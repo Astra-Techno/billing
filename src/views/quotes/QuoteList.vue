@@ -170,7 +170,16 @@ const avatarColor  = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarCol
       <!-- List -->
       <div class="lg:flex-1 lg:overflow-y-auto">
         <div class="card overflow-hidden lg:rounded-none lg:border-x-0 lg:border-b-0 lg:shadow-none mt-4 lg:mt-0">
-          <div v-if="loading" class="p-10 text-center text-gray-400 text-sm">Loading…</div>
+          <div v-if="loading" class="divide-y divide-gray-50">
+            <div v-for="i in 5" :key="i" class="flex items-center gap-3 px-4 py-3.5 animate-pulse">
+              <div class="w-10 h-10 rounded-xl bg-gray-100 shrink-0"></div>
+              <div class="flex-1 space-y-2">
+                <div class="h-3 bg-gray-100 rounded w-2/3"></div>
+                <div class="h-2.5 bg-gray-100 rounded w-1/3"></div>
+              </div>
+              <div class="h-3 bg-gray-100 rounded w-16"></div>
+            </div>
+          </div>
           <div v-else-if="!quotes.length" class="p-10 text-center">
             <div class="w-14 h-14 rounded-2xl bg-warning-50 flex items-center justify-center mx-auto mb-3">
               <svg class="w-7 h-7 text-warning-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>

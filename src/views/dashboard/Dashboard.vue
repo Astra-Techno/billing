@@ -13,6 +13,7 @@ const router = useRouter()
 const stats   = ref({ total_due: 0, total_paid_month: 0, overdue_count: 0, draft_count: 0 })
 const recent  = ref([])
 const overdue = ref([])
+const trend   = ref([])
 const loading = ref(true)
 
 const greeting = computed(() => {
@@ -22,6 +23,35 @@ const greeting = computed(() => {
   return 'Good evening'
 })
 const firstName = computed(() => auth.user?.name?.split(' ')[0] || '')
+
+// Build last 6 months labels + fetch revenue per month
+async function loadTrend() {
+  const months = []
+  const now = new Date()
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    months.push({
+      label: d.toLocaleString('default', { month: 'short' }),
+      from:  `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`,
+      to:    new Date(d.getFullYear(), d.getMonth()+1, 0).toISOString().split('T')[0],
+      total: 0,
+    })
+  }
+  await Promise.all(months.map(async m => {
+    try {
+      const res = await list('Invoice', {
+        'filter.from_date': m.from,
+        'filter.to_date':   m.to,
+        limit: 500,
+      })
+      const data = res.data?.data || []
+      m.total = data.reduce((s, i) => s + parseFloat(i.total || 0), 0)
+    } catch {}
+  }))
+  trend.value = months
+}
+
+const trendMax = computed(() => Math.max(...trend.value.map(m => m.total), 1))
 
 onMounted(async () => {
   try {
@@ -35,6 +65,7 @@ onMounted(async () => {
     overdue.value = oR.data?.data  || []
   } catch {}
   loading.value = false
+  loadTrend()
 })
 
 const quickActions = [
@@ -45,6 +76,11 @@ const quickActions = [
   { label: 'Products',     to: '/products',     bg: 'bg-purple-500', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
   { label: 'GST Filing',   to: '/gst-returns',  bg: 'bg-teal-500',   icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
 ]
+
+function remindWhatsApp(inv) {
+  const msg = `Dear ${inv.client_name},\n\nThis is a gentle reminder that your invoice *${inv.number}* for *${inr(inv.amount_due)}* is overdue by ${inv.days_overdue} day(s).\n\nKindly arrange payment at the earliest.\n\nThank you!`
+  window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank')
+}
 </script>
 
 <template>
@@ -99,42 +135,74 @@ const quickActions = [
       </div>
     </div>
 
-    <!-- ===== MAIN CONTENT GRID (fills remaining height) ===== -->
+    <!-- ===== MAIN CONTENT GRID ===== -->
     <div class="flex-1 min-h-0 grid lg:grid-cols-5 gap-4">
 
-      <!-- Recent Bills -->
-      <div class="lg:col-span-3 card overflow-hidden flex flex-col min-h-0">
-        <div class="flex items-center justify-between px-5 py-3 border-b border-gray-50 shrink-0">
-          <h2 class="font-bold text-gray-900">Recent Bills</h2>
-          <RouterLink to="/invoices" class="text-sm text-primary-600 font-semibold hover:underline">View all</RouterLink>
-        </div>
+      <!-- Recent Bills + Revenue Chart -->
+      <div class="lg:col-span-3 flex flex-col gap-4 min-h-0">
 
-        <div v-if="loading" class="p-10 text-center text-gray-400 text-sm">Loading…</div>
-
-        <div v-else-if="!recent.length" class="flex-1 flex flex-col items-center justify-center p-8 text-center">
-          <div class="w-14 h-14 rounded-full bg-primary-50 flex items-center justify-center mb-3">
-            <svg class="w-7 h-7 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <!-- Revenue Trend -->
+        <div class="card card-body shrink-0">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Revenue – Last 6 Months</p>
+            <RouterLink to="/reports" class="text-xs text-primary-600 font-semibold hover:underline">Reports →</RouterLink>
           </div>
-          <p class="text-gray-500 font-semibold">No bills yet</p>
-          <RouterLink to="/invoices/new" class="btn-primary btn-sm mt-3">Create First Bill</RouterLink>
+          <div v-if="!trend.length" class="h-20 flex items-center justify-center text-xs text-gray-400">Loading…</div>
+          <div v-else class="flex items-end gap-2 h-24">
+            <div v-for="m in trend" :key="m.label" class="flex-1 flex flex-col items-center gap-1">
+              <p class="text-[9px] text-gray-400 font-medium">{{ m.total > 0 ? inrCompact(m.total) : '' }}</p>
+              <div class="w-full rounded-t-lg transition-all duration-500"
+                :class="m.total > 0 ? 'bg-primary-500' : 'bg-gray-100'"
+                :style="{ height: m.total > 0 ? Math.max(8, Math.round((m.total / trendMax) * 72)) + 'px' : '8px' }">
+              </div>
+              <p class="text-[10px] text-gray-500 font-semibold">{{ m.label }}</p>
+            </div>
+          </div>
         </div>
 
-        <div v-else class="divide-y divide-gray-50 overflow-y-auto flex-1">
-          <div v-for="inv in recent" :key="inv.id"
-            class="flex items-center justify-between px-5 py-3.5 hover:bg-blue-50/40 cursor-pointer transition-colors group"
-            @click="router.push(`/invoices/${inv.id}`)">
-            <div class="flex items-center gap-3 min-w-0">
-              <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center shrink-0">
-                <span class="text-primary-700 font-bold text-sm">{{ inv.client_name?.charAt(0)?.toUpperCase() }}</span>
+        <!-- Recent Bills -->
+        <div class="card overflow-hidden flex flex-col min-h-0 flex-1">
+          <div class="flex items-center justify-between px-5 py-3 border-b border-gray-50 shrink-0">
+            <h2 class="font-bold text-gray-900">Recent Bills</h2>
+            <RouterLink to="/invoices" class="text-sm text-primary-600 font-semibold hover:underline">View all</RouterLink>
+          </div>
+
+          <div v-if="loading" class="p-6 space-y-3">
+            <div v-for="i in 4" :key="i" class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-gray-100 animate-pulse shrink-0"></div>
+              <div class="flex-1 space-y-1.5">
+                <div class="h-3 bg-gray-100 rounded animate-pulse w-2/3"></div>
+                <div class="h-2.5 bg-gray-100 rounded animate-pulse w-1/3"></div>
               </div>
-              <div class="min-w-0">
-                <p class="font-semibold text-gray-800 truncate text-sm group-hover:text-primary-700 transition-colors">{{ inv.client_name }}</p>
-                <p class="text-xs text-gray-400 mt-0.5">{{ inv.number }} · {{ fmtDateShort(inv.issue_date) }}</p>
-              </div>
+              <div class="h-3 bg-gray-100 rounded animate-pulse w-16"></div>
             </div>
-            <div class="text-right ml-4 shrink-0">
-              <p class="font-bold text-gray-900 text-sm">{{ inr(inv.amount_due) }}</p>
-              <span :class="statusBadge(inv.status)" class="mt-0.5">{{ statusLabel(inv.status) }}</span>
+          </div>
+
+          <div v-else-if="!recent.length" class="flex-1 flex flex-col items-center justify-center p-8 text-center">
+            <div class="w-14 h-14 rounded-full bg-primary-50 flex items-center justify-center mb-3">
+              <svg class="w-7 h-7 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+            <p class="text-gray-500 font-semibold">No bills yet</p>
+            <RouterLink to="/invoices/new" class="btn-primary btn-sm mt-3">Create First Bill</RouterLink>
+          </div>
+
+          <div v-else class="divide-y divide-gray-50 overflow-y-auto flex-1">
+            <div v-for="inv in recent" :key="inv.id"
+              class="flex items-center justify-between px-5 py-3.5 hover:bg-blue-50/40 cursor-pointer transition-colors group"
+              @click="router.push(`/invoices/${inv.id}`)">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center shrink-0">
+                  <span class="text-primary-700 font-bold text-sm">{{ inv.client_name?.charAt(0)?.toUpperCase() }}</span>
+                </div>
+                <div class="min-w-0">
+                  <p class="font-semibold text-gray-800 truncate text-sm group-hover:text-primary-700 transition-colors">{{ inv.client_name }}</p>
+                  <p class="text-xs text-gray-400 mt-0.5">{{ inv.number }} · {{ fmtDateShort(inv.issue_date) }}</p>
+                </div>
+              </div>
+              <div class="text-right ml-4 shrink-0">
+                <p class="font-bold text-gray-900 text-sm">{{ inr(inv.amount_due) }}</p>
+                <span :class="statusBadge(inv.status)" class="mt-0.5">{{ statusLabel(inv.status) }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -154,18 +222,22 @@ const quickActions = [
           </div>
           <div class="divide-y divide-red-50 overflow-y-auto flex-1">
             <div v-for="inv in overdue" :key="inv.id"
-              class="flex items-center justify-between px-5 py-3 hover:bg-red-50/50 cursor-pointer transition-colors"
-              @click="router.push(`/invoices/${inv.id}`)">
-              <div class="flex items-center gap-3 min-w-0">
-                <div class="w-8 h-8 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
-                  <span class="text-red-600 text-xs font-bold">{{ inv.client_name?.charAt(0)?.toUpperCase() }}</span>
-                </div>
-                <div class="min-w-0">
-                  <p class="text-sm font-semibold text-gray-800 truncate">{{ inv.client_name }}</p>
-                  <p class="text-xs text-red-400">{{ inv.days_overdue }}d late</p>
-                </div>
+              class="flex items-center gap-2 px-4 py-3 hover:bg-red-50/50 transition-colors">
+              <div class="w-8 h-8 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
+                <span class="text-red-600 text-xs font-bold">{{ inv.client_name?.charAt(0)?.toUpperCase() }}</span>
               </div>
-              <p class="text-sm font-bold text-red-600 ml-3 shrink-0">{{ inr(inv.amount_due) }}</p>
+              <div class="flex-1 min-w-0 cursor-pointer" @click="router.push(`/invoices/${inv.id}`)">
+                <p class="text-sm font-semibold text-gray-800 truncate">{{ inv.client_name }}</p>
+                <p class="text-xs text-red-400">{{ inv.days_overdue }}d late</p>
+              </div>
+              <p class="text-sm font-bold text-red-600 shrink-0">{{ inr(inv.amount_due) }}</p>
+              <button @click="remindWhatsApp(inv)" title="Send WhatsApp reminder"
+                class="shrink-0 w-8 h-8 rounded-lg bg-green-50 hover:bg-green-100 flex items-center justify-center transition-colors">
+                <svg class="w-4 h-4 text-green-600" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                  <path d="M12 0C5.373 0 0 5.373 0 12c0 2.137.565 4.147 1.554 5.887L0 24l6.305-1.524A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.375l-.359-.214-3.735.902.948-3.632-.234-.373A9.818 9.818 0 1112 21.818z"/>
+                </svg>
+              </button>
             </div>
           </div>
         </div>

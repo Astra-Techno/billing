@@ -284,10 +284,10 @@ async function saveInvoice() {
       <p class="text-sm text-gray-500 mt-0.5">Set up your business details, payment info, and bill preferences</p>
     </div>
 
-    <!-- Tabs -->
-    <div class="flex gap-1 bg-gray-100 p-1 rounded-lg w-fit flex-wrap">
+    <!-- Tabs — horizontally scrollable on mobile -->
+    <div class="flex gap-1 bg-gray-100 p-1 rounded-xl overflow-x-auto no-scrollbar">
       <button v-for="t in tabs" :key="t.key" @click="activeTab = t.key"
-        class="px-3 py-1.5 rounded-md text-sm font-medium transition"
+        class="px-3 py-1.5 rounded-lg text-sm font-medium transition whitespace-nowrap shrink-0"
         :class="activeTab === t.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'">
         {{ t.label }}
       </button>

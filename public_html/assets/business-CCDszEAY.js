@@ -1,1 +1,0 @@
-import{P as e,c as t,i as n}from"./auth-BOyz2Fcb.js";var r=t(`business`,()=>{let t=e(``);function r(e){t.value=e||``}async function i(){try{t.value=(await n(`Business`)).data?.data?.logo||``}catch{}}return{logo:t,setLogo:r,fetchLogo:i}});export{r as t};

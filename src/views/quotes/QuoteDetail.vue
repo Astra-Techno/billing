@@ -39,11 +39,13 @@ async function load() {
   loading.value = false
 }
 
+const quoteId = () => props.panelId || route.params.id
+
 async function act(method, label) {
   acting.value = label
   error.value  = ''
   try {
-    await task('Quote', method, { id: route.params.id })
+    await task('Quote', method, { id: quoteId() })
     await load()
   } catch (e) {
     error.value = e.response?.data?.message || 'Action failed.'
@@ -54,7 +56,7 @@ async function convertToInvoice() {
   acting.value = 'convert'
   error.value  = ''
   try {
-    const { data } = await task('Quote', 'convertToInvoice', { id: route.params.id })
+    const { data } = await task('Quote', 'convertToInvoice', { id: quoteId() })
     router.push('/invoices/' + data.data.invoice_id)
   } catch (e) {
     error.value = e.response?.data?.message || 'Conversion failed.'
@@ -77,8 +79,9 @@ function shareWhatsApp() {
 async function deleteQuote() {
   deleting.value = true
   try {
-    await task('Quote', 'delete', { id: route.params.id })
-    router.push('/quotes')
+    await task('Quote', 'delete', { id: quoteId() })
+    if (props.panelId) { emit('back'); emit('refresh') }
+    else router.push('/quotes')
   } catch (e) {
     error.value = e.response?.data?.message || 'Delete failed.'
     deleting.value = false

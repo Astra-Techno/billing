@@ -129,6 +129,38 @@ const expenseByCategory = computed(() => {
   return Object.entries(map).sort((a, b) => b[1] - a[1])
 })
 
+// GST Payable = GST collected on invoices − GST paid on expenses (input credit)
+const gstPayable = computed(() => {
+  const collected = gstTotals.value.cgst + gstTotals.value.sgst + gstTotals.value.igst
+  const inputCredit = expenseReport.value.reduce((s, e) => s + parseFloat(e.gst_amount || 0), 0)
+  return { collected, inputCredit, payable: collected - inputCredit }
+})
+
+function exportCSV(rows, headers, filename) {
+  const lines = [headers.join(',')]
+  for (const r of rows) lines.push(r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','))
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' })
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement('a'); a.href = url; a.download = filename; a.click()
+  URL.revokeObjectURL(url)
+}
+
+function exportGstCSV() {
+  exportCSV(
+    gstSummary.value.map(r => [r.number, r.client_name, fmtDateShort(r.issue_date), r.subtotal, r.cgst_total, r.sgst_total, r.igst_total, r.total]),
+    ['Invoice No','Client','Date','Taxable','CGST','SGST','IGST','Total'],
+    'gst-summary.csv'
+  )
+}
+
+function exportOutstandingCSV() {
+  exportCSV(
+    outstanding.value.map(r => [r.number, r.client_name, fmtDateShort(r.due_date), r.total, r.amount_paid, r.amount_due, r.status]),
+    ['Invoice No','Client','Due Date','Total','Paid','Balance','Status'],
+    'outstanding.csv'
+  )
+}
+
 function selectTab(key) {
   activeTab.value = key
   if      (key === 'outstanding') loadOutstanding()
@@ -162,7 +194,14 @@ onMounted(() => loadOutstanding())
       <div class="card">
         <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
           <h2 class="section-title mb-0">Bills to Collect</h2>
-          <span class="font-bold text-danger-600">{{ inr(outstandingTotal) }}</span>
+          <div class="flex items-center gap-3">
+            <span class="font-bold text-danger-600">{{ inr(outstandingTotal) }}</span>
+            <button v-if="outstanding.length" @click="exportOutstandingCSV"
+              class="text-xs px-2.5 py-1 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 font-medium flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              CSV
+            </button>
+          </div>
         </div>
         <div v-if="!outstanding.length" class="p-8 text-center text-gray-400 text-sm">No bills to collect</div>
         <div v-else class="divide-y divide-gray-100">
@@ -199,8 +238,13 @@ onMounted(() => loadOutstanding())
       </div>
 
       <div class="card">
-        <div class="px-5 py-4 border-b border-gray-100">
+        <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
           <h2 class="section-title mb-0">GST Summary</h2>
+          <button v-if="gstSummary.length" @click="exportGstCSV"
+            class="text-xs px-2.5 py-1 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 font-medium flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            CSV
+          </button>
         </div>
         <div v-if="!gstSummary.length" class="p-8 text-center text-gray-400 text-sm">No data for selected period</div>
         <template v-else>
@@ -259,6 +303,29 @@ onMounted(() => loadOutstanding())
             </table>
           </div>
         </template>
+      </div>
+    </template>
+
+    <!-- GST Payable summary card -->
+    <template v-if="!loading && activeTab === 'gst' && gstSummary.length">
+      <div class="card card-body">
+        <h2 class="section-title mb-3">GST Payable Estimate</h2>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between text-gray-600">
+            <span>GST Collected (CGST+SGST+IGST)</span>
+            <span class="font-semibold text-gray-900">{{ inr(gstPayable.collected) }}</span>
+          </div>
+          <div class="flex justify-between text-gray-600">
+            <span>Input Tax Credit (GST on expenses)</span>
+            <span class="text-success-600 font-semibold">− {{ inr(gstPayable.inputCredit) }}</span>
+          </div>
+          <div class="flex justify-between font-bold text-base border-t border-gray-200 pt-2 mt-1"
+            :class="gstPayable.payable >= 0 ? 'text-danger-600' : 'text-success-700'">
+            <span>Net GST Payable</span>
+            <span>{{ inr(Math.abs(gstPayable.payable)) }} {{ gstPayable.payable < 0 ? '(Credit)' : '' }}</span>
+          </div>
+        </div>
+        <p class="text-xs text-gray-400 mt-3">* Estimate only. Based on paid/partial invoices in the selected period vs all recorded expenses.</p>
       </div>
     </template>
 
