@@ -71,8 +71,8 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
 </script>
 
 <template>
-  <header class="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-30">
-    <div class="max-w-2xl mx-auto lg:max-w-none px-4 lg:px-8 py-3 flex items-center justify-between gap-3">
+  <header class="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-30 w-full">
+    <div class="w-full max-w-2xl mx-auto lg:max-w-none px-4 lg:px-8 py-3 flex items-center justify-between gap-3">
 
       <!-- Logo -->
       <RouterLink to="/" class="flex items-center gap-2.5 shrink-0">
