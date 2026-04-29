@@ -13,27 +13,51 @@ const routes = [
     meta: { auth: true },
     children: [
       { path: '',          name: 'Dashboard',     component: () => import('../views/dashboard/Dashboard.vue') },
-      { path: 'clients',   name: 'Clients',       component: () => import('../views/clients/ClientList.vue') },
-      { path: 'clients/new',       name: 'ClientNew',    component: () => import('../views/clients/ClientForm.vue') },
-      { path: 'clients/:id/edit', name: 'ClientEdit',   component: () => import('../views/clients/ClientForm.vue') },
-      { path: 'clients/:id',      name: 'ClientView',   component: () => import('../views/clients/ClientDetail.vue') },
-      { path: 'invoices',         name: 'Invoices',     component: () => import('../views/invoices/InvoiceList.vue') },
-      { path: 'invoices/new',     name: 'InvoiceNew',   component: () => import('../views/invoices/InvoiceForm.vue') },
-      { path: 'invoices/:id/edit',name: 'InvoiceEdit',  component: () => import('../views/invoices/InvoiceForm.vue') },
-      { path: 'invoices/:id',     name: 'InvoiceView',  component: () => import('../views/invoices/InvoiceDetail.vue') },
-      { path: 'quotes',           name: 'Quotes',       component: () => import('../views/quotes/QuoteList.vue') },
-      { path: 'quotes/new',       name: 'QuoteNew',     component: () => import('../views/quotes/QuoteForm.vue') },
-      { path: 'quotes/:id/edit',  name: 'QuoteEdit',    component: () => import('../views/quotes/QuoteForm.vue') },
-      { path: 'quotes/:id',       name: 'QuoteView',    component: () => import('../views/quotes/QuoteDetail.vue') },
-      { path: 'expenses',         name: 'Expenses',     component: () => import('../views/expenses/ExpenseList.vue') },
-      { path: 'expenses/new',     name: 'ExpenseNew',   component: () => import('../views/expenses/ExpenseForm.vue') },
-      { path: 'expenses/:id/edit',name: 'ExpenseEdit',  component: () => import('../views/expenses/ExpenseForm.vue') },
-      { path: 'products',         name: 'Products',     component: () => import('../views/products/ProductList.vue') },
-      { path: 'products/new',     name: 'ProductNew',   component: () => import('../views/products/ProductForm.vue') },
-      { path: 'products/:id/edit',name: 'ProductEdit',  component: () => import('../views/products/ProductForm.vue') },
-      { path: 'credit-notes',     name: 'CreditNotes',  component: () => import('../views/credit-notes/CreditNoteList.vue') },
-      { path: 'credit-notes/new',     name: 'CreditNoteNew',   component: () => import('../views/credit-notes/CreditNoteForm.vue') },
-      { path: 'credit-notes/:id/edit',name: 'CreditNoteEdit',  component: () => import('../views/credit-notes/CreditNoteForm.vue') },
+      { 
+        path: 'clients',   name: 'Clients',       component: () => import('../views/clients/ClientList.vue'),
+        children: [
+          { path: 'new',       name: 'ClientNew',    component: () => import('../views/clients/ClientForm.vue') },
+          { path: ':id/edit', name: 'ClientEdit',   component: () => import('../views/clients/ClientForm.vue') },
+          { path: ':id',      name: 'ClientView',   component: () => import('../views/clients/ClientDetail.vue') },
+        ]
+      },
+      { 
+        path: 'invoices',         name: 'Invoices',     component: () => import('../views/invoices/InvoiceList.vue'),
+        children: [
+          { path: 'new',     name: 'InvoiceNew',   component: () => import('../views/invoices/InvoiceForm.vue') },
+          { path: ':id/edit',name: 'InvoiceEdit',  component: () => import('../views/invoices/InvoiceForm.vue') },
+          { path: ':id',     name: 'InvoiceView',  component: () => import('../views/invoices/InvoiceDetail.vue') },
+        ]
+      },
+      { 
+        path: 'quotes',           name: 'Quotes',       component: () => import('../views/quotes/QuoteList.vue'),
+        children: [
+          { path: 'new',       name: 'QuoteNew',     component: () => import('../views/quotes/QuoteForm.vue') },
+          { path: ':id/edit',  name: 'QuoteEdit',    component: () => import('../views/quotes/QuoteForm.vue') },
+          { path: ':id',       name: 'QuoteView',    component: () => import('../views/quotes/QuoteDetail.vue') },
+        ]
+      },
+      { 
+        path: 'expenses',         name: 'Expenses',     component: () => import('../views/expenses/ExpenseList.vue'),
+        children: [
+          { path: 'new',     name: 'ExpenseNew',   component: () => import('../views/expenses/ExpenseForm.vue') },
+          { path: ':id/edit',name: 'ExpenseEdit',  component: () => import('../views/expenses/ExpenseForm.vue') },
+        ]
+      },
+      { 
+        path: 'products',         name: 'Products',     component: () => import('../views/products/ProductList.vue'),
+        children: [
+          { path: 'new',     name: 'ProductNew',   component: () => import('../views/products/ProductForm.vue') },
+          { path: ':id/edit',name: 'ProductEdit',  component: () => import('../views/products/ProductForm.vue') },
+        ]
+      },
+      { 
+        path: 'credit-notes',     name: 'CreditNotes',  component: () => import('../views/credit-notes/CreditNoteList.vue'),
+        children: [
+          { path: 'new',     name: 'CreditNoteNew',   component: () => import('../views/credit-notes/CreditNoteForm.vue') },
+          { path: ':id/edit',name: 'CreditNoteEdit',  component: () => import('../views/credit-notes/CreditNoteForm.vue') },
+        ]
+      },
       { path: 'gst-returns',      name: 'GstReturns',   component: () => import('../views/gst/GstReturns.vue') },
       { path: 'reports',          name: 'Reports',      component: () => import('../views/reports/Reports.vue') },
       { path: 'settings',         name: 'Settings',     component: () => import('../views/settings/Settings.vue') },

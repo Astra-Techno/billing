@@ -1,1 +1,0 @@
-import{N as e}from"./runtime-core.esm-bundler-7Nvb8RP7.js";var t=e(null);function n(){return{helpSection:t,openHelp:e=>{t.value=e},closeHelp:()=>{t.value=null}}}export{n as t};
