@@ -1,0 +1,1 @@
+function e(e,t=2){if(e==null||e===``)return`₹0`;let n=parseFloat(e);return isNaN(n)?`₹0`:`₹`+n.toLocaleString(`en-IN`,{minimumFractionDigits:t,maximumFractionDigits:t})}function t(t){let n=parseFloat(t)||0;return n>=1e7?`₹`+(n/1e7).toFixed(2)+` Cr`:n>=1e5?`₹`+(n/1e5).toFixed(2)+` L`:n>=1e3?`₹`+(n/1e3).toFixed(1)+`K`:e(n,0)}export{t as n,e as t};

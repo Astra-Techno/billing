@@ -1,0 +1,1 @@
+function e(e){if(!e)return`—`;let t=new Date(e);return isNaN(t)?`—`:t.toLocaleDateString(`en-IN`,{day:`2-digit`,month:`short`,year:`numeric`})}function t(){return new Date().toISOString().split(`T`)[0]}function n(e,t){let n=new Date(e);return n.setDate(n.getDate()+t),n.toISOString().split(`T`)[0]}export{e as n,t as r,n as t};
