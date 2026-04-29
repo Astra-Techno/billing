@@ -4,6 +4,10 @@
 
 @layer base {
   * { box-sizing: border-box; }
+  html, body {
+    @apply overflow-x-hidden w-full h-full;
+    overscroll-behavior-y: none;
+  }
   body { @apply text-gray-800 bg-slate-50; }
   html { scroll-behavior: smooth; }
 }
