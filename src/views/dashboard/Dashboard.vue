@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { list } from '../../api'
 import { inr, inrCompact } from '../../utils/currency'
+// inrCompact kept for hero card stats
 import { fmtDateShort } from '../../utils/date'
 import { statusBadge, statusLabel } from '../../utils/invoice'
 import { useAuthStore } from '../../stores/auth'
@@ -13,7 +14,6 @@ const router = useRouter()
 const stats   = ref({ total_due: 0, total_paid_month: 0, overdue_count: 0, draft_count: 0 })
 const recent  = ref([])
 const overdue = ref([])
-const trend   = ref([])
 const loading = ref(true)
 
 const greeting = computed(() => {
@@ -23,35 +23,6 @@ const greeting = computed(() => {
   return 'Good evening'
 })
 const firstName = computed(() => auth.user?.name?.split(' ')[0] || '')
-
-// Build last 6 months labels + fetch revenue per month
-async function loadTrend() {
-  const months = []
-  const now = new Date()
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    months.push({
-      label: d.toLocaleString('default', { month: 'short' }),
-      from:  `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`,
-      to:    new Date(d.getFullYear(), d.getMonth()+1, 0).toISOString().split('T')[0],
-      total: 0,
-    })
-  }
-  await Promise.all(months.map(async m => {
-    try {
-      const res = await list('Invoice', {
-        'filter.from_date': m.from,
-        'filter.to_date':   m.to,
-        limit: 500,
-      })
-      const data = res.data?.data || []
-      m.total = data.reduce((s, i) => s + parseFloat(i.total || 0), 0)
-    } catch {}
-  }))
-  trend.value = months
-}
-
-const trendMax = computed(() => Math.max(...trend.value.map(m => m.total), 1))
 
 onMounted(async () => {
   try {
@@ -65,7 +36,6 @@ onMounted(async () => {
     overdue.value = oR.data?.data  || []
   } catch {}
   loading.value = false
-  loadTrend()
 })
 
 const quickActions = [
@@ -184,25 +154,6 @@ function remindWhatsApp(inv) {
                 <p class="font-bold text-gray-900 text-sm">{{ inr(inv.amount_due) }}</p>
                 <span :class="statusBadge(inv.status)" class="mt-0.5">{{ statusLabel(inv.status) }}</span>
               </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Revenue Trend -->
-        <div class="card card-body shrink-0">
-          <div class="flex items-center justify-between mb-3">
-            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Revenue – Last 6 Months</p>
-            <RouterLink to="/reports" class="text-xs text-primary-600 font-semibold hover:underline">Reports →</RouterLink>
-          </div>
-          <div v-if="!trend.length" class="h-20 flex items-center justify-center text-xs text-gray-400">Loading…</div>
-          <div v-else class="flex items-end gap-2 h-24">
-            <div v-for="m in trend" :key="m.label" class="flex-1 flex flex-col items-center gap-1">
-              <p class="text-[9px] text-gray-400 font-medium">{{ m.total > 0 ? inrCompact(m.total) : '' }}</p>
-              <div class="w-full rounded-t-lg transition-all duration-500"
-                :class="m.total > 0 ? 'bg-primary-500' : 'bg-gray-100'"
-                :style="{ height: m.total > 0 ? Math.max(8, Math.round((m.total / trendMax) * 72)) + 'px' : '8px' }">
-              </div>
-              <p class="text-[10px] text-gray-500 font-semibold">{{ m.label }}</p>
             </div>
           </div>
         </div>
