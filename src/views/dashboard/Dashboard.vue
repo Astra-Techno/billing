@@ -141,25 +141,6 @@ function remindWhatsApp(inv) {
       <!-- Recent Bills + Revenue Chart -->
       <div class="lg:col-span-3 flex flex-col gap-4 lg:min-h-0">
 
-        <!-- Revenue Trend -->
-        <div class="card card-body shrink-0">
-          <div class="flex items-center justify-between mb-3">
-            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Revenue – Last 6 Months</p>
-            <RouterLink to="/reports" class="text-xs text-primary-600 font-semibold hover:underline">Reports →</RouterLink>
-          </div>
-          <div v-if="!trend.length" class="h-20 flex items-center justify-center text-xs text-gray-400">Loading…</div>
-          <div v-else class="flex items-end gap-2 h-24">
-            <div v-for="m in trend" :key="m.label" class="flex-1 flex flex-col items-center gap-1">
-              <p class="text-[9px] text-gray-400 font-medium">{{ m.total > 0 ? inrCompact(m.total) : '' }}</p>
-              <div class="w-full rounded-t-lg transition-all duration-500"
-                :class="m.total > 0 ? 'bg-primary-500' : 'bg-gray-100'"
-                :style="{ height: m.total > 0 ? Math.max(8, Math.round((m.total / trendMax) * 72)) + 'px' : '8px' }">
-              </div>
-              <p class="text-[10px] text-gray-500 font-semibold">{{ m.label }}</p>
-            </div>
-          </div>
-        </div>
-
         <!-- Recent Bills -->
         <div class="card overflow-hidden flex flex-col lg:min-h-0 lg:flex-1">
           <div class="flex items-center justify-between px-5 py-3 border-b border-gray-50 shrink-0">
@@ -206,6 +187,26 @@ function remindWhatsApp(inv) {
             </div>
           </div>
         </div>
+
+        <!-- Revenue Trend -->
+        <div class="card card-body shrink-0">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Revenue – Last 6 Months</p>
+            <RouterLink to="/reports" class="text-xs text-primary-600 font-semibold hover:underline">Reports →</RouterLink>
+          </div>
+          <div v-if="!trend.length" class="h-20 flex items-center justify-center text-xs text-gray-400">Loading…</div>
+          <div v-else class="flex items-end gap-2 h-24">
+            <div v-for="m in trend" :key="m.label" class="flex-1 flex flex-col items-center gap-1">
+              <p class="text-[9px] text-gray-400 font-medium">{{ m.total > 0 ? inrCompact(m.total) : '' }}</p>
+              <div class="w-full rounded-t-lg transition-all duration-500"
+                :class="m.total > 0 ? 'bg-primary-500' : 'bg-gray-100'"
+                :style="{ height: m.total > 0 ? Math.max(8, Math.round((m.total / trendMax) * 72)) + 'px' : '8px' }">
+              </div>
+              <p class="text-[10px] text-gray-500 font-semibold">{{ m.label }}</p>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- Right column -->
