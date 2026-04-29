@@ -87,7 +87,7 @@ function abort(string $msg): void {
 echo page_open();
 log_step('⬇', "Downloading <strong>{$repo}@{$branch}</strong> from GitHub…");
 
-$zipUrl = "https://github.com/{$repo}/archive/refs/heads/{$branch}.zip";
+$zipUrl = "https://github.com/{$repo}/archive/refs/heads/{$branch}.tar.gz";
 
 $zipData = false;
 if (function_exists('curl_init')) {
@@ -119,28 +119,29 @@ if (function_exists('curl_init')) {
     $zipData = @file_get_contents($zipUrl, false, $ctx);
 }
 
-if (!$zipData) abort('Failed to download ZIP. Enable cURL or allow_url_fopen.');
+if (!$zipData) abort('Failed to download archive. Enable cURL or allow_url_fopen.');
 log_step('✔', 'Download complete (' . round(strlen($zipData) / 1024) . ' KB)', 'ok');
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STEP 2 — Extract ZIP to temp dir
+// STEP 2 — Extract tar.gz to temp dir (uses PharData — no extension needed)
 // ─────────────────────────────────────────────────────────────────────────────
-log_step('📦', 'Extracting ZIP…');
+log_step('📦', 'Extracting archive…');
 
-$tmpZip = sys_get_temp_dir() . '/billing_deploy_' . time() . '.zip';
+$tmpTar = sys_get_temp_dir() . '/billing_deploy_' . time() . '.tar.gz';
 $tmpDir = sys_get_temp_dir() . '/billing_extract_' . time();
 
-file_put_contents($tmpZip, $zipData);
+file_put_contents($tmpTar, $zipData);
 unset($zipData);
 
-$zip = new ZipArchive();
-if ($zip->open($tmpZip) !== true) {
-    @unlink($tmpZip);
-    abort('Failed to open ZIP. ZipArchive PHP extension may be missing.');
+try {
+    $phar = new PharData($tmpTar);
+    $phar->extractTo($tmpDir);
+    unset($phar);
+} catch (Throwable $e) {
+    @unlink($tmpTar);
+    abort('Failed to extract archive: ' . $e->getMessage());
 }
-$zip->extractTo($tmpDir);
-$zip->close();
-@unlink($tmpZip);
+@unlink($tmpTar);
 
 // GitHub names the top folder: owner-repo-branch/
 $extractedDirs = glob($tmpDir . '/*', GLOB_ONLYDIR);
