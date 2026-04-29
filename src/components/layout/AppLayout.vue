@@ -2,6 +2,7 @@
 import { onMounted } from 'vue'
 import Sidebar from './Sidebar.vue'
 import TopBar from './TopBar.vue'
+import HelpPopup from '../HelpPopup.vue'
 import { useBusinessStore } from '../../stores/business'
 
 const bizStore = useBusinessStore()
@@ -15,5 +16,6 @@ onMounted(() => bizStore.fetchLogo())
       <RouterView />
     </main>
     <Sidebar />
+    <HelpPopup />
   </div>
 </template>
