@@ -84,7 +84,7 @@ function remindWhatsApp(inv) {
 </script>
 
 <template>
-  <div class="h-full flex flex-col gap-4">
+  <div class="flex flex-col gap-4 lg:h-full">
 
     <!-- ===== HERO CARD ===== -->
     <div class="rounded-3xl bg-gradient-to-br from-primary-600 via-primary-600 to-blue-700 text-white px-6 py-4 shadow-xl shadow-primary-200 relative overflow-hidden shrink-0">
@@ -136,10 +136,10 @@ function remindWhatsApp(inv) {
     </div>
 
     <!-- ===== MAIN CONTENT GRID ===== -->
-    <div class="flex-1 min-h-0 grid lg:grid-cols-5 gap-4">
+    <div class="grid lg:grid-cols-5 gap-4 lg:flex-1 lg:min-h-0">
 
       <!-- Recent Bills + Revenue Chart -->
-      <div class="lg:col-span-3 flex flex-col gap-4 min-h-0">
+      <div class="lg:col-span-3 flex flex-col gap-4 lg:min-h-0">
 
         <!-- Revenue Trend -->
         <div class="card card-body shrink-0">
@@ -161,7 +161,7 @@ function remindWhatsApp(inv) {
         </div>
 
         <!-- Recent Bills -->
-        <div class="card overflow-hidden flex flex-col min-h-0 flex-1">
+        <div class="card overflow-hidden flex flex-col lg:min-h-0 lg:flex-1">
           <div class="flex items-center justify-between px-5 py-3 border-b border-gray-50 shrink-0">
             <h2 class="font-bold text-gray-900">Recent Bills</h2>
             <RouterLink to="/invoices" class="text-sm text-primary-600 font-semibold hover:underline">View all</RouterLink>
@@ -209,10 +209,10 @@ function remindWhatsApp(inv) {
       </div>
 
       <!-- Right column -->
-      <div class="lg:col-span-2 flex flex-col gap-3 min-h-0">
+      <div class="lg:col-span-2 flex flex-col gap-3 lg:min-h-0">
 
         <!-- Overdue card -->
-        <div v-if="overdue.length" class="card overflow-hidden border-red-100 flex flex-col min-h-0 flex-1">
+        <div v-if="overdue.length" class="card overflow-hidden border-red-100 flex flex-col lg:min-h-0 lg:flex-1">
           <div class="px-5 py-3 border-b border-red-50 flex items-center justify-between shrink-0">
             <div class="flex items-center gap-2">
               <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
