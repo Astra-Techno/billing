@@ -133,15 +133,38 @@ $tmpDir = sys_get_temp_dir() . '/billing_extract_' . time();
 file_put_contents($tmpTar, $zipData);
 unset($zipData);
 
-try {
-    $phar = new PharData($tmpTar);
-    $phar->extractTo($tmpDir);
-    unset($phar);
-} catch (Throwable $e) {
-    @unlink($tmpTar);
-    abort('Failed to extract archive: ' . $e->getMessage());
+mkdir($tmpDir, 0755, true);
+
+// Try PharData (built-in), then system tar via exec/shell_exec
+$extracted = false;
+
+if (class_exists('PharData')) {
+    try {
+        $phar = new PharData($tmpTar);
+        $phar->extractTo($tmpDir);
+        unset($phar);
+        $extracted = true;
+    } catch (Throwable $e) {}
 }
+
+if (!$extracted && function_exists('exec')) {
+    $out = []; $rc = 0;
+    exec('tar -xzf ' . escapeshellarg($tmpTar) . ' -C ' . escapeshellarg($tmpDir) . ' 2>&1', $out, $rc);
+    if ($rc === 0) $extracted = true;
+    else log_step('⚠', 'exec tar failed: ' . implode(' ', $out), 'warn');
+}
+
+if (!$extracted && function_exists('shell_exec')) {
+    $result = shell_exec('tar -xzf ' . escapeshellarg($tmpTar) . ' -C ' . escapeshellarg($tmpDir) . ' 2>&1');
+    if (is_dir($tmpDir) && count(glob($tmpDir . '/*')) > 0) $extracted = true;
+    else log_step('⚠', 'shell_exec tar output: ' . $result, 'warn');
+}
+
 @unlink($tmpTar);
+
+if (!$extracted) {
+    abort('Cannot extract archive. Enable phar, exec, or shell_exec on this server.');
+}
 
 // GitHub names the top folder: owner-repo-branch/
 $extractedDirs = glob($tmpDir . '/*', GLOB_ONLYDIR);
