@@ -61,18 +61,15 @@ async function logout() {
         <span class="text-[10px] font-semibold tracking-wide" :class="isActive('/invoices') ? 'font-bold' : ''">Bills</span>
       </RouterLink>
 
-      <!-- Center FAB -->
-      <div class="flex-[1.2] flex flex-col items-center gap-1 py-2">
-        <div class="w-6 h-6 relative flex justify-center w-full">
-          <RouterLink to="/invoices/new"
-            class="absolute bottom-0 w-14 h-14 rounded-full bg-primary-600 flex items-center justify-center shadow-soft-blue active:scale-95 transition-transform hover:bg-primary-700">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-            </svg>
-          </RouterLink>
+      <!-- New Bill -->
+      <RouterLink to="/invoices/new" class="flex-1 flex flex-col items-center gap-1 py-2 transition-colors group text-gray-500">
+        <div class="px-4 py-1 rounded-full bg-transparent group-hover:bg-gray-100 transition-colors duration-300 text-gray-500">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+          </svg>
         </div>
-        <span class="text-[10px] font-semibold tracking-wide text-gray-500">New Bill</span>
-      </div>
+        <span class="text-[10px] font-semibold tracking-wide">New Bill</span>
+      </RouterLink>
 
       <RouterLink to="/quotes" class="flex-1 flex flex-col items-center gap-1 py-2 transition-colors group"
         :class="isActive('/quotes') ? 'text-gray-900' : 'text-gray-500'">
