@@ -288,12 +288,19 @@ onMounted(load)
       </div>
     </div>
 
-    <!-- Mobile modal (unchanged UX on small screens) -->
-    <div v-if="selectedId && window?.innerWidth < 1024" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40">
+    <!-- Mobile modal (small screens only) -->
+    <div v-if="selectedId" class="lg:hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40">
       <div class="bg-white rounded-2xl w-full max-w-md shadow-xl">
         <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
           <h3 class="font-semibold text-gray-800">{{ selectedId === 'new' ? 'Add Product / Service' : 'Edit Product / Service' }}</h3>
-          <button @click="selectedId = null" class="text-gray-400 hover:text-gray-600">✕</button>
+          <div class="flex items-center gap-3">
+            <button v-if="selectedId !== 'new'" @click="deleteTarget = products.find(p => p.id == selectedId)"
+              class="text-xs text-red-500 hover:text-red-700 flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              Delete
+            </button>
+            <button @click="selectedId = null" class="text-gray-400 hover:text-gray-600">✕</button>
+          </div>
         </div>
         <div class="p-5 space-y-4">
           <div class="flex gap-2">
