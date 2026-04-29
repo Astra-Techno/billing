@@ -157,59 +157,68 @@ onMounted(load)
       </div>
 
       <!-- Action buttons -->
-      <div class="flex flex-wrap gap-2" v-if="invoice.status !== 'cancelled'">
-        <button v-if="invoice.status === 'draft'" @click="markSent" :disabled="acting" class="btn-primary">
-          Mark as Sent to Customer
-        </button>
-        <RouterLink v-if="invoice.status === 'draft'" :to="`/invoices/${invoice.id}/edit`" class="btn-outline">
-          Edit
-        </RouterLink>
-        <button v-if="['sent','partial','overdue'].includes(invoice.status)"
-          @click="showPayModal = true" class="btn-primary">
-          Record Payment
-        </button>
-        <button @click="printInvoice" class="btn-outline">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-          </svg>
-          Print
-        </button>
-        <button @click="shareWhatsApp" class="btn-outline">
-          <svg class="w-4 h-4 text-green-600" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-            <path d="M12 0C5.373 0 0 5.373 0 12c0 2.137.565 4.147 1.554 5.887L0 24l6.305-1.524A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.375l-.359-.214-3.735.902.948-3.632-.234-.373A9.818 9.818 0 1112 21.818z"/>
-          </svg>
-          WhatsApp
-        </button>
-        <RouterLink :to="'/invoices/new?duplicate=' + invoice.id" class="btn-outline">Duplicate</RouterLink>
-        <button v-if="invoice.status !== 'paid'" @click="showCancelModal = true" class="btn-outline text-danger-500 border-danger-200 hover:bg-danger-50">Cancel Bill</button>
+      <div class="space-y-2" v-if="invoice.status !== 'cancelled'">
+        <!-- Primary actions — full width on mobile -->
+        <div class="flex gap-2">
+          <button v-if="invoice.status === 'draft'" @click="markSent" :disabled="acting" class="btn-primary flex-1">
+            Mark as Sent to Customer
+          </button>
+          <RouterLink v-if="invoice.status === 'draft'" :to="`/invoices/${invoice.id}/edit`" class="btn-outline flex-1 text-center">
+            Edit
+          </RouterLink>
+          <button v-if="['sent','partial','overdue'].includes(invoice.status)"
+            @click="showPayModal = true" class="btn-primary flex-1">
+            Record Payment
+          </button>
+        </div>
+        <!-- Secondary actions — icon+label row -->
+        <div class="flex gap-2 flex-wrap">
+          <button @click="printInvoice" class="btn-outline flex items-center gap-1.5 flex-1 justify-center">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+            </svg>
+            Print
+          </button>
+          <button @click="shareWhatsApp" class="btn-outline flex items-center gap-1.5 flex-1 justify-center">
+            <svg class="w-4 h-4 text-green-600" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+              <path d="M12 0C5.373 0 0 5.373 0 12c0 2.137.565 4.147 1.554 5.887L0 24l6.305-1.524A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.375l-.359-.214-3.735.902.948-3.632-.234-.373A9.818 9.818 0 1112 21.818z"/>
+            </svg>
+            WhatsApp
+          </button>
+          <RouterLink :to="'/invoices/new?duplicate=' + invoice.id" class="btn-outline flex-1 text-center">Duplicate</RouterLink>
+          <button v-if="invoice.status !== 'paid'" @click="showCancelModal = true"
+            class="btn-outline text-danger-500 border-danger-200 hover:bg-danger-50 flex-1">Cancel Bill</button>
+        </div>
       </div>
 
       <!-- Invoice body — proper Indian GST Tax Invoice -->
       <div class="card overflow-hidden">
 
-        <!-- Top: Logo + Business name + TAX INVOICE -->
-        <div class="px-5 pt-5 pb-4 flex items-start justify-between gap-4 border-b border-gray-200">
+        <!-- Top: TAX INVOICE title row + Business info row -->
+        <div class="px-5 pt-5 pb-4 border-b border-gray-200 space-y-4">
+          <!-- Title row -->
+          <div class="flex items-center justify-between gap-2">
+            <p class="text-xl sm:text-2xl font-black text-primary-700 uppercase tracking-widest leading-none">Tax Invoice</p>
+            <p class="text-sm font-bold text-gray-700 shrink-0">{{ invoice.number }}</p>
+          </div>
+          <!-- Business info row -->
           <div class="flex items-start gap-3">
-            <img v-if="business?.logo" :src="business.logo" class="w-14 h-14 object-contain rounded-xl border border-gray-100 shrink-0" alt="logo" />
-            <div>
-              <p class="text-lg font-bold text-gray-900 leading-tight">{{ business?.name || invoice.business_name }}</p>
+            <img v-if="business?.logo" :src="business.logo" class="w-12 h-12 object-contain rounded-xl border border-gray-100 shrink-0" alt="logo" />
+            <div class="min-w-0">
+              <p class="text-base font-bold text-gray-900 leading-tight">{{ business?.name || invoice.business_name }}</p>
               <p v-if="business?.address_line1" class="text-xs text-gray-500 mt-0.5">{{ business.address_line1 }}<span v-if="business.address_line2">, {{ business.address_line2 }}</span></p>
               <p v-if="business?.city || business?.state_name" class="text-xs text-gray-500">
                 {{ [business?.city, business?.state_name, business?.pincode].filter(Boolean).join(', ') }}
               </p>
-              <p v-if="business?.mobile || business?.email" class="text-xs text-gray-500 mt-0.5">
+              <p v-if="business?.mobile || business?.email" class="text-xs text-gray-500 mt-0.5 truncate">
                 {{ [business?.mobile, business?.email].filter(Boolean).join(' · ') }}
               </p>
-              <div class="flex gap-3 mt-1">
+              <div class="flex flex-wrap gap-x-3 mt-1">
                 <p v-if="business?.gstin || invoice.business_gstin" class="text-[11px] text-gray-500 font-mono">GSTIN: {{ business?.gstin || invoice.business_gstin }}</p>
                 <p v-if="business?.pan" class="text-[11px] text-gray-500 font-mono">PAN: {{ business.pan }}</p>
               </div>
             </div>
-          </div>
-          <div class="text-right shrink-0">
-            <p class="text-2xl font-black text-primary-700 uppercase tracking-widest leading-none">Tax Invoice</p>
-            <p class="text-base font-bold text-gray-800 mt-1">{{ invoice.number }}</p>
           </div>
         </div>
 
