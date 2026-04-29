@@ -37,7 +37,7 @@ async function logout() {
 <template>
   <!-- ========== BOTTOM NAV (all screen sizes) ========== -->
   <nav class="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-gray-100 shadow-lg safe-area-pb">
-    <div class="max-w-2xl mx-auto lg:max-w-none lg:px-4 flex items-center">
+    <div class="max-w-2xl mx-auto lg:max-w-none px-2 lg:px-4 flex items-center">
 
       <RouterLink to="/" class="flex-1 flex flex-col items-center gap-0.5 py-2 transition-colors"
         :class="isActive('/') ? 'text-primary-600' : 'text-gray-400'">
@@ -56,14 +56,16 @@ async function logout() {
       </RouterLink>
 
       <!-- Center FAB -->
-      <div class="flex-1 flex flex-col items-center py-1">
-        <RouterLink to="/invoices/new"
-          class="w-14 h-14 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-lg shadow-primary-300 active:scale-95 transition-transform -mt-5">
-          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-          </svg>
-        </RouterLink>
-        <span class="text-[10px] font-semibold text-gray-400 mt-0.5">New Bill</span>
+      <div class="flex-[1.2] flex flex-col items-center gap-0.5 py-2">
+        <div class="w-6 h-6 relative flex justify-center w-full">
+          <RouterLink to="/invoices/new"
+            class="absolute bottom-0 w-14 h-14 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-lg shadow-primary-300 active:scale-95 transition-transform">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+            </svg>
+          </RouterLink>
+        </div>
+        <span class="text-[10px] font-semibold text-gray-400">New Bill</span>
       </div>
 
       <RouterLink to="/quotes" class="flex-1 flex flex-col items-center gap-0.5 py-2 transition-colors"

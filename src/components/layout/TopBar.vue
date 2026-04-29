@@ -83,7 +83,7 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
       </RouterLink>
 
       <!-- Search -->
-      <div class="flex-1 relative">
+      <div class="flex-1 relative min-w-0">
 
         <!-- Trigger (closed state) -->
         <div v-if="!open"
