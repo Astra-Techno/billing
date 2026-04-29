@@ -20,8 +20,7 @@ api/.env
 # Storage (uploaded files)
 api/storage/
 
-# PHP vendor (installed on server via composer)
-api/vendor/
+# api/vendor/ — committed for shared hosting (no SSH/composer access)
 
 # Claude AI session files
 .claude/
