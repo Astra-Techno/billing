@@ -1,7 +1,20 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 
+const route = useRoute()
 const activeSection = ref('getting-started')
+
+function goToHash(hash) {
+  const id = hash?.replace('#', '')
+  if (!id) return
+  activeSection.value = id
+  const el = document.getElementById(id)
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+onMounted(() => { if (route.hash) setTimeout(() => goToHash(route.hash), 100) })
+watch(() => route.hash, (h) => goToHash(h))
 
 const sections = [
   { id: 'getting-started', label: 'Getting Started',  icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
