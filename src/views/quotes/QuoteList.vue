@@ -5,6 +5,7 @@ import { list } from '../../api'
 import { inr } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
 import QuoteDetail from './QuoteDetail.vue'
+import HelpIcon from '../../components/HelpIcon.vue'
 
 const router     = useRouter()
 const quotes     = ref([])
@@ -113,7 +114,7 @@ const avatarColor  = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarCol
       <div class="lg:px-5 lg:pt-5 pb-3 lg:border-b lg:border-gray-100 space-y-3">
         <div class="flex items-center justify-between">
           <div>
-            <h1 class="page-title">Quotations</h1>
+            <h1 class="page-title flex items-center gap-2">Quotations <HelpIcon section="quotes" /></h1>
             <p class="text-xs text-gray-400 mt-0.5">Send price quotes to your customers</p>
           </div>
           <RouterLink to="/quotes/new" class="btn-primary text-sm py-2 px-4">

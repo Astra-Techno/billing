@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { list, task, all } from '../../api'
+import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 import { fmtDateShort, today } from '../../utils/date'
 
@@ -143,7 +144,7 @@ onMounted(load)
       <div class="lg:px-5 lg:pt-5 pb-3 lg:border-b lg:border-gray-100 space-y-3">
         <div class="flex items-center justify-between">
           <div>
-            <h1 class="page-title">Expenses</h1>
+            <h1 class="page-title flex items-center gap-2">Expenses <HelpIcon section="expenses" /></h1>
             <p class="text-xs text-gray-400 mt-0.5">Track your business spending</p>
           </div>
           <button @click="openAdd" class="btn-primary text-sm py-2 px-4">

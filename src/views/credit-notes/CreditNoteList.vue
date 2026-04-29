@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { list, task } from '../../api'
+import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 import { fmtDateShort, today } from '../../utils/date'
 
@@ -110,7 +111,7 @@ onMounted(load)
 <template>
   <div class="space-y-5">
     <div class="flex items-center justify-between">
-      <h1 class="page-title">Credit Notes</h1>
+      <h1 class="page-title flex items-center gap-2">Credit Notes <HelpIcon section="returns" /></h1>
       <button @click="openCreate" class="btn-primary">+ New Credit Note</button>
     </div>
 

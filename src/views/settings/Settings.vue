@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { task, all, item, list } from '../../api'
+import HelpIcon from '../../components/HelpIcon.vue'
 import { useBusinessStore } from '../../stores/business'
 
 const bizStore = useBusinessStore()
@@ -280,7 +281,7 @@ async function saveInvoice() {
 <template>
   <div class="max-w-2xl mx-auto space-y-5">
     <div>
-      <h1 class="page-title">Settings</h1>
+      <h1 class="page-title flex items-center gap-2">Settings <HelpIcon section="settings" /></h1>
       <p class="text-sm text-gray-500 mt-0.5">Set up your business details, payment info, and bill preferences</p>
     </div>
 

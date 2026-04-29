@@ -6,6 +6,7 @@ import { inr } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
 import { statusBadge, statusLabel } from '../../utils/invoice'
 import InvoiceDetail from './InvoiceDetail.vue'
+import HelpIcon from '../../components/HelpIcon.vue'
 
 const router     = useRouter()
 const invoices   = ref([])
@@ -126,7 +127,7 @@ const activeDateLabel = () => {
       <div class="lg:px-5 lg:pt-5 pb-3 lg:border-b lg:border-gray-100 space-y-3">
         <div class="flex items-center justify-between">
           <div>
-            <h1 class="page-title">Bills</h1>
+            <h1 class="page-title flex items-center gap-2">Bills <HelpIcon section="bills" /></h1>
             <p class="text-xs text-gray-400 mt-0.5">Track all your bills and payments</p>
           </div>
           <button @click="onNewBill" class="btn-primary text-sm py-2 px-4">

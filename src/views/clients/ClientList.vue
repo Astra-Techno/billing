@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { list } from '../../api'
+import HelpIcon from '../../components/HelpIcon.vue'
 
 const router  = useRouter()
 const clients = ref([])
@@ -32,7 +33,7 @@ const avatarColor  = (name) => avatarColors[(name?.charCodeAt(0) || 0) % avatarC
 
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div>
-        <h1 class="page-title">Customers</h1>
+        <h1 class="page-title flex items-center gap-2">Customers <HelpIcon section="customers" /></h1>
         <p class="text-sm text-gray-400 mt-0.5 font-medium">All your contacts in one place</p>
       </div>
       <RouterLink to="/clients/new" class="btn-primary">

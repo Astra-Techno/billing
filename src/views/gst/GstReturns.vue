@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { all, item, list } from '../../api'
+import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 
 // ── Base state ────────────────────────────────────────────────────────────────
@@ -319,7 +320,7 @@ onMounted(async()=>{
             d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
         </svg>
       </div>
-      <h1 class="text-xl font-bold text-gray-900">GST File Generator</h1>
+      <h1 class="text-xl font-bold text-gray-900 flex items-center gap-2">GST File Generator <HelpIcon section="gst" /></h1>
       <p class="text-sm text-gray-500 mt-1">Create your GST return file in 3 simple steps</p>
 
       <!-- Step dots -->

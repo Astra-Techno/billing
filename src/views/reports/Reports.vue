@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { list } from '../../api'
+import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 import { fmtDateShort, today } from '../../utils/date'
 
@@ -174,7 +175,7 @@ onMounted(() => loadOutstanding())
 
 <template>
   <div class="space-y-5">
-    <h1 class="page-title">Reports</h1>
+    <h1 class="page-title flex items-center gap-2">Reports <HelpIcon section="reports" /></h1>
 
     <!-- Tabs -->
     <div class="flex gap-1.5 overflow-x-auto pb-1">
