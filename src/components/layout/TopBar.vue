@@ -75,11 +75,11 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
     <div class="w-full max-w-2xl mx-auto lg:max-w-none px-4 lg:px-8 py-3 flex items-center justify-between gap-3">
 
       <!-- Logo -->
-      <RouterLink to="/" class="flex items-center gap-2.5 shrink-0">
-        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-sm shadow-primary-200">
-          <span class="text-white font-bold text-xs">B</span>
+      <RouterLink to="/" class="flex items-center gap-2 shrink-0">
+        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-soft-blue">
+          <span class="text-white font-bold text-sm">B</span>
         </div>
-        <span class="font-bold text-gray-900">BillBook</span>
+        <span class="font-bold text-gray-900 tracking-tight text-[17px]">BillBook</span>
       </RouterLink>
 
       <!-- Search -->
@@ -87,18 +87,18 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
 
         <!-- Trigger (closed state) -->
         <div v-if="!open"
-          class="flex items-center gap-2 text-sm text-gray-400 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 cursor-text hover:bg-white hover:border-primary-300 transition select-none"
+          class="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 border border-transparent rounded-full px-4 py-2.5 cursor-text hover:bg-gray-200 transition-colors select-none"
           @click="openSearch">
-          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          <svg class="w-4 h-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
           </svg>
           <span class="truncate">Search bills, customers…</span>
         </div>
 
         <!-- Active search input -->
         <div v-else class="relative">
-          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-500 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
           </svg>
           <input
             ref="inputRef"
@@ -106,7 +106,7 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
             @keydown="onKeydown"
             type="text"
             placeholder="Search bills, customers…"
-            class="w-full bg-white border border-primary-300 rounded-xl pl-9 pr-9 py-2 text-sm text-gray-800 outline-none ring-2 ring-primary-100 placeholder:text-gray-400"
+            class="w-full bg-white border border-primary-200 rounded-full pl-10 pr-10 py-2.5 text-sm text-gray-800 outline-none ring-4 ring-primary-50 placeholder:text-gray-400 shadow-soft"
           />
           <button @click="close" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
