@@ -31,6 +31,7 @@ const routes = [
       { path: 'gst-returns',      name: 'GstReturns',   component: () => import('../views/gst/GstReturns.vue') },
       { path: 'reports',          name: 'Reports',      component: () => import('../views/reports/Reports.vue') },
       { path: 'settings',         name: 'Settings',     component: () => import('../views/settings/Settings.vue') },
+      { path: 'help',             name: 'Help',         component: () => import('../views/help/Help.vue') },
     ],
   },
 
