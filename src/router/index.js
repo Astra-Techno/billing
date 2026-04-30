@@ -13,12 +13,13 @@ const routes = [
     meta: { auth: true },
     children: [
       { path: '',          name: 'Dashboard',     component: () => import('../views/dashboard/Dashboard.vue') },
-      { 
+      {
         path: 'clients',   name: 'Clients',       component: () => import('../views/clients/ClientList.vue'),
         children: [
-          { path: 'new',       name: 'ClientNew',    component: () => import('../views/clients/ClientForm.vue') },
-          { path: ':id/edit', name: 'ClientEdit',   component: () => import('../views/clients/ClientForm.vue') },
-          { path: ':id',      name: 'ClientView',   component: () => import('../views/clients/ClientDetail.vue') },
+          { path: 'new',            name: 'ClientNew',       component: () => import('../views/clients/ClientForm.vue') },
+          { path: ':id/edit',       name: 'ClientEdit',      component: () => import('../views/clients/ClientForm.vue') },
+          { path: ':id/statement',  name: 'ClientStatement', component: () => import('../views/clients/CustomerStatement.vue') },
+          { path: ':id',            name: 'ClientView',      component: () => import('../views/clients/ClientDetail.vue') },
         ]
       },
       { 
@@ -56,6 +57,22 @@ const routes = [
         children: [
           { path: 'new',     name: 'CreditNoteNew',   component: () => import('../views/credit-notes/CreditNoteForm.vue') },
           { path: ':id/edit',name: 'CreditNoteEdit',  component: () => import('../views/credit-notes/CreditNoteForm.vue') },
+        ]
+      },
+      {
+        path: 'purchase-orders',  name: 'PurchaseOrders', component: () => import('../views/purchase-orders/PurchaseOrderList.vue'),
+        children: [
+          { path: 'new',       name: 'PurchaseOrderNew',    component: () => import('../views/purchase-orders/PurchaseOrderForm.vue') },
+          { path: ':id/edit',  name: 'PurchaseOrderEdit',   component: () => import('../views/purchase-orders/PurchaseOrderForm.vue') },
+          { path: ':id',       name: 'PurchaseOrderView',   component: () => import('../views/purchase-orders/PurchaseOrderDetail.vue') },
+        ]
+      },
+      {
+        path: 'delivery-challans', name: 'DeliveryChallans', component: () => import('../views/delivery-challans/DeliveryChallanList.vue'),
+        children: [
+          { path: 'new',       name: 'DeliveryChallanNew',  component: () => import('../views/delivery-challans/DeliveryChallanForm.vue') },
+          { path: ':id/edit',  name: 'DeliveryChallanEdit', component: () => import('../views/delivery-challans/DeliveryChallanForm.vue') },
+          { path: ':id',       name: 'DeliveryChallanView', component: () => import('../views/delivery-challans/DeliveryChallanDetail.vue') },
         ]
       },
       { path: 'gst-returns',      name: 'GstReturns',   component: () => import('../views/gst/GstReturns.vue') },

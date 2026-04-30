@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { item, list, task } from '../../api'
+import api, { item, list, task } from '../../api'
 import { inr } from '../../utils/currency'
 import { fmtDateShort, today } from '../../utils/date'
 import { statusBadge, statusLabel } from '../../utils/invoice'
@@ -48,6 +48,7 @@ async function markSent() {
   acting.value = true
   try {
     await task('Invoice', 'markSent', { id: invoice.value.id })
+    emit('refresh')
     await load()
   } finally { acting.value = false }
 }
@@ -64,6 +65,7 @@ async function recordPayment() {
       payment_date: payForm.value.payment_date,
     })
     showPayModal.value = false
+    emit('refresh')
     await load()
   } catch (e) {
     payError.value = e.response?.data?.message || 'Payment failed.'
@@ -75,12 +77,26 @@ async function cancelInvoice() {
   try {
     await task('Invoice', 'cancel', { id: invoice.value.id })
     showCancelModal.value = false
+    emit('refresh')
     await load()
   } finally { acting.value = false }
 }
 
 function printInvoice() {
   window.print()
+}
+
+const downloading = ref(false)
+async function downloadPdf() {
+  downloading.value = true
+  try {
+    const res = await api.post('task/Invoice/pdf', { id: invoice.value.id }, { responseType: 'blob' })
+    const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+    const a = Object.assign(document.createElement('a'), { href: url, download: `${invoice.value.number}.pdf` })
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch { alert('PDF generation failed. Please try again.') }
+  finally { downloading.value = false }
 }
 
 function shareWhatsApp() {
@@ -127,73 +143,78 @@ onMounted(load)
 <template>
   <div class="max-w-3xl mx-auto space-y-5">
 
-    <!-- Back -->
-    <div v-if="!panelId" class="flex items-center justify-between">
-      <button @click="router.push('/invoices')" class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        Bills
+    <!-- Back Navigation -->
+    <div v-if="!panelId" class="flex items-center gap-3 pt-2">
+      <button @click="router.push('/invoices')" class="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
+        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
       </button>
     </div>
 
-    <div v-if="loading" class="p-10 text-center text-gray-400">Loading…</div>
+    <div v-if="loading" class="flex justify-center p-12">
+      <div class="w-8 h-8 border-4 border-primary-100 border-t-primary-600 rounded-full animate-spin"></div>
+    </div>
 
     <template v-else-if="invoice">
 
-      <!-- Status bar -->
-      <div class="card card-body flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div class="flex items-center gap-3 mb-1">
-            <h1 class="text-xl font-bold text-gray-900">{{ invoice.number }}</h1>
-            <span :class="statusBadge(invoice.status)" class="text-sm px-3 py-1">{{ statusLabel(invoice.status) }}</span>
-          </div>
-          <p class="text-sm text-gray-500">{{ invoice.client_name }} · Due {{ fmtDateShort(invoice.due_date) }}</p>
+      <!-- HERO: Massive Total and Status -->
+      <div class="flex flex-col items-center justify-center text-center animate-fade-in-up mt-4 mb-2">
+        <div class="w-16 h-16 rounded-full bg-blue-50 text-primary-600 flex items-center justify-center mb-3">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         </div>
-        <div class="text-right">
-          <p class="text-3xl font-bold text-gray-900">{{ inr(invoice.total) }}</p>
-          <p v-if="invoice.amount_due > 0 && invoice.status !== 'paid'" class="text-sm text-danger-500 mt-0.5">
-            Balance: {{ inr(invoice.amount_due) }}
-          </p>
+        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">{{ invoice.client_name }}</p>
+        <h1 class="text-5xl font-extrabold tracking-tight text-gray-900">{{ inr(invoice.total) }}</h1>
+        <div class="flex items-center gap-2 mt-3">
+          <p class="text-sm font-semibold text-gray-600">Bill {{ invoice.number }}</p>
+          <span :class="statusBadge(invoice.status)" class="text-[10px] px-2 py-0.5">{{ statusLabel(invoice.status) }}</span>
         </div>
+        <p v-if="invoice.amount_due > 0 && invoice.status !== 'paid'" class="text-danger-600 font-bold mt-3 bg-danger-50 px-4 py-1.5 rounded-full text-sm tracking-wide">
+          Balance: {{ inr(invoice.amount_due) }}
+        </p>
       </div>
 
-      <!-- Action buttons -->
-      <div class="space-y-2" v-if="invoice.status !== 'cancelled'">
-        <!-- Primary actions — full width on mobile -->
-        <div class="flex gap-2">
-          <button v-if="invoice.status === 'draft'" @click="markSent" :disabled="acting" class="btn-primary flex-1">
-            Mark as Sent to Customer
-          </button>
-          <RouterLink v-if="invoice.status === 'draft'" :to="`/invoices/${invoice.id}/edit`" class="btn-outline flex-1 text-center">
-            Edit
-          </RouterLink>
-          <button v-if="['sent','partial','overdue'].includes(invoice.status)"
-            @click="showPayModal = true" class="btn-primary flex-1">
-            Record Payment
-          </button>
-        </div>
-        <!-- Secondary actions — icon+label row -->
-        <div class="flex gap-2 flex-wrap">
-          <button @click="printInvoice" class="btn-outline flex items-center gap-1.5 flex-1 justify-center">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-            </svg>
-            Print
-          </button>
-          <button @click="shareWhatsApp" class="btn-outline flex items-center gap-1.5 flex-1 justify-center">
-            <svg class="w-4 h-4 text-green-600" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-              <path d="M12 0C5.373 0 0 5.373 0 12c0 2.137.565 4.147 1.554 5.887L0 24l6.305-1.524A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.375l-.359-.214-3.735.902.948-3.632-.234-.373A9.818 9.818 0 1112 21.818z"/>
-            </svg>
-            WhatsApp
-          </button>
-          <RouterLink :to="'/invoices/new?duplicate=' + invoice.id" class="btn-outline flex-1 text-center">Duplicate</RouterLink>
-          <button v-if="invoice.status !== 'paid'" @click="showCancelModal = true"
-            class="btn-outline text-danger-500 border-danger-200 hover:bg-danger-50 flex-1">Cancel Bill</button>
-        </div>
+      <!-- Action Pills -->
+      <div class="flex flex-wrap justify-center gap-2 w-full max-w-lg mx-auto animate-fade-in-up delay-75 mb-6" v-if="invoice.status !== 'cancelled'">
+        
+        <button v-if="invoice.status === 'draft'" @click="markSent" :disabled="acting" class="flex-1 min-w-[120px] btn bg-primary-600 text-white hover:bg-primary-700 shadow-soft-blue flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+          <span class="text-xs">Mark Sent</span>
+        </button>
+
+        <button v-if="['sent','partial','overdue'].includes(invoice.status)" @click="showPayModal = true" class="flex-1 min-w-[120px] btn bg-emerald-600 text-white hover:bg-emerald-700 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span class="text-xs">Pay</span>
+        </button>
+
+        <button @click="shareWhatsApp" class="flex-1 min-w-[80px] btn bg-green-50 text-green-700 border border-green-100 hover:bg-green-100 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
+          <svg class="w-6 h-6 text-green-600" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.137.565 4.147 1.554 5.887L0 24l6.305-1.524A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.375l-.359-.214-3.735.902.948-3.632-.234-.373A9.818 9.818 0 1112 21.818z"/></svg>
+          <span class="text-xs">Share</span>
+        </button>
+
+        <button @click="printInvoice" class="flex-1 min-w-[80px] btn bg-gray-50 text-gray-800 border border-gray-100 hover:bg-gray-100 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          <span class="text-xs">Print</span>
+        </button>
+
+        <button @click="downloadPdf" :disabled="downloading" class="flex-1 min-w-[80px] btn bg-red-50 text-red-700 border border-red-100 hover:bg-red-100 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
+          <svg v-if="downloading" class="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+          <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          <span class="text-xs">{{ downloading ? '…' : 'PDF' }}</span>
+        </button>
+        
+        <RouterLink v-if="invoice.status === 'draft'" :to="`/invoices/${invoice.id}/edit`" class="flex-1 min-w-[80px] btn bg-gray-50 text-gray-800 border border-gray-100 hover:bg-gray-100 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+          <span class="text-xs">Edit</span>
+        </RouterLink>
+
+        <button v-if="invoice.status !== 'paid'" @click="showCancelModal = true" class="flex-1 min-w-[80px] btn bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          <span class="text-xs">Cancel</span>
+        </button>
+
       </div>
 
       <!-- Invoice body — proper Indian GST Tax Invoice -->
-      <div class="card overflow-hidden">
+      <div class="bg-white rounded-[2rem] shadow-soft border-0 overflow-hidden animate-fade-in-up delay-150">
 
         <!-- Top: TAX INVOICE title row + Business info row -->
         <div class="px-5 pt-5 pb-4 border-b border-gray-200 space-y-4">
@@ -352,9 +373,9 @@ onMounted(load)
       </div>
 
       <!-- Payment history -->
-      <div v-if="payments.length" class="card">
-        <div class="px-5 py-4 border-b border-gray-100"><h2 class="section-title mb-0">Payment History</h2></div>
-        <div class="divide-y divide-gray-100">
+      <div v-if="payments.length" class="mt-8 animate-fade-in-up delay-200">
+        <h2 class="font-bold text-gray-800 text-sm mb-4 px-1">Payment History</h2>
+        <div class="bg-white rounded-[2rem] shadow-soft border-0 overflow-hidden divide-y divide-gray-50">
           <div v-for="p in payments" :key="p.id" class="flex items-center justify-between px-5 py-3">
             <div>
               <p class="text-sm font-medium text-gray-800">{{ p.method?.toUpperCase() }}</p>
