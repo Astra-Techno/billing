@@ -352,10 +352,11 @@ function runMigrations(): array {
                 $pdo->beginTransaction();
                 foreach ($statements as $stmt) { $pdo->exec($stmt); }
                 $pdo->prepare("INSERT INTO _migrations (filename) VALUES (?)")->execute([$name]);
-                $pdo->commit();
+                // MySQL DDL (CREATE TABLE etc.) causes implicit commit — check before committing
+                if ($pdo->inTransaction()) $pdo->commit();
                 $log[] = ['status' => 'done', 'name' => $name];
             } catch (PDOException $e) {
-                $pdo->rollBack();
+                if ($pdo->inTransaction()) $pdo->rollBack();
                 $log[] = ['status' => 'fail', 'name' => $name, 'error' => ' — ' . $e->getMessage()];
                 break;
             }
