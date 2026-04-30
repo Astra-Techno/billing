@@ -155,11 +155,123 @@ INSERT INTO expenses (business_id,category_id,recorded_by,vendor_name,descriptio
 (1,@cat2,2,'IndiGo Airlines',  'Business trip — Mumbai to Delhi return',   8500.00,   0.00,8500.00,'2024-12-18','card','2024-25',NOW()-INTERVAL 7  DAY),
 (1,@cat5,2,'Tata Power',        'Electricity bill — November 2024',        3200.00,   0.00,3200.00,'2024-12-20','upi', '2024-25',NOW()-INTERVAL 5  DAY);
 
+-- ── CREDIT NOTES (Returns / Adjustments) ──────────────────────────────────────
+
+-- Re-fetch invoice IDs by number (safe for re-running seed independently)
+SET @ri3 = (SELECT id FROM invoices WHERE number = 'INV-2024-003' AND business_id = 1 LIMIT 1);
+SET @ri6 = (SELECT id FROM invoices WHERE number = 'INV-2024-006' AND business_id = 1 LIMIT 1);
+SET @ri9 = (SELECT id FROM invoices WHERE number = 'INV-2024-009' AND business_id = 1 LIMIT 1);
+
+-- CN-2024-001: Patel Industries returned 2 damaged Laptop Stands from INV-2024-003 (inter-state)
+INSERT INTO credit_notes (business_id,created_by,invoice_id,client_id,number,reason,issue_date,supply_type,place_of_supply,subtotal,igst_total,tax_total,total,status,notes,created_at) VALUES
+(1,2,@ri3,@c3,'CN-2024-001','return','2024-11-05','inter',28,3000.00,540.00,540.00,3540.00,'issued','2 units returned due to damage in transit. Replacement dispatched separately.','2024-11-05 10:00:00');
+SET @cn1=LAST_INSERT_ID();
+INSERT INTO credit_note_items (credit_note_id,description,hsn_sac,unit,quantity,unit_price,taxable_amt,gst_rate,igst_amt,total) VALUES
+(@cn1,'Laptop Stand — Aluminium (Returned — Damaged)','84733090','Nos',2.000,1500.00,3000.00,18.00,540.00,3540.00);
+
+-- CN-2024-002: TechStart Solutions — Discount correction on INV-2024-006 (intra-state)
+INSERT INTO credit_notes (business_id,created_by,invoice_id,client_id,number,reason,issue_date,supply_type,place_of_supply,subtotal,cgst_total,sgst_total,tax_total,total,status,notes,created_at) VALUES
+(1,2,@ri6,@c6,'CN-2024-002','discount','2024-12-10','intra',26,5000.00,450.00,450.00,900.00,5900.00,'issued','Loyalty discount of ₹5,000 agreed upon for early project milestone completion.','2024-12-10 11:00:00');
+SET @cn2=LAST_INSERT_ID();
+INSERT INTO credit_note_items (credit_note_id,description,unit,quantity,unit_price,taxable_amt,gst_rate,cgst_amt,sgst_amt,total) VALUES
+(@cn2,'Discount Adjustment — Mobile App Development Phase 1','Project',1.000,5000.00,5000.00,18.00,450.00,450.00,5900.00);
+
+-- CN-2024-003: Sharma Electronics — SEO service cancelled mid-month (intra-state)
+INSERT INTO credit_notes (business_id,created_by,invoice_id,client_id,number,reason,issue_date,supply_type,place_of_supply,subtotal,cgst_total,sgst_total,tax_total,total,status,notes,created_at) VALUES
+(1,2,@ri9,@c1,'CN-2024-003','return','2024-10-20','intra',26,6000.00,540.00,540.00,1080.00,7080.00,'adjusted','SEO campaign paused at client request after 15 days. Credit for unused 15 days.','2024-10-20 09:30:00');
+SET @cn3=LAST_INSERT_ID();
+INSERT INTO credit_note_items (credit_note_id,description,unit,quantity,unit_price,taxable_amt,gst_rate,cgst_amt,sgst_amt,total) VALUES
+(@cn3,'SEO & Digital Marketing — Partial Month Credit (15 days)','Month',0.500,12000.00,6000.00,18.00,540.00,540.00,7080.00);
+
+-- ── PURCHASE ORDERS ────────────────────────────────────────────────────────────
+
+-- PO-2024-001: Buy Mechanical Keyboards from Sharma Electronics — RECEIVED
+INSERT INTO purchase_orders (business_id,created_by,supplier_id,number,status,order_date,expected_date,subtotal,tax_total,total,notes,created_at) VALUES
+(1,2,@c1,'PO-2024-001','received','2024-11-01','2024-11-10',17500.00,3150.00,20650.00,'Urgent requirement for office setup. Delivery to BKC office.','2024-11-01 09:00:00');
+SET @po1=LAST_INSERT_ID();
+INSERT INTO purchase_order_items (po_id,description,hsn_sac,unit,quantity,unit_price,gst_rate,total,sort_order) VALUES
+(@po1,'Mechanical Keyboard — Wireless (Cherry MX Blue)','84716060','Nos',5.000,3500.00,18.00,20650.00,1);
+
+-- PO-2024-002: Buy Laptop Stands from Patel Industries — SENT
+INSERT INTO purchase_orders (business_id,created_by,supplier_id,number,status,order_date,expected_date,subtotal,tax_total,total,notes,created_at) VALUES
+(1,2,@c3,'PO-2024-002','sent','2024-11-20','2024-11-30',15000.00,2700.00,17700.00,'10 units for employee workstation upgrade project.','2024-11-20 10:00:00');
+SET @po2=LAST_INSERT_ID();
+INSERT INTO purchase_order_items (po_id,description,hsn_sac,unit,quantity,unit_price,gst_rate,total,sort_order) VALUES
+(@po2,'Laptop Stand — Adjustable Aluminium (Height & Angle)','84733090','Nos',10.000,1500.00,18.00,17700.00,1);
+
+-- PO-2024-003: Office furniture from Gupta & Sons — RECEIVED
+INSERT INTO purchase_orders (business_id,created_by,supplier_id,number,status,order_date,expected_date,subtotal,tax_total,total,notes,created_at) VALUES
+(1,2,@c5,'PO-2024-003','received','2024-10-15','2024-10-25',20000.00,2400.00,22400.00,'Office renovation — new workstations. GST 12% on furniture.','2024-10-15 09:00:00');
+SET @po3=LAST_INSERT_ID();
+INSERT INTO purchase_order_items (po_id,description,hsn_sac,unit,quantity,unit_price,gst_rate,total,sort_order) VALUES
+(@po3,'Office Workstation Desk — L-Shape','94033010','Nos',4.000,3500.00,12.00,15680.00,1),
+(@po3,'Ergonomic Office Chair','94012000','Nos',4.000,1500.00,12.00,6720.00,2);
+
+-- PO-2024-004: Cloud hosting from TechStart Solutions — DRAFT
+INSERT INTO purchase_orders (business_id,created_by,supplier_id,number,status,order_date,expected_date,subtotal,tax_total,total,notes,created_at) VALUES
+(1,2,@c6,'PO-2024-004','draft','2024-12-18','2025-01-18',36000.00,6480.00,42480.00,'Annual cloud infrastructure renewal — AWS equivalent. Pending approval from director.','2024-12-18 11:00:00');
+SET @po4=LAST_INSERT_ID();
+INSERT INTO purchase_order_items (po_id,description,hsn_sac,unit,quantity,unit_price,gst_rate,total,sort_order) VALUES
+(@po4,'Cloud Hosting — Business Plan (Annual)','998316','Year',1.000,24000.00,18.00,28320.00,1),
+(@po4,'SSL Certificate + CDN — Annual','998313','Year',1.000,12000.00,18.00,14160.00,2);
+
+-- PO-2024-005: Handicraft samples from Jaipur Handicrafts — CANCELLED
+INSERT INTO purchase_orders (business_id,created_by,supplier_id,number,status,order_date,expected_date,subtotal,tax_total,total,notes,created_at) VALUES
+(1,2,@c8,'PO-2024-005','cancelled','2024-10-05','2024-10-20',25000.00,3000.00,28000.00,'Office decor samples. Cancelled as budget was reallocated.','2024-10-05 10:00:00');
+SET @po5=LAST_INSERT_ID();
+INSERT INTO purchase_order_items (po_id,description,hsn_sac,unit,quantity,unit_price,gst_rate,total,sort_order) VALUES
+(@po5,'Rajasthani Handicraft Wall Art — Large (Assorted)','97011000','Set',5.000,4000.00,12.00,22400.00,1),
+(@po5,'Decorative Brass Showpiece (Set of 3)','83062900','Set',5.000,1000.00,12.00,5600.00,2);
+
+-- ── DELIVERY CHALLANS ──────────────────────────────────────────────────────────
+
+-- DC-2024-001: Deliver Mobile App Phase 2 assets to TechStart — DELIVERED
+INSERT INTO delivery_challans (business_id,created_by,client_id,number,status,challan_date,vehicle_no,driver_name,destination,notes,created_at) VALUES
+(1,2,@c6,'DC-2024-001','delivered','2024-12-10','MH-04-AB-2345','Ramesh Patil','TechStart Solutions, BKC, Mumbai - 400051','Handle with care. USB drives with source code and design assets.','2024-12-10 09:00:00');
+SET @dc1=LAST_INSERT_ID();
+INSERT INTO delivery_challan_items (dc_id,description,hsn_sac,unit,quantity,sort_order) VALUES
+(@dc1,'USB Drive — Project Source Code & Assets','84717090','Nos',2.000,1),
+(@dc1,'Printed Documentation — User Manual & API Docs','49111090','Set',1.000,2),
+(@dc1,'License Certificate (Printed)','49111090','Nos',1.000,3);
+
+-- DC-2024-002: Deliver Mechanical Keyboards to Sharma Electronics — DELIVERED
+INSERT INTO delivery_challans (business_id,created_by,client_id,number,status,challan_date,vehicle_no,driver_name,destination,notes,created_at) VALUES
+(1,2,@c1,'DC-2024-002','delivered','2024-11-08','MH-01-CD-5678','Suresh Kumar','Sharma Electronics, Linking Road, Bandra West, Mumbai - 400050','5 keyboards as per PO-2024-001. Handle with care.','2024-11-08 10:00:00');
+SET @dc2=LAST_INSERT_ID();
+INSERT INTO delivery_challan_items (dc_id,description,hsn_sac,unit,quantity,sort_order) VALUES
+(@dc2,'Mechanical Keyboard — Wireless (Cherry MX Blue)','84716060','Nos',5.000,1);
+
+-- DC-2024-003: Deliver Laptop Stands to Patel Industries — ISSUED (in transit)
+INSERT INTO delivery_challans (business_id,created_by,client_id,number,status,challan_date,vehicle_no,driver_name,destination,notes,created_at) VALUES
+(1,2,@c3,'DC-2024-003','issued','2024-11-28','KA-03-EF-9012','Venkat Reddy','Patel Industries, Industrial Area, Peenya, Bengaluru - 560058','10 laptop stands as per PO-2024-002. Fragile — do not stack.','2024-11-28 08:30:00');
+SET @dc3=LAST_INSERT_ID();
+INSERT INTO delivery_challan_items (dc_id,description,hsn_sac,unit,quantity,sort_order) VALUES
+(@dc3,'Laptop Stand — Adjustable Aluminium','84733090','Nos',10.000,1);
+
+-- DC-2024-004: Deliver SEO Report & Materials to Rajesh Kumar — ISSUED
+INSERT INTO delivery_challans (business_id,created_by,client_id,number,status,challan_date,vehicle_no,driver_name,destination,notes,created_at) VALUES
+(1,2,@c4,'DC-2024-004','issued','2024-12-01','TN-09-GH-3456','Muthu Selvam','Rajesh Kumar, Anna Nagar 4th Street, Chennai - 600040','Monthly SEO reports and access credentials document.','2024-12-01 11:00:00');
+SET @dc4=LAST_INSERT_ID();
+INSERT INTO delivery_challan_items (dc_id,description,unit,quantity,sort_order) VALUES
+(@dc4,'SEO Performance Report — November 2024 (Printed)','Set',1.000,1),
+(@dc4,'Keyword Research Document (USB Copy)','Nos',1.000,2);
+
+-- DC-2024-005: New DC for Gupta & Sons — DRAFT
+INSERT INTO delivery_challans (business_id,created_by,client_id,number,status,challan_date,destination,notes,created_at) VALUES
+(1,2,@c5,'DC-2024-005','draft','2024-12-22','Gupta & Sons, Karol Bagh Market, New Delhi - 110005','Keyboard and stand bundle as per invoice INV-2024-005. Awaiting dispatch clearance.','2024-12-22 14:00:00');
+SET @dc5=LAST_INSERT_ID();
+INSERT INTO delivery_challan_items (dc_id,description,hsn_sac,unit,quantity,sort_order) VALUES
+(@dc5,'Mechanical Keyboard — Wireless','84716060','Nos',2.000,1),
+(@dc5,'Laptop Stand — Aluminium','84733090','Nos',3.000,2);
+
 -- ── SEQUENCES (so next invoice/quote picks up correct number) ─────────────────
 INSERT INTO sequences (business_id, type, financial_year, prefix, next_number, padding)
 VALUES
-  (1, 'invoice', '2024-25', 'INV', 11, 4),
-  (1, 'quote',   '2024-25', 'QUO',  6, 4)
+  (1, 'invoice',          '2024-25', 'INV', 11, 4),
+  (1, 'quote',            '2024-25', 'QUO',  6, 4),
+  (1, 'credit_note',      '2024-25', 'CN',   4, 4),
+  (1, 'purchase_order',   '2024-25', 'PO',   6, 4),
+  (1, 'delivery_challan', '2024-25', 'DC',   6, 4)
 ON DUPLICATE KEY UPDATE next_number = VALUES(next_number);
 
 SET FOREIGN_KEY_CHECKS = 1;
