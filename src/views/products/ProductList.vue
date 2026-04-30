@@ -65,7 +65,7 @@ onMounted(load)
 <template>
   <div class="flex flex-col lg:flex-row gap-6 h-[calc(100vh-6rem)]">
     <!-- Left Pane: List -->
-    <div :class="{ 'hidden lg:flex': $route.name !== 'Products', 'w-full lg:w-[35%] flex-col': true }">
+    <div :class="{ 'hidden lg:flex': $route.name !== 'Products', 'w-full lg:w-[35%] flex flex-col': true }">
       <div class="space-y-5 flex-1 overflow-y-auto pr-1 no-scrollbar">
       <div class="lg:px-5 lg:pt-5 pb-3 lg:border-b lg:border-gray-100 space-y-3">
         <div class="flex items-center justify-between">
