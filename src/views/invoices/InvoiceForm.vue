@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { task, item, all } from '../../api'
 import { inr } from '../../utils/currency'
@@ -8,6 +8,7 @@ import { calcInvoice } from '../../utils/invoice'
 
 const router = useRouter()
 const route  = useRoute()
+const emit   = defineEmits(['refresh'])
 
 const clients      = ref([])
 const products     = ref([])
@@ -140,6 +141,12 @@ onMounted(async () => {
   }
 })
 
+watch(() => form.value.invoice_type, (type) => {
+  if (type === 'bill_of_supply') {
+    form.value.items.forEach(it => { it.gst_rate = 0 })
+  }
+})
+
 function addItem() { form.value.items.push(blankItem()) }
 function removeItem(i) { if (form.value.items.length > 1) form.value.items.splice(i, 1) }
 
@@ -176,9 +183,11 @@ async function submit() {
   try {
     if (isEdit.value) {
       await task('Invoice', 'update', { ...form.value, id: route.params.id })
+      emit('refresh')
       router.push('/invoices/' + route.params.id)
     } else {
       const { data } = await task('Invoice', 'create', form.value)
+      emit('refresh')
       router.push('/invoices/' + data.data.invoice_id)
     }
   } catch (e) {
@@ -351,14 +360,17 @@ async function submit() {
               </div>
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                  <span class="text-xs text-gray-500">GST</span>
-                  <div class="flex gap-1">
-                    <button v-for="r in gstRates" :key="r" type="button" @click="it.gst_rate = r"
-                      class="px-2 py-1 rounded-lg text-xs font-medium border transition"
-                      :class="it.gst_rate === r ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-600 border-gray-200'">
-                      {{ r }}%
-                    </button>
-                  </div>
+                  <template v-if="form.invoice_type !== 'bill_of_supply'">
+                    <span class="text-xs text-gray-500">GST</span>
+                    <div class="flex gap-1">
+                      <button v-for="r in gstRates" :key="r" type="button" @click="it.gst_rate = r"
+                        class="px-2 py-1 rounded-lg text-xs font-medium border transition"
+                        :class="it.gst_rate === r ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-600 border-gray-200'">
+                        {{ r }}%
+                      </button>
+                    </div>
+                  </template>
+                  <span v-else class="text-xs text-amber-600 font-medium bg-amber-50 px-2 py-1 rounded-lg">No GST (Bill of Supply)</span>
                 </div>
                 <div class="flex items-center gap-2">
                   <p class="text-sm font-bold text-gray-900">{{ inr(lineTotal(it)) }}</p>
@@ -578,15 +590,18 @@ async function submit() {
             <!-- GST + line total on same row -->
             <div class="flex items-center justify-between gap-3">
               <div class="flex items-center gap-2">
-                <label class="text-xs text-gray-500">GST</label>
-                <div class="flex gap-1">
-                  <button v-for="r in gstRates" :key="r" type="button"
-                    @click="it.gst_rate = r"
-                    class="px-2.5 py-1 rounded-lg text-xs font-medium border transition"
-                    :class="it.gst_rate === r ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-600 border-gray-200'">
-                    {{ r }}%
-                  </button>
-                </div>
+                <template v-if="form.invoice_type !== 'bill_of_supply'">
+                  <label class="text-xs text-gray-500">GST</label>
+                  <div class="flex gap-1">
+                    <button v-for="r in gstRates" :key="r" type="button"
+                      @click="it.gst_rate = r"
+                      class="px-2.5 py-1 rounded-lg text-xs font-medium border transition"
+                      :class="it.gst_rate === r ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-600 border-gray-200'">
+                      {{ r }}%
+                    </button>
+                  </div>
+                </template>
+                <span v-else class="text-xs text-amber-600 font-medium bg-amber-50 px-2 py-1 rounded-lg">No GST</span>
               </div>
               <div class="flex items-center gap-2">
                 <p class="text-sm font-bold text-gray-900">{{ inr(lineTotal(it)) }}</p>

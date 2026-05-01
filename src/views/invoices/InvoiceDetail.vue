@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api, { item, list, task } from '../../api'
 import { inr } from '../../utils/currency'
@@ -86,6 +86,13 @@ function printInvoice() {
   window.print()
 }
 
+const invoiceTitle = computed(() => {
+  const map = { tax_invoice: 'Tax Invoice', bill_of_supply: 'Bill of Supply', retail: 'Retail Invoice', export: 'Export Invoice' }
+  return map[invoice.value?.invoice_type] || 'Tax Invoice'
+})
+
+const isGst = computed(() => invoice.value?.invoice_type !== 'bill_of_supply')
+
 const downloading = ref(false)
 async function downloadPdf() {
   downloading.value = true
@@ -95,14 +102,49 @@ async function downloadPdf() {
     const a = Object.assign(document.createElement('a'), { href: url, download: `${invoice.value.number}.pdf` })
     a.click()
     URL.revokeObjectURL(url)
-  } catch { alert('PDF generation failed. Please try again.') }
-  finally { downloading.value = false }
+  } catch {
+    // Backend PDF not available — fallback to browser print
+    window.print()
+  } finally { downloading.value = false }
 }
 
 function shareWhatsApp() {
   const inv = invoice.value
-  const msg = `Dear ${inv.client_name},\n\nInvoice *${inv.number}* for *${inr(inv.total)}* is due on ${fmtDateShort(inv.due_date)}.\n\nPlease arrange payment at your earliest.\n\nThank you!`
+  const due  = parseFloat(inv.amount_due  || 0)
+  const paid = parseFloat(inv.amount_paid || 0)
+  let msg = `Dear ${inv.client_name},\n\nInvoice *${inv.number}* — *${inr(inv.total)}*`
+  if (due <= 0) {
+    msg += `\n\n✅ Paid in full. Thank you!`
+  } else if (paid > 0) {
+    msg += `\n\nPaid: ${inr(paid)} | *Balance Due: ${inr(due)}*\nDue by: ${fmtDateShort(inv.due_date)}`
+  } else {
+    msg += `\nDue by: *${fmtDateShort(inv.due_date)}*`
+  }
+  if (business.value?.upi_id) msg += `\n\nPay via UPI: *${business.value.upi_id}*`
+  msg += `\n\nThank you for your business!`
   window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank')
+}
+
+function shareEmail() {
+  const inv = invoice.value
+  const due = parseFloat(inv.amount_due || 0)
+  const subject = `Invoice ${inv.number} — ${inr(inv.total)}`
+  const lines = [
+    `Dear ${inv.client_name},`,
+    ``,
+    `Please find the details of Invoice ${inv.number}.`,
+    ``,
+    `Invoice No  : ${inv.number}`,
+    `Invoice Date: ${fmtDateShort(inv.issue_date)}`,
+    `Due Date    : ${fmtDateShort(inv.due_date)}`,
+    `Total Amount: ${inr(inv.total)}`,
+    due > 0 ? `Balance Due : ${inr(due)}` : `Status      : PAID`,
+    business.value?.upi_id ? `\nPay via UPI : ${business.value.upi_id}` : ``,
+    ``,
+    `Thank you for your business!`,
+    business.value?.name ? `\n— ${business.value.name}` : ``,
+  ]
+  window.location.href = `mailto:${inv.client_email || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join('\n'))}`
 }
 
 const methods = [
@@ -190,6 +232,11 @@ onMounted(load)
           <span class="text-xs">Share</span>
         </button>
 
+        <button @click="shareEmail" class="flex-1 min-w-[80px] btn bg-sky-50 text-sky-700 border border-sky-100 hover:bg-sky-100 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
+          <svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          <span class="text-xs">Email</span>
+        </button>
+
         <button @click="printInvoice" class="flex-1 min-w-[80px] btn bg-gray-50 text-gray-800 border border-gray-100 hover:bg-gray-100 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
           <span class="text-xs">Print</span>
@@ -201,7 +248,7 @@ onMounted(load)
           <span class="text-xs">{{ downloading ? '…' : 'PDF' }}</span>
         </button>
         
-        <RouterLink v-if="invoice.status === 'draft'" :to="`/invoices/${invoice.id}/edit`" class="flex-1 min-w-[80px] btn bg-gray-50 text-gray-800 border border-gray-100 hover:bg-gray-100 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
+        <RouterLink v-if="invoice.status !== 'cancelled'" :to="`/invoices/${invoice.id}/edit`" class="flex-1 min-w-[80px] btn bg-gray-50 text-gray-800 border border-gray-100 hover:bg-gray-100 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
           <span class="text-xs">Edit</span>
         </RouterLink>
@@ -220,7 +267,7 @@ onMounted(load)
         <div class="px-5 pt-5 pb-4 border-b border-gray-200 space-y-4">
           <!-- Title row -->
           <div class="flex items-center justify-between gap-2">
-            <p class="text-xl sm:text-2xl font-black text-primary-700 uppercase tracking-widest leading-none">Tax Invoice</p>
+            <p class="text-xl sm:text-2xl font-black text-primary-700 uppercase tracking-widest leading-none">{{ invoiceTitle }}</p>
             <p class="text-sm font-bold text-gray-700 shrink-0">{{ invoice.number }}</p>
           </div>
           <!-- Business info row -->
@@ -283,7 +330,7 @@ onMounted(load)
                 <th class="px-3 py-2.5 text-right text-xs font-semibold">Qty</th>
                 <th class="px-3 py-2.5 text-right text-xs font-semibold">Rate</th>
                 <th class="px-3 py-2.5 text-right text-xs font-semibold">Taxable</th>
-                <th class="px-3 py-2.5 text-right text-xs font-semibold">Tax</th>
+                <th v-if="isGst" class="px-3 py-2.5 text-right text-xs font-semibold">Tax</th>
                 <th class="px-3 py-2.5 text-right text-xs font-semibold">Amount</th>
               </tr>
             </thead>
@@ -298,7 +345,7 @@ onMounted(load)
                 <td class="px-3 py-3 text-right text-gray-700">{{ it.quantity }}</td>
                 <td class="px-3 py-3 text-right text-gray-700">{{ inr(it.unit_price) }}</td>
                 <td class="px-3 py-3 text-right text-gray-700">{{ inr(it.taxable_amt) }}</td>
-                <td class="px-3 py-3 text-right text-xs">
+                <td v-if="isGst" class="px-3 py-3 text-right text-xs">
                   <div v-if="it.cgst_amt > 0" class="space-y-0.5">
                     <div class="text-gray-600">CGST {{ it.cgst_rate }}%: {{ inr(it.cgst_amt) }}</div>
                     <div class="text-gray-600">SGST {{ it.sgst_rate }}%: {{ inr(it.sgst_amt) }}</div>
