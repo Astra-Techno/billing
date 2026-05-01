@@ -30,6 +30,7 @@ const sections = [
   { id: 'gst',             label: 'GST Filing',        icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
   { id: 'reports',         label: 'Reports',           icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
   { id: 'settings',        label: 'Settings',          icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
+  { id: 'vs-vyapar',       label: 'BillBook vs Vyapar', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
 ]
 
 function scrollTo(id) {
@@ -712,6 +713,240 @@ function scrollTo(id) {
                 </svg>
                 <p class="text-sm text-primary-900 leading-relaxed"><strong>Do this first!</strong> Complete your business profile in Settings before creating your first invoice. Incomplete profiles result in missing GSTIN or bank details on printed documents.</p>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── BillBook vs Vyapar ── -->
+        <section :id="'vs-vyapar'" class="card p-8 scroll-mt-6 border-0 shadow-soft relative overflow-hidden group">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-primary-50 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+          <div class="relative z-10">
+            <div class="flex items-center gap-4 mb-6">
+              <div class="w-12 h-12 rounded-[1rem] bg-primary-100 flex items-center justify-center shrink-0 shadow-inner">
+                <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-xl font-extrabold text-gray-900">BillBook India vs Vyapar</h2>
+                <p class="text-sm text-gray-500 font-medium">How we compare to the popular alternative</p>
+              </div>
+            </div>
+
+            <div class="space-y-7 text-sm text-gray-700">
+
+              <!-- Headline banner -->
+              <div class="bg-gradient-to-r from-primary-600 to-indigo-700 rounded-2xl p-5 text-white">
+                <p class="font-extrabold text-lg mb-1">Clean, fast, and truly free — built for Indian SMBs</p>
+                <p class="text-primary-100 text-sm leading-relaxed">Vyapar is a solid app with many features. BillBook is for businesses that want a fast, modern billing experience without a yearly subscription or cluttered screens.</p>
+              </div>
+
+              <!-- Feature comparison table -->
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm border-collapse">
+                  <thead>
+                    <tr class="bg-gray-800 text-white">
+                      <th class="px-4 py-3 text-left font-semibold rounded-tl-xl">Feature</th>
+                      <th class="px-4 py-3 text-center font-semibold text-primary-200">BillBook India</th>
+                      <th class="px-4 py-3 text-center font-semibold text-gray-300 rounded-tr-xl">Vyapar</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-100">
+                    <!-- Billing -->
+                    <tr class="bg-gray-50"><td colspan="3" class="px-4 py-2 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Billing & Invoicing</td></tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">GST Tax Invoice (CGST/SGST/IGST)</td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">Bill of Supply (non-GST)</td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">Quotations / Estimates</td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">Recurring / Auto-repeat invoices</td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                      <td class="px-4 py-3 text-center text-gray-500">Paid</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">Credit Notes (returns & adjustments)</td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">Edit invoice after sending</td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Anytime</span></td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓</span></td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">Multiple invoice templates</td>
+                      <td class="px-4 py-3 text-center text-gray-400">1 clean template</td>
+                      <td class="px-4 py-3 text-center text-gray-600">10+ templates</td>
+                    </tr>
+                    <!-- Payments -->
+                    <tr class="bg-gray-50"><td colspan="3" class="px-4 py-2 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Payments & Dues</td></tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">Partial payment tracking</td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">Balance due on invoice</td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">Automated payment reminders</td>
+                      <td class="px-4 py-3 text-center text-gray-400">Manual via WhatsApp</td>
+                      <td class="px-4 py-3 text-center text-gray-600">Paid</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">UPI ID on invoices & WhatsApp</td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓</span></td>
+                    </tr>
+                    <!-- Sharing -->
+                    <tr class="bg-gray-50"><td colspan="3" class="px-4 py-2 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Sharing & Export</td></tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">WhatsApp share with amount + UPI</td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">Email share (pre-filled)</td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                      <td class="px-4 py-3 text-center text-gray-600">Paid</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">PDF download / Print</td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                      <td class="px-4 py-3 text-center text-gray-600">Paid</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">Invoice branding (no watermark)</td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Always clean</span></td>
+                      <td class="px-4 py-3 text-center text-gray-500">Paid (free has "Powered by Vyapar")</td>
+                    </tr>
+                    <!-- Docs -->
+                    <tr class="bg-gray-50"><td colspan="3" class="px-4 py-2 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Documents</td></tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">Purchase Orders</td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓</span></td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">Delivery Challans</td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓</span></td>
+                    </tr>
+                    <!-- GST & Accounting -->
+                    <tr class="bg-gray-50"><td colspan="3" class="px-4 py-2 text-[11px] font-bold text-gray-400 uppercase tracking-widest">GST & Accounting</td></tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">GSTR-1 / GSTR-3B summary</td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">GSTR JSON export for portal</td>
+                      <td class="px-4 py-3 text-center text-gray-400">—</td>
+                      <td class="px-4 py-3 text-center text-gray-600">Paid</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">Expense tracking & ITC</td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">Balance Sheet / P&amp;L</td>
+                      <td class="px-4 py-3 text-center text-gray-400">Reports only</td>
+                      <td class="px-4 py-3 text-center text-gray-600">Paid</td>
+                    </tr>
+                    <!-- Inventory -->
+                    <tr class="bg-gray-50"><td colspan="3" class="px-4 py-2 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Inventory</td></tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">Product / service catalog</td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                      <td class="px-4 py-3 text-center"><span class="text-emerald-600 font-bold">✓ Free</span></td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">Stock quantity tracking</td>
+                      <td class="px-4 py-3 text-center text-gray-400">—</td>
+                      <td class="px-4 py-3 text-center text-gray-600">✓ Free</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">Low stock alerts</td>
+                      <td class="px-4 py-3 text-center text-gray-400">—</td>
+                      <td class="px-4 py-3 text-center text-gray-600">Paid</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">Barcode scanning</td>
+                      <td class="px-4 py-3 text-center text-gray-400">—</td>
+                      <td class="px-4 py-3 text-center text-gray-600">Paid</td>
+                    </tr>
+                    <!-- Platform -->
+                    <tr class="bg-gray-50"><td colspan="3" class="px-4 py-2 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Platform & Pricing</td></tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">Works offline</td>
+                      <td class="px-4 py-3 text-center text-gray-400">—</td>
+                      <td class="px-4 py-3 text-center text-gray-600">✓ Android app</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">Multiple users / devices</td>
+                      <td class="px-4 py-3 text-center text-gray-400">—</td>
+                      <td class="px-4 py-3 text-center text-gray-600">Paid</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-3 text-gray-700 font-medium">Online store for customers</td>
+                      <td class="px-4 py-3 text-center text-gray-400">—</td>
+                      <td class="px-4 py-3 text-center text-gray-600">Paid</td>
+                    </tr>
+                    <tr class="bg-primary-50 hover:bg-primary-100 transition-colors">
+                      <td class="px-4 py-3 text-gray-900 font-bold">Price</td>
+                      <td class="px-4 py-3 text-center font-extrabold text-emerald-700 text-base">Free</td>
+                      <td class="px-4 py-3 text-center font-semibold text-gray-700">₹3,399 / year</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Where Vyapar wins -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="bg-amber-50 border border-amber-100 rounded-2xl p-5">
+                  <p class="font-bold text-amber-900 mb-2 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Choose Vyapar if you need…
+                  </p>
+                  <ul class="space-y-1.5 text-sm text-amber-800">
+                    <li class="flex items-start gap-2"><span class="mt-0.5">•</span>Inventory / stock tracking with low-stock alerts</li>
+                    <li class="flex items-start gap-2"><span class="mt-0.5">•</span>Barcode scanning at checkout</li>
+                    <li class="flex items-start gap-2"><span class="mt-0.5">•</span>Offline access without internet</li>
+                    <li class="flex items-start gap-2"><span class="mt-0.5">•</span>Multi-user access across devices</li>
+                    <li class="flex items-start gap-2"><span class="mt-0.5">•</span>GSTR JSON export directly for the portal</li>
+                    <li class="flex items-start gap-2"><span class="mt-0.5">•</span>Full balance sheet & double-entry accounting</li>
+                  </ul>
+                </div>
+                <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-5">
+                  <p class="font-bold text-emerald-900 mb-2 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Choose BillBook if you want…
+                  </p>
+                  <ul class="space-y-1.5 text-sm text-emerald-800">
+                    <li class="flex items-start gap-2"><span class="mt-0.5">•</span>Zero cost — no yearly subscription ever</li>
+                    <li class="flex items-start gap-2"><span class="mt-0.5">•</span>Clean invoices with no "Powered by" watermark</li>
+                    <li class="flex items-start gap-2"><span class="mt-0.5">•</span>Fast, modern mobile-first experience</li>
+                    <li class="flex items-start gap-2"><span class="mt-0.5">•</span>Email share with pre-filled message (free)</li>
+                    <li class="flex items-start gap-2"><span class="mt-0.5">•</span>PDF download free (no paid plan needed)</li>
+                    <li class="flex items-start gap-2"><span class="mt-0.5">•</span>Simple setup — ready in under 5 minutes</li>
+                  </ul>
+                </div>
+              </div>
+
             </div>
           </div>
         </section>

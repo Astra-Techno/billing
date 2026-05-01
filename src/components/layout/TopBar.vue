@@ -82,12 +82,24 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
         <span class="font-bold text-gray-900 tracking-tight text-[17px]">BillBook</span>
       </RouterLink>
 
+      <!-- Navigation (Desktop Only) -->
+      <nav class="hidden lg:flex items-center gap-5 ml-4 mr-2 shrink-0">
+        <RouterLink to="/" class="text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors" active-class="!text-primary-600">Home</RouterLink>
+        <RouterLink to="/invoices" class="text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors" active-class="!text-primary-600">Bills</RouterLink>
+        <RouterLink to="/quotes" class="text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors" active-class="!text-primary-600">Quotes</RouterLink>
+        <RouterLink to="/expenses" class="text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors" active-class="!text-primary-600">Expenses</RouterLink>
+        <RouterLink to="/more" class="text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors" active-class="!text-primary-600">More</RouterLink>
+        <RouterLink to="/invoices/new" class="ml-2 px-4 py-1.5 bg-primary-600 text-white text-sm font-semibold rounded-full hover:bg-primary-700 transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm">
+          New Bill
+        </RouterLink>
+      </nav>
+
       <!-- Search -->
-      <div class="flex-1 relative min-w-0">
+      <div class="flex-1 relative min-w-0 flex justify-end">
 
         <!-- Trigger (closed state) -->
         <div v-if="!open"
-          class="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 border border-transparent rounded-full px-4 py-2.5 cursor-text hover:bg-gray-200 transition-colors select-none"
+          class="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 border border-transparent rounded-full px-4 py-2.5 cursor-text hover:bg-gray-200 transition-colors select-none w-full max-w-sm"
           @click="openSearch">
           <svg class="w-4 h-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -106,7 +118,7 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
             @keydown="onKeydown"
             type="text"
             placeholder="Search bills, customers…"
-            class="w-full bg-white border border-primary-200 rounded-full pl-10 pr-10 py-2.5 text-sm text-gray-800 outline-none ring-4 ring-primary-50 placeholder:text-gray-400 shadow-soft"
+            class="w-full lg:min-w-[300px] bg-white border border-primary-200 rounded-full pl-10 pr-10 py-2.5 text-sm text-gray-800 outline-none ring-4 ring-primary-50 placeholder:text-gray-400 shadow-soft"
           />
           <button @click="close" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

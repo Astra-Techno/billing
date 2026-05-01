@@ -8,6 +8,7 @@ import { calcInvoice } from '../../utils/invoice'
 
 const router   = useRouter()
 const route    = useRoute()
+const emit     = defineEmits(['refresh'])
 const clients  = ref([])
 const products = ref([])
 const taxRates = ref([])
@@ -100,9 +101,11 @@ async function submit() {
   try {
     if (isEdit.value) {
       await task('Quote', 'update', { ...form.value, id: route.params.id })
+      emit('refresh')
       router.push('/quotes/' + route.params.id)
     } else {
       const { data } = await task('Quote', 'create', form.value)
+      emit('refresh')
       router.push('/quotes/' + data.data.quote_id)
     }
   } catch (e) {

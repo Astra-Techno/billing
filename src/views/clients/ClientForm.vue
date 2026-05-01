@@ -5,6 +5,7 @@ import { task, item, all } from '../../api'
 
 const router = useRouter()
 const route  = useRoute()
+const emit   = defineEmits(['refresh'])
 
 const states  = ref([])
 const loading = ref(false)
@@ -42,9 +43,11 @@ async function submit() {
   try {
     if (isEdit.value) {
       await task('Client', 'update', { ...form.value, id: route.params.id })
+      emit('refresh')
       router.push(`/clients/${route.params.id}`)
     } else {
       await task('Client', 'create', form.value)
+      emit('refresh')
       router.push('/clients')
     }
   } catch (e) {

@@ -7,10 +7,12 @@ const isActive = (to) => to === '/' ? route.path === '/' : route.path.startsWith
 </script>
 
 <template>
-  <!-- ========== BOTTOM NAV (all screen sizes) ========== -->
-  <nav class="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-gray-100 shadow-lg safe-area-pb">
-    <div class="max-w-2xl mx-auto lg:max-w-none px-2 lg:px-4 flex items-center">
-
+  <!-- ========== BOTTOM NAV (Mobile Only) ========== -->
+  <nav class="fixed z-50 transition-all duration-300
+              bottom-0 inset-x-0 bg-white border-t border-gray-100 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] safe-area-pb
+              lg:hidden">
+    
+    <div class="max-w-2xl mx-auto px-2 flex items-center w-full">
       <RouterLink to="/" class="flex-1 flex flex-col items-center gap-1 py-2 transition-colors group"
         :class="isActive('/') ? 'text-gray-900' : 'text-gray-500'">
         <div class="px-4 py-1 rounded-full transition-colors duration-300"
@@ -34,8 +36,9 @@ const isActive = (to) => to === '/' ? route.path === '/' : route.path.startsWith
       </RouterLink>
 
       <!-- New Bill -->
+      <!-- New Bill -->
       <RouterLink to="/invoices/new" class="flex-1 flex flex-col items-center gap-1 py-2 transition-colors group text-gray-500">
-        <div class="px-4 py-1 rounded-full bg-transparent group-hover:bg-gray-100 transition-colors duration-300 text-gray-500">
+        <div class="px-4 py-1 rounded-full bg-transparent group-hover:bg-gray-100 transition-colors duration-300 text-gray-500 flex items-center justify-center">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
           </svg>

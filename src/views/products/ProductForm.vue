@@ -6,6 +6,7 @@ import HelpIcon from '../../components/HelpIcon.vue'
 
 const router = useRouter()
 const route  = useRoute()
+const emit   = defineEmits(['refresh'])
 
 const taxRates = ref([])
 const loading  = ref(false)
@@ -67,6 +68,7 @@ async function save() {
     } else {
       await task('Product', 'create', form.value)
     }
+    emit('refresh')
     router.push('/products')
   } catch (e) {
     error.value = e.response?.data?.message || 'Could not save. Please try again.'
