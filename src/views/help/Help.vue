@@ -261,6 +261,104 @@ function scrollTo(id) {
           </div>
         </section>
 
+        <!-- ── Quotations ── -->
+        <section :id="'quotes'" class="card p-8 scroll-mt-6 border-0 shadow-soft relative overflow-hidden group">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+          <div class="relative z-10">
+            <div class="flex items-center gap-4 mb-6">
+              <div class="w-12 h-12 rounded-[1rem] bg-indigo-100 flex items-center justify-center shrink-0 shadow-inner">
+                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-xl font-extrabold text-gray-900">Quotations</h2>
+                <p class="text-sm text-gray-500 font-medium">Send price estimates before invoicing</p>
+              </div>
+            </div>
+            <div class="space-y-5 text-sm text-gray-700">
+              <p class="text-gray-500 leading-relaxed">A Quotation (or Estimate) lets you send a price proposal to a potential customer before they confirm the order. Once accepted, convert it to a Tax Invoice in one tap.</p>
+
+              <div class="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                <p class="font-bold text-gray-900 mb-3">Quotation Lifecycle</p>
+                <div class="flex flex-wrap gap-2 text-xs">
+                  <div class="flex items-center gap-2"><span class="badge badge-gray">Draft</span><span class="text-gray-500">Being prepared</span></div>
+                  <div class="flex items-center gap-2"><span class="badge badge-blue">Sent</span><span class="text-gray-500">Shared with customer</span></div>
+                  <div class="flex items-center gap-2"><span class="badge badge-green">Accepted</span><span class="text-gray-500">Customer approved</span></div>
+                  <div class="flex items-center gap-2"><span class="badge badge-red">Declined</span><span class="text-gray-500">Customer rejected</span></div>
+                  <div class="flex items-center gap-2"><span class="badge badge-yellow">Expired</span><span class="text-gray-500">Past validity date</span></div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">Convert to Invoice</p>
+                  <p class="text-gray-500">Open an accepted quotation and tap <strong>Convert to Invoice</strong>. All items, customer details, and taxes are copied — no re-entry needed.</p>
+                </div>
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">Validity Date</p>
+                  <p class="text-gray-500">Set a validity date on each quote. Expired quotes are flagged automatically so you know which estimates need follow-up.</p>
+                </div>
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">Share via WhatsApp</p>
+                  <p class="text-gray-500">Send a professional quotation message to your customer instantly via WhatsApp with the total and validity date.</p>
+                </div>
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">Terms & Notes</p>
+                  <p class="text-gray-500">Add custom terms, payment conditions, and a personal note to each quotation before sharing.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── Customers ── -->
+        <section :id="'customers'" class="card p-8 scroll-mt-6 border-0 shadow-soft relative overflow-hidden group">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-teal-50 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+          <div class="relative z-10">
+            <div class="flex items-center gap-4 mb-6">
+              <div class="w-12 h-12 rounded-[1rem] bg-teal-100 flex items-center justify-center shrink-0 shadow-inner">
+                <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-xl font-extrabold text-gray-900">Customers</h2>
+                <p class="text-sm text-gray-500 font-medium">Manage your client directory</p>
+              </div>
+            </div>
+            <div class="space-y-5 text-sm text-gray-700">
+              <p class="text-gray-500 leading-relaxed">Your customer list is the foundation of billing. Every invoice, quotation, and delivery challan is linked to a customer record. Keeping records complete saves time and reduces errors.</p>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">Customer Details</p>
+                  <p class="text-gray-500">Store name, company, mobile, email, GSTIN, PAN, and full billing address. All fields auto-fill on new invoices.</p>
+                </div>
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">Account Statement</p>
+                  <p class="text-gray-500">View a customer's full billing history — all invoices, payments received, and outstanding balance in one place.</p>
+                </div>
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">Quick Add While Billing</p>
+                  <p class="text-gray-500">No need to pre-add customers. Tap <strong>Add new customer</strong> right from the invoice form to create one on the fly.</p>
+                </div>
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">State for GST</p>
+                  <p class="text-gray-500">Setting the correct state on a customer record ensures BillBook applies CGST+SGST or IGST automatically on every invoice.</p>
+                </div>
+              </div>
+
+              <div class="bg-teal-50 border border-teal-100 rounded-xl p-4 flex gap-3 shadow-sm">
+                <svg class="w-5 h-5 text-teal-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="text-sm text-teal-900 leading-relaxed"><strong>Suppliers too:</strong> Use the same Customers list to store your suppliers. When creating a Purchase Order, just pick the supplier from this list.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <!-- ── Purchase Orders ── -->
         <section :id="'purchase-orders'" class="card p-8 scroll-mt-6 border-0 shadow-soft relative overflow-hidden group">
           <div class="absolute top-0 right-0 w-32 h-32 bg-violet-50 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
@@ -382,6 +480,237 @@ function scrollTo(id) {
                   <p class="font-bold text-gray-900 mb-1">ITC Tracking</p>
                   <p class="text-gray-500">Enter the GST paid on purchases from registered vendors to automatically calculate your GST liability offsets.</p>
                 </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── Products ── -->
+        <section :id="'products'" class="card p-8 scroll-mt-6 border-0 shadow-soft relative overflow-hidden group">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-lime-50 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+          <div class="relative z-10">
+            <div class="flex items-center gap-4 mb-6">
+              <div class="w-12 h-12 rounded-[1rem] bg-lime-100 flex items-center justify-center shrink-0 shadow-inner">
+                <svg class="w-6 h-6 text-lime-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-xl font-extrabold text-gray-900">Products & Services</h2>
+                <p class="text-sm text-gray-500 font-medium">Build your catalog for faster billing</p>
+              </div>
+            </div>
+            <div class="space-y-5 text-sm text-gray-700">
+              <p class="text-gray-500 leading-relaxed">Add your products and services once — then pick them from a list while creating any invoice or quotation. Description, price, HSN/SAC, unit, and GST rate all fill in automatically.</p>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">Product Fields</p>
+                  <p class="text-gray-500">Name, type (goods/service), sale price, unit (Nos/Kg/Ltr/Hrs…), HSN/SAC code, and default GST rate.</p>
+                </div>
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">Quick-Add from Invoice</p>
+                  <p class="text-gray-500">While adding items in an invoice, tap the <strong>+</strong> button next to the product picker to create a new product on the spot.</p>
+                </div>
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">HSN / SAC Codes</p>
+                  <p class="text-gray-500">HSN for goods, SAC for services. These are mandatory for GST invoices above certain turnover thresholds. Enter them once per product.</p>
+                </div>
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">Units of Measure</p>
+                  <p class="text-gray-500">Choose from Nos, Kg, Ltr, Hrs, Pcs, Mtr, Box, Set, Pair — or leave as Nos for general items and services.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── Returns & Adjustments ── -->
+        <section :id="'returns'" class="card p-8 scroll-mt-6 border-0 shadow-soft relative overflow-hidden group">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-rose-50 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+          <div class="relative z-10">
+            <div class="flex items-center gap-4 mb-6">
+              <div class="w-12 h-12 rounded-[1rem] bg-rose-100 flex items-center justify-center shrink-0 shadow-inner">
+                <svg class="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-xl font-extrabold text-gray-900">Returns & Adjustments</h2>
+                <p class="text-sm text-gray-500 font-medium">Issue credit notes for returns and corrections</p>
+              </div>
+            </div>
+            <div class="space-y-5 text-sm text-gray-700">
+              <p class="text-gray-500 leading-relaxed">A Credit Note reduces the amount owed by a customer. Use it when goods are returned, when you've overcharged, or when a discount is given after an invoice has been issued.</p>
+
+              <div class="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                <p class="font-bold text-gray-900 mb-3">When to Use a Credit Note</p>
+                <div class="space-y-2">
+                  <div class="flex items-start gap-2"><div class="w-1.5 h-1.5 rounded-full bg-rose-400 mt-1.5 shrink-0"></div><span class="text-gray-600">Customer returns goods (full or partial)</span></div>
+                  <div class="flex items-start gap-2"><div class="w-1.5 h-1.5 rounded-full bg-rose-400 mt-1.5 shrink-0"></div><span class="text-gray-600">You overcharged on a previous invoice</span></div>
+                  <div class="flex items-start gap-2"><div class="w-1.5 h-1.5 rounded-full bg-rose-400 mt-1.5 shrink-0"></div><span class="text-gray-600">Post-sale discount or price correction</span></div>
+                  <div class="flex items-start gap-2"><div class="w-1.5 h-1.5 rounded-full bg-rose-400 mt-1.5 shrink-0"></div><span class="text-gray-600">Cancellation of a partially delivered order</span></div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">Linked to Original Invoice</p>
+                  <p class="text-gray-500">Each credit note references the original invoice number. This is required for GST compliance and maintains a clean audit trail.</p>
+                </div>
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">GST Reversal</p>
+                  <p class="text-gray-500">Credit notes include the GST reversal amounts (CGST/SGST/IGST) so your GST returns reflect the correct net liability.</p>
+                </div>
+              </div>
+
+              <div class="bg-rose-50 border border-rose-100 rounded-xl p-4 flex gap-3 shadow-sm">
+                <svg class="w-5 h-5 text-rose-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="text-sm text-rose-800 leading-relaxed"><strong>Never delete invoices.</strong> Always issue a Credit Note instead. Deleting a sent invoice breaks your numbering sequence and can cause discrepancies in your GST returns.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── GST Filing ── -->
+        <section :id="'gst'" class="card p-8 scroll-mt-6 border-0 shadow-soft relative overflow-hidden group">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-yellow-50 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+          <div class="relative z-10">
+            <div class="flex items-center gap-4 mb-6">
+              <div class="w-12 h-12 rounded-[1rem] bg-yellow-100 flex items-center justify-center shrink-0 shadow-inner">
+                <svg class="w-6 h-6 text-yellow-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-xl font-extrabold text-gray-900">GST Filing</h2>
+                <p class="text-sm text-gray-500 font-medium">GSTR-1, GSTR-3B summaries and data export</p>
+              </div>
+            </div>
+            <div class="space-y-5 text-sm text-gray-700">
+              <p class="text-gray-500 leading-relaxed">BillBook auto-compiles your GST return data from invoices, credit notes, and expenses. Use this section to review totals before filing on the GST portal.</p>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">GSTR-1 Summary</p>
+                  <p class="text-gray-500">Outward supplies breakdown — B2B invoices with customer GSTIN, B2C sales, credit notes, and nil-rated supplies.</p>
+                </div>
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">GSTR-3B Summary</p>
+                  <p class="text-gray-500">Net GST liability summary: output tax on sales minus input tax credit (ITC) from tracked expenses.</p>
+                </div>
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">Tax Rate Breakup</p>
+                  <p class="text-gray-500">Totals split by GST slab (0%, 5%, 12%, 18%, 28%) with CGST, SGST, and IGST shown separately.</p>
+                </div>
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">Period Selection</p>
+                  <p class="text-gray-500">Switch between monthly and quarterly views to match your GST return filing frequency.</p>
+                </div>
+              </div>
+
+              <div class="bg-yellow-50 border border-yellow-100 rounded-xl p-4 flex gap-3 shadow-sm">
+                <svg class="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="text-sm text-yellow-900 leading-relaxed"><strong>Filing happens on the GST portal.</strong> BillBook prepares and displays your summary — you then log in to <strong>gst.gov.in</strong> to submit the actual return. Always review totals carefully before filing.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── Reports ── -->
+        <section :id="'reports'" class="card p-8 scroll-mt-6 border-0 shadow-soft relative overflow-hidden group">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-sky-50 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+          <div class="relative z-10">
+            <div class="flex items-center gap-4 mb-6">
+              <div class="w-12 h-12 rounded-[1rem] bg-sky-100 flex items-center justify-center shrink-0 shadow-inner">
+                <svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-xl font-extrabold text-gray-900">Reports</h2>
+                <p class="text-sm text-gray-500 font-medium">Business insights and financial summaries</p>
+              </div>
+            </div>
+            <div class="space-y-5 text-sm text-gray-700">
+              <p class="text-gray-500 leading-relaxed">Reports give you a clear picture of your business performance — revenue, expenses, outstanding dues, and profit — all filterable by date range.</p>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">Sales Report</p>
+                  <p class="text-gray-500">Total invoiced amount, GST collected, and net taxable value for any date range. Filter by customer or invoice type.</p>
+                </div>
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">Receivables (Due)</p>
+                  <p class="text-gray-500">List of all unpaid and partially paid invoices with days overdue, so you know exactly who owes how much.</p>
+                </div>
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">Expense Report</p>
+                  <p class="text-gray-500">Break down your spending by category (Rent, Travel, Inventory, etc.) for any period.</p>
+                </div>
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">Profit & Loss</p>
+                  <p class="text-gray-500">Revenue minus expenses = net profit. At a glance, see whether your business is in the green this month.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── Settings ── -->
+        <section :id="'settings'" class="card p-8 scroll-mt-6 border-0 shadow-soft relative overflow-hidden group">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-gray-50 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+          <div class="relative z-10">
+            <div class="flex items-center gap-4 mb-6">
+              <div class="w-12 h-12 rounded-[1rem] bg-gray-100 flex items-center justify-center shrink-0 shadow-inner">
+                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-xl font-extrabold text-gray-900">Settings</h2>
+                <p class="text-sm text-gray-500 font-medium">Business profile, branding, and preferences</p>
+              </div>
+            </div>
+            <div class="space-y-5 text-sm text-gray-700">
+              <p class="text-gray-500 leading-relaxed">Settings is where you configure your business identity. Everything you enter here appears on every invoice, quotation, and document automatically.</p>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">Business Profile</p>
+                  <p class="text-gray-500">Business name, address, GSTIN, PAN, mobile, email, and state. These appear on every printed document.</p>
+                </div>
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">Logo & Signature</p>
+                  <p class="text-gray-500">Upload your business logo and authorised signature image. Both appear on printed invoices for a professional look.</p>
+                </div>
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">Bank & UPI Details</p>
+                  <p class="text-gray-500">Enter your bank account, IFSC, and UPI ID. These appear in the payment section of every invoice and in WhatsApp share messages.</p>
+                </div>
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">Invoice Numbering</p>
+                  <p class="text-gray-500">Set a custom prefix (e.g. <em>INV-</em> or <em>2024-</em>) and starting number for your invoice sequence.</p>
+                </div>
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">Default Notes & Terms</p>
+                  <p class="text-gray-500">Add standard payment terms or a thank-you message that pre-fills on every new invoice.</p>
+                </div>
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">User Account</p>
+                  <p class="text-gray-500">Update your login name, email address, and password from the Settings page.</p>
+                </div>
+              </div>
+
+              <div class="bg-primary-50 border border-primary-100 rounded-xl p-4 flex gap-3 shadow-sm">
+                <svg class="w-5 h-5 text-primary-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="text-sm text-primary-900 leading-relaxed"><strong>Do this first!</strong> Complete your business profile in Settings before creating your first invoice. Incomplete profiles result in missing GSTIN or bank details on printed documents.</p>
               </div>
             </div>
           </div>
