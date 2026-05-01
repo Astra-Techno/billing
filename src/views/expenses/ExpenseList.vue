@@ -14,7 +14,7 @@ const deleteTarget = ref(null)
 const deleting     = ref(false)
 const searchQ      = ref('')
 const catFilter    = ref('')
-const showDatePicker = ref(false)
+const showFilters = ref(false)
 const filter = ref({ preset: '', from_date: '', to_date: '' })
 
 // ── Date presets ──────────────────────────────────────────────────────────────
@@ -29,7 +29,7 @@ const presets = [
 function fmt(d) { return d.toISOString().split('T')[0] }
 function applyPreset(p) {
   const now = new Date()
-  filter.value.preset = p; showDatePicker.value = false
+  filter.value.preset = p; showFilters.value = false
   if (p === 'today') { filter.value.from_date = fmt(now); filter.value.to_date = fmt(now) }
   else if (p === 'week') { const s = new Date(now); s.setDate(now.getDate() - now.getDay() + 1); filter.value.from_date = fmt(s); filter.value.to_date = fmt(now) }
   else if (p === 'month') { filter.value.from_date = fmt(new Date(now.getFullYear(), now.getMonth(), 1)); filter.value.to_date = fmt(now) }
@@ -38,7 +38,7 @@ function applyPreset(p) {
   else if (p === 'year') { filter.value.from_date = fmt(new Date(now.getFullYear(), 0, 1)); filter.value.to_date = fmt(now) }
   load()
 }
-function clearDate() { filter.value.preset = ''; filter.value.from_date = ''; filter.value.to_date = ''; showDatePicker.value = false; load() }
+function clearDate() { filter.value.preset = ''; filter.value.from_date = ''; filter.value.to_date = ''; showFilters.value = false; load() }
 const activeDateLabel = () => {
   if (filter.value.preset) return presets.find(p => p.value === filter.value.preset)?.label
   if (filter.value.from_date && filter.value.to_date) return `${filter.value.from_date} → ${filter.value.to_date}`
@@ -99,73 +99,69 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="flex flex-col lg:flex-row gap-6 h-[calc(100vh-6rem)]">
+  <div class="flex flex-col lg:flex-row gap-6 h-full min-h-0">
     <!-- Left Pane: List -->
-    <div :class="{ 'hidden lg:flex': $route.name !== 'Expenses', 'w-full lg:w-[35%] flex flex-col': true }">
-      <div class="space-y-5 flex-1 overflow-y-auto pr-1 no-scrollbar">
-      <div class="lg:px-5 lg:pt-5 pb-3 lg:border-b lg:border-gray-100 space-y-3">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="page-title flex items-center gap-2">Expenses <HelpIcon section="expenses" /></h1>
-            <p class="text-xs text-gray-400 mt-0.5">Track your business spending</p>
+    <div :class="{ 'hidden lg:flex': $route.name !== 'Expenses', 'w-full lg:w-[35%] flex flex-col min-h-0': true }">
+      <div class="flex flex-col gap-2 pr-1 shrink-0 z-10 relative">
+        <!-- Compact Header -->
+        <div class="flex items-center justify-between gap-3">
+          <h1 class="page-title flex items-center gap-2">Expenses <HelpIcon section="expenses" /></h1>
+          <div class="flex items-center gap-2">
+            <button @click="showFilters = !showFilters" class="p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-colors shadow-sm bg-white border border-gray-100" :class="{'bg-primary-50 text-primary-600 border-primary-100': showFilters || filter.preset || filter.from_date || catFilter}">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+            </button>
+            <button @click="openAdd" class="lg:hidden p-2 text-white bg-primary-600 hover:bg-primary-700 rounded-full transition-colors shadow-soft-blue">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+            </button>
           </div>
-          <button @click="openAdd" class="btn-primary text-sm py-2 px-4">
-            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-            Record
-          </button>
         </div>
 
-      <div class="flex flex-col lg:flex-row gap-3 items-start lg:items-center justify-between">
-        <!-- Category filter -->
-        <div class="flex gap-1 overflow-x-auto pb-1 no-scrollbar w-full lg:w-auto">
-          <button @click="catFilter = ''"
-            class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap shrink-0 transition-all"
-            :class="catFilter === '' ? 'bg-primary-600 text-white' : 'bg-white text-gray-500 border border-gray-200 hover:border-gray-300'">
-            All
-          </button>
-          <button v-for="c in categories" :key="c.id" @click="catFilter = c.id"
-            class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap shrink-0 transition-all"
-            :class="catFilter == c.id ? 'bg-primary-600 text-white' : 'bg-white text-gray-500 border border-gray-200 hover:border-gray-300'">
-            {{ c.name }}
-          </button>
+        <!-- Search & Status Row -->
+        <div class="flex gap-2 animate-fade-in-up z-10 relative">
+          <div class="relative flex-1 min-w-0">
+            <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input v-model="searchQ" type="text"
+              class="w-full bg-white border-0 shadow-soft text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-primary-500 block pl-10 p-2.5 transition-shadow"
+              placeholder="Search by description or vendor…" />
+          </div>
+          <div class="shrink-0 w-[110px] relative">
+            <select v-model="catFilter" class="w-full h-full bg-white border-0 shadow-soft text-gray-700 text-xs rounded-xl focus:ring-2 focus:ring-primary-500 pl-3 pr-8 appearance-none cursor-pointer font-bold">
+              <option value="">All Categories</option>
+              <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
+            </select>
+            <svg class="w-3.5 h-3.5 text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+          </div>
         </div>
 
-        <!-- Search -->
-        <div class="relative w-full lg:max-w-md animate-fade-in-up">
-          <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-          <input v-model="searchQ" type="text" class="w-full bg-white border-0 shadow-soft text-gray-900 text-sm rounded-full focus:ring-2 focus:ring-primary-500 block pl-12 p-3.5 transition-shadow" placeholder="Search by description or vendor…" />
+        <!-- Collapsible Date Filters -->
+        <div v-show="showFilters" class="flex flex-col gap-3 animate-fade-in-up">
+          <div class="flex items-center gap-2 flex-wrap">
+            <button v-for="p in presets" :key="p.value"
+              @click="applyPreset(p.value)"
+              class="px-2.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 transition-all"
+              :class="filter.preset === p.value
+                ? 'bg-indigo-100 text-indigo-700 border border-indigo-200'
+                : 'bg-white text-gray-500 border border-gray-200 hover:border-gray-300 shadow-soft'">
+              {{ p.label }}
+            </button>
+            <button v-if="activeDateLabel()" @click="clearDate"
+              class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-red-50 text-red-500 border border-red-100 hover:bg-red-100 shrink-0 flex items-center gap-1">
+              ✕ Clear
+            </button>
+          </div>
+          
+          <div class="flex gap-2 items-center bg-white p-2.5 rounded-xl shadow-soft border border-gray-100">
+            <input v-model="filter.from_date" type="date" class="form-input text-xs flex-1 border-0 bg-gray-50 rounded-lg"
+              @change="filter.preset = ''; load()" />
+            <span class="text-gray-400 text-xs font-medium">to</span>
+            <input v-model="filter.to_date" type="date" class="form-input text-xs flex-1 border-0 bg-gray-50 rounded-lg"
+              @change="filter.preset = ''; load()" />
+          </div>
         </div>
       </div>
 
-        <!-- Date presets -->
-        <div class="flex items-center gap-2 flex-wrap animate-fade-in-up">
-          <div class="flex gap-1 overflow-x-auto no-scrollbar">
-            <button v-for="p in presets" :key="p.value" @click="applyPreset(p.value)"
-              class="px-2.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 transition-all"
-              :class="filter.preset === p.value ? 'bg-indigo-100 text-indigo-700 border border-indigo-200' : 'bg-white text-gray-500 border border-gray-200 hover:border-gray-300 shadow-soft'">
-              {{ p.label }}
-            </button>
-          </div>
-          <button @click="showDatePicker = !showDatePicker"
-            class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-gray-500 border border-gray-200 hover:border-gray-300 shadow-soft shrink-0 flex items-center gap-1">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            Custom
-          </button>
-          <button v-if="activeDateLabel()" @click="clearDate"
-            class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-red-50 text-red-500 border border-red-100 hover:bg-red-100 shrink-0">
-            ✕ {{ activeDateLabel() }}
-          </button>
-        </div>
-        </div>
-
-        <div v-if="showDatePicker" class="flex gap-2 items-center bg-white p-3 rounded-2xl shadow-soft animate-fade-in-up">
-          <input v-model="filter.from_date" type="date" class="form-input text-sm flex-1 border-0 bg-gray-50" @change="filter.preset = ''; load()" />
-          <span class="text-gray-400 text-sm font-medium">to</span>
-          <input v-model="filter.to_date" type="date" class="form-input text-sm flex-1 border-0 bg-gray-50" @change="filter.preset = ''; load()" />
-        </div>
-
-      <!-- List -->
-      <div class="lg:flex-1 lg:overflow-y-auto pt-2 pb-8 px-1">
+      <!-- Scrollable List Wrapper -->
+      <div class="flex-1 overflow-y-auto pr-1 pb-10 mt-2 no-scrollbar min-h-0">
         <div class="bg-white rounded-[2rem] shadow-soft border-0 overflow-hidden mt-2 lg:mt-0 animate-fade-in-up anim-delay-75">
           <div v-if="loading" class="p-12 text-center text-gray-400 text-sm">Loading…</div>
           <div v-else-if="!filteredExpenses().length" class="p-12 text-center">
@@ -207,6 +203,14 @@ onMounted(load)
               <svg class="w-5 h-5 text-gray-300 shrink-0 group-hover:text-primary-500 group-hover:translate-x-1 transition-all ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
             </div>
           </div>
+          <!-- List Footer -->
+          <div v-if="!loading && filteredExpenses().length" class="bg-gray-50/80 border-t border-gray-100 px-6 py-4 flex items-center justify-between">
+            <span class="text-xs text-gray-500 font-medium">Showing <span class="font-bold text-gray-800">{{ filteredExpenses().length }}</span> expense{{ filteredExpenses().length !== 1 ? 's' : '' }}</span>
+            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              End of list
+            </span>
+          </div>
         </div>
       </div>
 
@@ -224,7 +228,6 @@ onMounted(load)
       </div>
     </div>
     </div>
-  </div>
 
   <!-- Right Pane: Detail/Form -->
     <div v-if="$route.name !== 'Expenses'" class="w-full lg:w-[65%] flex-1 overflow-y-auto no-scrollbar pb-10">

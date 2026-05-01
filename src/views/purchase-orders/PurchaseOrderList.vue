@@ -44,38 +44,38 @@ onMounted(load)
   <div class="flex flex-col lg:flex-row gap-6 h-[calc(100vh-6rem)]">
     <!-- Left Pane -->
     <div :class="{ 'hidden lg:flex': $route.name !== 'PurchaseOrders', 'w-full lg:w-[35%] flex flex-col': true }">
-      <div class="space-y-5 flex-1 overflow-y-auto pr-1 no-scrollbar">
-
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h1 class="page-title">Purchase Orders</h1>
-            <p class="text-sm text-gray-400 mt-0.5 font-medium">Orders raised to your suppliers</p>
+      <div class="flex flex-col gap-2 pr-1 shrink-0 z-10 relative">
+        <!-- Compact Header -->
+        <div class="flex items-center justify-between gap-3">
+          <h1 class="page-title flex items-center gap-2">Purchase Orders <HelpIcon section="purchase-orders" /></h1>
+          <div class="flex items-center gap-2">
+            <!-- Mobile only New PO -->
+            <RouterLink to="/purchase-orders/new" class="lg:hidden p-2 text-white bg-primary-600 hover:bg-primary-700 rounded-full transition-colors shadow-soft-blue">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+            </RouterLink>
           </div>
-          <RouterLink to="/purchase-orders/new" class="btn-primary">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-            New PO
-          </RouterLink>
         </div>
 
-        <!-- Status tabs -->
-        <div class="flex gap-1 overflow-x-auto pb-1 no-scrollbar">
-          <button v-for="t in tabs" :key="t.value"
-            @click="filter.status = t.value; load()"
-            class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all shrink-0"
-            :class="filter.status === t.value ? 'bg-primary-600 text-white shadow-sm' : 'bg-white text-gray-500 border border-gray-200 hover:border-gray-300'">
-            {{ t.label }}
-          </button>
+        <!-- Search & Status Row -->
+        <div class="flex gap-2 animate-fade-in-up z-10 relative">
+          <div class="relative flex-1 min-w-0">
+            <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input v-model="filter.search" @input="onSearch" type="text"
+              class="w-full bg-white border-0 shadow-soft text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-primary-500 block pl-10 p-2.5 transition-shadow"
+              placeholder="Search by PO no. or supplier…" />
+          </div>
+          <div class="shrink-0 w-[110px] relative">
+            <select v-model="filter.status" @change="load()" class="w-full h-full bg-white border-0 shadow-soft text-gray-700 text-xs rounded-xl focus:ring-2 focus:ring-primary-500 pl-3 pr-8 appearance-none cursor-pointer font-bold">
+              <option value="">All Status</option>
+              <option v-for="t in tabs.filter(t => t.value)" :key="t.value" :value="t.value">{{ t.label }}</option>
+            </select>
+            <svg class="w-3.5 h-3.5 text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+          </div>
         </div>
+      </div>
 
-        <!-- Search -->
-        <div class="relative animate-fade-in-up">
-          <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-          <input v-model="filter.search" @input="onSearch" type="text"
-            class="w-full bg-white border-0 shadow-soft text-gray-900 text-sm rounded-full focus:ring-2 focus:ring-primary-500 block pl-12 p-3.5 transition-shadow"
-            placeholder="Search by PO no. or supplier…" />
-        </div>
-
-        <!-- List -->
+      <!-- Scrollable List Wrapper -->
+      <div class="flex-1 overflow-y-auto pr-1 pb-10 mt-2 no-scrollbar min-h-0">
         <div class="bg-white rounded-[2rem] shadow-soft border-0 overflow-hidden animate-fade-in-up anim-delay-75">
           <div v-if="loading" class="divide-y divide-gray-50">
             <div v-for="i in 4" :key="i" class="flex items-center gap-4 px-5 py-4 animate-pulse">
@@ -116,6 +116,15 @@ onMounted(load)
                 <p class="text-[10px] uppercase font-bold tracking-wider mt-1 text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">Due {{ fmtDateShort(po.expected_date) }}</p>
               </div>
             </div>
+          </div>
+          
+          <!-- List Footer -->
+          <div v-if="!loading && orders.length" class="bg-gray-50/80 border-t border-gray-100 px-6 py-4 flex items-center justify-between">
+            <span class="text-xs text-gray-500 font-medium">Showing <span class="font-bold text-gray-800">{{ orders.length }}</span> order{{ orders.length !== 1 ? 's' : '' }}</span>
+            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              End of list
+            </span>
           </div>
         </div>
       </div>
