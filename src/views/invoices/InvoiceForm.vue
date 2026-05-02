@@ -487,7 +487,7 @@ async function submit() {
           </div>
           <h2 class="section-title mb-0">Bill dates</h2>
         </div>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="form-label">Bill Date</label>
             <input v-model="form.issue_date" type="date" class="form-input" />
