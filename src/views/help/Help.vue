@@ -157,16 +157,20 @@ function scrollTo(id) {
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="bg-gray-50/80 rounded-2xl p-4 border border-gray-100 hover:shadow-md transition-shadow">
-                  <p class="font-bold text-gray-900 mb-1">Financial Metrics</p>
-                  <p class="text-gray-500 leading-relaxed">Tracks total revenue, pending receivables, total expenses, and net profit for the month.</p>
+                  <p class="font-bold text-gray-900 mb-1">Total Outstanding</p>
+                  <p class="text-gray-500 leading-relaxed">The large number at the top is your total pending receivables — money customers owe you right now.</p>
                 </div>
                 <div class="bg-gray-50/80 rounded-2xl p-4 border border-gray-100 hover:shadow-md transition-shadow">
-                  <p class="font-bold text-gray-900 mb-1">Growth Trend</p>
-                  <p class="text-gray-500 leading-relaxed">Visual bar chart of your revenue over the last 6 months to spot momentum.</p>
+                  <p class="font-bold text-gray-900 mb-1">Overdue Alert Banner</p>
+                  <p class="text-gray-500 leading-relaxed">A red warning banner appears at the top when invoices are past their due date, showing the count and total overdue amount. Tap <strong>View All</strong> to see the full list.</p>
                 </div>
                 <div class="bg-gray-50/80 rounded-2xl p-4 border border-gray-100 hover:shadow-md transition-shadow">
-                  <p class="font-bold text-gray-900 mb-1">Actionable Reminders</p>
-                  <p class="text-gray-500 leading-relaxed">Instantly see who owes you money and send WhatsApp payment reminders with one click.</p>
+                  <p class="font-bold text-gray-900 mb-1">People (Quick Access)</p>
+                  <p class="text-gray-500 leading-relaxed">Horizontally scrollable row of recently billed customers. Tap any avatar to jump to their latest invoice.</p>
+                </div>
+                <div class="bg-gray-50/80 rounded-2xl p-4 border border-gray-100 hover:shadow-md transition-shadow">
+                  <p class="font-bold text-gray-900 mb-1">Recent Activity</p>
+                  <p class="text-gray-500 leading-relaxed">See your 8 most recent invoices with amount due and status. Tap any row to open that invoice.</p>
                 </div>
               </div>
             </div>
@@ -215,12 +219,18 @@ function scrollTo(id) {
 
               <!-- Actions -->
               <div>
-                <p class="font-bold text-gray-900 mb-3">One-Click Actions</p>
+                <p class="font-bold text-gray-900 mb-3">Invoice Actions</p>
+                <p class="text-gray-500 mb-3 text-sm">Actions are arranged by priority. The most important action is shown as a large primary button; secondary actions (Share, Email, Print, PDF, Edit) appear as a compact icon row below.</p>
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm text-gray-600">
-                  <div class="bg-white border border-gray-100 shadow-sm rounded-xl p-3 flex flex-col items-center text-center hover:border-primary-200 transition-colors">
-                    <span class="text-2xl mb-1">🖨️</span>
-                    <span class="font-semibold text-gray-800">Print / PDF</span>
-                    <span class="text-xs text-gray-400 mt-0.5">Save or print your invoice</span>
+                  <div class="bg-primary-50 border border-primary-100 shadow-sm rounded-xl p-3 flex flex-col items-center text-center">
+                    <span class="text-2xl mb-1">📤</span>
+                    <span class="font-semibold text-gray-800">Mark as Sent</span>
+                    <span class="text-xs text-gray-400 mt-0.5">Primary action for Draft invoices</span>
+                  </div>
+                  <div class="bg-emerald-50 border border-emerald-100 shadow-sm rounded-xl p-3 flex flex-col items-center text-center">
+                    <span class="text-2xl mb-1">💳</span>
+                    <span class="font-semibold text-gray-800">Record Payment</span>
+                    <span class="text-xs text-gray-400 mt-0.5">Primary action for Sent/Overdue</span>
                   </div>
                   <div class="bg-white border border-gray-100 shadow-sm rounded-xl p-3 flex flex-col items-center text-center hover:border-green-200 transition-colors">
                     <span class="text-2xl mb-1">📲</span>
@@ -232,17 +242,30 @@ function scrollTo(id) {
                     <span class="font-semibold text-gray-800">Email</span>
                     <span class="text-xs text-gray-400 mt-0.5">Pre-filled email with details</span>
                   </div>
-                  <div class="bg-white border border-gray-100 shadow-sm rounded-xl p-3 flex flex-col items-center text-center hover:border-emerald-200 transition-colors">
-                    <span class="text-2xl mb-1">💳</span>
-                    <span class="font-semibold text-gray-800">Record Payment</span>
-                    <span class="text-xs text-gray-400 mt-0.5">Partial or full payment</span>
+                  <div class="bg-white border border-gray-100 shadow-sm rounded-xl p-3 flex flex-col items-center text-center hover:border-gray-200 transition-colors">
+                    <span class="text-2xl mb-1">🖨️</span>
+                    <span class="font-semibold text-gray-800">Print</span>
+                    <span class="text-xs text-gray-400 mt-0.5">Opens print dialog in new tab (works on mobile)</span>
+                  </div>
+                  <div class="bg-white border border-gray-100 shadow-sm rounded-xl p-3 flex flex-col items-center text-center hover:border-red-200 transition-colors">
+                    <span class="text-2xl mb-1">📄</span>
+                    <span class="font-semibold text-gray-800">PDF Download</span>
+                    <span class="text-xs text-gray-400 mt-0.5">Download invoice as PDF file</span>
                   </div>
                   <div class="bg-white border border-gray-100 shadow-sm rounded-xl p-3 flex flex-col items-center text-center hover:border-amber-200 transition-colors">
                     <span class="text-2xl mb-1">✏️</span>
-                    <span class="font-semibold text-gray-800">Edit Anytime</span>
-                    <span class="text-xs text-gray-400 mt-0.5">Correct any non-cancelled bill</span>
+                    <span class="font-semibold text-gray-800">Edit</span>
+                    <span class="text-xs text-gray-400 mt-0.5">Modify any non-cancelled invoice</span>
                   </div>
                 </div>
+              </div>
+
+              <!-- Issue Credit Note shortcut -->
+              <div class="bg-rose-50 border border-rose-100 rounded-xl p-4 flex gap-3 shadow-sm">
+                <svg class="w-5 h-5 text-rose-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="text-sm text-rose-800 leading-relaxed"><strong>Issue Credit Note from an Invoice:</strong> Open any paid or partially-paid invoice and tap <strong>Issue Credit Note</strong> at the bottom. The credit note form opens pre-filled with all the original items — you only need to adjust quantities or amounts before saving.</p>
               </div>
 
               <!-- Partial Payments -->
@@ -333,16 +356,16 @@ function scrollTo(id) {
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
-                  <p class="font-bold text-gray-900 mb-1">Customer Details</p>
-                  <p class="text-gray-500">Store name, company, mobile, email, GSTIN, PAN, and full billing address. All fields auto-fill on new invoices.</p>
+                  <p class="font-bold text-gray-900 mb-1">Outstanding Balance Badge</p>
+                  <p class="text-gray-500">Each customer row shows a red badge with their current outstanding balance (unpaid invoices). Empty if the customer is fully paid up.</p>
                 </div>
                 <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
                   <p class="font-bold text-gray-900 mb-1">Account Statement</p>
                   <p class="text-gray-500">View a customer's full billing history — all invoices, payments received, and outstanding balance in one place.</p>
                 </div>
                 <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
-                  <p class="font-bold text-gray-900 mb-1">Quick Add While Billing</p>
-                  <p class="text-gray-500">No need to pre-add customers. Tap <strong>Add new customer</strong> right from the invoice form to create one on the fly.</p>
+                  <p class="font-bold text-gray-900 mb-1">Quick Add Form</p>
+                  <p class="text-gray-500">Only <strong>Name</strong> and <strong>Mobile</strong> are required to save a customer. Tap <em>"Add email, GST, address…"</em> to reveal the optional fields — keeps the form fast for new customers.</p>
                 </div>
                 <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
                   <p class="font-bold text-gray-900 mb-1">State for GST</p>
@@ -439,7 +462,19 @@ function scrollTo(id) {
                 </div>
                 <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
                   <p class="font-bold text-gray-900 mb-1">No Prices, Just Qty</p>
-                  <p class="text-gray-500">DC items show only description, HSN/SAC, quantity, and unit — no financial data.</p>
+                  <p class="text-gray-500">DC items show only description, HSN/SAC, quantity, and unit — no financial data needed for a transport slip.</p>
+                </div>
+                <div class="bg-blue-50 border border-blue-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-blue-900 mb-1">Convert to Invoice</p>
+                  <p class="text-blue-700">Open any challan and tap <strong>Convert to Invoice</strong> (or the <em>To Invoice</em> icon). A new invoice form opens pre-filled with the same customer and all items — just add prices and GST rates, then save.</p>
+                </div>
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">Actions by Status</p>
+                  <div class="space-y-1 text-xs text-gray-500 mt-1">
+                    <p><strong class="text-gray-700">Draft:</strong> Issue → dispatches goods</p>
+                    <p><strong class="text-gray-700">Issued:</strong> Mark Delivered → confirms receipt</p>
+                    <p><strong class="text-gray-700">Delivered:</strong> Convert to Invoice → creates a bill</p>
+                  </div>
                 </div>
               </div>
 
@@ -447,7 +482,7 @@ function scrollTo(id) {
                 <svg class="w-5 h-5 text-cyan-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                <p class="text-sm text-cyan-900 leading-relaxed"><strong>Tip:</strong> Always create a Tax Invoice alongside or after a Delivery Challan. The DC is a transport slip — it is not a valid tax document for GST purposes.</p>
+                <p class="text-sm text-cyan-900 leading-relaxed"><strong>Typical workflow:</strong> Create DC → Issue (dispatch goods) → Mark Delivered → Convert to Invoice (bill the customer). The DC is a transport slip — it is not a valid GST tax document on its own.</p>
               </div>
             </div>
           </div>
@@ -526,7 +561,7 @@ function scrollTo(id) {
           </div>
         </section>
 
-        <!-- ── Returns & Adjustments ── -->
+        <!-- ── Credit Notes ── -->
         <section :id="'returns'" class="card p-8 scroll-mt-6 border-0 shadow-soft relative overflow-hidden group">
           <div class="absolute top-0 right-0 w-32 h-32 bg-rose-50 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
           <div class="relative z-10">
@@ -537,7 +572,7 @@ function scrollTo(id) {
                 </svg>
               </div>
               <div>
-                <h2 class="text-xl font-extrabold text-gray-900">Returns & Adjustments</h2>
+                <h2 class="text-xl font-extrabold text-gray-900">Credit Notes</h2>
                 <p class="text-sm text-gray-500 font-medium">Issue credit notes for returns and corrections</p>
               </div>
             </div>
@@ -556,12 +591,24 @@ function scrollTo(id) {
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
-                  <p class="font-bold text-gray-900 mb-1">Linked to Original Invoice</p>
-                  <p class="text-gray-500">Each credit note references the original invoice number. This is required for GST compliance and maintains a clean audit trail.</p>
+                  <p class="font-bold text-gray-900 mb-1">One-Tap from Invoice</p>
+                  <p class="text-gray-500">Open any paid or partially-paid invoice and tap <strong>Issue Credit Note</strong>. The form opens pre-filled with all the original items, so you only adjust quantities or amounts.</p>
+                </div>
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">Link to Original Invoice</p>
+                  <p class="text-gray-500">Each credit note references the original invoice. In the Credit Notes list, the invoice number is a clickable link that takes you directly to that invoice.</p>
                 </div>
                 <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
                   <p class="font-bold text-gray-900 mb-1">GST Reversal</p>
                   <p class="text-gray-500">Credit notes include the GST reversal amounts (CGST/SGST/IGST) so your GST returns reflect the correct net liability.</p>
+                </div>
+                <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+                  <p class="font-bold text-gray-900 mb-1">Credit Note Lifecycle</p>
+                  <div class="flex flex-wrap gap-2 text-xs mt-1">
+                    <div class="flex items-center gap-1"><span class="badge badge-gray">Draft</span><span class="text-gray-400">Saved</span></div>
+                    <div class="flex items-center gap-1"><span class="badge badge-blue">Issued</span><span class="text-gray-400">Sent to customer</span></div>
+                    <div class="flex items-center gap-1"><span class="badge badge-green">Adjusted</span><span class="text-gray-400">Applied to invoice</span></div>
+                  </div>
                 </div>
               </div>
 
