@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { list } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
+import { inr } from '../../utils/currency'
 
 const router  = useRouter()
 const clients = ref([])
@@ -92,6 +93,14 @@ const avatarColor  = (name) => avatarColors[(name?.charCodeAt(0) || 0) % avatarC
               <span v-if="(c.mobile || c.gstin) && c.city" class="text-gray-300 text-xs">·</span>
               <p v-if="c.city" class="text-xs text-gray-500">{{ c.city }}</p>
             </div>
+          </div>
+
+          <!-- Outstanding balance -->
+          <div class="shrink-0 text-right ml-2">
+            <span v-if="parseFloat(c.outstanding_balance) > 0"
+              class="text-xs font-bold text-danger-600 bg-danger-50 px-2 py-1 rounded-full">
+              {{ inr(c.outstanding_balance) }}
+            </span>
           </div>
 
           <svg class="w-5 h-5 text-gray-300 shrink-0 group-hover:text-primary-500 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>

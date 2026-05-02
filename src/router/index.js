@@ -83,6 +83,9 @@ const routes = [
     ],
   },
 
+  // Print views (standalone, no AppLayout chrome)
+  { path: '/print/invoice/:id', name: 'InvoicePrint', component: () => import('../views/invoices/InvoicePrint.vue'), meta: { auth: true } },
+
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
 

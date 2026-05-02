@@ -75,37 +75,53 @@ const statusLabel = s => ({ draft: 'Draft', issued: 'Issued', delivered: 'Delive
         </div>
       </div>
 
-      <!-- Action Pills -->
-      <div class="flex flex-wrap justify-center gap-2 w-full max-w-lg mx-auto animate-fade-in-up mb-4">
+      <!-- Actions -->
+      <div class="w-full max-w-lg mx-auto space-y-3 animate-fade-in-up mb-4">
+
+        <!-- Primary action -->
         <button v-if="dc.status === 'draft'" @click="doAction('issue')" :disabled="acting"
-          class="flex-1 min-w-[100px] btn bg-primary-600 text-white hover:bg-primary-700 shadow-soft-blue flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
+          class="w-full flex items-center justify-center gap-3 py-4 bg-primary-600 text-white font-extrabold text-base rounded-[1.5rem] shadow-soft-blue hover:bg-primary-700 active:scale-[0.98] transition-all">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
-          <span class="text-xs">Issue</span>
+          {{ acting ? '…' : 'Issue Challan' }}
         </button>
 
         <button v-if="dc.status === 'issued'" @click="doAction('deliver')" :disabled="acting"
-          class="flex-1 min-w-[100px] btn bg-emerald-600 text-white hover:bg-emerald-700 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
+          class="w-full flex items-center justify-center gap-3 py-4 bg-emerald-600 text-white font-extrabold text-base rounded-[1.5rem] shadow-soft hover:bg-emerald-700 active:scale-[0.98] transition-all">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-          <span class="text-xs">Mark Delivered</span>
+          {{ acting ? '…' : 'Mark Delivered' }}
         </button>
 
-        <RouterLink v-if="dc.status === 'draft'" :to="`/delivery-challans/${dc.id}/edit`"
-          class="flex-1 min-w-[100px] btn bg-gray-50 text-gray-800 border border-gray-100 hover:bg-gray-100 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-          <span class="text-xs">Edit</span>
+        <!-- Convert to Invoice (prominent for delivered challans) -->
+        <RouterLink v-if="dc.status === 'delivered'" :to="`/invoices/new?from_challan=${dc.id}`"
+          class="w-full flex items-center justify-center gap-3 py-4 bg-blue-600 text-white font-extrabold text-base rounded-[1.5rem] shadow-soft hover:bg-blue-700 active:scale-[0.98] transition-all">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Convert to Invoice
         </RouterLink>
 
-        <button @click="window.print()"
-          class="flex-1 min-w-[100px] btn bg-gray-50 text-gray-800 border border-gray-100 hover:bg-gray-100 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-          <span class="text-xs">Print</span>
-        </button>
+        <!-- Secondary icon row -->
+        <div class="flex justify-center gap-2">
+          <button @click="window.print()" class="flex flex-col items-center gap-1 px-3 py-2.5 rounded-2xl bg-gray-50 border border-gray-100 hover:bg-gray-100 transition-colors min-w-[56px]">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            <span class="text-[10px] font-bold text-gray-600">Print</span>
+          </button>
+          <RouterLink v-if="dc.status === 'draft'" :to="`/delivery-challans/${dc.id}/edit`"
+            class="flex flex-col items-center gap-1 px-3 py-2.5 rounded-2xl bg-gray-50 border border-gray-100 hover:bg-gray-100 transition-colors min-w-[56px]">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+            <span class="text-[10px] font-bold text-gray-600">Edit</span>
+          </RouterLink>
+          <RouterLink v-if="dc.status !== 'delivered'" :to="`/invoices/new?from_challan=${dc.id}`"
+            class="flex flex-col items-center gap-1 px-3 py-2.5 rounded-2xl bg-blue-50 border border-blue-100 hover:bg-blue-100 transition-colors min-w-[56px]">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span class="text-[10px] font-bold text-blue-700">To Invoice</span>
+          </RouterLink>
+        </div>
 
-        <button v-if="dc.status !== 'delivered' && dc.status !== 'cancelled'" @click="doAction('cancel')" :disabled="acting"
-          class="flex-1 min-w-[100px] btn bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-          <span class="text-xs">Cancel</span>
-        </button>
+        <!-- Cancel text link -->
+        <div v-if="dc.status !== 'delivered' && dc.status !== 'cancelled'" class="text-center pt-1">
+          <button @click="doAction('cancel')" :disabled="acting" class="text-xs text-gray-400 hover:text-danger-500 transition-colors underline underline-offset-2">
+            Cancel Challan
+          </button>
+        </div>
       </div>
 
       <div v-if="actError" class="text-sm text-danger-600 bg-danger-50 rounded-xl px-4 py-3">{{ actError }}</div>

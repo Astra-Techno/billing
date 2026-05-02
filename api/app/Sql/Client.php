@@ -25,7 +25,8 @@ class Client extends Sql
             ->select('list', '
                 c.id, c.type, c.name, c.company, c.gstin, c.email, c.mobile,
                 c.city, c.credit_days, c.currency, c.active, c.created_at,
-                s.name AS state_name
+                s.name AS state_name,
+                (SELECT COALESCE(SUM(i.amount_due),0) FROM invoices i WHERE i.client_id = c.id AND i.status IN (\'sent\',\'partial\',\'overdue\')) AS outstanding_balance
             ')
             ->select('total', 'COUNT(*) AS total')
             ->filter('c.business_id = {business_id}')

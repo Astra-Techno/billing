@@ -56,6 +56,20 @@ const recentPeople = computed(() => {
 <template>
   <div class="flex flex-col gap-6 lg:max-w-4xl lg:mx-auto">
 
+    <!-- ===== OVERDUE ALERT BANNER ===== -->
+    <div v-if="overdue.length > 0" class="flex items-center gap-3 bg-red-50 border border-red-100 rounded-2xl px-4 py-3 animate-fade-in-up">
+      <div class="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-bold text-red-700">{{ overdue.length }} overdue invoice{{ overdue.length !== 1 ? 's' : '' }}</p>
+        <p class="text-xs text-red-500 mt-0.5">{{ inr(overdue.reduce((s, i) => s + parseFloat(i.amount_due || 0), 0)) }} pending collection</p>
+      </div>
+      <RouterLink to="/invoices?status=overdue" class="text-xs font-bold text-red-600 bg-red-100 hover:bg-red-200 px-3 py-1.5 rounded-full transition-colors shrink-0">
+        View All
+      </RouterLink>
+    </div>
+
     <!-- ===== HERO (GPay Style Balance) ===== -->
     <div class="flex flex-col items-center justify-center pt-8 pb-4 shrink-0 relative animate-fade-in-up">
       <p class="text-gray-500 font-medium tracking-wide mb-1 text-sm">Total Outstanding</p>

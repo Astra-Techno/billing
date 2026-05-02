@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { task, item, all } from '../../api'
+import { task, item, list, all } from '../../api'
 import { inr } from '../../utils/currency'
 import { today, addDays } from '../../utils/date'
 import { calcInvoice } from '../../utils/invoice'
@@ -138,6 +138,35 @@ onMounted(async () => {
       const inv = res.data?.data
       if (inv) { applySourceInvoice(inv); if (isEdit.value) step.value = 1 }
     } catch { error.value = 'Could not load bill data. Please try again.' }
+  }
+
+  // Prefill from delivery challan
+  const challanId = route.query.from_challan
+  if (challanId) {
+    try {
+      const [dcRes, itmRes] = await Promise.all([
+        item('DeliveryChallan', { id: challanId }),
+        list('DeliveryChallan:items', { dc_id: challanId }),
+      ])
+      const dc = dcRes.data?.data
+      const dcItems = itmRes.data?.data || []
+      if (dc) {
+        form.value.client_id = dc.client_id
+        form.value.notes = dc.notes || ''
+        if (dcItems.length) {
+          form.value.items = dcItems.map(it => ({
+            description:  it.description,
+            hsn_sac:      it.hsn_sac || '',
+            unit:         it.unit || 'Nos',
+            quantity:     parseFloat(it.quantity) || 1,
+            unit_price:   0,
+            discount_pct: 0,
+            gst_rate:     18,
+            product_id:   it.product_id || null,
+          }))
+        }
+      }
+    } catch { /* silently ignore prefill failure */ }
   }
 })
 

@@ -3,6 +3,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { task, item, all } from '../../api'
 
+const showMore = ref(false)
+
 const router = useRouter()
 const route  = useRoute()
 const emit   = defineEmits(['refresh'])
@@ -30,6 +32,8 @@ onMounted(async () => {
       const c = res.data?.data
       if (c) {
         Object.keys(form.value).forEach(k => { if (c[k] !== undefined) form.value[k] = c[k] })
+        // Show more details if any optional fields are filled
+        if (c.email || c.gstin || c.pan || c.address_line1 || c.city || c.contact_name) showMore.value = true
       }
     } catch {
       error.value = 'Could not load customer details. Please try again.'
@@ -89,7 +93,7 @@ async function submit() {
         </div>
       </div>
 
-      <!-- Basic info -->
+      <!-- Required: Name + Mobile -->
       <div class="card card-body space-y-4">
         <h2 class="section-title">Basic Details</h2>
         <div class="grid sm:grid-cols-2 gap-4">
@@ -105,83 +109,99 @@ async function submit() {
             <label class="form-label">Mobile Number *</label>
             <input v-model="form.mobile" type="tel" class="form-input" placeholder="9876543210" maxlength="10" />
           </div>
-          <div>
-            <label class="form-label">Email Address</label>
-            <input v-model="form.email" type="email" class="form-input" placeholder="email@example.com" />
-          </div>
-          <div>
-            <label class="form-label">GST Number <span class="text-gray-400 font-normal">(if registered)</span></label>
-            <input v-model="form.gstin" type="text" class="form-input font-mono uppercase" placeholder="e.g. 27AABCU9603R1Z6" maxlength="15" />
-          </div>
-          <div>
-            <label class="form-label">PAN Number</label>
-            <input v-model="form.pan" type="text" class="form-input font-mono uppercase" placeholder="e.g. AABCU9603R" maxlength="10" />
-          </div>
-          <div>
-            <label class="form-label">Payment Terms <span class="text-gray-400 font-normal text-xs">(days to pay)</span></label>
-            <div class="flex items-center gap-2">
-              <input v-model="form.credit_days" type="number" class="form-input" min="0" max="365" />
-              <span class="text-sm text-gray-500 shrink-0">days</span>
+        </div>
+
+        <!-- "More Details" toggle -->
+        <button type="button" @click="showMore = !showMore"
+          class="flex items-center gap-2 text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors mt-1">
+          <svg class="w-4 h-4 transition-transform" :class="showMore ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          {{ showMore ? 'Hide extra details' : 'Add email, GST, address…' }}
+        </button>
+      </div>
+
+      <!-- Optional details (expandable) -->
+      <template v-if="showMore">
+        <div class="card card-body space-y-4">
+          <h2 class="section-title">Contact & Tax</h2>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label class="form-label">Email Address</label>
+              <input v-model="form.email" type="email" class="form-input" placeholder="email@example.com" />
+            </div>
+            <div>
+              <label class="form-label">GST Number <span class="text-gray-400 font-normal">(if registered)</span></label>
+              <input v-model="form.gstin" type="text" class="form-input font-mono uppercase" placeholder="e.g. 27AABCU9603R1Z6" maxlength="15" />
+            </div>
+            <div>
+              <label class="form-label">PAN Number</label>
+              <input v-model="form.pan" type="text" class="form-input font-mono uppercase" placeholder="e.g. AABCU9603R" maxlength="10" />
+            </div>
+            <div>
+              <label class="form-label">Payment Terms <span class="text-gray-400 font-normal text-xs">(days to pay)</span></label>
+              <div class="flex items-center gap-2">
+                <input v-model="form.credit_days" type="number" class="form-input" min="0" max="365" />
+                <span class="text-sm text-gray-500 shrink-0">days</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Address -->
-      <div class="card card-body space-y-4">
-        <h2 class="section-title">Address <span class="text-gray-400 font-normal text-sm">(for bills)</span></h2>
-        <div class="grid sm:grid-cols-2 gap-4">
-          <div class="sm:col-span-2">
-            <label class="form-label">Street / Shop Number</label>
-            <input v-model="form.address_line1" type="text" class="form-input" placeholder="e.g. Shop No. 12, Main Market" />
-          </div>
-          <div class="sm:col-span-2">
-            <label class="form-label">Area / Locality</label>
-            <input v-model="form.address_line2" type="text" class="form-input" placeholder="e.g. Near Bus Stand, Gandhi Road" />
-          </div>
-          <div>
-            <label class="form-label">City</label>
-            <input v-model="form.city" type="text" class="form-input" placeholder="Mumbai" />
-          </div>
-          <div>
-            <label class="form-label">PIN Code</label>
-            <input v-model="form.pincode" type="text" class="form-input" placeholder="400001" maxlength="6" />
-          </div>
-          <div class="sm:col-span-2">
-            <label class="form-label">State</label>
-            <select v-model="form.state_id" class="form-select">
-              <option value="">Select State</option>
-              <option v-for="s in states" :key="s.id" :value="s.id">{{ s.name }}</option>
-            </select>
+        <!-- Address -->
+        <div class="card card-body space-y-4">
+          <h2 class="section-title">Address <span class="text-gray-400 font-normal text-sm">(for bills)</span></h2>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div class="sm:col-span-2">
+              <label class="form-label">Street / Shop Number</label>
+              <input v-model="form.address_line1" type="text" class="form-input" placeholder="e.g. Shop No. 12, Main Market" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="form-label">Area / Locality</label>
+              <input v-model="form.address_line2" type="text" class="form-input" placeholder="e.g. Near Bus Stand, Gandhi Road" />
+            </div>
+            <div>
+              <label class="form-label">City</label>
+              <input v-model="form.city" type="text" class="form-input" placeholder="Mumbai" />
+            </div>
+            <div>
+              <label class="form-label">PIN Code</label>
+              <input v-model="form.pincode" type="text" class="form-input" placeholder="400001" maxlength="6" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="form-label">State</label>
+              <select v-model="form.state_id" class="form-select">
+                <option value="">Select State</option>
+                <option v-for="s in states" :key="s.id" :value="s.id">{{ s.name }}</option>
+              </select>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Primary contact (optional) -->
-      <div class="card card-body space-y-4">
-        <div>
-          <h2 class="section-title mb-0">Contact Person <span class="text-gray-400 font-normal text-sm">(optional)</span></h2>
-          <p class="text-xs text-gray-400 mt-0.5">Add a billing or accounts contact for this customer</p>
+        <!-- Primary contact (optional) -->
+        <div class="card card-body space-y-4">
+          <div>
+            <h2 class="section-title mb-0">Contact Person <span class="text-gray-400 font-normal text-sm">(optional)</span></h2>
+            <p class="text-xs text-gray-400 mt-0.5">Add a billing or accounts contact for this customer</p>
+          </div>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label class="form-label">Contact Name</label>
+              <input v-model="form.contact_name" type="text" class="form-input" placeholder="e.g. Priya Sharma" />
+            </div>
+            <div>
+              <label class="form-label">Role / Designation</label>
+              <input v-model="form.contact_designation" type="text" class="form-input" placeholder="e.g. Accounts Manager" />
+            </div>
+            <div>
+              <label class="form-label">Mobile</label>
+              <input v-model="form.contact_mobile" type="tel" class="form-input" placeholder="9876543210" />
+            </div>
+            <div>
+              <label class="form-label">Email</label>
+              <input v-model="form.contact_email" type="email" class="form-input" placeholder="contact@example.com" />
+            </div>
+          </div>
         </div>
-        <div class="grid sm:grid-cols-2 gap-4">
-          <div>
-            <label class="form-label">Contact Name</label>
-            <input v-model="form.contact_name" type="text" class="form-input" placeholder="e.g. Priya Sharma" />
-          </div>
-          <div>
-            <label class="form-label">Role / Designation</label>
-            <input v-model="form.contact_designation" type="text" class="form-input" placeholder="e.g. Accounts Manager" />
-          </div>
-          <div>
-            <label class="form-label">Mobile</label>
-            <input v-model="form.contact_mobile" type="tel" class="form-input" placeholder="9876543210" />
-          </div>
-          <div>
-            <label class="form-label">Email</label>
-            <input v-model="form.contact_email" type="email" class="form-input" placeholder="contact@example.com" />
-          </div>
-        </div>
-      </div>
+      </template>
 
       <div v-if="error" class="text-sm text-danger-500 bg-danger-50 rounded-lg px-4 py-3">{{ error }}</div>
 

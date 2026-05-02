@@ -1,12 +1,13 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { list, task } from '../../api'
+import { ref, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { list, task, item } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 import { today } from '../../utils/date'
 
 const router = useRouter()
+const route  = useRoute()
 const emit   = defineEmits(['refresh'])
 
 const invoices = ref([])
@@ -24,6 +25,27 @@ const form = ref({
   items:      [blankItem()],
 })
 
+// When invoice_id changes, offer to prefill items from that invoice
+async function prefillFromInvoice(invoiceId) {
+  if (!invoiceId) return
+  try {
+    const [itmRes] = await Promise.all([
+      list('Invoice:items', { invoice_id: invoiceId }),
+    ])
+    const invItems = itmRes.data?.data || []
+    if (invItems.length > 0) {
+      form.value.items = invItems.map(it => ({
+        description: it.description,
+        hsn_sac:     it.hsn_sac || '',
+        unit:        it.unit || 'Nos',
+        quantity:    parseFloat(it.quantity) || 1,
+        unit_price:  parseFloat(it.unit_price) || 0,
+        gst_rate:    parseFloat(it.gst_rate) || 0,
+      }))
+    }
+  } catch {}
+}
+
 const reasons = [
   { value: 'return',     label: 'Goods Return' },
   { value: 'discount',   label: 'Discount / Price Adjustment' },
@@ -39,6 +61,12 @@ async function load() {
   try {
     const invRes = await list('Invoice', { sort_by: 'i.created_at', sort_order: 'desc', limit: 500 })
     invoices.value = invRes.data?.data || []
+    // Prefill if coming from an invoice detail page
+    const fromId = route.query.from_invoice
+    if (fromId) {
+      form.value.invoice_id = parseInt(fromId)
+      await prefillFromInvoice(fromId)
+    }
   } catch (err) {
     error.value = 'Failed to load invoices.'
   }

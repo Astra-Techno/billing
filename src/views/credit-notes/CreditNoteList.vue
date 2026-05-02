@@ -101,7 +101,10 @@ onMounted(load)
           <tbody class="divide-y divide-gray-50">
             <tr v-for="cn in creditNotes" :key="cn.id" class="hover:bg-gray-50 transition-colors">
               <td class="px-5 py-4 font-bold text-gray-900">{{ cn.number }}</td>
-              <td class="px-5 py-4 text-gray-500 hidden sm:table-cell">{{ cn.invoice_number || '—' }}</td>
+              <td class="px-5 py-4 hidden sm:table-cell">
+                <RouterLink v-if="cn.invoice_id" :to="`/invoices/${cn.invoice_id}`" class="text-primary-600 font-medium hover:underline">{{ cn.invoice_number }}</RouterLink>
+                <span v-else class="text-gray-400">—</span>
+              </td>
               <td class="px-5 py-4 text-gray-500 hidden md:table-cell">{{ fmtDateShort(cn.issue_date) }}</td>
               <td class="px-5 py-4 text-gray-500 hidden md:table-cell capitalize">{{ cn.reason }}</td>
               <td class="px-5 py-4 text-right font-extrabold text-gray-900">{{ inr(cn.total) }}</td>

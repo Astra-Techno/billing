@@ -83,7 +83,7 @@ async function cancelInvoice() {
 }
 
 function printInvoice() {
-  window.print()
+  window.open('/print/invoice/' + invoice.value.id, '_blank')
 }
 
 const invoiceTitle = computed(() => {
@@ -214,49 +214,61 @@ onMounted(load)
         </p>
       </div>
 
-      <!-- Action Pills -->
-      <div class="flex flex-wrap justify-center gap-2 w-full max-w-lg mx-auto animate-fade-in-up delay-75 mb-6" v-if="invoice.status !== 'cancelled'">
-        
-        <button v-if="invoice.status === 'draft'" @click="markSent" :disabled="acting" class="flex-1 min-w-[120px] btn bg-primary-600 text-white hover:bg-primary-700 shadow-soft-blue flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
+      <!-- Actions -->
+      <div v-if="invoice.status !== 'cancelled'" class="w-full max-w-lg mx-auto space-y-3 animate-fade-in-up delay-75 mb-6">
+
+        <!-- Primary: Mark Sent / Record Payment -->
+        <button v-if="invoice.status === 'draft'" @click="markSent" :disabled="acting"
+          class="w-full flex items-center justify-center gap-3 py-4 bg-primary-600 text-white font-extrabold text-base rounded-[1.5rem] shadow-soft-blue hover:bg-primary-700 active:scale-[0.98] transition-all">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
-          <span class="text-xs">Mark Sent</span>
+          {{ acting ? 'Sending…' : 'Mark as Sent' }}
         </button>
 
-        <button v-if="['sent','partial','overdue'].includes(invoice.status)" @click="showPayModal = true" class="flex-1 min-w-[120px] btn bg-emerald-600 text-white hover:bg-emerald-700 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
+        <button v-if="['sent','partial','overdue'].includes(invoice.status)" @click="showPayModal = true"
+          class="w-full flex items-center justify-center gap-3 py-4 bg-emerald-600 text-white font-extrabold text-base rounded-[1.5rem] shadow-soft hover:bg-emerald-700 active:scale-[0.98] transition-all">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          <span class="text-xs">Pay</span>
+          Record Payment
         </button>
 
-        <button @click="shareWhatsApp" class="flex-1 min-w-[80px] btn bg-green-50 text-green-700 border border-green-100 hover:bg-green-100 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
-          <svg class="w-6 h-6 text-green-600" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.137.565 4.147 1.554 5.887L0 24l6.305-1.524A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.375l-.359-.214-3.735.902.948-3.632-.234-.373A9.818 9.818 0 1112 21.818z"/></svg>
-          <span class="text-xs">Share</span>
-        </button>
+        <!-- Secondary: icon row -->
+        <div class="flex justify-center gap-2">
+          <button @click="shareWhatsApp" class="flex flex-col items-center gap-1 px-3 py-2.5 rounded-2xl bg-green-50 border border-green-100 hover:bg-green-100 active:bg-green-200 transition-colors min-w-[56px]">
+            <svg class="w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.137.565 4.147 1.554 5.887L0 24l6.305-1.524A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.375l-.359-.214-3.735.902.948-3.632-.234-.373A9.818 9.818 0 1112 21.818z"/></svg>
+            <span class="text-[10px] font-bold text-green-700">Share</span>
+          </button>
 
-        <button @click="shareEmail" class="flex-1 min-w-[80px] btn bg-sky-50 text-sky-700 border border-sky-100 hover:bg-sky-100 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
-          <svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-          <span class="text-xs">Email</span>
-        </button>
+          <button @click="shareEmail" class="flex flex-col items-center gap-1 px-3 py-2.5 rounded-2xl bg-sky-50 border border-sky-100 hover:bg-sky-100 active:bg-sky-200 transition-colors min-w-[56px]">
+            <svg class="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            <span class="text-[10px] font-bold text-sky-700">Email</span>
+          </button>
 
-        <button @click="printInvoice" class="flex-1 min-w-[80px] btn bg-gray-50 text-gray-800 border border-gray-100 hover:bg-gray-100 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-          <span class="text-xs">Print</span>
-        </button>
+          <button @click="printInvoice" class="flex flex-col items-center gap-1 px-3 py-2.5 rounded-2xl bg-gray-50 border border-gray-100 hover:bg-gray-100 active:bg-gray-200 transition-colors min-w-[56px]">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            <span class="text-[10px] font-bold text-gray-600">Print</span>
+          </button>
 
-        <button @click="downloadPdf" :disabled="downloading" class="flex-1 min-w-[80px] btn bg-red-50 text-red-700 border border-red-100 hover:bg-red-100 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
-          <svg v-if="downloading" class="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
-          <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-          <span class="text-xs">{{ downloading ? '…' : 'PDF' }}</span>
-        </button>
-        
-        <RouterLink v-if="invoice.status !== 'cancelled'" :to="`/invoices/${invoice.id}/edit`" class="flex-1 min-w-[80px] btn bg-gray-50 text-gray-800 border border-gray-100 hover:bg-gray-100 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-          <span class="text-xs">Edit</span>
-        </RouterLink>
+          <button @click="downloadPdf" :disabled="downloading" class="flex flex-col items-center gap-1 px-3 py-2.5 rounded-2xl bg-red-50 border border-red-100 hover:bg-red-100 active:bg-red-200 transition-colors min-w-[56px]">
+            <svg v-if="downloading" class="w-5 h-5 animate-spin text-red-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+            <svg v-else class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            <span class="text-[10px] font-bold text-red-700">{{ downloading ? '…' : 'PDF' }}</span>
+          </button>
 
-        <button v-if="invoice.status !== 'paid'" @click="showCancelModal = true" class="flex-1 min-w-[80px] btn bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-          <span class="text-xs">Cancel</span>
-        </button>
+          <RouterLink :to="`/invoices/${invoice.id}/edit`" class="flex flex-col items-center gap-1 px-3 py-2.5 rounded-2xl bg-gray-50 border border-gray-100 hover:bg-gray-100 active:bg-gray-200 transition-colors min-w-[56px]">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+            <span class="text-[10px] font-bold text-gray-600">Edit</span>
+          </RouterLink>
+        </div>
+
+        <!-- Cancel + Credit Note: deprioritised text links -->
+        <div class="flex items-center justify-center gap-4 pt-1">
+          <RouterLink v-if="invoice.status === 'paid' || invoice.status === 'partial'" :to="`/credit-notes/new?from_invoice=${invoice.id}`"
+            class="text-xs text-gray-400 hover:text-primary-600 transition-colors">
+            Issue Credit Note
+          </RouterLink>
+          <button v-if="invoice.status !== 'paid'" @click="showCancelModal = true" class="text-xs text-gray-400 hover:text-danger-500 transition-colors underline underline-offset-2">
+            Cancel Invoice
+          </button>
+        </div>
 
       </div>
 
@@ -326,11 +338,11 @@ onMounted(load)
               <tr>
                 <th class="px-3 py-2.5 text-left text-xs font-semibold w-7">#</th>
                 <th class="px-3 py-2.5 text-left text-xs font-semibold">Description</th>
-                <th class="px-3 py-2.5 text-center text-xs font-semibold">HSN/SAC</th>
+                <th class="hidden sm:table-cell px-3 py-2.5 text-center text-xs font-semibold">HSN/SAC</th>
                 <th class="px-3 py-2.5 text-right text-xs font-semibold">Qty</th>
-                <th class="px-3 py-2.5 text-right text-xs font-semibold">Rate</th>
-                <th class="px-3 py-2.5 text-right text-xs font-semibold">Taxable</th>
-                <th v-if="isGst" class="px-3 py-2.5 text-right text-xs font-semibold">Tax</th>
+                <th class="hidden sm:table-cell px-3 py-2.5 text-right text-xs font-semibold">Rate</th>
+                <th class="hidden sm:table-cell px-3 py-2.5 text-right text-xs font-semibold">Taxable</th>
+                <th v-if="isGst" class="hidden sm:table-cell px-3 py-2.5 text-right text-xs font-semibold">Tax</th>
                 <th class="px-3 py-2.5 text-right text-xs font-semibold">Amount</th>
               </tr>
             </thead>
@@ -340,12 +352,14 @@ onMounted(load)
                 <td class="px-3 py-3">
                   <p class="font-medium text-gray-800">{{ it.description }}</p>
                   <p v-if="it.unit" class="text-xs text-gray-400">{{ it.unit }}</p>
+                  <!-- Mobile-only: rate info inline -->
+                  <p class="sm:hidden text-xs text-gray-400 mt-0.5">{{ it.quantity }} × {{ inr(it.unit_price) }}</p>
                 </td>
-                <td class="px-3 py-3 text-center font-mono text-xs text-gray-500">{{ it.hsn_sac || '—' }}</td>
+                <td class="hidden sm:table-cell px-3 py-3 text-center font-mono text-xs text-gray-500">{{ it.hsn_sac || '—' }}</td>
                 <td class="px-3 py-3 text-right text-gray-700">{{ it.quantity }}</td>
-                <td class="px-3 py-3 text-right text-gray-700">{{ inr(it.unit_price) }}</td>
-                <td class="px-3 py-3 text-right text-gray-700">{{ inr(it.taxable_amt) }}</td>
-                <td v-if="isGst" class="px-3 py-3 text-right text-xs">
+                <td class="hidden sm:table-cell px-3 py-3 text-right text-gray-700">{{ inr(it.unit_price) }}</td>
+                <td class="hidden sm:table-cell px-3 py-3 text-right text-gray-700">{{ inr(it.taxable_amt) }}</td>
+                <td v-if="isGst" class="hidden sm:table-cell px-3 py-3 text-right text-xs">
                   <div v-if="it.cgst_amt > 0" class="space-y-0.5">
                     <div class="text-gray-600">CGST {{ it.cgst_rate }}%: {{ inr(it.cgst_amt) }}</div>
                     <div class="text-gray-600">SGST {{ it.sgst_rate }}%: {{ inr(it.sgst_amt) }}</div>
