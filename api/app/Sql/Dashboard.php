@@ -13,14 +13,14 @@ class Dashboard extends Sql
     {
         return (new Query('Dashboard.stats'))
             ->from('invoices i')
+            ->left('payments p ON p.invoice_id = i.id
+                    AND MONTH(p.payment_date) = MONTH(CURDATE())
+                    AND YEAR(p.payment_date)  = YEAR(CURDATE())')
             ->select('list', '
                 SUM(i.amount_due)                                                       AS total_due,
-                SUM(CASE WHEN i.status = \'overdue\'                 THEN 1 ELSE 0 END) AS overdue_count,
-                SUM(CASE WHEN i.status = \'draft\'                   THEN 1 ELSE 0 END) AS draft_count,
-                SUM(CASE WHEN i.status = \'paid\'
-                         AND MONTH(i.paid_at) = MONTH(CURDATE())
-                         AND YEAR(i.paid_at)  = YEAR(CURDATE())
-                    THEN i.total ELSE 0 END)                                            AS total_paid_month
+                SUM(CASE WHEN i.status = \'overdue\' THEN 1 ELSE 0 END)                AS overdue_count,
+                SUM(CASE WHEN i.status = \'draft\'   THEN 1 ELSE 0 END)                AS draft_count,
+                COALESCE(SUM(p.amount), 0)                                              AS total_paid_month
             ')
             ->filter('i.business_id = {business_id}')
             ->filter('i.status != \'cancelled\'');
