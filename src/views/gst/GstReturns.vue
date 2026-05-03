@@ -18,10 +18,12 @@ const filingFreq = ref('monthly')  // 'monthly' | 'quarterly'
 
 // Period selection
 const now       = new Date()
+const currentFy = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1
+const selFy     = ref(currentFy)
 const selMonth  = ref(now.getMonth() + 1)
 const selYear   = ref(now.getFullYear())
 const selQ      = ref(Math.ceil((now.getMonth() + 1) / 3))
-const selQYear  = ref(now.getFullYear())
+const selQYear  = ref(currentFy)
 
 // Invoices & selection
 const invoices    = ref([])
@@ -39,26 +41,35 @@ const MONTH_NAMES = ['','January','February','March','April','May','June',
 const QUARTER_LABELS = ['','Apr – Jun','Jul – Sep','Oct – Dec','Jan – Mar']
 const GST_RATES = [0, 5, 12, 18, 28]
 
-// Last 12 months as selectable cards
-const recentMonths = computed(() => {
+// Available Financial Years
+const availableFys = computed(() => {
+  const years = []
+  for (let y = currentFy; y >= currentFy - 5; y--) years.push(y)
+  return years
+})
+
+// Months for selected FY
+const displayMonths = computed(() => {
   const list = []
-  for (let i = 0; i < 12; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    list.push({ month: d.getMonth() + 1, year: d.getFullYear(),
-                label: MONTH_NAMES[d.getMonth() + 1], shortYear: String(d.getFullYear()).slice(2) })
+  const fy = selFy.value
+  for (let m = 4; m <= 12; m++) {
+    list.push({ month: m, year: fy, label: MONTH_NAMES[m], shortYear: String(fy).slice(2) })
+  }
+  for (let m = 1; m <= 3; m++) {
+    list.push({ month: m, year: fy + 1, label: MONTH_NAMES[m], shortYear: String(fy + 1).slice(2) })
   }
   return list
 })
 
-// Quarterly options for current and last FY
-const recentQuarters = computed(() => {
-  const rows = []
-  for (let fy = now.getFullYear(); fy >= now.getFullYear() - 1; fy--) {
-    for (let q = 4; q >= 1; q--) {
-      rows.push({ q, year: fy, label: QUARTER_LABELS[q], fyLabel: `FY ${fy}–${String(fy+1).slice(2)}` })
-    }
-  }
-  return rows.slice(0, 8)
+// Quarters for selected FY
+const displayQuarters = computed(() => {
+  const fy = selFy.value
+  return [
+    { q: 1, year: fy, label: 'Apr – Jun', fyLabel: `FY ${fy}–${String(fy+1).slice(2)}` },
+    { q: 2, year: fy, label: 'Jul – Sep', fyLabel: `FY ${fy}–${String(fy+1).slice(2)}` },
+    { q: 3, year: fy, label: 'Oct – Dec', fyLabel: `FY ${fy}–${String(fy+1).slice(2)}` },
+    { q: 4, year: fy, label: 'Jan – Mar', fyLabel: `FY ${fy}–${String(fy+1).slice(2)}` },
+  ]
 })
 
 // Period date range
@@ -296,6 +307,87 @@ function download() {
   a.click(); URL.revokeObjectURL(url)
 }
 
+const printing = ref(false)
+
+function generatePdf() {
+  printing.value = true
+  const biz = business.value
+  const t    = liveTotals.value
+  const r    = periodRange.value
+  const selected = invoices.value.filter(inv => selectedIds.value.has(inv.id))
+
+  const rows = selected.map(inv => `
+    <tr>
+      <td>${inv.number}</td>
+      <td>${inv.client_name || 'Walk-in Customer'}</td>
+      <td>${inv.client_gstin || '—'}</td>
+      <td style="text-align:right">${inr(inv.total)}</td>
+    </tr>`).join('')
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GST Report – ${r.label}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,sans-serif;color:#111;padding:32px;max-width:860px;margin:0 auto}
+    .header{text-align:center;border-bottom:2px solid #e5e7eb;padding-bottom:20px;margin-bottom:24px}
+    h1{font-size:22px;font-weight:800;margin-bottom:4px}
+    .sub{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#6b7280;margin-bottom:12px}
+    .meta{display:flex;justify-content:center;gap:32px;font-size:12px;color:#555}
+    .meta b{color:#111}
+    h3{font-size:13px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin:0 0 10px}
+    table{width:100%;border-collapse:collapse;margin-bottom:28px;font-size:13px}
+    th{text-align:left;font-size:11px;text-transform:uppercase;color:#9ca3af;border-bottom:2px solid #e5e7eb;padding:6px 0}
+    td{padding:9px 0;border-bottom:1px solid #f3f4f6}
+    .totals{background:#111;color:#fff;border-radius:12px;padding:20px 24px;margin-top:8px}
+    .t-row{display:flex;justify-content:space-between;font-size:13px;color:#9ca3af;padding:4px 0}
+    .t-grand{display:flex;justify-content:space-between;font-size:18px;font-weight:800;border-top:1px solid rgba(255,255,255,.15);padding-top:12px;margin-top:8px}
+    .footer{text-align:center;font-size:11px;color:#9ca3af;margin-top:28px}
+    @media print{body{padding:16px}button{display:none}}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>${biz?.name || 'Business'}</h1>
+    <p class="sub">GST Return Report</p>
+    <div class="meta">
+      <span><b>GSTIN:</b> ${biz?.gstin || 'Not provided'}</span>
+      <span><b>Period:</b> ${r.label}</span>
+      <span><b>Generated:</b> ${new Date().toLocaleDateString('en-IN')}</span>
+    </div>
+  </div>
+
+  <h3>${selected.length} Bills Included</h3>
+  <table>
+    <thead>
+      <tr><th>Invoice No.</th><th>Customer</th><th>GSTIN</th><th style="text-align:right">Amount</th></tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+
+  <div class="totals">
+    <div class="t-row"><span>CGST</span><span>${inr(t.cgst)}</span></div>
+    <div class="t-row"><span>SGST</span><span>${inr(t.sgst)}</span></div>
+    <div class="t-row"><span>IGST</span><span>${inr(t.igst)}</span></div>
+    <div class="t-grand"><span>Total GST to pay this period</span><span>${inr(t.gst)}</span></div>
+  </div>
+
+  <p class="footer">BillBook India &nbsp;·&nbsp; ${new Date().toLocaleString('en-IN')}</p>
+
+  <script>window.onload=function(){window.print()}<\/script>
+</body>
+</html>`
+
+  const blob = new Blob([html], { type: 'text/html' })
+  const url  = URL.createObjectURL(blob)
+  const win  = window.open(url, '_blank')
+  if (win) win.addEventListener('afterprint', () => URL.revokeObjectURL(url))
+  else URL.revokeObjectURL(url)
+  printing.value = false
+}
+
 function startOver() { step.value=1; invoices.value=[]; selectedIds.value=new Set(); cashSales.value=[]; fetchError.value=''; gstr1Json.value=null; resultData.value=null }
 
 onMounted(async()=>{
@@ -310,62 +402,109 @@ onMounted(async()=>{
 </script>
 
 <template>
-  <div class="max-w-xl mx-auto space-y-5 pb-10">
+  <div class="flex flex-col lg:flex-row gap-6 w-full lg:h-full lg:min-h-0">
 
-    <!-- Header -->
-    <div class="text-center pt-2">
-      <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary-100 mb-3">
-        <svg class="w-7 h-7 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-        </svg>
-      </div>
-      <h1 class="text-xl font-bold text-gray-900 flex items-center gap-2">GST File Generator <HelpIcon section="gst" /></h1>
-      <p class="text-sm text-gray-500 mt-1">Create your GST return file in 3 simple steps</p>
+    <!-- LEFT PANE: Header & Steps -->
+    <div class="shrink-0 w-full lg:w-72 flex flex-col gap-6 lg:h-full lg:min-h-0 print:hidden">
+      
+      <!-- Header -->
+      <div class="pt-2">
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary-100 mb-3">
+          <svg class="w-7 h-7 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+        <h1 class="text-xl font-bold text-gray-900 flex items-center gap-2">GST File Generator <HelpIcon section="gst" /></h1>
+        <p class="text-sm text-gray-500 mt-1">Create your GST return file in 3 simple steps</p>
 
-      <!-- Step dots -->
-      <div class="flex items-center justify-center gap-2 mt-4">
-        <div v-for="n in 3" :key="n" class="flex items-center gap-2">
-          <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all"
-            :class="step===n ? 'bg-primary-600 text-white shadow-md scale-110'
-                  : step>n  ? 'bg-success-500 text-white'
-                             : 'bg-gray-200 text-gray-500'">
-            <svg v-if="step>n" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
-            </svg>
-            <span v-else>{{ n }}</span>
+        <!-- Step dots (Vertical on Desktop, Horizontal on Mobile) -->
+        <div class="flex lg:flex-col justify-between lg:justify-start lg:items-start gap-2 lg:gap-4 mt-6 bg-gray-50 lg:bg-transparent p-3 lg:p-0 rounded-2xl">
+          
+          <div class="flex items-center lg:items-start gap-3">
+            <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all shrink-0"
+              :class="step===1 ? 'bg-primary-600 text-white shadow-md scale-110' : step>1 ? 'bg-success-500 text-white' : 'bg-gray-200 text-gray-500'">
+              <svg v-if="step>1" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span v-else>1</span>
+            </div>
+            <div class="flex flex-col hidden lg:flex mt-1">
+              <span class="text-sm" :class="step===1?'text-primary-600 font-bold':'text-gray-500'">Choose month</span>
+            </div>
           </div>
-          <div v-if="n<3" class="w-8 h-0.5" :class="step>n?'bg-success-400':'bg-gray-200'"></div>
+          
+          <div class="hidden lg:block w-0.5 h-4 ml-3.5" :class="step>1?'bg-success-400':'bg-gray-200'"></div>
+          
+          <div class="flex items-center lg:items-start gap-3">
+            <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all shrink-0"
+              :class="step===2 ? 'bg-primary-600 text-white shadow-md scale-110' : step>2 ? 'bg-success-500 text-white' : 'bg-gray-200 text-gray-500'">
+              <svg v-if="step>2" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span v-else>2</span>
+            </div>
+            <div class="flex flex-col hidden lg:flex mt-1">
+              <span class="text-sm" :class="step===2?'text-primary-600 font-bold':'text-gray-500'">Check bills</span>
+            </div>
+          </div>
+
+          <div class="hidden lg:block w-0.5 h-4 ml-3.5" :class="step>2?'bg-success-400':'bg-gray-200'"></div>
+
+          <div class="flex items-center lg:items-start gap-3">
+            <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all shrink-0"
+              :class="step===3 ? 'bg-primary-600 text-white shadow-md scale-110' : 'bg-gray-200 text-gray-500'">
+              <span>3</span>
+            </div>
+            <div class="flex flex-col hidden lg:flex mt-1">
+              <span class="text-sm" :class="step===3?'text-primary-600 font-bold':'text-gray-500'">Download</span>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="flex justify-center gap-10 mt-1">
-        <span class="text-xs" :class="step===1?'text-primary-600 font-medium':'text-gray-400'">Choose month</span>
-        <span class="text-xs" :class="step===2?'text-primary-600 font-medium':'text-gray-400'">Check bills</span>
-        <span class="text-xs" :class="step===3?'text-primary-600 font-medium':'text-gray-400'">Download</span>
+
+      <!-- GSTIN missing notice -->
+      <div v-if="!loading && !business?.gstin"
+        class="flex items-start gap-3 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 mt-4">
+        <svg class="w-6 h-6 mt-0.5 text-yellow-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <div class="text-sm text-yellow-800">
+          <p class="font-semibold">Your GSTIN is missing</p>
+          <p class="mt-0.5">Go to <RouterLink to="/settings" class="underline font-medium">Settings → GST Details</RouterLink> to add it.</p>
+        </div>
       </div>
     </div>
 
-    <div v-if="loading" class="card p-10 text-center text-gray-400">Loading your data…</div>
-
-    <template v-else>
-
-      <!-- GSTIN missing notice -->
-      <div v-if="!business?.gstin"
-        class="flex items-start gap-3 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3">
-        <span class="text-xl mt-0.5">⚠️</span>
-        <div class="text-sm text-yellow-800">
-          <p class="font-semibold">Your GST number (GSTIN) is missing</p>
-          <p class="mt-0.5">Go to
-            <RouterLink to="/settings" class="underline font-medium">Settings → GST Details</RouterLink>
-            and add your GSTIN. It will appear on the file sent to the government.
-          </p>
+    <!-- RIGHT PANE: Main Form / Wizard Area -->
+    <div class="flex-1 w-full flex flex-col lg:h-full lg:min-h-0 lg:overflow-y-auto hide-scrollbar pb-20 lg:pb-6 lg:pt-2 print:overflow-visible print:pb-0">
+      <div class="w-full max-w-2xl lg:ml-8 space-y-5 print:max-w-none print:w-full print:m-0">
+        
+        <!-- Print Header (Only visible when printing) -->
+        <div class="hidden print:block print:mb-8 print:text-center border-b border-gray-200 print:pb-6">
+          <h1 class="text-3xl font-black text-gray-900 mb-1">{{ business?.name || 'GST Return Report' }}</h1>
+          <p class="text-sm font-semibold text-gray-500 mb-4 tracking-widest uppercase">GST RETURN REPORT</p>
+          <div class="flex justify-center gap-8 text-sm text-gray-700">
+            <p><span class="font-semibold text-gray-400">GSTIN:</span> {{ business?.gstin || 'Not provided' }}</p>
+            <p><span class="font-semibold text-gray-400">Period:</span> {{ periodRange?.label }}</p>
+            <p><span class="font-semibold text-gray-400">Generated:</span> {{ new Date().toLocaleDateString('en-IN') }}</p>
+          </div>
         </div>
-      </div>
+        
+        <div v-if="loading" class="card p-10 text-center text-gray-400">Loading your data…</div>
 
-      <!-- ══════════════════════════════════════════
-           STEP 1 — Choose month
-      ══════════════════════════════════════════ -->
+        <template v-else>
+
+          <!-- ══════════════════════════════════════════
+               STEP 1 — Choose month
+          ══════════════════════════════════════════ -->
       <div v-if="step===1" class="space-y-4">
+
+        <!-- Choose Financial Year -->
+        <div class="card card-body flex items-center justify-between">
+          <p class="text-sm font-semibold text-gray-800">Select Financial Year</p>
+          <select v-model="selFy" class="form-select w-36 py-2 text-sm font-semibold text-gray-800 bg-gray-50 border-transparent hover:border-gray-300 focus:border-primary-500 transition-colors">
+            <option v-for="y in availableFys" :key="y" :value="y">FY {{ y }}–{{ String(y+1).slice(2) }}</option>
+          </select>
+        </div>
 
         <!-- How often do you file? -->
         <div class="card card-body">
@@ -374,14 +513,14 @@ onMounted(async()=>{
             <button @click="filingFreq='monthly'"
               class="flex flex-col items-center gap-1 py-4 rounded-xl border-2 transition-all"
               :class="filingFreq==='monthly'?'border-primary-500 bg-primary-50':'border-gray-200 hover:border-gray-300'">
-              <span class="text-2xl">📅</span>
+              <svg class="w-8 h-8 text-primary-600 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
               <span class="text-sm font-semibold text-gray-800">Every month</span>
               <span class="text-xs text-gray-400">Monthly filer</span>
             </button>
             <button @click="filingFreq='quarterly'"
               class="flex flex-col items-center gap-1 py-4 rounded-xl border-2 transition-all"
               :class="filingFreq==='quarterly'?'border-primary-500 bg-primary-50':'border-gray-200 hover:border-gray-300'">
-              <span class="text-2xl">🗓️</span>
+              <svg class="w-8 h-8 text-primary-600 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
               <span class="text-sm font-semibold text-gray-800">Every 3 months</span>
               <span class="text-xs text-gray-400">Quarterly filer</span>
             </button>
@@ -397,7 +536,7 @@ onMounted(async()=>{
             Which month's GST file do you need?
           </p>
           <div class="grid grid-cols-3 gap-2">
-            <button v-for="m in recentMonths" :key="`${m.month}-${m.year}`"
+            <button v-for="m in displayMonths" :key="`${m.month}-${m.year}`"
               @click="selMonth=m.month; selYear=m.year"
               class="py-3 rounded-xl border-2 text-center transition-all"
               :class="selMonth===m.month && selYear===m.year
@@ -415,7 +554,7 @@ onMounted(async()=>{
             Which quarter's GST file do you need?
           </p>
           <div class="space-y-2">
-            <button v-for="q in recentQuarters" :key="`${q.q}-${q.year}`"
+            <button v-for="q in displayQuarters" :key="`${q.q}-${q.year}`"
               @click="selQ=q.q; selQYear=q.year"
               class="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all"
               :class="selQ===q.q && selQYear===q.year
@@ -436,7 +575,7 @@ onMounted(async()=>{
         </div>
 
         <div v-if="fetchError" class="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
-          <span>⚠️</span> {{ fetchError }}
+          <svg class="w-5 h-5 text-red-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg> {{ fetchError }}
         </div>
 
         <div v-if="fetching" class="card card-body flex items-center justify-center gap-3 py-6 text-primary-600">
@@ -459,10 +598,10 @@ onMounted(async()=>{
       <template v-if="step===2">
 
         <!-- Period badge -->
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between print:hidden">
           <div class="flex items-center gap-2">
             <span class="bg-primary-100 text-primary-700 text-sm font-semibold px-3 py-1 rounded-full">
-              📅 {{ periodRange.label }}
+              <svg class="w-4 h-4 inline-block text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> {{ periodRange.label }}
             </span>
             <span class="text-xs text-gray-400">{{ invoices.length }} bills found</span>
           </div>
@@ -476,7 +615,7 @@ onMounted(async()=>{
           <div class="px-5 py-4 bg-blue-50 border-b border-blue-100">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <span class="text-xl">🏢</span>
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                 <div>
                   <p class="font-semibold text-gray-800 text-sm">Business customers</p>
                   <p class="text-xs text-gray-500">Customers who gave you their GST number</p>
@@ -517,7 +656,7 @@ onMounted(async()=>{
           <div class="px-5 py-4 bg-purple-50 border-b border-purple-100">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <span class="text-xl">🛍️</span>
+                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                 <div>
                   <p class="font-semibold text-gray-800 text-sm">Regular customers</p>
                   <p class="text-xs text-gray-500">Walk-in customers, individuals, no GST number</p>
@@ -560,14 +699,14 @@ onMounted(async()=>{
           <div class="px-5 py-4 bg-amber-50 border-b border-amber-100">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <span class="text-xl">💵</span>
+                <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 <div>
                   <p class="font-semibold text-gray-800 text-sm">Cash sales not in this app?</p>
                   <p class="text-xs text-gray-500">Add any sales you didn't enter as a bill</p>
                 </div>
               </div>
               <button @click="addCashRow"
-                class="text-xs bg-amber-100 text-amber-700 font-medium px-3 py-1.5 rounded-lg hover:bg-amber-200 transition-colors">
+                class="text-xs bg-amber-100 text-amber-700 font-medium px-3 py-1.5 rounded-lg hover:bg-amber-200 transition-colors print:hidden">
                 + Add
               </button>
             </div>
@@ -613,37 +752,45 @@ onMounted(async()=>{
         </div>
 
         <!-- Live totals -->
-        <div class="card card-body bg-gray-900 text-white rounded-2xl space-y-4">
+        <div class="card card-body bg-gray-900 print:bg-white print:border print:border-gray-300 text-white print:text-gray-900 rounded-2xl space-y-4 print:break-inside-avoid">
           <div class="flex items-center justify-between">
             <p class="font-semibold">Your GST for {{ periodRange.label }}</p>
-            <span class="text-xs text-gray-400">{{ selectedCount }} of {{ invoices.length }} bills included</span>
+            <span class="text-xs text-gray-400 print:text-gray-600">{{ selectedCount }} of {{ invoices.length }} bills included</span>
           </div>
           <div class="grid grid-cols-3 gap-3">
-            <div class="bg-white/10 rounded-xl p-3 text-center">
+            <div class="bg-white/10 print:bg-gray-50 print:border print:border-gray-200 rounded-xl p-3 text-center">
               <p class="text-xs text-gray-300 mb-1">CGST</p>
               <p class="font-bold text-lg">{{ inr(liveTotals.cgst) }}</p>
             </div>
-            <div class="bg-white/10 rounded-xl p-3 text-center">
-              <p class="text-xs text-gray-300 mb-1">SGST</p>
+            <div class="bg-white/10 print:bg-gray-50 print:border print:border-gray-200 rounded-xl p-3 text-center">
+              <p class="text-xs text-gray-300 print:text-gray-500 mb-1">SGST</p>
               <p class="font-bold text-lg">{{ inr(liveTotals.sgst) }}</p>
             </div>
-            <div class="bg-white/10 rounded-xl p-3 text-center">
-              <p class="text-xs text-gray-300 mb-1">IGST</p>
+            <div class="bg-white/10 print:bg-gray-50 print:border print:border-gray-200 rounded-xl p-3 text-center">
+              <p class="text-xs text-gray-300 print:text-gray-500 mb-1">IGST</p>
               <p class="font-bold text-lg">{{ inr(liveTotals.igst) }}</p>
             </div>
           </div>
-          <div class="border-t border-white/20 pt-3 flex justify-between items-center">
-            <p class="text-gray-300 text-sm">Total GST to pay this period</p>
-            <p class="text-2xl font-bold text-white">{{ inr(liveTotals.gst) }}</p>
+          <div class="border-t border-white/20 print:border-gray-200 pt-3 flex justify-between items-center">
+            <p class="text-gray-300 print:text-gray-600 text-sm">Total GST to pay this period</p>
+            <p class="text-2xl font-bold text-white print:text-gray-900">{{ inr(liveTotals.gst) }}</p>
           </div>
         </div>
 
         <div v-if="fetchError" class="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
-          <span>⚠️</span> {{ fetchError }}
+          <svg class="w-5 h-5 text-red-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg> {{ fetchError }}
         </div>
 
-        <div class="flex gap-3">
+        <div class="flex flex-col sm:flex-row gap-3 print:hidden">
           <button @click="step=1" class="btn-outline flex-1" :disabled="building">← Back</button>
+          <button @click="generatePdf" class="btn-outline flex-1 flex items-center justify-center gap-2" :disabled="building || printing">
+            <svg v-if="printing" class="animate-spin w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+            </svg>
+            <svg v-else class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            {{ printing ? 'Preparing…' : 'Print Report' }}
+          </button>
           <button @click="createFile" :disabled="building || selectedCount===0"
             class="btn-primary flex-1 py-3.5 text-base font-semibold rounded-xl">
             <span v-if="building" class="flex items-center justify-center gap-2">
@@ -653,7 +800,7 @@ onMounted(async()=>{
               </svg>
               Creating file…
             </span>
-            <span v-else>✅ Create my GST file</span>
+            <span v-else class="flex items-center justify-center gap-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Create my GST file</span>
           </button>
         </div>
       </template>
@@ -673,7 +820,7 @@ onMounted(async()=>{
             </div>
           </div>
           <div>
-            <h2 class="text-lg font-bold text-gray-900">Your GST file is ready! 🎉</h2>
+            <h2 class="text-lg font-bold text-gray-900">Your GST file is ready!</h2>
             <p class="text-sm text-gray-600 mt-1">{{ resultData.period }}</p>
           </div>
           <p class="text-xs text-gray-500">The file was downloaded automatically. Check your Downloads folder.</p>
@@ -685,25 +832,25 @@ onMounted(async()=>{
           <div class="space-y-3">
             <div class="flex items-center justify-between py-2 border-b border-gray-100">
               <div class="flex items-center gap-2 text-sm text-gray-600">
-                <span>🏢</span> Bills to business customers
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg> Bills to business customers
               </div>
               <span class="font-semibold text-gray-900">{{ resultData.b2bCount }}</span>
             </div>
             <div class="flex items-center justify-between py-2 border-b border-gray-100">
               <div class="flex items-center gap-2 text-sm text-gray-600">
-                <span>🛍️</span> Regular customer sales
+                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg> Regular customer sales
               </div>
               <span class="font-semibold text-gray-900">{{ resultData.retailCount }}</span>
             </div>
             <div v-if="resultData.cashRows" class="flex items-center justify-between py-2 border-b border-gray-100">
               <div class="flex items-center gap-2 text-sm text-gray-600">
-                <span>💵</span> Cash sales added manually
+                <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg> Cash sales added manually
               </div>
               <span class="font-semibold text-gray-900">{{ resultData.cashRows }}</span>
             </div>
             <div v-if="resultData.excluded" class="flex items-center justify-between py-2 border-b border-gray-100">
               <div class="flex items-center gap-2 text-sm text-gray-500">
-                <span>❌</span> Bills you excluded
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> Bills you excluded
               </div>
               <span class="font-medium text-gray-500">{{ resultData.excluded }}</span>
             </div>
@@ -734,7 +881,7 @@ onMounted(async()=>{
           <p class="font-semibold text-gray-800">What to do with this file?</p>
           <div class="space-y-3">
             <div class="flex items-start gap-3 p-3 bg-blue-50 rounded-xl">
-              <span class="text-2xl shrink-0">👨‍💼</span>
+              <svg class="w-8 h-8 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
               <div>
                 <p class="text-sm font-semibold text-gray-800">Option 1 — Send to your CA</p>
                 <p class="text-xs text-gray-500 mt-0.5">
@@ -744,7 +891,7 @@ onMounted(async()=>{
               </div>
             </div>
             <div class="flex items-start gap-3 p-3 bg-green-50 rounded-xl">
-              <span class="text-2xl shrink-0">🌐</span>
+              <svg class="w-8 h-8 text-green-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
               <div>
                 <p class="text-sm font-semibold text-gray-800">Option 2 — Upload yourself on gst.gov.in</p>
                 <ol class="text-xs text-gray-500 mt-1 space-y-0.5 list-decimal list-inside">
@@ -764,6 +911,8 @@ onMounted(async()=>{
         </button>
       </template>
 
-    </template>
+        </template>
+      </div> <!-- End Main Form wrapper -->
+    </div> <!-- End Right Pane -->
   </div>
 </template>
