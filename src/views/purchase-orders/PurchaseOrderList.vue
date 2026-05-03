@@ -56,7 +56,7 @@ onMounted(load)
           </div>
         </div>
 
-        <!-- Search & Status Row -->
+        <!-- Search Row -->
         <div class="flex gap-2 animate-fade-in-up z-10 relative">
           <div class="relative flex-1 min-w-0">
             <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -64,13 +64,17 @@ onMounted(load)
               class="w-full bg-white border-0 shadow-soft text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-primary-500 block pl-10 p-2.5 transition-shadow"
               placeholder="Search by PO no. or supplier…" />
           </div>
-          <div class="shrink-0 w-[110px] relative">
-            <select v-model="filter.status" @change="load()" class="w-full h-full bg-white border-0 shadow-soft text-gray-700 text-xs rounded-xl focus:ring-2 focus:ring-primary-500 pl-3 pr-8 appearance-none cursor-pointer font-bold">
-              <option value="">All Status</option>
-              <option v-for="t in tabs.filter(t => t.value)" :key="t.value" :value="t.value">{{ t.label }}</option>
-            </select>
-            <svg class="w-3.5 h-3.5 text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
-          </div>
+        </div>
+
+        <!-- Status Pill Tabs -->
+        <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+          <button v-for="t in tabs" :key="t.value"
+            @click="filter.status = t.value; load()"
+            class="shrink-0 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all"
+            :class="filter.status === t.value
+              ? 'bg-primary-600 text-white shadow-soft-blue'
+              : 'bg-white text-gray-500 shadow-soft hover:bg-gray-50'">{{ t.label }}
+          </button>
         </div>
       </div>
 

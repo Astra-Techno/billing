@@ -279,28 +279,40 @@ async function saveInvoice() {
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto space-y-5">
-    <div>
-      <h1 class="page-title flex items-center gap-2">Settings <HelpIcon section="settings" /></h1>
-      <p class="text-sm text-gray-500 mt-0.5">Set up your business details, payment info, and bill preferences</p>
+  <div class="flex flex-col lg:flex-row gap-6 w-full lg:h-full lg:min-h-0">
+    
+    <!-- LEFT PANE: Menu -->
+    <div class="shrink-0 w-full lg:w-64 flex flex-col gap-6 lg:h-full lg:min-h-0">
+      <div class="px-1 shrink-0">
+        <h1 class="page-title flex items-center gap-2">Settings <HelpIcon section="settings" /></h1>
+        <p class="text-sm text-gray-500 mt-1">Set up your business details and preferences</p>
+      </div>
+
+      <!-- Vertical Tabs for Desktop, Horizontal for Mobile -->
+      <div class="flex lg:flex-col gap-1 lg:gap-2 bg-gray-100 lg:bg-transparent p-1 lg:p-0 rounded-xl overflow-x-auto lg:overflow-y-auto no-scrollbar shrink-0 pb-2 lg:pb-6">
+        <button v-for="t in tabs" :key="t.key" @click="activeTab = t.key"
+          class="px-4 py-2.5 rounded-lg text-sm font-medium transition text-left whitespace-nowrap lg:whitespace-normal shrink-0"
+          :class="activeTab === t.key ? 'bg-white text-gray-900 shadow-sm border border-gray-100/50' : 'text-gray-500 hover:text-gray-900 lg:hover:bg-gray-50'">
+          {{ t.label }}
+        </button>
+      </div>
     </div>
 
-    <!-- Tabs — horizontally scrollable on mobile -->
-    <div class="flex gap-1 bg-gray-100 p-1 rounded-xl overflow-x-auto no-scrollbar">
-      <button v-for="t in tabs" :key="t.key" @click="activeTab = t.key"
-        class="px-3 py-1.5 rounded-lg text-sm font-medium transition whitespace-nowrap shrink-0"
-        :class="activeTab === t.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'">
-        {{ t.label }}
-      </button>
-    </div>
+    <!-- RIGHT PANE: Content -->
+    <div class="flex-1 w-full flex flex-col lg:h-full lg:min-h-0 lg:overflow-y-auto hide-scrollbar pb-20 lg:pb-6 lg:pt-2">
+      
+      <div v-if="loading" class="bg-white rounded-[2rem] shadow-soft border border-gray-50 p-10 text-center text-gray-400 text-sm w-full max-w-3xl">Loading…</div>
 
-    <div v-if="loading" class="card p-10 text-center text-gray-400 text-sm">Loading…</div>
+      <!-- Success / Error banners -->
+      <div class="w-full max-w-3xl shrink-0">
+        <div v-if="success" class="text-sm text-success-700 bg-success-50 rounded-xl px-4 py-3 border border-success-200 mb-5 shadow-sm">{{ success }}</div>
+        <div v-if="error"   class="text-sm text-danger-600 bg-danger-50 rounded-xl px-4 py-3 border border-danger-200 mb-5 shadow-sm">{{ error }}</div>
+      </div>
 
-    <!-- Success / Error banners -->
-    <div v-if="success" class="text-sm text-success-700 bg-success-50 rounded-lg px-4 py-3 border border-success-200">{{ success }}</div>
-    <div v-if="error"   class="text-sm text-danger-600 bg-danger-50 rounded-lg px-4 py-3">{{ error }}</div>
-
-    <!-- Business Profile -->
+      <!-- Active Tab Content Wrapper -->
+      <div class="w-full max-w-3xl pb-10">
+        
+        <!-- Business Profile -->
     <template v-if="!loading && activeTab === 'business'">
       <!-- Company Logo -->
       <div class="card card-body">
@@ -607,5 +619,7 @@ async function saveInvoice() {
         </div>
       </div>
     </template>
+      </div> <!-- End Active Tab Content Wrapper -->
+    </div> <!-- End Right Pane -->
   </div>
 </template>

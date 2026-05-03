@@ -41,8 +41,14 @@ class Client extends Sql
         return (new Query('Client.entity'))
             ->from('clients c')
             ->left('indian_states s ON s.id = c.state_id')
-            ->select('entity', 'c.*, s.name AS state_name, s.code AS state_code, s.is_ut')
-            ->select('list',   'c.*, s.name AS state_name, s.code AS state_code, s.is_ut')
+            ->select('entity', '
+                c.*, s.name AS state_name, s.code AS state_code, s.is_ut,
+                (SELECT COALESCE(SUM(i.amount_due),0) FROM invoices i WHERE i.client_id = c.id AND i.status IN (\'sent\',\'partial\',\'overdue\')) AS outstanding_balance
+            ')
+            ->select('list', '
+                c.*, s.name AS state_name, s.code AS state_code, s.is_ut,
+                (SELECT COALESCE(SUM(i.amount_due),0) FROM invoices i WHERE i.client_id = c.id AND i.status IN (\'sent\',\'partial\',\'overdue\')) AS outstanding_balance
+            ')
             ->filter('c.id = {id}')
             ->filter('c.business_id = {business_id}');
     }

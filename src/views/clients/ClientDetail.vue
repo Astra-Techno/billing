@@ -31,8 +31,9 @@ async function load() {
 
 onMounted(load)
 
-const outstanding = () => invoices.value.filter(i => ['sent','partial','overdue'].includes(i.status))
-                                         .reduce((s, i) => s + parseFloat(i.amount_due || 0), 0)
+// outstanding_balance now comes directly from the API (Client.entity query)
+// This is the same value shown in ClientList, ensuring consistency
+const outstanding = () => parseFloat(client.value?.outstanding_balance || 0)
 
 async function deleteClient() {
   deleting.value = true

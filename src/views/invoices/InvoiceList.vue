@@ -124,7 +124,7 @@ const activeDateLabel = () => {
       </div>
     </div>
 
-    <!-- Search & Status Row -->
+    <!-- Search Row -->
     <div class="flex gap-2 animate-fade-in-up z-10 relative">
       <div class="relative flex-1 min-w-0">
         <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -132,13 +132,17 @@ const activeDateLabel = () => {
           class="w-full bg-white border-0 shadow-soft text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-primary-500 block pl-10 p-2.5 transition-shadow"
           placeholder="Search bills..." />
       </div>
-      <div class="shrink-0 w-[110px] relative">
-        <select v-model="filter.status" @change="load()" class="w-full h-full bg-white border-0 shadow-soft text-gray-700 text-xs rounded-xl focus:ring-2 focus:ring-primary-500 pl-3 pr-8 appearance-none cursor-pointer font-bold">
-          <option value="">All Status</option>
-          <option v-for="t in tabs.filter(t => t.value)" :key="t.value" :value="t.value">{{ t.label }}</option>
-        </select>
-        <svg class="w-3.5 h-3.5 text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
-      </div>
+    </div>
+
+    <!-- Status Pill Tabs -->
+    <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+      <button v-for="t in tabs" :key="t.value"
+        @click="filter.status = t.value; load()"
+        class="shrink-0 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all"
+        :class="filter.status === t.value
+          ? 'bg-primary-600 text-white shadow-soft-blue'
+          : 'bg-white text-gray-500 shadow-soft hover:bg-gray-50'">{{ t.label }}
+      </button>
     </div>
 
     <!-- Collapsible Date Filters -->
@@ -228,9 +232,8 @@ const activeDateLabel = () => {
           <!-- List Footer -->
           <div v-if="!loading && invoices.length" class="bg-gray-50/80 border-t border-gray-100 px-6 py-4 flex items-center justify-between">
             <span class="text-xs text-gray-500 font-medium">Showing <span class="font-bold text-gray-800">{{ invoices.length }}</span> bill{{ invoices.length !== 1 ? 's' : '' }}</span>
-            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-              End of list
+            <span v-if="invoices.some(i => i.amount_due > 0)" class="text-xs font-bold text-danger-600">
+              {{ inr(invoices.reduce((s, i) => s + parseFloat(i.amount_due || 0), 0)) }} due
             </span>
           </div>
 
