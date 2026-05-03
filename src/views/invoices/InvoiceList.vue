@@ -1,12 +1,13 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { list } from '../../api'
 import { inr } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
 import { statusBadge, statusLabel } from '../../utils/invoice'
 import HelpIcon from '../../components/HelpIcon.vue'
 
+const route      = useRoute()
 const router     = useRouter()
 const invoices   = ref([])
 const loading    = ref(true)
@@ -84,7 +85,16 @@ function onNewBill() {
   router.push('/invoices/new')
 }
 
-onMounted(load)
+onMounted(() => {
+  if (route.query.status) filter.value.status = route.query.status
+  load()
+})
+
+// Re-apply filter if navigated to with a different ?status= query
+watch(() => route.query.status, val => {
+  filter.value.status = val || ''
+  load()
+})
 
 const tabs = [
   { label: 'All',              value: '' },
