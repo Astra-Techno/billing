@@ -374,7 +374,7 @@ function generatePdf() {
     <div class="t-grand"><span>Total GST to pay this period</span><span>${inr(t.gst)}</span></div>
   </div>
 
-  <p class="footer">BillBook India &nbsp;·&nbsp; ${new Date().toLocaleString('en-IN')}</p>
+  <p class="footer">CloudBill &nbsp;·&nbsp; ${new Date().toLocaleString('en-IN')}</p>
 
   <script>window.onload=function(){window.print()}<\/script>
 </body>

@@ -70,7 +70,7 @@ async function submit() {
       <div class="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center mb-5 shadow-xl">
         <span class="text-white font-black text-3xl">B</span>
       </div>
-      <h1 class="text-3xl font-black text-white tracking-tight text-center">BillBook India</h1>
+      <h1 class="text-3xl font-black text-white tracking-tight text-center">CloudBill</h1>
       <p class="text-primary-200 text-sm mt-2 text-center leading-relaxed max-w-xs">
         Free for 30 days · No credit card needed
       </p>

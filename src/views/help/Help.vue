@@ -30,7 +30,7 @@ const sections = [
   { id: 'gst',             label: 'GST Filing',        icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
   { id: 'reports',         label: 'Reports',           icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
   { id: 'settings',        label: 'Settings',          icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
-  { id: 'vs-vyapar',       label: 'BillBook vs Vyapar', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
+  { id: 'vs-vyapar',       label: 'CloudBill vs Vyapar', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
 ]
 
 function scrollTo(id) {
@@ -50,7 +50,7 @@ function scrollTo(id) {
       
       <div class="relative z-10 max-w-2xl">
         <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight mb-3 text-white">How can we help?</h1>
-        <p class="text-primary-100 text-base sm:text-lg">Explore our guides and find answers to all your questions about BillBook India.</p>
+        <p class="text-primary-100 text-base sm:text-lg">Explore our guides and find answers to all your questions about CloudBill.</p>
         
         <!-- Search bar (Visual for aesthetics) -->
         <div class="mt-8 relative max-w-md animate-fade-in-up">
@@ -111,7 +111,7 @@ function scrollTo(id) {
 
             <div class="space-y-6 text-sm text-gray-700">
               <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100/50 rounded-2xl p-5 shadow-sm">
-                <p class="font-bold text-blue-900 mb-1.5 text-base">Welcome to BillBook India! 🎉</p>
+                <p class="font-bold text-blue-900 mb-1.5 text-base">Welcome to CloudBill! 🎉</p>
                 <p class="text-blue-800/80 text-sm leading-relaxed">A simple, premium billing and accounting tool designed specifically for Indian small businesses. Create GST-compliant invoices, manage quotations, and track expenses effortlessly.</p>
               </div>
 
@@ -271,7 +271,7 @@ function scrollTo(id) {
               <!-- Partial Payments -->
               <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4 shadow-sm">
                 <p class="font-bold text-emerald-900 mb-1.5">Partial Payments & Balance Tracking</p>
-                <p class="text-sm text-emerald-800 leading-relaxed">Tap <strong>Record Payment</strong> on any sent invoice to log cash, UPI, NEFT, or cheque receipts. You can record multiple payments over time — BillBook automatically tracks the running balance due and marks the invoice as Paid when fully settled.</p>
+                <p class="text-sm text-emerald-800 leading-relaxed">Tap <strong>Record Payment</strong> on any sent invoice to log cash, UPI, NEFT, or cheque receipts. You can record multiple payments over time — CloudBill automatically tracks the running balance due and marks the invoice as Paid when fully settled.</p>
               </div>
 
               <!-- Auto GST -->
@@ -279,7 +279,7 @@ function scrollTo(id) {
                 <svg class="w-5 h-5 text-green-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                <p class="text-sm text-green-800 leading-relaxed"><strong>Auto GST split:</strong> Same state → CGST + SGST. Different state → IGST. Bill of Supply → no GST. BillBook handles all cases automatically based on your bill type and customer's state.</p>
+                <p class="text-sm text-green-800 leading-relaxed"><strong>Auto GST split:</strong> Same state → CGST + SGST. Different state → IGST. Bill of Supply → no GST. CloudBill handles all cases automatically based on your bill type and customer's state.</p>
               </div>
             </div>
           </div>
@@ -369,7 +369,7 @@ function scrollTo(id) {
                 </div>
                 <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
                   <p class="font-bold text-gray-900 mb-1">State for GST</p>
-                  <p class="text-gray-500">Setting the correct state on a customer record ensures BillBook applies CGST+SGST or IGST automatically on every invoice.</p>
+                  <p class="text-gray-500">Setting the correct state on a customer record ensures CloudBill applies CGST+SGST or IGST automatically on every invoice.</p>
                 </div>
               </div>
 
@@ -638,7 +638,7 @@ function scrollTo(id) {
               </div>
             </div>
             <div class="space-y-5 text-sm text-gray-700">
-              <p class="text-gray-500 leading-relaxed">BillBook auto-compiles your GST return data from invoices, credit notes, and expenses. Use this section to review totals before filing on the GST portal.</p>
+              <p class="text-gray-500 leading-relaxed">CloudBill auto-compiles your GST return data from invoices, credit notes, and expenses. Use this section to review totals before filing on the GST portal.</p>
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
@@ -663,7 +663,7 @@ function scrollTo(id) {
                 <svg class="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                <p class="text-sm text-yellow-900 leading-relaxed"><strong>Filing happens on the GST portal.</strong> BillBook prepares and displays your summary — you then log in to <strong>gst.gov.in</strong> to submit the actual return. Always review totals carefully before filing.</p>
+                <p class="text-sm text-yellow-900 leading-relaxed"><strong>Filing happens on the GST portal.</strong> CloudBill prepares and displays your summary — you then log in to <strong>gst.gov.in</strong> to submit the actual return. Always review totals carefully before filing.</p>
               </div>
             </div>
           </div>
@@ -764,7 +764,7 @@ function scrollTo(id) {
           </div>
         </section>
 
-        <!-- ── BillBook vs Vyapar ── -->
+        <!-- ── CloudBill vs Vyapar ── -->
         <section :id="'vs-vyapar'" class="card p-8 scroll-mt-6 border-0 shadow-soft relative overflow-hidden group">
           <div class="absolute top-0 right-0 w-32 h-32 bg-primary-50 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
           <div class="relative z-10">
@@ -775,7 +775,7 @@ function scrollTo(id) {
                 </svg>
               </div>
               <div>
-                <h2 class="text-xl font-extrabold text-gray-900">BillBook India vs Vyapar</h2>
+                <h2 class="text-xl font-extrabold text-gray-900">CloudBill vs Vyapar</h2>
                 <p class="text-sm text-gray-500 font-medium">How we compare to the popular alternative</p>
               </div>
             </div>
@@ -785,7 +785,7 @@ function scrollTo(id) {
               <!-- Headline banner -->
               <div class="bg-gradient-to-r from-primary-600 to-indigo-700 rounded-2xl p-5 text-white">
                 <p class="font-extrabold text-lg mb-1">Clean, fast, and truly free — built for Indian SMBs</p>
-                <p class="text-primary-100 text-sm leading-relaxed">Vyapar is a solid app with many features. BillBook is for businesses that want a fast, modern billing experience without a yearly subscription or cluttered screens.</p>
+                <p class="text-primary-100 text-sm leading-relaxed">Vyapar is a solid app with many features. CloudBill is for businesses that want a fast, modern billing experience without a yearly subscription or cluttered screens.</p>
               </div>
 
               <!-- Feature comparison table -->
@@ -794,7 +794,7 @@ function scrollTo(id) {
                   <thead>
                     <tr class="bg-gray-800 text-white">
                       <th class="px-4 py-3 text-left font-semibold rounded-tl-xl">Feature</th>
-                      <th class="px-4 py-3 text-center font-semibold text-primary-200">BillBook India</th>
+                      <th class="px-4 py-3 text-center font-semibold text-primary-200">CloudBill</th>
                       <th class="px-4 py-3 text-center font-semibold text-gray-300 rounded-tr-xl">Vyapar</th>
                     </tr>
                   </thead>
@@ -981,7 +981,7 @@ function scrollTo(id) {
                 <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-5">
                   <p class="font-bold text-emerald-900 mb-2 flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    Choose BillBook if you want…
+                    Choose CloudBill if you want…
                   </p>
                   <ul class="space-y-1.5 text-sm text-emerald-800">
                     <li class="flex items-start gap-2"><span class="mt-0.5">•</span>Zero cost — no yearly subscription ever</li>
@@ -1004,7 +1004,7 @@ function scrollTo(id) {
           <div class="space-y-3">
             <details class="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" open>
               <summary class="flex items-center justify-between p-5 cursor-pointer font-bold text-gray-900 select-none hover:bg-gray-50 transition-colors">
-                Can I use BillBook India without a GSTIN?
+                Can I use CloudBill without a GSTIN?
                 <span class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center group-open:bg-primary-100 group-open:text-primary-600 transition-colors">
                   <svg class="w-4 h-4 transform group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 </span>
@@ -1079,7 +1079,7 @@ function scrollTo(id) {
         <!-- Footer Note -->
         <div class="mt-12 text-center pb-8 opacity-70">
           <div class="w-16 h-1 bg-gray-200 rounded-full mx-auto mb-6"></div>
-          <p class="text-sm font-bold text-gray-800">BillBook India</p>
+          <p class="text-sm font-bold text-gray-800">CloudBill</p>
           <p class="text-xs text-gray-500 mt-1">Proudly built for modern businesses.</p>
         </div>
 

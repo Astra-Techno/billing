@@ -79,7 +79,7 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
         <div class="w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-soft-blue">
           <span class="text-white font-bold text-sm">B</span>
         </div>
-        <span class="font-bold text-gray-900 tracking-tight text-[17px]">BillBook</span>
+        <span class="font-bold text-gray-900 tracking-tight text-[17px]">CloudBill</span>
       </RouterLink>
 
       <!-- Navigation (Desktop Only) -->

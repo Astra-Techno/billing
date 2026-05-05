@@ -98,7 +98,7 @@ const titles = {
             </div>
             <div class="bg-green-50 border border-green-100 rounded-xl p-3 flex gap-2">
               <svg class="w-4 h-4 text-green-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              <p class="text-xs text-green-700"><strong>GST Tip:</strong> Same state = CGST + SGST. Different state = IGST. BillBook handles this automatically.</p>
+              <p class="text-xs text-green-700"><strong>GST Tip:</strong> Same state = CGST + SGST. Different state = IGST. CloudBill handles this automatically.</p>
             </div>
           </template>
 
@@ -201,7 +201,7 @@ const titles = {
 
           <!-- GST -->
           <template v-else-if="helpSection === 'gst'">
-            <p class="text-gray-600 leading-relaxed">Prepare your sales data for GST returns. BillBook organizes your invoices — your CA or you file on the GST portal.</p>
+            <p class="text-gray-600 leading-relaxed">Prepare your sales data for GST returns. CloudBill organizes your invoices — your CA or you file on the GST portal.</p>
             <div>
               <p class="font-semibold text-gray-800 mb-2">GST Return types</p>
               <div class="space-y-1.5 text-xs text-gray-600">
