@@ -19,8 +19,7 @@ $app->get('/shop/{slug}', function ($request, $response, $args) {
         return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
     }
 
-    $db   = \App\Core\DB::connection();
-    $stmt = $db->prepare('
+    $data = \App\Core\DB::selectOne('
         SELECT b.id, b.name, b.slug, b.logo, b.mobile, b.phone, b.email, b.website,
                b.address_line1, b.address_line2, b.city, b.pincode,
                b.upi_id, b.gstin, b.business_type, b.is_gst_registered,
@@ -29,9 +28,8 @@ $app->get('/shop/{slug}', function ($request, $response, $args) {
         LEFT JOIN indian_states s ON s.id = b.state_id
         WHERE b.slug = ? AND b.active = 1
         LIMIT 1
-    ');
-    $stmt->execute([$slug]);
-    $data = $stmt->fetch(\PDO::FETCH_ASSOC);
+    ', [$slug]);
+    if ($data) $data = (array) $data;
 
     $payload = $data
         ? ['success' => true,  'data'    => $data]
