@@ -1,1 +1,0 @@
-import{a as e,l as t}from"./auth-B6_5sNYU.js";import{P as n}from"./runtime-core.esm-bundler-CYFvZMzH.js";var r=t(`business`,()=>{let t=n(``);function r(e){t.value=e||``}async function i(){try{t.value=(await e(`Business`)).data?.data?.logo||``}catch{}}return{logo:t,setLogo:r,fetchLogo:i}});export{r as t};
