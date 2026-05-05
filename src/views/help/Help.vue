@@ -17,26 +17,258 @@ onMounted(() => { if (route.hash) setTimeout(() => goToHash(route.hash), 100) })
 watch(() => route.hash, (h) => goToHash(h))
 
 const sections = [
-  { id: 'getting-started', label: 'Getting Started',  icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
-  { id: 'dashboard',       label: 'Dashboard',         icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-  { id: 'bills',           label: 'Bills / Invoices',  icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-  { id: 'quotes',          label: 'Quotations',        icon: 'M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2' },
-  { id: 'customers',       label: 'Customers',         icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' },
-  { id: 'expenses',        label: 'Expenses',          icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' },
-  { id: 'products',        label: 'Products',          icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
-  { id: 'returns',         label: 'Returns & Adjustments', icon: 'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z' },
-  { id: 'purchase-orders', label: 'Purchase Orders',   icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
-  { id: 'delivery-challans', label: 'Delivery Challans', icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4' },
-  { id: 'gst',             label: 'GST Filing',        icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-  { id: 'reports',         label: 'Reports',           icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
-  { id: 'settings',        label: 'Settings',          icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
-  { id: 'vs-vyapar',       label: 'CloudBill vs Vyapar', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
+  { id: 'getting-started',  label: 'Getting Started',     icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
+  { id: 'dashboard',        label: 'Dashboard',            icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+  { id: 'bills',            label: 'Bills / Invoices',     icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+  { id: 'quotes',           label: 'Quotations',           icon: 'M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2' },
+  { id: 'customers',        label: 'Customers',            icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' },
+  { id: 'expenses',         label: 'Expenses',             icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' },
+  { id: 'products',         label: 'Products',             icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
+  { id: 'returns',          label: 'Credit Notes',         icon: 'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z' },
+  { id: 'purchase-orders',  label: 'Purchase Orders',      icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
+  { id: 'delivery-challans', label: 'Delivery Challans',   icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4' },
+  { id: 'gst',              label: 'GST Filing',           icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+  { id: 'reports',          label: 'Reports',              icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
+  { id: 'settings',         label: 'Settings',             icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
+  { id: 'vs-vyapar',        label: 'CloudBill vs Vyapar',  icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
 ]
 
 function scrollTo(id) {
   activeSection.value = id
   const el = document.getElementById(id)
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function exportPdf() {
+  const d = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+  const win = window.open('', '_blank')
+  win.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CloudBill — Help Guide</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #111827; background: #fff; padding: 32px 40px; font-size: 13px; line-height: 1.6; max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 900; color: #1e40af; margin-bottom: 2px; }
+  .meta { font-size: 11px; color: #6b7280; margin-bottom: 28px; border-bottom: 2px solid #e5e7eb; padding-bottom: 12px; }
+  h2 { font-size: 15px; font-weight: 800; color: #111827; margin: 24px 0 10px; padding-bottom: 6px; border-bottom: 1px solid #e5e7eb; }
+  h3 { font-size: 12px; font-weight: 700; color: #374151; margin: 12px 0 4px; }
+  p { color: #4b5563; margin-bottom: 8px; }
+  ul { padding-left: 18px; color: #4b5563; }
+  ul li { margin-bottom: 3px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+  .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 12px; background: #f9fafb; page-break-inside: avoid; }
+  .card h3 { margin-top: 0; }
+  .tip { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px 12px; margin: 10px 0; }
+  .tip strong { color: #1d4ed8; }
+  .warn { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 10px 12px; margin: 10px 0; }
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: 700; }
+  .badge-gray { background: #f3f4f6; color: #6b7280; }
+  .badge-blue { background: #dbeafe; color: #1d4ed8; }
+  .badge-green { background: #dcfce7; color: #166534; }
+  .badge-yellow { background: #fef9c3; color: #854d0e; }
+  .badge-red { background: #fee2e2; color: #dc2626; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
+  th { background: #1f2937; color: #fff; padding: 8px 10px; text-align: left; font-weight: 600; }
+  th:not(:first-child) { text-align: center; }
+  td { padding: 7px 10px; border-bottom: 1px solid #f3f4f6; }
+  td:not(:first-child) { text-align: center; }
+  tr:nth-child(even) td { background: #f9fafb; }
+  .section-header td { background: #f3f4f6; font-size: 10px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; }
+  .check { color: #16a34a; font-weight: 700; }
+  .cross { color: #dc2626; }
+  .dim { color: #9ca3af; }
+  section { page-break-inside: avoid; }
+  .footer { margin-top: 32px; border-top: 1px solid #e5e7eb; padding-top: 12px; font-size: 11px; color: #9ca3af; text-align: center; }
+  @media print {
+    body { padding: 16px 20px; }
+    h2 { page-break-before: auto; }
+  }
+</style>
+</head>
+<body>
+<h1>CloudBill — Complete Help Guide</h1>
+<p class="meta">Generated on ${d} &nbsp;|&nbsp; cloudbill.in</p>
+
+<section>
+<h2>Getting Started</h2>
+<div class="grid">
+  <div class="card"><h3>Step 1 — Business Profile</h3><p>Go to Settings and fill in your business name, address, GSTIN, PAN, bank account, logo, and signature. This data appears on every document.</p></div>
+  <div class="card"><h3>Step 2 — Add Products</h3><p>Go to Products and add your items with rate, HSN/SAC code, and GST rate. They auto-fill when creating invoices.</p></div>
+  <div class="card"><h3>Step 3 — Create First Bill</h3><p>Tap + New Bill. Select a customer, add items, and save. Your GST-compliant invoice is ready to share instantly.</p></div>
+  <div class="card"><h3>Step 4 — Share & Collect</h3><p>Tap the WhatsApp button to send a payment request. When paid, tap Record Payment to mark the invoice settled.</p></div>
+</div>
+</section>
+
+<section>
+<h2>Dashboard</h2>
+<div class="grid">
+  <div class="card"><h3>Total Outstanding</h3><p>The large number on the home screen is your total pending receivables — all unpaid invoices combined.</p></div>
+  <div class="card"><h3>Overdue Alert Banner</h3><p>A red banner appears when invoices are past their due date, showing the count and total overdue amount.</p></div>
+  <div class="card"><h3>Collected This Month</h3><p>Shows the sum of all payments received in the current calendar month, pulled from your payment records.</p></div>
+  <div class="card"><h3>Draft Bills</h3><p>Count of bills saved but not yet sent to customers. Tap to view and send them.</p></div>
+  <div class="card"><h3>People</h3><p>Recently billed customers shown as avatars. Tap any to jump to their customer profile.</p></div>
+  <div class="card"><h3>Recent Activity</h3><p>Your 8 most recent invoices with status and amount. Tap any row to open that invoice.</p></div>
+</div>
+</section>
+
+<section>
+<h2>Bills & Invoices</h2>
+<h3>Invoice Types</h3>
+<div class="grid">
+  <div class="card"><h3>Tax Invoice</h3><p>Standard GST invoice with CGST/SGST or IGST breakdown. For GST-registered transactions.</p></div>
+  <div class="card"><h3>Bill of Supply</h3><p>No GST charged. For exempt goods/services or unregistered sellers. GST rates auto-set to 0%.</p></div>
+  <div class="card"><h3>Retail Invoice</h3><p>Simplified invoice for cash/retail sales without GST column breakdown.</p></div>
+  <div class="card"><h3>Export Invoice</h3><p>For goods/services exported outside India (zero-rated supply).</p></div>
+</div>
+
+<h3>Invoice Lifecycle</h3>
+<div class="badges">
+  <span class="badge badge-gray">Draft</span><span style="font-size:11px;color:#6b7280"> Saved, not sent &nbsp;</span>
+  <span class="badge badge-blue">Sent</span><span style="font-size:11px;color:#6b7280"> Shared with customer &nbsp;</span>
+  <span class="badge badge-yellow">Overdue</span><span style="font-size:11px;color:#6b7280"> Past due date &nbsp;</span>
+  <span class="badge badge-green">Paid</span><span style="font-size:11px;color:#6b7280"> Fully settled</span>
+</div>
+
+<h3>Invoice Actions</h3>
+<div class="grid">
+  <div class="card"><h3>Primary Action (large button)</h3><p>Mark as Sent — for Draft invoices.<br>Record Payment — for Sent/Overdue invoices.</p></div>
+  <div class="card"><h3>Secondary Actions (icon row)</h3><p>WhatsApp share, Email (pre-filled), Print (new tab), PDF download, Edit.</p></div>
+  <div class="card"><h3>Record Payment</h3><p>Supports cash, UPI, NEFT, cheque. Record partial payments — balance tracked automatically until fully paid.</p></div>
+  <div class="card"><h3>Issue Credit Note</h3><p>Open a paid/partial invoice → tap Issue Credit Note. Form opens pre-filled with all original items.</p></div>
+</div>
+<div class="tip"><strong>Auto GST split:</strong> Same state → CGST + SGST. Different state → IGST. Bill of Supply → no GST. Set automatically based on bill type and customer state.</div>
+</section>
+
+<section>
+<h2>Quotations</h2>
+<p>Send price proposals before the customer confirms. Once accepted, convert to a Tax Invoice in one tap — no re-entry.</p>
+<div class="badges">
+  <span class="badge badge-gray">Draft</span>&nbsp;
+  <span class="badge badge-blue">Sent</span>&nbsp;
+  <span class="badge badge-green">Accepted</span>&nbsp;
+  <span class="badge badge-red">Declined</span>&nbsp;
+  <span class="badge badge-yellow">Expired</span>
+</div>
+<div class="grid">
+  <div class="card"><h3>Convert to Invoice</h3><p>Open an accepted quotation → tap Convert to Invoice. All items and taxes are copied instantly.</p></div>
+  <div class="card"><h3>Validity Date</h3><p>Set a validity date. Expired quotes are flagged automatically for follow-up.</p></div>
+</div>
+</section>
+
+<section>
+<h2>Customers</h2>
+<div class="grid">
+  <div class="card"><h3>Outstanding Balance Badge</h3><p>Each customer row shows a red badge with their current unpaid balance across all invoices.</p></div>
+  <div class="card"><h3>Quick Add Form</h3><p>Only Name and Mobile are required. Tap "Add email, GST, address…" to reveal optional fields.</p></div>
+  <div class="card"><h3>Account Statement</h3><p>Full billing history — all invoices, payments received, and running outstanding balance.</p></div>
+  <div class="card"><h3>State for GST</h3><p>Set the customer's state once. CGST+SGST or IGST is applied automatically on every invoice.</p></div>
+</div>
+<div class="tip"><strong>Suppliers too:</strong> Store your suppliers in the same Customers list. Pick them when creating Purchase Orders.</div>
+</section>
+
+<section>
+<h2>Credit Notes</h2>
+<p>A Credit Note reduces the amount owed. Use it for returns, overcharges, or post-sale discounts.</p>
+<div class="grid">
+  <div class="card"><h3>One-Tap from Invoice</h3><p>Open any paid or partially-paid invoice → tap Issue Credit Note. Form is pre-filled with original items.</p></div>
+  <div class="card"><h3>Link to Original Invoice</h3><p>Each credit note references the original invoice number — clickable link in the Credit Notes list.</p></div>
+  <div class="card"><h3>GST Reversal</h3><p>CGST/SGST/IGST reversal amounts are calculated so your GST returns reflect net liability correctly.</p></div>
+  <div class="card"><h3>When to Use</h3><ul><li>Customer returns goods</li><li>You overcharged on a previous bill</li><li>Post-sale discount or price correction</li></ul></div>
+</div>
+<div class="warn"><strong>Never delete invoices.</strong> Always issue a Credit Note instead — deleting breaks your invoice sequence and GST returns.</div>
+</section>
+
+<section>
+<h2>Purchase Orders</h2>
+<p>A Purchase Order (PO) is a document you send to a supplier confirming what you want to buy, at what price, and when.</p>
+<div class="grid">
+  <div class="card"><h3>PO Lifecycle</h3><div class="badges"><span class="badge badge-gray">Draft</span>&nbsp;<span class="badge badge-blue">Sent</span>&nbsp;<span class="badge badge-green">Received</span>&nbsp;<span class="badge badge-red">Cancelled</span></div></div>
+  <div class="card"><h3>Supplier = Customer Record</h3><p>Suppliers are stored in your Customers list. Add a supplier the same way you add a customer.</p></div>
+</div>
+</section>
+
+<section>
+<h2>Delivery Challans</h2>
+<p>A transport document listing goods being delivered. No prices or GST — purely for logistics and proof of dispatch.</p>
+<div class="grid">
+  <div class="card"><h3>Convert to Invoice</h3><p>Open any challan → tap Convert to Invoice. A new invoice opens pre-filled with the same customer and items — just add prices.</p></div>
+  <div class="card"><h3>Typical Workflow</h3><p>Create DC → Issue (dispatch goods) → Mark Delivered → Convert to Invoice (bill the customer).</p></div>
+  <div class="card"><h3>Transport Details</h3><p>Record vehicle number, driver name, and destination for each challan.</p></div>
+  <div class="card"><h3>DC Lifecycle</h3><div class="badges"><span class="badge badge-gray">Draft</span>&nbsp;<span class="badge badge-blue">Issued</span>&nbsp;<span class="badge badge-green">Delivered</span>&nbsp;<span class="badge badge-red">Cancelled</span></div></div>
+</div>
+</section>
+
+<section>
+<h2>GST Filing</h2>
+<div class="grid">
+  <div class="card"><h3>GSTR-1 Summary</h3><p>Outward supplies breakdown — B2B invoices with GSTIN, B2C sales, credit notes, nil-rated supplies.</p></div>
+  <div class="card"><h3>GSTR-3B Summary</h3><p>Net GST liability: output tax on sales minus input tax credit (ITC) from tracked expenses.</p></div>
+  <div class="card"><h3>Tax Rate Breakup</h3><p>Totals split by slab (0%, 5%, 12%, 18%, 28%) with CGST, SGST, IGST shown separately.</p></div>
+  <div class="card"><h3>Period Selection</h3><p>Switch between monthly and quarterly views to match your GST return filing frequency.</p></div>
+</div>
+<div class="tip"><strong>Filing happens on the GST portal.</strong> CloudBill prepares your summary — you log in to gst.gov.in to submit the actual return.</div>
+</section>
+
+<section>
+<h2>Settings</h2>
+<div class="grid">
+  <div class="card"><h3>Business Profile</h3><p>Business name, address, GSTIN, PAN, mobile, email, state. Appears on every printed document.</p></div>
+  <div class="card"><h3>Logo & Signature</h3><p>Upload your logo and authorised signature — both appear on printed invoices.</p></div>
+  <div class="card"><h3>Bank & UPI Details</h3><p>Bank account, IFSC, UPI ID. Appears in payment section of invoices and WhatsApp messages.</p></div>
+  <div class="card"><h3>Invoice Numbering</h3><p>Set a custom prefix (e.g. INV- or 2024-) and starting number for your invoice sequence.</p></div>
+  <div class="card"><h3>Default Notes & Terms</h3><p>Standard payment terms or thank-you message that pre-fills on every new invoice.</p></div>
+  <div class="card"><h3>Settings Layout</h3><p>Desktop: vertical tab sidebar. Mobile: horizontally scrollable tab strip. All settings in one place.</p></div>
+</div>
+<div class="tip"><strong>Do this first!</strong> Complete your business profile before creating your first invoice — incomplete profiles result in missing GSTIN or bank details on printed documents.</div>
+</section>
+
+<section>
+<h2>CloudBill vs Vyapar</h2>
+<table>
+  <thead>
+    <tr><th>Feature</th><th>CloudBill</th><th>Vyapar</th></tr>
+  </thead>
+  <tbody>
+    <tr class="section-header"><td colspan="3">Billing & Invoicing</td></tr>
+    <tr><td>GST Tax Invoice (CGST/SGST/IGST)</td><td><span class="check">✓ Free</span></td><td><span class="check">✓ Free</span></td></tr>
+    <tr><td>Bill of Supply (non-GST)</td><td><span class="check">✓ Free</span></td><td><span class="check">✓ Free</span></td></tr>
+    <tr><td>Quotations / Estimates</td><td><span class="check">✓ Free</span></td><td><span class="check">✓ Free</span></td></tr>
+    <tr><td>Credit Notes</td><td><span class="check">✓ Free</span></td><td><span class="check">✓ Free</span></td></tr>
+    <tr><td>Multiple invoice templates</td><td><span class="dim">1 clean template</span></td><td>10+ templates</td></tr>
+    <tr class="section-header"><td colspan="3">Payments & Dues</td></tr>
+    <tr><td>Partial payment tracking</td><td><span class="check">✓ Free</span></td><td><span class="check">✓ Free</span></td></tr>
+    <tr><td>Outstanding balance per customer</td><td><span class="check">✓ Free</span></td><td><span class="check">✓ Free</span></td></tr>
+    <tr><td>Automated payment reminders</td><td><span class="dim">Manual via WhatsApp</span></td><td>Paid</td></tr>
+    <tr><td>UPI ID on invoices & WhatsApp</td><td><span class="check">✓ Free</span></td><td><span class="check">✓</span></td></tr>
+    <tr class="section-header"><td colspan="3">Sharing & Export</td></tr>
+    <tr><td>WhatsApp share with amount + UPI</td><td><span class="check">✓ Free</span></td><td><span class="check">✓ Free</span></td></tr>
+    <tr><td>Email share (pre-filled)</td><td><span class="check">✓ Free</span></td><td>Paid</td></tr>
+    <tr><td>PDF download / Print</td><td><span class="check">✓ Free</span></td><td>Paid</td></tr>
+    <tr><td>Invoice branding (no watermark)</td><td><span class="check">✓ Always clean</span></td><td><span class="dim">Free has watermark</span></td></tr>
+    <tr class="section-header"><td colspan="3">Documents</td></tr>
+    <tr><td>Purchase Orders</td><td><span class="check">✓ Free</span></td><td><span class="check">✓</span></td></tr>
+    <tr><td>Delivery Challans</td><td><span class="check">✓ Free</span></td><td><span class="check">✓</span></td></tr>
+    <tr><td>Convert Challan to Invoice</td><td><span class="check">✓ Free</span></td><td><span class="check">✓</span></td></tr>
+    <tr class="section-header"><td colspan="3">GST & Accounting</td></tr>
+    <tr><td>GSTR-1 / GSTR-3B summary</td><td><span class="check">✓ Free</span></td><td><span class="check">✓ Free</span></td></tr>
+    <tr><td>GSTR JSON export</td><td><span class="dim">—</span></td><td>Paid</td></tr>
+    <tr><td>Expense tracking & ITC</td><td><span class="check">✓ Free</span></td><td><span class="check">✓ Free</span></td></tr>
+    <tr class="section-header"><td colspan="3">Inventory & Platform</td></tr>
+    <tr><td>Stock quantity tracking</td><td><span class="dim">—</span></td><td><span class="check">✓ Free</span></td></tr>
+    <tr><td>Works offline</td><td><span class="dim">—</span></td><td><span class="check">✓ Android</span></td></tr>
+    <tr><td>Price</td><td><strong style="color:#16a34a">Free</strong></td><td>₹3,399 / year</td></tr>
+  </tbody>
+</table>
+</section>
+
+<p class="footer">CloudBill &nbsp;·&nbsp; Complete Help Guide &nbsp;·&nbsp; Generated ${d}</p>
+<script>window.onload = function() { window.print() }<\/script>
+</body>
+</html>`)
+  win.document.close()
 }
 </script>
 
@@ -51,11 +283,21 @@ function scrollTo(id) {
       <div class="relative z-10 max-w-2xl">
         <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight mb-3 text-white">How can we help?</h1>
         <p class="text-primary-100 text-base sm:text-lg">Explore our guides and find answers to all your questions about CloudBill.</p>
-        
-        <!-- Search bar (Visual for aesthetics) -->
-        <div class="mt-8 relative max-w-md animate-fade-in-up">
-          <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-          <input type="text" placeholder="Search guides, invoices, GST..." class="w-full bg-white text-gray-900 border-0 rounded-2xl py-4 pl-12 pr-4 shadow-xl focus:ring-2 focus:ring-primary-300 placeholder-gray-400 text-sm font-medium transition-all" />
+
+        <div class="mt-8 flex flex-wrap gap-3 animate-fade-in-up">
+          <!-- Search bar -->
+          <div class="relative flex-1 min-w-[200px] max-w-md">
+            <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input type="text" placeholder="Search guides, invoices, GST..." class="w-full bg-white text-gray-900 border-0 rounded-2xl py-4 pl-12 pr-4 shadow-xl focus:ring-2 focus:ring-primary-300 placeholder-gray-400 text-sm font-medium transition-all" />
+          </div>
+          <!-- Export PDF button -->
+          <button @click="exportPdf"
+            class="flex items-center gap-2 bg-white/15 hover:bg-white/25 active:scale-95 backdrop-blur-md text-white font-bold text-sm rounded-2xl px-5 py-4 border border-white/20 transition-all shadow-lg shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Export PDF
+          </button>
         </div>
       </div>
     </div>
@@ -1070,7 +1312,43 @@ function scrollTo(id) {
                 </span>
               </summary>
               <div class="px-5 pb-5 pt-1 text-gray-500 leading-relaxed border-t border-gray-50 mt-1">
-                Use a Delivery Challan when you dispatch goods before raising the invoice — for example, goods sent on approval, goods delivered in batches, or returnable items. A DC contains the vehicle number, driver name, destination, and item quantities (no prices). It must always be accompanied by or followed up with a proper Tax Invoice.
+                Use a Delivery Challan when you dispatch goods before raising the invoice — for example, goods sent on approval, goods delivered in batches, or returnable items. A DC contains the vehicle number, driver name, destination, and item quantities (no prices). Once goods are delivered, tap <strong>Convert to Invoice</strong> directly from the challan — all items carry over automatically.
+              </div>
+            </details>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <summary class="flex items-center justify-between p-5 cursor-pointer font-bold text-gray-900 select-none hover:bg-gray-50 transition-colors">
+                How do I issue a Credit Note for a returned item?
+                <span class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center group-open:bg-primary-100 group-open:text-primary-600 transition-colors">
+                  <svg class="w-4 h-4 transform group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </span>
+              </summary>
+              <div class="px-5 pb-5 pt-1 text-gray-500 leading-relaxed border-t border-gray-50 mt-1">
+                Open the original invoice and tap <strong>Issue Credit Note</strong> at the bottom of the page. The credit note form opens pre-filled with all the original items — adjust quantities or amounts for the returned goods and save. The credit note will automatically reference the original invoice number for GST compliance.
+              </div>
+            </details>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <summary class="flex items-center justify-between p-5 cursor-pointer font-bold text-gray-900 select-none hover:bg-gray-50 transition-colors">
+                Why does the outstanding balance on the customer list differ from what I see inside?
+                <span class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center group-open:bg-primary-100 group-open:text-primary-600 transition-colors">
+                  <svg class="w-4 h-4 transform group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </span>
+              </summary>
+              <div class="px-5 pb-5 pt-1 text-gray-500 leading-relaxed border-t border-gray-50 mt-1">
+                They should always match. The outstanding balance badge on the customer list and the figure inside the customer detail both come from the same database query — the sum of <em>amount_due</em> across all invoices with status Sent, Partial, or Overdue. If you notice a discrepancy, a page refresh will recalculate.
+              </div>
+            </details>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <summary class="flex items-center justify-between p-5 cursor-pointer font-bold text-gray-900 select-none hover:bg-gray-50 transition-colors">
+                How does the "Collected this month" figure get calculated?
+                <span class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center group-open:bg-primary-100 group-open:text-primary-600 transition-colors">
+                  <svg class="w-4 h-4 transform group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </span>
+              </summary>
+              <div class="px-5 pb-5 pt-1 text-gray-500 leading-relaxed border-t border-gray-50 mt-1">
+                It is the sum of all individual payment entries (cash, UPI, NEFT, cheque) recorded in the current calendar month via the <strong>Record Payment</strong> button — not just fully-paid invoices. Partial payments are included too.
               </div>
             </details>
           </div>
@@ -1080,7 +1358,11 @@ function scrollTo(id) {
         <div class="mt-12 text-center pb-8 opacity-70">
           <div class="w-16 h-1 bg-gray-200 rounded-full mx-auto mb-6"></div>
           <p class="text-sm font-bold text-gray-800">CloudBill</p>
-          <p class="text-xs text-gray-500 mt-1">Proudly built for modern businesses.</p>
+          <p class="text-xs text-gray-500 mt-1">Proudly built for modern Indian businesses.</p>
+          <button @click="exportPdf" class="mt-4 inline-flex items-center gap-2 text-xs font-bold text-primary-600 hover:text-primary-700 transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Export Help Guide as PDF
+          </button>
         </div>
 
       </div>
