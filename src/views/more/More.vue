@@ -56,7 +56,7 @@ async function logout() {
         </RouterLink>
 
         <RouterLink v-if="bizSlug" :to="`/shop/${bizSlug}`" target="_blank"
-          class="mt-3 flex items-center gap-2 px-6 py-2.5 bg-primary-500/20 backdrop-blur-md text-primary-300 font-bold text-sm rounded-xl border border-primary-400/20 hover:bg-primary-500/30 transition-all active:scale-95 relative z-10">
+          class="mt-3 flex items-center gap-2 px-8 py-2.5 bg-white/10 backdrop-blur-md text-white font-bold text-sm rounded-xl border border-white/10 hover:bg-white/20 transition-all active:scale-95 relative z-10">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
           </svg>
