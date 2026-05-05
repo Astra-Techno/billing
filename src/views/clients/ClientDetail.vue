@@ -11,7 +11,7 @@ const router = useRouter()
 const emit   = defineEmits(['refresh'])
 const client      = ref(null)
 const invoices    = ref([])
-const contacts    = ref([])
+const topItems    = ref([])
 const loading     = ref(true)
 const showDelete  = ref(false)
 const deleting    = ref(false)
@@ -19,12 +19,14 @@ const deleting    = ref(false)
 async function load() {
   try {
     const id = route.params.id
-    const [cRes, iRes] = await Promise.all([
+    const [cRes, iRes, tRes] = await Promise.all([
       item('Client', { id }),
       list('Invoice', { 'filter.client_id': id, sort_by: 'i.created_at', sort_order: 'desc' }),
+      list('Client:topItems', { client_id: id }),
     ])
     client.value   = cRes.data?.data
     invoices.value = iRes.data?.data || []
+    topItems.value = tRes.data?.data || []
   } catch {}
   loading.value = false
 }
@@ -149,6 +151,27 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
                <p class="text-gray-900 text-base font-bold">{{ [client.city, client.pincode].filter(Boolean).join(' - ') }}</p>
                <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Location</p>
              </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Items -->
+      <div v-if="topItems.length" class="mt-6 animate-fade-in-up delay-150">
+        <h2 class="font-bold text-gray-800 text-sm mb-4 px-1">Top Items Ordered</h2>
+        <div class="bg-white rounded-[2rem] shadow-soft border-0 overflow-hidden divide-y divide-gray-50">
+          <div v-for="(item, idx) in topItems.slice(0, 5)" :key="item.description"
+            class="flex items-center gap-4 px-5 py-4">
+            <div class="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center shrink-0 text-indigo-600 font-extrabold text-sm">
+              {{ idx + 1 }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-bold text-gray-900 text-sm truncate">{{ item.description }}</p>
+              <p class="text-xs text-gray-500 mt-0.5">{{ item.order_count }} {{ item.order_count == 1 ? 'order' : 'orders' }} · last {{ fmtDateShort(item.last_ordered) }}</p>
+            </div>
+            <div class="text-right shrink-0">
+              <p class="font-extrabold text-gray-900 text-sm">{{ inr(item.total_value) }}</p>
+              <p class="text-xs text-gray-500 mt-0.5">qty {{ item.total_qty }}</p>
+            </div>
           </div>
         </div>
       </div>

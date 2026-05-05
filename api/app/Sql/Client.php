@@ -81,6 +81,25 @@ class Client extends Sql
             ->order('c.name', 'asc');
     }
 
+    public function topItems(array $input = []): Query
+    {
+        return (new Query('Client.topItems'))
+            ->from('invoice_items ii')
+            ->inner('invoices i ON i.id = ii.invoice_id AND i.business_id = {business_id}')
+            ->select('list', '
+                ii.description,
+                COUNT(i.id)        AS order_count,
+                SUM(ii.quantity)   AS total_qty,
+                SUM(ii.total)      AS total_value,
+                MAX(i.issue_date)  AS last_ordered
+            ')
+            ->select('total', 'COUNT(DISTINCT ii.description) AS total')
+            ->filter('i.client_id = {client_id}')
+            ->filter('i.status != \'draft\'')
+            ->group('ii.description')
+            ->order('total_qty', 'desc');
+    }
+
     public function outstanding(array $input = []): Query
     {
         return (new Query('Client.outstanding'))
