@@ -348,15 +348,14 @@ function runMigrations(): array {
                 array_map('trim', explode(';', preg_replace('/--[^\n]*/', '', $sql))),
                 fn($s) => $s !== ''
             );
+            // No transaction wrapper — MySQL DDL (CREATE TABLE, ALTER TABLE) causes
+            // implicit commit, leaving PDO's transaction state stale and causing
+            // a secondary exception on rollBack(). Run statements directly instead.
             try {
-                $pdo->beginTransaction();
                 foreach ($statements as $stmt) { $pdo->exec($stmt); }
                 $pdo->prepare("INSERT INTO _migrations (filename) VALUES (?)")->execute([$name]);
-                // MySQL DDL (CREATE TABLE etc.) causes implicit commit — check before committing
-                if ($pdo->inTransaction()) $pdo->commit();
                 $log[] = ['status' => 'done', 'name' => $name];
             } catch (PDOException $e) {
-                if ($pdo->inTransaction()) $pdo->rollBack();
                 $log[] = ['status' => 'fail', 'name' => $name, 'error' => ' — ' . $e->getMessage()];
                 break;
             }
