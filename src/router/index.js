@@ -89,6 +89,9 @@ const routes = [
   // Public digital business card — no auth required
   { path: '/shop/:slug', name: 'ShopCard', component: () => import('../views/shop/ShopCard.vue') },
 
+  // Staff invite acceptance — accessible logged-in or out
+  { path: '/accept-invite/:token', name: 'AcceptInvite', component: () => import('../views/auth/AcceptInvite.vue') },
+
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
 

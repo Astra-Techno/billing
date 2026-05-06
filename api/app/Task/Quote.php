@@ -222,6 +222,7 @@ class Quote extends Task
         $this->validate(['id' => 'required|integer']);
 
         $businessId = $this->requireBusiness();
+        $this->requireRole(['owner', 'admin']);
         $quote      = $this->findQuote((int)$input['id'], $businessId);
 
         if ($quote->status !== 'draft')

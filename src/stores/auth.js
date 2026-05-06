@@ -10,6 +10,12 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isLoggedIn = computed(() => !!token.value && !!businessId.value)
 
+  // Role of current user in the active business
+  const role = computed(() => {
+    const biz = businesses.value?.find(b => String(b.id) === String(businessId.value))
+    return biz?.role || 'staff'
+  })
+
   function setSession(data) {
     token.value      = data.token
     user.value       = data.user
@@ -51,5 +57,5 @@ export const useAuthStore = defineStore('auth', () => {
     return data
   }
 
-  return { token, user, businessId, businesses, isLoggedIn, setSession, logout, login, register, switchBusiness }
+  return { token, user, businessId, businesses, role, isLoggedIn, setSession, logout, login, register, switchBusiness }
 })

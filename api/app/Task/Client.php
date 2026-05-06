@@ -119,6 +119,7 @@ class Client extends Task
         $this->validate(['id' => 'required|integer']);
 
         $businessId = $this->requireBusiness();
+        $this->requireRole(['owner', 'admin']);
         $client     = $this->findClient((int)$input['id'], $businessId);
 
         // Check for open invoices
@@ -217,6 +218,7 @@ class Client extends Task
         $this->validate(['id' => 'required|integer']);
 
         $businessId = $this->requireBusiness();
+        $this->requireRole(['owner', 'admin']);
         $contact    = $this->findContact((int)$input['id'], $businessId);
 
         DB::statement("DELETE FROM client_contacts WHERE id = ?", [$contact->id]);

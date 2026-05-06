@@ -65,6 +65,7 @@ class Product extends Task
         $this->validate(['id' => 'required|integer']);
 
         $businessId = $this->requireBusiness();
+        $this->requireRole(['owner', 'admin']);
         $product    = $this->findProduct((int)$input['id'], $businessId);
 
         $product->setAttribute('active', 0);

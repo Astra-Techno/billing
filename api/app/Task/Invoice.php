@@ -213,6 +213,7 @@ class Invoice extends Task
         $this->validate(['id' => 'required|integer']);
 
         $businessId = $this->requireBusiness();
+        $this->requireRole(['owner', 'admin']);
         $invoice    = $this->findInvoice((int)$input['id'], $businessId);
 
         if ($invoice->status === 'cancelled') $this->fail('Already cancelled.');

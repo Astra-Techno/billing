@@ -84,6 +84,7 @@ class Expense extends Task
         $this->validate(['id' => 'required|integer']);
 
         $businessId = $this->requireBusiness();
+        $this->requireRole(['owner', 'admin']);
         $expense    = $this->findExpense((int)$input['id'], $businessId);
 
         DB::statement("DELETE FROM expenses WHERE id = ?", [$expense->id]);
@@ -113,6 +114,7 @@ class Expense extends Task
         $this->validate(['id' => 'required|integer']);
 
         $businessId = $this->requireBusiness();
+        $this->requireRole(['owner', 'admin']);
         $cat        = ExpenseCategory::find((int)$input['id']);
 
         if (!$cat || (int)$cat->business_id !== $businessId) $this->fail('Category not found.', 404);

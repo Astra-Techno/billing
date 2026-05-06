@@ -37,7 +37,7 @@ class TaskController
      */
     public function guest(Request $request, Response $response, array $args): Response
     {
-        return $this->run($request, $response, $args);
+        return $this->action($request, $response, $args);
     }
 
     // ── Private ───────────────────────────────────────────────────────────────

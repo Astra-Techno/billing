@@ -82,6 +82,7 @@ class TaxRate extends Task
         $this->validate(['id' => 'required|integer']);
 
         $businessId = $this->requireBusiness();
+        $this->requireRole(['owner', 'admin']);
         $taxRate    = $this->findTaxRate((int)$input['id'], $businessId);
 
         // Check if in use
