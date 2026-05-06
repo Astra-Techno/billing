@@ -139,6 +139,14 @@ function exportPdf() {
   <div class="card"><h3>Record Payment</h3><p>Supports cash, UPI, NEFT, cheque. Record partial payments — balance tracked automatically until fully paid.</p></div>
   <div class="card"><h3>Issue Credit Note</h3><p>Open a paid/partial invoice → tap Issue Credit Note. Form opens pre-filled with all original items.</p></div>
 </div>
+<h3>Bulk Actions & CSV Export</h3>
+<p>Tap the checklist icon in the Bills header to enter select mode. Tap rows to select, or use the top checkbox to select all.</p>
+<div class="grid">
+  <div class="card"><h3>Mark Paid (bulk)</h3><p>Select multiple invoices → Mark Paid → choose date and method. Records a full payment for each in one step. Useful at month-end collection.</p></div>
+  <div class="card"><h3>Mark Sent (bulk)</h3><p>Select draft invoices → Mark Sent. Updates status for all selected at once without opening each invoice individually.</p></div>
+  <div class="card"><h3>Export CSV</h3><p>Tap the download icon (always visible) to export all filtered invoices. In select mode, exports only selected rows. Open in Excel or share with your CA for reconciliation.</p></div>
+  <div class="card"><h3>Accountant Tip</h3><p>Filter by month → select all → Export CSV. Instant data for GSTR workings, ITR preparation, or CA handoffs.</p></div>
+</div>
 <div class="tip"><strong>Auto GST split:</strong> Same state → CGST + SGST. Different state → IGST. Bill of Supply → no GST. Set automatically based on bill type and customer state.</div>
 </section>
 
@@ -499,6 +507,44 @@ function exportPdf() {
                     <span class="font-semibold text-gray-800">Edit</span>
                     <span class="text-xs text-gray-400 mt-0.5">Modify any non-cancelled invoice</span>
                   </div>
+                </div>
+              </div>
+
+              <!-- Bulk Actions & CSV Export -->
+              <div class="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                <p class="font-bold text-gray-900 mb-3">Bulk Actions & Export</p>
+                <p class="text-gray-500 text-sm mb-4 leading-relaxed">Use bulk select to act on multiple invoices at once — ideal for accountants collecting payments at month-end or exporting data for your CA.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                  <div class="bg-white border border-gray-100 rounded-xl p-3 flex flex-col gap-1">
+                    <div class="flex items-center gap-2 mb-1">
+                      <div class="w-7 h-7 rounded-lg bg-primary-50 flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                      </div>
+                      <span class="font-semibold text-gray-800">Select Mode</span>
+                    </div>
+                    <p class="text-xs text-gray-500">Tap the checklist icon in the Bills header to enter select mode. Tap rows to check/uncheck. Use the top checkbox to select all.</p>
+                  </div>
+                  <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 flex flex-col gap-1">
+                    <div class="flex items-center gap-2 mb-1">
+                      <div class="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      </div>
+                      <span class="font-semibold text-emerald-900">Mark Paid</span>
+                    </div>
+                    <p class="text-xs text-emerald-800">Select multiple invoices → tap Mark Paid → choose payment date and method. Records a full payment for each selected invoice in one step.</p>
+                  </div>
+                  <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 flex flex-col gap-1">
+                    <div class="flex items-center gap-2 mb-1">
+                      <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                      </div>
+                      <span class="font-semibold text-blue-900">Export CSV</span>
+                    </div>
+                    <p class="text-xs text-blue-800">Tap the download icon (always visible) to export all filtered invoices as CSV. In select mode, exports only selected rows. Use with Excel or share with your CA.</p>
+                  </div>
+                </div>
+                <div class="mt-3 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 text-xs text-amber-800">
+                  <strong>Accountant tip:</strong> Filter by month or date range → select all → Export CSV. Use this at month-end for reconciliation or to prepare GSTR workings in Excel.
                 </div>
               </div>
 

@@ -68,6 +68,28 @@ class AuthMiddleware
         // Update last_used_at async (fire and forget style)
         Auth::updateTokenLastUsed($token);
 
+        // Lazy: sync overdue invoice statuses once per calendar day per business
+        if ($businessId) {
+            $today  = date('Y-m-d');
+            $synced = DB::selectOne(
+                "SELECT value FROM settings WHERE business_id = ? AND `key` = 'overdue_synced_date' LIMIT 1",
+                [$businessId]
+            );
+            if (!$synced || $synced->value !== $today) {
+                DB::statement(
+                    "UPDATE invoices SET status = 'overdue'
+                     WHERE business_id = ? AND status IN ('sent','partial') AND due_date < CURDATE()",
+                    [$businessId]
+                );
+                DB::statement(
+                    "INSERT INTO settings (business_id, `key`, value)
+                     VALUES (?, 'overdue_synced_date', ?)
+                     ON DUPLICATE KEY UPDATE value = VALUES(value)",
+                    [$businessId, $today]
+                );
+            }
+        }
+
         return $handler->handle($request);
     }
 

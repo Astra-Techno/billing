@@ -206,6 +206,74 @@ class Invoice extends Task
         return $this->success(['invoice_id' => $invoice->id], 'Invoice marked as paid.');
     }
 
+    // ── Bulk mark as paid ─────────────────────────────────────────────────────
+
+    public function bulkMarkPaid(array $input): array
+    {
+        $this->validate([
+            'ids'          => 'required',
+            'payment_date' => 'required|date',
+            'method'       => 'required|in:cash,upi,neft,rtgs,imps,cheque,card,netbanking,other',
+        ]);
+
+        $businessId = $this->requireBusiness();
+        $ids = array_values(array_filter(array_map('intval', (array)$input['ids'])));
+        if (empty($ids)) $this->fail('No invoices selected.');
+
+        $ph = implode(',', array_fill(0, count($ids), '?'));
+
+        $invoices = DB::select(
+            "SELECT id, client_id, amount_due FROM invoices
+             WHERE id IN ($ph) AND business_id = ?
+               AND status NOT IN ('cancelled','paid') AND amount_due > 0",
+            [...$ids, $businessId]
+        );
+
+        if (empty($invoices)) $this->fail('No eligible invoices (all already paid or cancelled).');
+
+        foreach ($invoices as $inv) {
+            DB::statement(
+                "INSERT INTO payments
+                 (business_id, invoice_id, client_id, recorded_by, amount, method, payment_date, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())",
+                [$businessId, $inv->id, $inv->client_id, $this->userId(),
+                 (float)$inv->amount_due, $input['method'], $input['payment_date']]
+            );
+            DB::statement(
+                "UPDATE invoices
+                 SET amount_paid = total, amount_due = 0, status = 'paid', paid_at = NOW()
+                 WHERE id = ?",
+                [$inv->id]
+            );
+        }
+
+        return $this->success(['updated' => count($invoices)],
+            count($invoices) . ' invoice(s) marked as paid.');
+    }
+
+    // ── Bulk mark as sent ─────────────────────────────────────────────────────
+
+    public function bulkMarkSent(array $input): array
+    {
+        $this->validate(['ids' => 'required']);
+
+        $businessId = $this->requireBusiness();
+        $ids = array_values(array_filter(array_map('intval', (array)$input['ids'])));
+        if (empty($ids)) $this->fail('No invoices selected.');
+
+        $ph = implode(',', array_fill(0, count($ids), '?'));
+
+        DB::statement(
+            "UPDATE invoices
+             SET status = 'sent', sent_at = COALESCE(sent_at, NOW())
+             WHERE id IN ($ph) AND business_id = ?
+               AND status NOT IN ('cancelled','paid')",
+            [...$ids, $businessId]
+        );
+
+        return $this->success(null, 'Invoices marked as sent.');
+    }
+
     // ── Cancel invoice ────────────────────────────────────────────────────────
 
     public function cancel(array $input): array
