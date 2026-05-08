@@ -14,6 +14,7 @@ const titles = {
   gst:            { label: 'GST Filing',              color: 'bg-teal-100 text-teal-600' },
   reports:        { label: 'Reports',                 color: 'bg-violet-100 text-violet-600' },
   settings:       { label: 'Settings',                color: 'bg-gray-100 text-gray-600' },
+  team:           { label: 'Team & Staff Access',     color: 'bg-indigo-100 text-indigo-600' },
 }
 </script>
 
@@ -90,11 +91,17 @@ const titles = {
             <div>
               <p class="font-semibold text-gray-800 mb-2">Actions on a bill</p>
               <div class="grid grid-cols-2 gap-2 text-xs text-gray-600">
-                <div class="bg-gray-50 rounded-lg p-2"><strong>Print/PDF</strong> — Print-ready GST invoice</div>
-                <div class="bg-gray-50 rounded-lg p-2"><strong>WhatsApp</strong> — Share with customer</div>
+                <div class="bg-gray-50 rounded-lg p-2"><strong>Print / PDF</strong> — Print-ready GST invoice</div>
+                <div class="bg-gray-50 rounded-lg p-2"><strong>WhatsApp</strong> — Share details with customer</div>
                 <div class="bg-gray-50 rounded-lg p-2"><strong>Record Payment</strong> — Mark amount received</div>
                 <div class="bg-gray-50 rounded-lg p-2"><strong>Duplicate</strong> — Copy for recurring bills</div>
+                <div class="bg-gray-50 rounded-lg p-2"><strong>Mark Sent</strong> — Confirm bill was shared</div>
+                <div class="bg-gray-50 rounded-lg p-2"><strong>Cancel</strong> — Void a sent invoice</div>
               </div>
+            </div>
+            <div class="bg-blue-50 border border-blue-100 rounded-xl p-3">
+              <p class="font-semibold text-blue-800 text-xs mb-1">Bulk Actions</p>
+              <p class="text-xs text-blue-700">Tap the <strong>select icon</strong> (top right) to choose multiple bills. Then bulk mark as paid, mark as sent, or export to CSV — useful for month-end reconciliation.</p>
             </div>
             <div class="bg-green-50 border border-green-100 rounded-xl p-3 flex gap-2">
               <svg class="w-4 h-4 text-green-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -131,16 +138,17 @@ const titles = {
           <template v-else-if="helpSection === 'customers'">
             <p class="text-gray-600 leading-relaxed">Save your client details once, then select them in one tap when creating bills or quotes.</p>
             <div>
-              <p class="font-semibold text-gray-800 mb-2">Important fields</p>
+              <p class="font-semibold text-gray-800 mb-2">Only Name and Mobile are required</p>
+              <p class="text-xs text-gray-500 mb-2">GST number, address, email — all optional. Tap <strong>"Add email, GST, address…"</strong> to expand extra fields.</p>
               <div class="space-y-1.5 text-xs text-gray-600">
-                <div class="flex gap-2 bg-gray-50 rounded-lg p-2"><strong class="w-20 shrink-0">GSTIN</strong><span>For B2B customers — required for proper GST invoicing.</span></div>
+                <div class="flex gap-2 bg-gray-50 rounded-lg p-2"><strong class="w-20 shrink-0">GSTIN</strong><span>Only needed for GST-registered businesses. Leave blank for individuals and unregistered shops.</span></div>
                 <div class="flex gap-2 bg-gray-50 rounded-lg p-2"><strong class="w-20 shrink-0">State</strong><span>Determines CGST+SGST vs IGST on invoices.</span></div>
-                <div class="flex gap-2 bg-gray-50 rounded-lg p-2"><strong class="w-20 shrink-0">Phone</strong><span>Used for WhatsApp payment reminders.</span></div>
+                <div class="flex gap-2 bg-gray-50 rounded-lg p-2"><strong class="w-20 shrink-0">Mobile</strong><span>Used for WhatsApp payment reminders.</span></div>
               </div>
             </div>
             <div class="bg-purple-50 border border-purple-100 rounded-xl p-3 flex gap-2">
               <svg class="w-4 h-4 text-purple-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              <p class="text-xs text-purple-700"><strong>Tip:</strong> Tap any customer to see their full billing history and outstanding balance.</p>
+              <p class="text-xs text-purple-700"><strong>Tip:</strong> Tap any customer to see their full billing history, outstanding balance, and top items they buy.</p>
             </div>
           </template>
 
@@ -236,6 +244,34 @@ const titles = {
                 <p class="font-semibold text-gray-800 text-xs mb-1">GST Summary</p>
                 <p class="text-xs text-gray-500">CGST, SGST, IGST collected + ITC estimate.</p>
               </div>
+            </div>
+          </template>
+
+          <!-- TEAM -->
+          <template v-else-if="helpSection === 'team'">
+            <p class="text-gray-600 leading-relaxed">Add staff members to your business. Each person gets their own login with role-based access.</p>
+            <div>
+              <p class="font-semibold text-gray-800 mb-2">Roles</p>
+              <div class="space-y-1.5 text-xs text-gray-600">
+                <div class="flex gap-2 bg-gray-50 rounded-lg p-2"><strong class="w-24 shrink-0">Owner</strong><span>Full access. Can delete, manage settings, view reports, and manage team.</span></div>
+                <div class="flex gap-2 bg-gray-50 rounded-lg p-2"><strong class="w-24 shrink-0">Admin</strong><span>Same as owner except cannot change business settings or manage team.</span></div>
+                <div class="flex gap-2 bg-gray-50 rounded-lg p-2"><strong class="w-24 shrink-0">Accountant</strong><span>Can view and export reports, record payments. Cannot delete records.</span></div>
+                <div class="flex gap-2 bg-gray-50 rounded-lg p-2"><strong class="w-24 shrink-0">Staff</strong><span>Can create bills and quotes only. No delete, no reports, no settings.</span></div>
+              </div>
+            </div>
+            <div>
+              <p class="font-semibold text-gray-800 mb-2">How to invite someone</p>
+              <ol class="space-y-2">
+                <li v-for="(s, i) in ['Go to Settings → Team tab.','Tap Invite Member and enter their mobile/email and role.','Share the invite link via WhatsApp.','They open the link, create a password, and get instant access.']"
+                  :key="i" class="flex gap-2 text-xs text-gray-600">
+                  <span class="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center shrink-0 text-[10px]">{{i+1}}</span>
+                  <span>{{s}}</span>
+                </li>
+              </ol>
+            </div>
+            <div class="bg-amber-50 border border-amber-100 rounded-xl p-3 flex gap-2">
+              <svg class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              <p class="text-xs text-amber-700"><strong>Security Tip:</strong> Give staff the minimum role they need. Use <strong>Staff</strong> for billing-only employees — they cannot delete or export data.</p>
             </div>
           </template>
 
