@@ -292,6 +292,23 @@ class Invoice extends Task
             [$invoice->id]
         );
 
+        DB::statement(
+            "INSERT INTO audit_log (business_id, user_id, action, entity_type, entity_id, snapshot, note)
+             VALUES (?, ?, 'cancel', 'invoice', ?, ?, ?)",
+            [
+                $businessId,
+                $this->userId(),
+                $invoice->id,
+                json_encode([
+                    'number' => $invoice->number,
+                    'status' => $invoice->status,
+                    'total'  => $invoice->total,
+                    'client' => $invoice->client_id,
+                ]),
+                "Invoice {$invoice->number} cancelled",
+            ]
+        );
+
         return $this->success(null, 'Invoice cancelled.');
     }
 

@@ -135,6 +135,18 @@ class Client extends Task
         $client->setAttribute('active', 0);
         $client->save();
 
+        DB::statement(
+            "INSERT INTO audit_log (business_id, user_id, action, entity_type, entity_id, snapshot, note)
+             VALUES (?, ?, 'delete', 'client', ?, ?, ?)",
+            [
+                $businessId,
+                $this->userId(),
+                $client->id,
+                json_encode(['name' => $client->name, 'mobile' => $client->mobile]),
+                "Client {$client->name} deactivated",
+            ]
+        );
+
         return $this->success(null, 'Client deactivated.');
     }
 

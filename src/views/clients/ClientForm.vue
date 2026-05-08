@@ -9,9 +9,19 @@ const router = useRouter()
 const route  = useRoute()
 const emit   = defineEmits(['refresh'])
 
-const states  = ref([])
-const loading = ref(false)
-const error   = ref('')
+const states     = ref([])
+const loading    = ref(false)
+const error      = ref('')
+const gstinError = ref('')
+
+const GSTIN_RE = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/
+
+function validateGstin() {
+  const v = (form.value.gstin || '').trim().toUpperCase()
+  form.value.gstin = v
+  if (!v) { gstinError.value = ''; return }
+  gstinError.value = GSTIN_RE.test(v) ? '' : 'Invalid GSTIN format. Example: 27AABCU9603R1Z6'
+}
 const isEdit  = computed(() => !!route.params.id)
 
 const form = ref({
@@ -130,7 +140,10 @@ async function submit() {
             </div>
             <div>
               <label class="form-label">GST Number <span class="text-gray-400 font-normal">(if registered)</span></label>
-              <input v-model="form.gstin" type="text" class="form-input font-mono uppercase" placeholder="e.g. 27AABCU9603R1Z6" maxlength="15" />
+              <input v-model="form.gstin" type="text" @blur="validateGstin"
+                class="form-input font-mono uppercase" :class="gstinError ? 'border-red-400 focus:ring-red-200' : ''"
+                placeholder="e.g. 27AABCU9603R1Z6" maxlength="15" />
+              <p v-if="gstinError" class="text-xs text-red-500 mt-1">{{ gstinError }}</p>
             </div>
             <div>
               <label class="form-label">PAN Number</label>

@@ -4,13 +4,15 @@ import { useRoute } from 'vue-router'
 import api, { item, list } from '../../api'
 import { inr } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
+import QRCode from 'qrcode'
 
-const route   = useRoute()
+const route    = useRoute()
 const invoice  = ref(null)
 const business = ref(null)
 const items    = ref([])
 const loading  = ref(true)
 const error    = ref('')
+const qrDataUrl = ref('')
 
 const invoiceTitle = computed(() => {
   const map = { tax_invoice: 'Tax Invoice', bill_of_supply: 'Bill of Supply', retail: 'Retail Invoice', export: 'Export Invoice' }
@@ -50,6 +52,15 @@ onMounted(async () => {
     invoice.value  = invRes.data?.data
     items.value    = itmRes.data?.data || []
     business.value = bizRes.data?.data || null
+
+    // Generate UPI QR code if business has a UPI ID and invoice has a balance due
+    if (business.value?.upi_id && invoice.value) {
+      const due = parseFloat(invoice.value.amount_due || 0)
+      const upiStr = `upi://pay?pa=${encodeURIComponent(business.value.upi_id)}&pn=${encodeURIComponent(business.value.name || '')}&am=${due > 0 ? due.toFixed(2) : ''}&cu=INR&tn=${encodeURIComponent(invoice.value.number)}`
+      try {
+        qrDataUrl.value = await QRCode.toDataURL(upiStr, { width: 96, margin: 1, color: { dark: '#111827', light: '#ffffff' } })
+      } catch {}
+    }
   } catch (e) {
     error.value = 'Could not load invoice. Please ensure you are logged in.'
     loading.value = false
@@ -175,11 +186,18 @@ onMounted(async () => {
       <div class="grid grid-cols-2 gap-6 mb-6">
         <div v-if="business?.bank_name || business?.upi_id">
           <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Payment Details</p>
-          <div class="space-y-0.5 text-xs">
-            <div v-if="business.bank_name" class="flex gap-2"><span class="text-gray-400 w-16 shrink-0">Bank</span><span>{{ business.bank_name }}</span></div>
-            <div v-if="business.bank_account_no" class="flex gap-2"><span class="text-gray-400 w-16 shrink-0">A/C No</span><span class="font-mono">{{ business.bank_account_no }}</span></div>
-            <div v-if="business.bank_ifsc" class="flex gap-2"><span class="text-gray-400 w-16 shrink-0">IFSC</span><span class="font-mono">{{ business.bank_ifsc }}</span></div>
-            <div v-if="business.upi_id" class="flex gap-2"><span class="text-gray-400 w-16 shrink-0">UPI ID</span><span class="font-mono">{{ business.upi_id }}</span></div>
+          <div class="flex gap-4 items-start">
+            <div class="space-y-0.5 text-xs flex-1">
+              <div v-if="business.bank_name" class="flex gap-2"><span class="text-gray-400 w-16 shrink-0">Bank</span><span>{{ business.bank_name }}</span></div>
+              <div v-if="business.bank_account_no" class="flex gap-2"><span class="text-gray-400 w-16 shrink-0">A/C No</span><span class="font-mono">{{ business.bank_account_no }}</span></div>
+              <div v-if="business.bank_ifsc" class="flex gap-2"><span class="text-gray-400 w-16 shrink-0">IFSC</span><span class="font-mono">{{ business.bank_ifsc }}</span></div>
+              <div v-if="business.upi_id" class="flex gap-2"><span class="text-gray-400 w-16 shrink-0">UPI ID</span><span class="font-mono">{{ business.upi_id }}</span></div>
+            </div>
+            <!-- UPI QR Code -->
+            <div v-if="qrDataUrl && invoice?.amount_due > 0" class="shrink-0 text-center">
+              <img :src="qrDataUrl" class="w-20 h-20 border border-gray-200 rounded" alt="UPI QR" />
+              <p class="text-[9px] text-gray-400 mt-0.5">Scan to Pay</p>
+            </div>
           </div>
         </div>
         <div>

@@ -108,6 +108,18 @@ class Payment extends Task
             [$totalPaid, $due, $status, $invoiceId]
         );
 
+        DB::statement(
+            "INSERT INTO audit_log (business_id, user_id, action, entity_type, entity_id, snapshot, note)
+             VALUES (?, ?, 'delete', 'payment', ?, ?, ?)",
+            [
+                $businessId,
+                $this->userId(),
+                $payment->id,
+                json_encode(['invoice_id' => $invoiceId, 'amount' => $amount, 'method' => $payment->method]),
+                "Payment of ₹{$amount} deleted from invoice #{$invoiceId}",
+            ]
+        );
+
         return $this->success(null, 'Payment deleted and invoice balance updated.');
     }
 }
