@@ -208,32 +208,78 @@ class Business extends Task
 
     public function updateBank(array $input): array
     {
-        $this->validate([
-            'bank_name'         => 'required|string',
-            'bank_account_no'   => 'required|string',
-            'bank_ifsc'         => 'required|string',
-            'bank_account_name' => 'required|string',
-        ]);
-
         $businessId = $this->requireBusiness();
         $this->requireRole(['owner', 'admin']);
 
-        $ifsc = strtoupper(trim($input['bank_ifsc']));
-        if (!preg_match('/^[A-Z]{4}0[A-Z0-9]{6}$/', $ifsc)) {
-            $this->fail('Invalid IFSC code format (e.g. SBIN0001234).');
+        $business = BusinessTable::findOrFail($businessId);
+
+        $fields = [];
+
+        // Bank fields — all optional; validate IFSC only when provided
+        if (array_key_exists('bank_name', $input))         $fields['bank_name']         = trim($input['bank_name']);
+        if (array_key_exists('bank_account_no', $input))   $fields['bank_account_no']   = trim($input['bank_account_no']);
+        if (array_key_exists('bank_account_name', $input)) $fields['bank_account_name'] = trim($input['bank_account_name']);
+
+        if (!empty($input['bank_ifsc'])) {
+            $ifsc = strtoupper(trim($input['bank_ifsc']));
+            if (!preg_match('/^[A-Z]{4}0[A-Z0-9]{6}$/', $ifsc)) {
+                $this->fail('Invalid IFSC code format (e.g. SBIN0001234).');
+            }
+            $fields['bank_ifsc'] = $ifsc;
+        } elseif (array_key_exists('bank_ifsc', $input)) {
+            $fields['bank_ifsc'] = null;
         }
 
+        // UPI fields
+        if (array_key_exists('upi_id', $input))       $fields['upi_id']       = trim($input['upi_id']) ?: null;
+        if (array_key_exists('upi_qr_image', $input)) $fields['upi_qr_image'] = $input['upi_qr_image'] ?: null;
+
+        if (!empty($fields)) {
+            $business->fill($fields);
+            $business->save();
+        }
+
+        return $this->success(null, 'Payment details updated.');
+    }
+
+    // ── Upload UPI QR code image ───────────────────────────────────────────────
+
+    public function uploadUpiQr(array $input): array
+    {
+        $businessId = $this->requireBusiness();
+        $this->requireRole(['owner', 'admin']);
+
+        $data = $input['qr_image'] ?? '';
+        if (!$data) $this->fail('No image provided.');
+
+        // Accept base64 data URL (image/png or image/jpeg)
+        if (!preg_match('/^data:image\/(png|jpeg|jpg|webp);base64,/', $data)) {
+            $this->fail('Image must be PNG or JPEG.');
+        }
+
+        $raw  = base64_decode(preg_replace('/^data:image\/\w+;base64,/', '', $data));
+        $size = strlen($raw);
+        if ($size > 2 * 1024 * 1024) $this->fail('QR image must be under 2 MB.');
+
         $business = BusinessTable::findOrFail($businessId);
-        $business->fill([
-            'bank_name'         => $input['bank_name'],
-            'bank_account_no'   => $input['bank_account_no'],
-            'bank_ifsc'         => $ifsc,
-            'bank_account_name' => $input['bank_account_name'],
-            'upi_id'            => $input['upi_id'] ?? $business->upi_id,
-        ]);
+        $business->fill(['upi_qr_image' => $data]);
         $business->save();
 
-        return $this->success(null, 'Bank details updated.');
+        return $this->success(['upi_qr_image' => $data], 'UPI QR image saved.');
+    }
+
+    // ── Remove UPI QR code image ──────────────────────────────────────────────
+
+    public function removeUpiQr(array $input): array
+    {
+        $businessId = $this->requireBusiness();
+        $this->requireRole(['owner', 'admin']);
+
+        $business = BusinessTable::findOrFail($businessId);
+        $business->fill(['upi_qr_image' => null]);
+        $business->save();
+
+        return $this->success(null, 'UPI QR image removed.');
     }
 
     // ── Invite team member ────────────────────────────────────────────────────

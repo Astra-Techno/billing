@@ -5,6 +5,7 @@ import api, { item, list, task } from '../../api'
 import { inr } from '../../utils/currency'
 import { fmtDateShort, today } from '../../utils/date'
 import { statusBadge, statusLabel } from '../../utils/invoice'
+import QRCode from 'qrcode'
 
 const props = defineProps({ panelId: { type: [String, Number], default: null } })
 const emit  = defineEmits(['back', 'refresh'])
@@ -24,6 +25,12 @@ const payForm  = ref({ amount: '', method: 'upi', reference: '', payment_date: t
 const payError = ref('')
 const paying   = ref(false)
 const acting   = ref(false)
+const upiQrDataUrl = ref('')
+
+function setQuickAmount(pct) {
+  const due = parseFloat(invoice.value?.amount_due || 0)
+  payForm.value.amount = pct === 1 ? due.toFixed(2) : (Math.round(due * pct * 100) / 100).toFixed(2)
+}
 
 async function load() {
   loading.value = true
@@ -40,6 +47,13 @@ async function load() {
     payments.value = payRes.data?.data  || []
     business.value = bizRes.data?.data  || null
     if (invoice.value) payForm.value.amount = invoice.value.amount_due
+
+    // Generate UPI QR for collect payment card
+    const upiId = business.value?.upi_id
+    if (upiId && invoice.value?.amount_due > 0) {
+      const upiStr = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(business.value?.name || '')}&am=${parseFloat(invoice.value.amount_due).toFixed(2)}&cu=INR&tn=${encodeURIComponent(invoice.value.number)}`
+      try { upiQrDataUrl.value = await QRCode.toDataURL(upiStr, { width: 140, margin: 1 }) } catch {}
+    }
   } catch {}
   loading.value = false
 }
@@ -272,6 +286,36 @@ onMounted(load)
 
       </div>
 
+      <!-- UPI Collect Payment card — shown when balance due and business has UPI -->
+      <div v-if="invoice.status !== 'cancelled' && invoice.amount_due > 0 && (business?.upi_qr_image || business?.upi_id)"
+        class="w-full max-w-lg mx-auto mb-5 animate-fade-in-up delay-100">
+        <div class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-[1.75rem] p-5">
+          <p class="text-xs font-bold text-emerald-700 uppercase tracking-widest mb-3">Collect Payment</p>
+          <div class="flex items-center gap-5">
+            <!-- QR code -->
+            <div class="shrink-0 text-center">
+              <img v-if="business.upi_qr_image" :src="business.upi_qr_image"
+                class="w-32 h-32 object-contain border border-emerald-200 rounded-xl bg-white p-1" alt="UPI QR" />
+              <img v-else-if="upiQrDataUrl" :src="upiQrDataUrl"
+                class="w-32 h-32 border border-emerald-200 rounded-xl bg-white p-1" alt="UPI QR" />
+              <p class="text-[10px] text-emerald-600 font-medium mt-1">Scan to Pay</p>
+            </div>
+            <!-- Details -->
+            <div class="flex-1 min-w-0 space-y-2">
+              <div>
+                <p class="text-[10px] text-emerald-600 font-semibold uppercase tracking-wider">Balance Due</p>
+                <p class="text-2xl font-extrabold text-emerald-800">{{ inr(invoice.amount_due) }}</p>
+              </div>
+              <div v-if="business.upi_id">
+                <p class="text-[10px] text-emerald-600 font-semibold uppercase tracking-wider">UPI ID</p>
+                <p class="text-sm font-bold text-gray-800 font-mono break-all">{{ business.upi_id }}</p>
+              </div>
+              <p class="text-[11px] text-emerald-600">Show this QR to customer — they scan from any UPI app</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Invoice body — proper Indian GST Tax Invoice -->
       <div class="bg-white rounded-[2rem] shadow-soft border-0 overflow-hidden animate-fade-in-up delay-150">
 
@@ -458,8 +502,23 @@ onMounted(load)
         </div>
         <div class="p-5 space-y-4">
           <div>
-            <label class="form-label">Amount (₹) *</label>
-            <input v-model="payForm.amount" type="number" min="0.01" step="0.01" class="form-input text-lg font-semibold" />
+            <div class="flex items-center justify-between mb-1">
+              <label class="form-label mb-0">Amount (₹) *</label>
+              <div class="flex gap-1.5">
+                <button type="button" @click="setQuickAmount(0.25)"
+                  class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 hover:bg-primary-100 hover:text-primary-700 transition-colors">25%</button>
+                <button type="button" @click="setQuickAmount(0.5)"
+                  class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 hover:bg-primary-100 hover:text-primary-700 transition-colors">50%</button>
+                <button type="button" @click="setQuickAmount(0.75)"
+                  class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 hover:bg-primary-100 hover:text-primary-700 transition-colors">75%</button>
+                <button type="button" @click="setQuickAmount(1)"
+                  class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors">Full</button>
+              </div>
+            </div>
+            <input v-model="payForm.amount" type="number" min="0.01" :max="invoice?.amount_due" step="0.01" class="form-input text-lg font-semibold" />
+            <p v-if="invoice?.amount_paid > 0" class="text-xs text-gray-400 mt-1">
+              Already paid: {{ inr(invoice.amount_paid) }} · Balance: {{ inr(invoice.amount_due) }}
+            </p>
           </div>
           <div>
             <label class="form-label">Payment Method *</label>

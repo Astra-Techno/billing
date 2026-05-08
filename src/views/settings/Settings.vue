@@ -130,6 +130,57 @@ const bankForm = ref({
   bank_name: '', bank_account_no: '', bank_ifsc: '', bank_account_name: '', upi_id: '',
 })
 
+// UPI QR image
+const upiQrCurrent    = ref('')
+const upiQrPreview    = ref('')
+const upiQrUploading  = ref(false)
+const upiQrFileInput  = ref(null)
+const upiQrGenerated  = ref('')  // auto-generated from UPI ID via qrcode lib
+
+function pickUpiQr() { upiQrFileInput.value?.click() }
+
+async function onUpiQrFile(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  if (file.size > 2 * 1024 * 1024) { error.value = 'QR image must be under 2 MB.'; return }
+  const reader = new FileReader()
+  reader.onload = async (ev) => {
+    upiQrPreview.value  = ev.target.result
+    upiQrUploading.value = true
+    try {
+      const res = await task('Business', 'uploadUpiQr', { qr_image: ev.target.result })
+      upiQrCurrent.value = res.data?.data?.upi_qr_image || ev.target.result
+      upiQrPreview.value = ''
+      flash('UPI QR image saved.')
+    } catch (err) {
+      error.value        = err.response?.data?.message || 'Upload failed.'
+      upiQrPreview.value = ''
+    }
+    upiQrUploading.value = false
+  }
+  reader.readAsDataURL(file)
+}
+
+async function removeUpiQr() {
+  upiQrUploading.value = true
+  try {
+    await task('Business', 'removeUpiQr', {})
+    upiQrCurrent.value = ''
+    flash('UPI QR image removed.')
+  } catch {}
+  upiQrUploading.value = false
+}
+
+async function genUpiQr() {
+  const id = bankForm.value.upi_id?.trim()
+  if (!id) { upiQrGenerated.value = ''; return }
+  try {
+    const QRCode = (await import('qrcode')).default
+    const upiStr = `upi://pay?pa=${encodeURIComponent(id)}&cu=INR`
+    upiQrGenerated.value = await QRCode.toDataURL(upiStr, { width: 120, margin: 1 })
+  } catch { upiQrGenerated.value = '' }
+}
+
 const invoiceForm = ref({
   invoice_prefix: 'INV', quote_prefix: 'QTE', invoice_notes: '', invoice_terms: '',
 })
@@ -249,6 +300,8 @@ onMounted(async () => {
     bankForm.value.bank_ifsc         = biz.bank_ifsc         || ''
     bankForm.value.bank_account_name = biz.bank_account_name || ''
     bankForm.value.upi_id            = biz.upi_id            || ''
+    upiQrCurrent.value               = biz.upi_qr_image      || ''
+    if (biz.upi_id) genUpiQr()
 
     invoiceForm.value.invoice_prefix = biz.invoice_prefix || 'INV'
     invoiceForm.value.quote_prefix   = biz.quote_prefix   || 'QTE'
@@ -585,8 +638,79 @@ async function saveInvoice() {
 
     <!-- Bank & UPI -->
     <template v-if="!loading && activeTab === 'bank'">
+
+      <!-- UPI Payment (prominent — most shops only need this) -->
       <div class="card card-body space-y-4">
-        <h2 class="section-title">Bank Account</h2>
+        <div>
+          <h2 class="section-title mb-0">UPI Payment</h2>
+          <p class="text-xs text-gray-400 mt-0.5">Customers scan your QR or use your UPI ID to pay directly from their phone</p>
+        </div>
+
+        <!-- UPI ID + live QR preview -->
+        <div class="flex flex-col sm:flex-row gap-4 items-start">
+          <div class="flex-1 space-y-2">
+            <label class="form-label">UPI ID</label>
+            <input v-model="bankForm.upi_id" @blur="genUpiQr" type="text" class="form-input" placeholder="yourname@okaxis, 9876543210@upi" />
+            <p class="text-xs text-gray-400">Your UPI handle — shown on every invoice &amp; printed bill</p>
+          </div>
+          <!-- Auto-generated QR preview -->
+          <div v-if="upiQrGenerated" class="shrink-0 text-center">
+            <p class="text-xs text-gray-400 mb-1 font-medium">Preview</p>
+            <img :src="upiQrGenerated" class="w-24 h-24 border border-gray-200 rounded-xl" alt="UPI QR preview" />
+            <p class="text-[10px] text-gray-400 mt-1">Generated from UPI ID</p>
+          </div>
+        </div>
+
+        <!-- UPI QR image upload -->
+        <div class="border-t border-gray-100 pt-4">
+          <p class="text-sm font-semibold text-gray-700 mb-1">Upload Your Bank QR Code <span class="font-normal text-gray-400">(optional)</span></p>
+          <p class="text-xs text-gray-400 mb-3">If your bank gave you a printed QR code (PhonePe/GPay merchant QR), upload it here — it replaces the auto-generated one on invoices</p>
+
+          <!-- Has uploaded QR -->
+          <div v-if="upiQrCurrent" class="flex items-center gap-4">
+            <img :src="upiQrCurrent" class="w-20 h-20 border border-gray-200 rounded-xl object-contain" alt="UPI QR" />
+            <div class="space-y-2">
+              <p class="text-xs text-emerald-600 font-semibold">QR code uploaded</p>
+              <button @click="pickUpiQr" class="text-xs font-medium text-primary-600 hover:text-primary-700 block">Replace image</button>
+              <button @click="removeUpiQr" :disabled="upiQrUploading" class="text-xs font-medium text-red-500 hover:text-red-600 block">Remove</button>
+            </div>
+          </div>
+
+          <!-- No QR yet — upload zone -->
+          <div v-else>
+            <button @click="pickUpiQr" :disabled="upiQrUploading"
+              class="flex items-center gap-3 border-2 border-dashed border-gray-200 rounded-xl px-5 py-4 w-full sm:w-auto hover:border-primary-300 hover:bg-primary-50 transition-colors text-left">
+              <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                <svg v-if="!upiQrUploading" class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                </svg>
+                <svg v-else class="w-5 h-5 text-primary-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-gray-700">{{ upiQrUploading ? 'Uploading…' : 'Upload QR Image' }}</p>
+                <p class="text-xs text-gray-400">PNG or JPEG, max 2 MB</p>
+              </div>
+            </button>
+          </div>
+          <input ref="upiQrFileInput" type="file" accept="image/png,image/jpeg,image/jpg" class="hidden" @change="onUpiQrFile" />
+        </div>
+
+        <div class="pt-2">
+          <button @click="saveBank" :disabled="saving" class="btn-primary w-full sm:w-auto">
+            {{ saving ? 'Saving…' : 'Save UPI Details' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Bank Account (secondary — for NEFT/cheque customers) -->
+      <div class="card card-body space-y-4">
+        <div>
+          <h2 class="section-title mb-0">Bank Account</h2>
+          <p class="text-xs text-gray-400 mt-0.5">For customers who pay via NEFT, RTGS, or cheque — printed on invoices</p>
+        </div>
         <div class="grid sm:grid-cols-2 gap-4">
           <div>
             <label class="form-label">Bank Name</label>
@@ -605,18 +729,13 @@ async function saveInvoice() {
             <input v-model="bankForm.bank_account_name" type="text" class="form-input" placeholder="Name as per bank records" />
           </div>
         </div>
-        <h2 class="section-title pt-2">UPI</h2>
         <div>
-          <label class="form-label">UPI ID</label>
-          <input v-model="bankForm.upi_id" type="text" class="form-input" placeholder="yourname@upi" />
-          <p class="text-xs text-gray-400 mt-1">Shown on bills so customers can pay you directly via UPI</p>
-        </div>
-        <div class="pt-2">
           <button @click="saveBank" :disabled="saving" class="btn-primary w-full sm:w-auto">
             {{ saving ? 'Saving…' : 'Save Bank Details' }}
           </button>
         </div>
       </div>
+
     </template>
 
     <!-- Invoice Settings -->
