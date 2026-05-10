@@ -197,14 +197,7 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="max-w-3xl mx-auto space-y-5">
-
-    <!-- Back Navigation -->
-    <div v-if="!panelId" class="flex items-center gap-3 pt-2">
-      <button @click="router.push('/invoices')" class="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
-        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-      </button>
-    </div>
+  <div class="max-w-3xl mx-auto space-y-5 pt-2 sm:pt-4">
 
     <div v-if="loading" class="flex justify-center p-12">
       <div class="w-8 h-8 border-4 border-primary-100 border-t-primary-600 rounded-full animate-spin"></div>
@@ -212,78 +205,101 @@ onMounted(load)
 
     <template v-else-if="invoice">
 
-      <!-- HERO: Massive Total and Status -->
-      <div class="flex flex-col items-center justify-center text-center animate-fade-in-up mt-4 mb-2">
-        <div class="w-16 h-16 rounded-full bg-blue-50 text-primary-600 flex items-center justify-center mb-3">
-          <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      <!-- Premium Header Card -->
+      <div class="bg-gradient-to-br from-white to-gray-50/80 rounded-[2rem] p-6 sm:p-8 shadow-md shadow-gray-200/50 border border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative overflow-hidden animate-fade-in-up mt-2 mb-6">
+        <!-- decorative background blur -->
+        <div class="absolute -top-10 -right-10 w-40 h-40 bg-primary-100 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+
+        <div class="relative z-10 space-y-4">
+          <div class="flex items-center gap-3">
+             <span class="text-sm font-bold text-gray-400 uppercase tracking-widest">Invoice {{ invoice.number }}</span>
+             <span :class="statusBadge(invoice.status)" class="px-2.5 py-1 text-xs rounded-lg shadow-sm border border-black/5">{{ statusLabel(invoice.status) }}</span>
+          </div>
+          <div>
+            <h1 class="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">{{ invoice.client_name }}</h1>
+            <p class="text-sm font-medium text-gray-500 mt-1.5 flex items-center gap-2">
+              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              Issued {{ fmtDateShort(invoice.issue_date) }} <span class="text-gray-300">•</span> Due {{ fmtDateShort(invoice.due_date) }}
+            </p>
+          </div>
         </div>
-        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">{{ invoice.client_name }}</p>
-        <h1 class="text-5xl font-extrabold tracking-tight text-gray-900">{{ inr(invoice.total) }}</h1>
-        <div class="flex items-center gap-2 mt-3">
-          <p class="text-sm font-semibold text-gray-600">Bill {{ invoice.number }}</p>
-          <span :class="statusBadge(invoice.status)" class="text-[10px] px-2 py-0.5">{{ statusLabel(invoice.status) }}</span>
+
+        <div class="relative z-10 flex flex-col items-start sm:items-end w-full sm:w-auto bg-gray-50/80 sm:bg-transparent p-4 sm:p-0 rounded-2xl border border-gray-100/50 sm:border-transparent">
+          <p class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Amount</p>
+          <p class="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">{{ inr(invoice.total) }}</p>
+          <div v-if="invoice.amount_due > 0 && invoice.status !== 'paid'" class="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-danger-50 text-danger-700 text-sm font-bold shadow-sm border border-danger-100/50">
+            <span class="w-2 h-2 rounded-full bg-danger-500 animate-pulse"></span>
+            Balance Due: {{ inr(invoice.amount_due) }}
+          </div>
+          <div v-else class="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-success-50 text-success-700 text-sm font-bold shadow-sm border border-success-100/50">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Fully Paid
+          </div>
         </div>
-        <p v-if="invoice.amount_due > 0 && invoice.status !== 'paid'" class="text-danger-600 font-bold mt-3 bg-danger-50 px-4 py-1.5 rounded-full text-sm tracking-wide">
-          Balance: {{ inr(invoice.amount_due) }}
-        </p>
       </div>
 
-      <!-- Actions -->
-      <div v-if="invoice.status !== 'cancelled'" class="w-full max-w-lg mx-auto space-y-3 animate-fade-in-up delay-75 mb-6">
-
-        <!-- Primary: Mark Sent / Record Payment -->
+      <!-- Unified Action Bar -->
+      <div v-if="invoice.status !== 'cancelled'" class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 mb-8 animate-fade-in-up delay-75 z-20 relative">
+        <!-- Primary Action -->
         <button v-if="invoice.status === 'draft'" @click="markSent" :disabled="acting"
-          class="w-full flex items-center justify-center gap-3 py-4 bg-primary-600 text-white font-extrabold text-base rounded-[1.5rem] shadow-soft-blue hover:bg-primary-700 active:scale-[0.98] transition-all">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+          class="flex items-center justify-center gap-2 px-6 py-3.5 bg-primary-600 text-white font-bold text-sm rounded-xl shadow-soft-blue hover:bg-primary-700 hover:shadow-lg transition-all active:scale-95 shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
           {{ acting ? 'Sending…' : 'Mark as Sent' }}
         </button>
 
         <button v-if="['sent','partial','overdue'].includes(invoice.status)" @click="showPayModal = true"
-          class="w-full flex items-center justify-center gap-3 py-4 bg-emerald-600 text-white font-extrabold text-base rounded-[1.5rem] shadow-soft hover:bg-emerald-700 active:scale-[0.98] transition-all">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          class="flex items-center justify-center gap-2 px-6 py-3.5 bg-emerald-600 text-white font-bold text-sm rounded-xl shadow-soft hover:bg-emerald-700 hover:shadow-lg transition-all active:scale-95 shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           Record Payment
         </button>
 
-        <!-- Secondary: icon row -->
-        <div class="flex justify-center gap-2">
-          <button @click="shareWhatsApp" class="flex flex-col items-center gap-1 px-3 py-2.5 rounded-2xl bg-green-50 border border-green-100 hover:bg-green-100 active:bg-green-200 transition-colors min-w-[56px]">
-            <svg class="w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.137.565 4.147 1.554 5.887L0 24l6.305-1.524A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.375l-.359-.214-3.735.902.948-3.632-.234-.373A9.818 9.818 0 1112 21.818z"/></svg>
-            <span class="text-[10px] font-bold text-green-700">Share</span>
+        <div class="w-[1px] h-8 bg-gray-200 hidden sm:block mx-1"></div>
+
+        <!-- Secondary Actions Row -->
+        <div class="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
+          <button @click="shareWhatsApp" class="flex items-center gap-2 px-4 py-3 sm:py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-green-50 hover:border-green-200 hover:text-green-700 font-semibold text-xs transition-colors shrink-0 shadow-sm">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.137.565 4.147 1.554 5.887L0 24l6.305-1.524A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.375l-.359-.214-3.735.902.948-3.632-.234-.373A9.818 9.818 0 1112 21.818z"/></svg>
+            Share
+          </button>
+          
+          <button @click="shareEmail" class="flex items-center gap-2 px-4 py-3 sm:py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-sky-50 hover:border-sky-200 hover:text-sky-700 font-semibold text-xs transition-colors shrink-0 shadow-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            Email
           </button>
 
-          <button @click="shareEmail" class="flex flex-col items-center gap-1 px-3 py-2.5 rounded-2xl bg-sky-50 border border-sky-100 hover:bg-sky-100 active:bg-sky-200 transition-colors min-w-[56px]">
-            <svg class="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-            <span class="text-[10px] font-bold text-sky-700">Email</span>
+          <button @click="printInvoice" class="flex items-center gap-2 px-4 py-3 sm:py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 font-semibold text-xs transition-colors shrink-0 shadow-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            Print
           </button>
 
-          <button @click="printInvoice" class="flex flex-col items-center gap-1 px-3 py-2.5 rounded-2xl bg-gray-50 border border-gray-100 hover:bg-gray-100 active:bg-gray-200 transition-colors min-w-[56px]">
-            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-            <span class="text-[10px] font-bold text-gray-600">Print</span>
+          <button @click="downloadPdf" :disabled="downloading" class="flex items-center gap-2 px-4 py-3 sm:py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-red-50 hover:border-red-200 hover:text-red-700 font-semibold text-xs transition-colors shrink-0 shadow-sm">
+            <svg v-if="downloading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+            <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            PDF
           </button>
 
-          <button @click="downloadPdf" :disabled="downloading" class="flex flex-col items-center gap-1 px-3 py-2.5 rounded-2xl bg-red-50 border border-red-100 hover:bg-red-100 active:bg-red-200 transition-colors min-w-[56px]">
-            <svg v-if="downloading" class="w-5 h-5 animate-spin text-red-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
-            <svg v-else class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-            <span class="text-[10px] font-bold text-red-700">{{ downloading ? '…' : 'PDF' }}</span>
-          </button>
-
-          <RouterLink :to="`/invoices/${invoice.id}/edit`" class="flex flex-col items-center gap-1 px-3 py-2.5 rounded-2xl bg-gray-50 border border-gray-100 hover:bg-gray-100 active:bg-gray-200 transition-colors min-w-[56px]">
-            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-            <span class="text-[10px] font-bold text-gray-600">Edit</span>
+          <RouterLink :to="`/invoices/${invoice.id}/edit`" class="flex items-center gap-2 px-4 py-3 sm:py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 font-semibold text-xs transition-colors shrink-0 shadow-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+            Edit
           </RouterLink>
-        </div>
 
-        <!-- Cancel + Credit Note: deprioritised text links -->
-        <div class="flex items-center justify-center gap-4 pt-1">
-          <RouterLink v-if="invoice.status === 'paid' || invoice.status === 'partial'" :to="`/credit-notes/new?from_invoice=${invoice.id}`"
-            class="text-xs text-gray-400 hover:text-primary-600 transition-colors">
-            Issue Credit Note
-          </RouterLink>
-          <button v-if="invoice.status !== 'paid'" @click="showCancelModal = true" class="text-xs text-gray-400 hover:text-danger-500 transition-colors underline underline-offset-2">
-            Cancel Invoice
-          </button>
+          <!-- More Options Menu -->
+          <div class="relative ml-auto sm:ml-0 group shrink-0">
+            <button class="p-3 sm:p-3.5 rounded-xl bg-white border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors shadow-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
+            </button>
+            <!-- Dropdown -->
+            <div class="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all origin-top-right">
+               <RouterLink v-if="invoice.status === 'paid' || invoice.status === 'partial'" :to="`/credit-notes/new?from_invoice=${invoice.id}`"
+                 class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 font-medium">
+                 Issue Credit Note
+               </RouterLink>
+               <button v-if="invoice.status !== 'paid'" @click="showCancelModal = true" class="w-full text-left px-4 py-2.5 text-sm text-danger-600 hover:bg-danger-50 font-bold">
+                 Cancel Invoice
+               </button>
+            </div>
+          </div>
         </div>
-
       </div>
 
       <!-- UPI Collect Payment card — shown when balance due and business has UPI -->
@@ -317,7 +333,7 @@ onMounted(load)
       </div>
 
       <!-- Invoice body — proper Indian GST Tax Invoice -->
-      <div class="bg-white rounded-[2rem] shadow-soft border-0 overflow-hidden animate-fade-in-up delay-150">
+      <div class="bg-white rounded-[2rem] shadow-xl shadow-gray-200/40 border border-gray-100 ring-1 ring-black/5 overflow-hidden animate-fade-in-up delay-150">
 
         <!-- Top: TAX INVOICE title row + Business info row -->
         <div class="px-5 pt-5 pb-4 border-b border-gray-200 space-y-4">
