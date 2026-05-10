@@ -30,97 +30,93 @@ const avatarColor  = (name) => avatarColors[(name?.charCodeAt(0) || 0) % avatarC
 </script>
 
 <template>
-  <div class="flex flex-col lg:flex-row gap-6 h-full min-h-0">
+  <div class="flex flex-col lg:flex-row h-full min-h-0 w-full overflow-hidden">
+
     <!-- Left Pane: List -->
-    <div :class="{ 'hidden lg:flex': $route.name !== 'Clients', 'w-full lg:w-[35%] flex flex-col min-h-0': true }">
-      <div class="flex flex-col gap-2 pr-1 shrink-0 z-10 relative">
-        <!-- Compact Header -->
-        <div class="flex items-center justify-between gap-3">
-          <h1 class="page-title flex items-center gap-2">Customers <HelpIcon section="customers" /></h1>
-          <div class="flex items-center gap-2">
-            <!-- Mobile only Add Customer -->
-            <RouterLink to="/clients/new" class="lg:hidden p-2 text-white bg-primary-600 hover:bg-primary-700 rounded-full transition-colors shadow-soft-blue">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-            </RouterLink>
-          </div>
+    <div id="c3-left-panel" :class="{ 'hidden lg:flex': $route.name !== 'Clients', 'w-full lg:w-[340px] border-r border-gray-200/60 flex flex-col shrink-0 bg-[#FAFAFA] transition-all duration-300 relative z-30 h-full': true }">
+      
+      <!-- Top Sticky Header Area -->
+      <div class="px-5 py-4 border-b border-gray-200/60 bg-white/60 backdrop-blur-md sticky top-0 z-10">
+        <!-- Header & Actions -->
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="font-bold text-gray-900 text-sm tracking-tight flex items-center gap-2">Customers <HelpIcon section="customers" class="w-3.5 h-3.5" /></h2>
+            <div class="flex gap-2">
+                <!-- Search Toggle (Using inline expansion for clients) -->
+                <!-- New Customer -->
+                <button @click="router.push('/clients/new')" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center text-gray-600 transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                </button>
+            </div>
         </div>
 
-        <!-- Search Row -->
-        <div class="flex gap-2 animate-fade-in-up z-10 relative">
-          <div class="relative flex-1 min-w-0">
-            <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            <input v-model="search" @input="onSearch" type="text" class="w-full bg-white border-0 shadow-soft text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-primary-500 block pl-10 p-2.5 transition-shadow"
-              placeholder="Search by name, phone, GST number…" />
-          </div>
+        <!-- Search -->
+        <div class="mb-2 space-y-2 animate-fade-in-up">
+            <input v-model="search" @input="onSearch" type="text"
+              class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-xs font-semibold rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 block px-3 py-2.5 transition-all"
+              placeholder="Search customers..." />
         </div>
       </div>
 
-      <!-- Scrollable List Wrapper -->
-      <div class="flex-1 overflow-y-auto pr-1 pb-10 mt-2 no-scrollbar min-h-0">
-        <div class="bg-white rounded-[2rem] shadow-soft border-0 overflow-hidden animate-fade-in-up anim-delay-75">
-      <div v-if="loading" class="p-12 text-center text-gray-400 text-sm">Loading…</div>
-
-      <div v-else-if="!clients.length" class="p-12 text-center">
-        <div class="w-16 h-16 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center mx-auto mb-4">
-          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-        </div>
-        <p class="font-extrabold text-gray-900 text-lg">No customers yet</p>
-        <p class="text-sm text-gray-500 mt-1">Add your first customer to start creating bills</p>
-        <RouterLink to="/clients/new" class="btn bg-primary-600 text-white hover:bg-primary-700 shadow-soft-blue rounded-full px-6 py-2.5 mt-5 inline-flex items-center gap-2 font-bold">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-          Add First Customer
-        </RouterLink>
-      </div>
-
-      <!-- Unified card list -->
-      <div v-else class="divide-y divide-gray-50">
-        <div v-for="c in clients" :key="c.id"
-          class="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 active:bg-gray-100 cursor-pointer transition-colors group"
-          @click="router.push(`/clients/${c.id}`)">
-
-          <!-- Avatar -->
-          <div class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 font-extrabold text-lg" :class="avatarColor(c.name)">
-            {{ c.name?.charAt(0)?.toUpperCase() }}
-          </div>
-
-          <!-- Info -->
-          <div class="flex-1 min-w-0">
-            <p class="font-bold text-gray-900 text-base truncate group-hover:text-primary-700 transition-colors">{{ c.name }}</p>
-            <div class="flex items-center gap-2 flex-wrap mt-0.5">
-              <p v-if="c.mobile" class="text-xs text-gray-500 font-medium">{{ c.mobile }}</p>
-              <span v-if="c.mobile && c.gstin" class="text-gray-300 text-xs">·</span>
-              <p v-if="c.gstin" class="text-[11px] text-gray-400 font-mono tracking-tight">{{ c.gstin }}</p>
-              <span v-if="(c.mobile || c.gstin) && c.city" class="text-gray-300 text-xs">·</span>
-              <p v-if="c.city" class="text-xs text-gray-500">{{ c.city }}</p>
+      <!-- Scrollable List -->
+      <div class="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 custom-scrollbar min-h-0">
+          
+          <div v-if="loading" class="space-y-1.5">
+            <div v-for="i in 6" :key="i" class="p-4 rounded-xl border border-gray-100 bg-white/40 animate-pulse flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-gray-200 shrink-0"></div>
+              <div class="space-y-2 flex-1"><div class="h-3.5 bg-gray-200 rounded w-24"></div><div class="h-2.5 bg-gray-100 rounded w-16"></div></div>
             </div>
           </div>
 
-          <!-- Outstanding balance -->
-          <div class="shrink-0 text-right ml-2">
-            <span v-if="parseFloat(c.outstanding_balance) > 0"
-              class="text-xs font-bold text-danger-600 bg-danger-50 px-2 py-1 rounded-full">
-              {{ inr(c.outstanding_balance) }}
-            </span>
+          <div v-else-if="!clients.length" class="p-8 text-center">
+            <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+            <p class="font-bold text-gray-900 text-[13px]">No customers found</p>
+            <p class="text-[11px] text-gray-500 mt-1">Add a customer to get started</p>
           </div>
 
-          <svg class="w-5 h-5 text-gray-300 shrink-0 group-hover:text-primary-500 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-        </div>
-      </div>
-      
-      <!-- List Footer -->
-      <div v-if="!loading && clients.length" class="bg-gray-50/80 border-t border-gray-100 px-6 py-4 flex items-center justify-between">
-        <span class="text-xs text-gray-500 font-medium">Showing <span class="font-bold text-gray-800">{{ clients.length }}</span> customer{{ clients.length !== 1 ? 's' : '' }}</span>
-        <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-          End of list
-        </span>
-      </div>
-    </div>
+          <div v-else v-for="(c, idx) in clients" :key="c.id"
+            class="p-4 rounded-xl border cursor-pointer transition-all group relative overflow-hidden list-item-1"
+            :style="{ animationDelay: (idx * 0.05) + 's' }"
+            :class="[
+              $route.params.id == c.id ? 'bg-white border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.03)]' : 'border-transparent hover:border-gray-200/60 hover:bg-white hover:shadow-[0_2px_8px_rgba(0,0,0,0.02)]'
+            ]"
+            @click="router.push(`/clients/${c.id}`)">
+            
+            <!-- Active Indicator Line -->
+            <div v-if="$route.params.id == c.id" class="absolute left-0 top-0 bottom-0 w-[3px] bg-gray-900 rounded-l-xl"></div>
+            
+            <div class="flex gap-3 items-center">
+                <div class="w-10 h-10 rounded-[10px] flex items-center justify-center font-bold text-sm border group-hover:scale-105 transition-transform shrink-0" :class="avatarColor(c.name)">
+                  {{ c.name?.charAt(0)?.toUpperCase() }}
+                </div>
+                
+                <div class="flex-1 min-w-0">
+                    <div class="flex justify-between items-start mb-0.5">
+                        <span class="text-[14px] font-bold truncate pr-2 tracking-tight transition-colors"
+                              :class="$route.params.id == c.id ? 'text-indigo-600' : 'text-gray-900 group-hover:text-indigo-600'">
+                              {{ c.name }}
+                        </span>
+                        <span v-if="parseFloat(c.outstanding_balance) > 0" class="text-[11px] font-bold text-red-600 tabular-nums bg-red-50 px-1.5 py-0.5 rounded border border-red-100 shrink-0">
+                              {{ inr(c.outstanding_balance) }}
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span v-if="c.mobile" class="text-[11px] font-semibold text-gray-500">{{ c.mobile }}</span>
+                        <span v-if="c.mobile && c.city" class="text-gray-300 text-[10px]">•</span>
+                        <span v-if="c.city" class="text-[11px] text-gray-400">{{ c.city }}</span>
+                    </div>
+                </div>
+            </div>
+          </div>
       </div>
     </div>
 
-    <!-- Right Pane: Detail/Form -->
-    <div v-if="$route.name !== 'Clients'" class="w-full lg:w-[65%] flex-1 overflow-y-auto no-scrollbar pb-10">
+    <!-- Right Pane: Detail/Form wrapper -->
+    <div v-if="$route.name !== 'Clients'" id="c3-right-view" class="flex-1 bg-[#F4F4F5] overflow-y-auto flex flex-col relative z-20 shadow-[-10px_0_20px_rgba(0,0,0,0.02)] custom-scrollbar">
+      <!-- Subtle noise/texture overlay -->
+      <div class="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-multiply" style="background-image: url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E');"></div>
+      
       <router-view v-slot="{ Component }">
         <component :is="Component" :key="$route.fullPath" @refresh="load" />
       </router-view>

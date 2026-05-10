@@ -1,0 +1,1 @@
+import{I as e}from"./runtime-core.esm-bundler-CpSkzsCi.js";import{a as t,l as n}from"./auth-CN_imUrj.js";var r=n(`business`,()=>{let n=e(``);function r(e){n.value=e||``}async function i(){try{n.value=(await t(`Business`)).data?.data?.logo||``}catch{}}return{logo:n,setLogo:r,fetchLogo:i}});export{r as t};

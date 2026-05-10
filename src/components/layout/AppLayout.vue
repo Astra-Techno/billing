@@ -2,6 +2,8 @@
 import { onMounted } from 'vue'
 import Sidebar from './Sidebar.vue'
 import TopBar from './TopBar.vue'
+import DesktopSidebar from './DesktopSidebar.vue'
+import DesktopHeader from './DesktopHeader.vue'
 import HelpPopup from '../HelpPopup.vue'
 import { useBusinessStore } from '../../stores/business'
 
@@ -10,12 +12,27 @@ onMounted(() => bizStore.fetchLogo())
 </script>
 
 <template>
-  <div class="h-[100dvh] w-full max-w-[100vw] flex flex-col bg-slate-50 overflow-hidden relative">
-    <TopBar />
-    <main class="flex-1 lg:overflow-hidden overflow-y-auto overflow-x-hidden max-w-2xl mx-auto lg:max-w-none w-full px-4 lg:px-8 pt-5 pb-24 lg:pb-6 flex flex-col min-h-0 app-main-scroll">
-      <RouterView />
-    </main>
+  <div class="h-[100dvh] w-full max-w-[100vw] flex flex-col bg-[#FAFAFA] overflow-hidden relative font-sans">
+    
+    <!-- Mobile Header -->
+    <TopBar class="lg:hidden" />
+    
+    <!-- Desktop Header -->
+    <DesktopHeader />
+
+    <div class="flex-1 flex overflow-hidden">
+      <!-- Desktop Sidebar -->
+      <DesktopSidebar />
+      
+      <!-- Main Content Container -->
+      <main class="flex-1 lg:overflow-hidden overflow-y-auto overflow-x-hidden max-w-2xl mx-auto lg:max-w-none w-full px-4 lg:px-0 pt-5 lg:pt-0 pb-24 lg:pb-0 flex flex-col min-h-0 app-main-scroll">
+        <RouterView />
+      </main>
+    </div>
+
+    <!-- Mobile Bottom Nav -->
     <Sidebar />
+    
     <HelpPopup />
   </div>
 </template>

@@ -41,100 +41,114 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="flex flex-col lg:flex-row gap-6 h-full min-h-0">
-    <!-- Left Pane -->
-    <div :class="{ 'hidden lg:flex': $route.name !== 'DeliveryChallans', 'w-full lg:w-[35%] flex flex-col min-h-0': true }">
-      <div class="flex flex-col gap-2 pr-1 shrink-0 z-10 relative">
-        <!-- Compact Header -->
-        <div class="flex items-center justify-between gap-3">
-          <h1 class="page-title flex items-center gap-2">Delivery Challans <HelpIcon section="delivery-challans" /></h1>
-          <div class="flex items-center gap-2">
-            <!-- Mobile only New DC -->
-            <RouterLink to="/delivery-challans/new" class="lg:hidden p-2 text-white bg-primary-600 hover:bg-primary-700 rounded-full transition-colors shadow-soft-blue">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-            </RouterLink>
-          </div>
+  <div class="flex flex-col lg:flex-row h-full min-h-0 w-full overflow-hidden">
+    
+    <!-- Left Pane: List -->
+    <div id="c3-left-panel" :class="{ 'hidden lg:flex': $route.name !== 'DeliveryChallans', 'w-full lg:w-[340px] border-r border-gray-200/60 flex flex-col shrink-0 bg-[#FAFAFA] transition-all duration-300 relative z-30 h-full': true }">
+      
+      <!-- Top Sticky Header Area -->
+      <div class="px-5 py-4 border-b border-gray-200/60 bg-white/60 backdrop-blur-md sticky top-0 z-10">
+        <!-- Header & Actions -->
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="font-bold text-gray-900 text-sm tracking-tight flex items-center gap-2">Delivery Challans <HelpIcon section="delivery-challans" class="w-3.5 h-3.5" /></h2>
+            <div class="flex gap-2">
+                <!-- New Challan -->
+                <button @click="router.push('/delivery-challans/new')" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center text-gray-600 transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                </button>
+            </div>
         </div>
 
-        <!-- Search Row -->
-        <div class="flex gap-2 animate-fade-in-up z-10 relative">
-          <div class="relative flex-1 min-w-0">
-            <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <!-- Search & Filter -->
+        <div class="mb-4 space-y-2 animate-fade-in-up">
             <input v-model="filter.search" @input="onSearch" type="text"
-              class="w-full bg-white border-0 shadow-soft text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-primary-500 block pl-10 p-2.5 transition-shadow"
-              placeholder="Search by DC no. or customer…" />
-          </div>
+              class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-xs font-semibold rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 block px-3 py-2 transition-all"
+              placeholder="Search by DC no. or customer..." />
         </div>
 
-        <!-- Status Pill Tabs -->
-        <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
-          <button v-for="t in tabs" :key="t.value"
-            @click="filter.status = t.value; load()"
-            class="shrink-0 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all"
-            :class="filter.status === t.value
-              ? 'bg-primary-600 text-white shadow-soft-blue'
-              : 'bg-white text-gray-500 shadow-soft hover:bg-gray-50'">{{ t.label }}
-          </button>
+        <!-- Status Tabs -->
+        <div class="flex gap-1 bg-gray-100/80 p-1 rounded-[10px] ring-1 ring-inset ring-gray-200/50 overflow-x-auto hide-scrollbar">
+            <button v-for="t in tabs" :key="t.value"
+              @click="filter.status = t.value; load()"
+              class="flex-1 text-[11px] font-semibold rounded-md py-1.5 transition-all whitespace-nowrap px-2"
+              :class="filter.status === t.value ? 'bg-white shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-700'">
+              {{ t.label }}
+            </button>
         </div>
       </div>
 
-      <!-- Scrollable List Wrapper -->
-      <div class="flex-1 overflow-y-auto pr-1 pb-10 mt-2 no-scrollbar min-h-0">
-        <div class="bg-white rounded-[2rem] shadow-soft border-0 overflow-hidden animate-fade-in-up anim-delay-75">
-          <div v-if="loading" class="divide-y divide-gray-50">
-            <div v-for="i in 4" :key="i" class="flex items-center gap-4 px-5 py-4 animate-pulse">
-              <div class="w-12 h-12 rounded-full bg-gray-100 shrink-0"></div>
-              <div class="flex-1 space-y-2"><div class="h-3 bg-gray-100 rounded w-2/3"></div><div class="h-2.5 bg-gray-100 rounded w-1/3"></div></div>
-              <div class="h-3 bg-gray-100 rounded w-16"></div>
-            </div>
-          </div>
-
-          <div v-else-if="!challans.length" class="p-12 text-center">
-            <div class="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center mx-auto mb-4">
-              <svg class="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-            </div>
-            <p class="font-extrabold text-gray-900 text-lg">No delivery challans yet</p>
-            <p class="text-sm text-gray-500 mt-1">Issue challans for goods dispatched</p>
-            <RouterLink to="/delivery-challans/new" class="btn bg-primary-600 text-white hover:bg-primary-700 shadow-soft-blue rounded-full px-6 py-2.5 mt-5 inline-flex items-center gap-2 font-bold">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-              Create First DC
-            </RouterLink>
-          </div>
-
-          <div v-else class="divide-y divide-gray-50">
-            <div v-for="dc in challans" :key="dc.id"
-              class="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 active:bg-gray-100 cursor-pointer transition-colors group"
-              @click="router.push('/delivery-challans/' + dc.id)">
-              <div class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 font-extrabold text-lg" :class="avatarColor(dc.client_name)">
-                {{ dc.client_name?.charAt(0)?.toUpperCase() || 'C' }}
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <p class="font-bold text-gray-900 text-base truncate group-hover:text-primary-700 transition-colors">{{ dc.client_name || 'Unknown Customer' }}</p>
-                  <span :class="badgeClass(dc.status)" class="text-[10px]">{{ statusLabel(dc.status) }}</span>
-                </div>
-                <p class="text-xs text-gray-500 mt-0.5 truncate">{{ dc.number }} · {{ fmtDateShort(dc.challan_date) }}</p>
-              </div>
-              <div v-if="dc.vehicle_no" class="text-right shrink-0">
-                <p class="text-[10px] uppercase font-bold tracking-wider text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">{{ dc.vehicle_no }}</p>
-              </div>
-            </div>
-          </div>
+      <!-- Scrollable List -->
+      <div class="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 custom-scrollbar min-h-0">
           
-          <!-- List Footer -->
-          <div v-if="!loading && challans.length" class="bg-gray-50/80 border-t border-gray-100 px-6 py-4 flex items-center justify-between">
-            <span class="text-xs text-gray-500 font-medium">Showing <span class="font-bold text-gray-800">{{ challans.length }}</span> challan{{ challans.length !== 1 ? 's' : '' }}</span>
-            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-              End of list
-            </span>
+          <div v-if="loading" class="space-y-1.5">
+            <div v-for="i in 6" :key="i" class="p-4 rounded-xl border border-gray-100 bg-white/40 animate-pulse flex justify-between items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-gray-200 shrink-0"></div>
+              <div class="space-y-2 flex-1"><div class="h-3.5 bg-gray-200 rounded w-24"></div><div class="h-2.5 bg-gray-100 rounded w-16"></div></div>
+            </div>
           </div>
-        </div>
+
+          <div v-else-if="!challans.length" class="p-8 text-center">
+            <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+            </div>
+            <p class="font-bold text-gray-900 text-[13px]">No delivery challans</p>
+            <p class="text-[11px] text-gray-500 mt-1">Issue challans for goods dispatched</p>
+          </div>
+
+          <div v-else v-for="(dc, idx) in challans" :key="dc.id"
+            class="p-4 rounded-xl border cursor-pointer transition-all group relative overflow-hidden list-item-1"
+            :style="{ animationDelay: (idx * 0.05) + 's' }"
+            :class="[
+              $route.params.id == dc.id ? 'bg-white border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.03)]' : 'border-transparent hover:border-gray-200/60 hover:bg-white hover:shadow-[0_2px_8px_rgba(0,0,0,0.02)]'
+            ]"
+            @click="router.push('/delivery-challans/' + dc.id)">
+            
+            <!-- Active Indicator Line -->
+            <div v-if="$route.params.id == dc.id" class="absolute left-0 top-0 bottom-0 w-[3px] bg-gray-900 rounded-l-xl"></div>
+            
+            <div class="flex gap-3 items-center">
+                <div class="w-10 h-10 rounded-[10px] flex items-center justify-center font-bold text-sm border group-hover:scale-105 transition-transform shrink-0" :class="avatarColor(dc.client_name)">
+                  {{ dc.client_name?.charAt(0)?.toUpperCase() || 'C' }}
+                </div>
+                
+                <div class="flex-1 min-w-0">
+                    <div class="flex justify-between items-start mb-0.5">
+                        <span class="text-[14px] font-bold truncate pr-2 tracking-tight transition-colors"
+                              :class="$route.params.id == dc.id ? 'text-indigo-600' : 'text-gray-900 group-hover:text-indigo-600'">
+                              {{ dc.client_name || 'Unknown Customer' }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between items-center mt-1">
+                        <span class="text-[11px] font-medium text-gray-500 truncate pr-2 flex items-center gap-1.5">
+                            <span class="text-gray-400 font-semibold">{{ dc.number }}</span>
+                            <span class="text-gray-300">•</span>
+                            <span>{{ fmtDateShort(dc.challan_date) }}</span>
+                        </span>
+                        
+                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded tracking-wider flex items-center shrink-0"
+                              :class="{
+                                  'bg-green-50 text-green-600 border border-green-100': dc.status === 'delivered',
+                                  'bg-blue-50 text-blue-600 border border-blue-100': dc.status === 'issued',
+                                  'bg-gray-100 text-gray-500 border border-gray-200/60': dc.status === 'draft',
+                                  'bg-red-50 text-red-600 border border-red-100': dc.status === 'cancelled'
+                              }">
+                            {{ statusLabel(dc.status).toUpperCase() }}
+                        </span>
+                    </div>
+                    <div v-if="dc.vehicle_no" class="mt-1.5 text-[10px] uppercase font-bold tracking-wider text-gray-400 bg-gray-50/80 px-2 py-0.5 rounded-md inline-block border border-gray-100">
+                        {{ dc.vehicle_no }}
+                    </div>
+                </div>
+            </div>
+          </div>
       </div>
     </div>
 
-    <!-- Right Pane -->
-    <div v-if="$route.name !== 'DeliveryChallans'" class="w-full lg:w-[65%] flex-1 overflow-y-auto no-scrollbar pb-10">
+    <!-- Right Pane: Detail/Form wrapper -->
+    <div v-if="$route.name !== 'DeliveryChallans'" id="c3-right-view" class="flex-1 bg-[#F4F4F5] overflow-y-auto flex flex-col relative z-20 shadow-[-10px_0_20px_rgba(0,0,0,0.02)] custom-scrollbar">
+      <!-- Subtle noise/texture overlay -->
+      <div class="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-multiply" style="background-image: url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E');"></div>
+      
       <router-view v-slot="{ Component }">
         <component :is="Component" :key="$route.fullPath" @refresh="load" />
       </router-view>

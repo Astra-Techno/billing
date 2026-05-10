@@ -81,83 +81,88 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="max-w-3xl mx-auto space-y-6 pb-20">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <button @click="router.push('/expenses')" class="w-10 h-10 rounded-full bg-white shadow-soft flex items-center justify-center text-gray-500 hover:text-gray-900 transition-colors">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        <h1 class="page-title flex items-center gap-2">{{ isEdit ? 'Edit Expense' : 'Record Expense' }} <HelpIcon section="expenses" /></h1>
-      </div>
-      <div class="flex gap-3">
-        <button @click="router.push('/expenses')" class="btn-outline hidden sm:flex">Cancel</button>
-        <button @click="save" :disabled="saving || loading" class="btn-primary">
-          <svg v-if="saving" class="w-4 h-4 animate-spin inline mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-          {{ saving ? 'Saving…' : 'Save Expense' }}
-        </button>
+  <div class="max-w-2xl mx-auto space-y-6">
+    <div class="flex items-center gap-3">
+      <button @click="router.back()" class="p-2 rounded-xl hover:bg-gray-100 shrink-0 transition">
+        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <div>
+        <h1 class="page-title">{{ isEdit ? 'Edit Expense' : 'Record Expense' }}</h1>
+        <p class="text-sm text-gray-500 mt-0.5">{{ isEdit ? 'Update expense details' : 'Keep track of your business spending' }}</p>
       </div>
     </div>
 
     <div v-if="loading" class="card p-12 text-center text-gray-400">Loading...</div>
     
-    <div v-else class="card p-6 sm:p-8 space-y-6 animate-fade-in-up">
-      <div v-if="error" class="text-sm text-danger-500 bg-danger-50 rounded-lg px-4 py-3">{{ error }}</div>
+    <form v-else @submit.prevent="save" class="space-y-6 animate-fade-in-up">
+      <div v-if="error" class="text-sm text-danger-600 bg-danger-50 border border-danger-100 rounded-xl px-4 py-3 font-medium">{{ error }}</div>
 
-      <div>
-        <label class="form-label">What did you spend on? *</label>
-        <input v-model="form.description" type="text" class="form-input text-lg font-semibold" placeholder="e.g. Office rent, Stock purchase, Courier…" />
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div class="card card-body space-y-5">
+        <h2 class="section-title mb-0">Expense Details</h2>
         <div>
-          <label class="form-label">Total Amount (₹) *</label>
-          <input v-model="form.total_amount" type="number" min="0" step="0.01" class="form-input text-lg font-bold text-gray-900" placeholder="0.00" />
+          <label class="form-label">What did you spend on? *</label>
+          <input v-model="form.description" type="text" class="form-input text-lg font-medium" placeholder="e.g. Office rent, Stock purchase, Courier…" />
         </div>
-        <div>
-          <label class="form-label">Date *</label>
-          <input v-model="form.expense_date" type="date" class="form-input" />
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div>
-          <label class="form-label">Category</label>
-          <select v-model="form.category_id" class="form-select">
-            <option value="">General</option>
-            <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
-          </select>
-        </div>
-        <div>
-          <label class="form-label">GST Paid (₹)</label>
-          <input v-model="form.gst_amount" type="number" min="0" step="0.01" class="form-input" placeholder="0.00" />
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="form-label">Total Amount (₹) *</label>
+            <input v-model="form.total_amount" type="number" min="0" step="0.01" class="form-input text-lg font-semibold" placeholder="0.00" />
+          </div>
+          <div>
+            <label class="form-label">Date *</label>
+            <input v-model="form.expense_date" type="date" class="form-input" />
+          </div>
         </div>
       </div>
 
-      <hr class="border-gray-100" />
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div class="card card-body space-y-4">
+          <h2 class="section-title mb-0">Categorization</h2>
+          <div>
+            <label class="form-label">Category</label>
+            <select v-model="form.category_id" class="form-select">
+              <option value="">General</option>
+              <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">GST Paid (₹)</label>
+            <input v-model="form.gst_amount" type="number" min="0" step="0.01" class="form-input" placeholder="0.00" />
+          </div>
+        </div>
 
-      <div>
-        <label class="form-label">Paid To <span class="text-gray-400 font-normal">(vendor / shop name)</span></label>
-        <input v-model="form.vendor_name" type="text" class="form-input" placeholder="e.g. Sharma Stationery, Vodafone" />
+        <div class="card card-body space-y-4">
+          <h2 class="section-title mb-0">Payment</h2>
+          <div>
+            <label class="form-label">Payment Method</label>
+            <select v-model="form.method" class="form-select">
+              <option value="cash">Cash</option>
+              <option value="upi">UPI / PhonePe / GPay</option>
+              <option value="neft">Bank Transfer (NEFT)</option>
+              <option value="cheque">Cheque</option>
+              <option value="card">Card</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Paid To <span class="text-gray-400 font-normal">(vendor name)</span></label>
+            <input v-model="form.vendor_name" type="text" class="form-input" placeholder="e.g. Sharma Stationery" />
+          </div>
+        </div>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div>
-          <label class="form-label">Payment Method</label>
-          <select v-model="form.method" class="form-select">
-            <option value="cash">Cash</option>
-            <option value="upi">UPI / PhonePe / GPay</option>
-            <option value="neft">Bank Transfer (NEFT)</option>
-            <option value="cheque">Cheque</option>
-            <option value="card">Card</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-        <div>
-          <label class="form-label">Reference / Receipt No.</label>
-          <input v-model="form.reference" type="text" class="form-input" placeholder="UTR / cheque no." />
-        </div>
+      <div class="card card-body">
+        <label class="form-label">Reference / Receipt No.</label>
+        <input v-model="form.reference" type="text" class="form-input" placeholder="UTR / cheque no." />
       </div>
 
-    </div>
+      <div class="flex gap-3 pb-6">
+        <button type="button" @click="router.back()" class="btn-outline flex-1">Cancel</button>
+        <button type="submit" class="btn-primary flex-1" :disabled="saving">
+          {{ saving ? 'Saving…' : 'Save Expense' }}
+        </button>
+      </div>
+
+    </form>
   </div>
 </template>

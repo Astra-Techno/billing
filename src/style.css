@@ -94,4 +94,36 @@
   .anim-delay-75 { animation-delay: 75ms; }
   .anim-delay-150 { animation-delay: 150ms; }
   .anim-delay-200 { animation-delay: 200ms; }
+
+  /* ── Premium Split Panel Styles ── */
+  /* Custom scrollbar */
+  .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  
+  /* Premium Text Selection */
+  ::selection { background-color: #1e293b; color: #f8fafc; }
+  
+  /* Tabular figures for pricing alignment */
+  .tabular-nums { font-variant-numeric: tabular-nums; }
+  
+  /* Refined Animations */
+  @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(16px) scale(0.99); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes staggerFadeIn {
+      from { opacity: 0; transform: translateX(-12px); }
+      to { opacity: 1; transform: translateX(0); }
+  }
+  
+  .animate-doc {
+      animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  
+  .list-item-1 { animation: staggerFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; animation-delay: 0.05s; opacity: 0; }
+  .list-item-2 { animation: staggerFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; animation-delay: 0.1s; opacity: 0; }
+  .list-item-3 { animation: staggerFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; animation-delay: 0.15s; opacity: 0; }
+  .list-item-4 { animation: staggerFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; animation-delay: 0.2s; opacity: 0; }
 }

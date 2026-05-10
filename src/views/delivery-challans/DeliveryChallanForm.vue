@@ -36,6 +36,8 @@ const form = ref({
   items:        [blankItem()],
 })
 
+const selectedClient = computed(() => clients.value.find(c => c.id == form.value.client_id))
+
 function addItem() { form.value.items.push(blankItem()) }
 function removeItem(i) { if (form.value.items.length > 1) form.value.items.splice(i, 1) }
 
@@ -78,7 +80,7 @@ onMounted(async () => {
 
 async function submit() {
   error.value = ''
-  if (!form.value.client_id) return (error.value = 'Please select a customer.')
+  if (!form.value.client_id) return (error.value = 'Please choose a customer. You must select one from the list.')
   if (!form.value.items.some(i => i.description)) return (error.value = 'Please add at least one item.')
   loading.value = true
   try {
@@ -97,115 +99,148 @@ async function submit() {
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto space-y-5 pb-10">
+  <div class="max-w-3xl mx-auto space-y-6">
 
     <!-- Header -->
-    <div class="flex items-center gap-3 pt-2">
-      <button @click="router.push('/delivery-challans')" class="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
-        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+    <div class="flex items-center gap-3">
+      <button @click="router.back()" class="p-2 rounded-xl hover:bg-gray-100 shrink-0 transition">
+        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
-      <h1 class="page-title">{{ isEdit ? 'Edit Delivery Challan' : 'New Delivery Challan' }}</h1>
-    </div>
-
-    <div v-if="error" class="text-sm text-danger-600 bg-danger-50 rounded-xl px-4 py-3">{{ error }}</div>
-
-    <!-- Customer + Date -->
-    <div class="card card-body space-y-4 animate-fade-in-up">
-      <h2 class="section-title">Customer & Date</h2>
-
       <div>
-        <label class="form-label">Customer *</label>
-        <input v-model="clientSearch" type="text" class="form-input mb-2" placeholder="Search customer…" />
-        <select v-model="form.client_id" class="form-select">
-          <option value="">Select Customer</option>
-          <option v-for="c in filteredClients" :key="c.id" :value="c.id">{{ c.name }}</option>
-        </select>
-      </div>
-
-      <div class="grid sm:grid-cols-2 gap-4">
-        <div>
-          <label class="form-label">Challan Date *</label>
-          <input v-model="form.challan_date" type="date" class="form-input" />
-        </div>
-        <div>
-          <label class="form-label">Destination</label>
-          <input v-model="form.destination" type="text" class="form-input" placeholder="Delivery address / city" />
-        </div>
+        <h1 class="page-title">{{ isEdit ? 'Edit Delivery Challan' : 'New Delivery Challan' }}</h1>
+        <p class="text-sm text-gray-500 mt-0.5">Record goods dispatched for delivery.</p>
       </div>
     </div>
 
-    <!-- Transport Details -->
-    <div class="card card-body space-y-4 animate-fade-in-up anim-delay-75">
-      <h2 class="section-title">Transport Details</h2>
+    <form @submit.prevent="submit" class="space-y-6">
+      
+      <!-- Customer -->
+      <div class="card card-body space-y-4">
+        <h2 class="section-title mb-0">Delivery To</h2>
+        <div v-if="form.client_id" class="flex items-center gap-3 px-4 py-3 bg-primary-50/50 border border-primary-100 rounded-[1.25rem]">
+          <div class="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center shrink-0">
+            <span class="text-primary-700 text-sm font-bold">{{ selectedClient?.name?.charAt(0)?.toUpperCase() }}</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-primary-900 truncate">{{ selectedClient?.name }}</p>
+            <p class="text-xs text-primary-600 truncate">{{ selectedClient?.mobile || selectedClient?.email }}</p>
+          </div>
+          <button type="button" @click="form.client_id = ''; clientSearch = ''" class="text-xs text-primary-600 font-semibold hover:underline shrink-0">Change</button>
+        </div>
+        <div v-else class="space-y-3">
+          <div class="relative">
+            <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input v-model="clientSearch" type="text" placeholder="Search by name, mobile…" class="form-input pl-10" />
+          </div>
+          <div v-if="clientSearch || filteredClients.length > 0" class="max-h-56 overflow-y-auto rounded-[1rem] border border-gray-200 divide-y divide-gray-50">
+            <div v-if="!filteredClients.length" class="px-4 py-4 text-center text-sm text-gray-400">No customers match "{{ clientSearch }}"</div>
+            <button v-for="c in filteredClients" :key="c.id" type="button"
+              @click="form.client_id = c.id; clientSearch = ''"
+              class="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition text-left group">
+              <div class="w-8 h-8 rounded-full bg-gray-100 group-hover:bg-primary-50 flex items-center justify-center shrink-0 transition">
+                <span class="text-xs font-bold text-gray-600 group-hover:text-primary-600">{{ c.name?.charAt(0)?.toUpperCase() }}</span>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-semibold text-gray-800 group-hover:text-primary-700 truncate">{{ c.name }}</p>
+                <p class="text-xs text-gray-400 truncate">{{ c.mobile || c.email || 'Customer' }}</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div class="grid sm:grid-cols-2 gap-4">
-        <div>
-          <label class="form-label">Vehicle Number</label>
-          <input v-model="form.vehicle_no" type="text" class="form-input" placeholder="e.g. TN 01 AB 1234" />
+        <div class="card card-body space-y-4">
+          <h2 class="section-title mb-0">Delivery Details</h2>
+          <div>
+            <label class="form-label">Challan Date *</label>
+            <input v-model="form.challan_date" type="date" class="form-input" />
+          </div>
+          <div>
+            <label class="form-label">Destination</label>
+            <input v-model="form.destination" type="text" class="form-input" placeholder="Delivery address / city" />
+          </div>
         </div>
-        <div>
-          <label class="form-label">Driver Name</label>
-          <input v-model="form.driver_name" type="text" class="form-input" placeholder="Driver's name" />
+
+        <!-- Transport Details -->
+        <div class="card card-body space-y-4">
+          <h2 class="section-title mb-0">Transport Details</h2>
+          <div>
+            <label class="form-label">Vehicle Number</label>
+            <input v-model="form.vehicle_no" type="text" class="form-input" placeholder="e.g. TN 01 AB 1234" />
+          </div>
+          <div>
+            <label class="form-label">Driver Name</label>
+            <input v-model="form.driver_name" type="text" class="form-input" placeholder="Driver's name" />
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Items -->
-    <div class="card card-body space-y-4 animate-fade-in-up anim-delay-75">
-      <div class="flex items-center justify-between">
-        <h2 class="section-title mb-0">Items</h2>
-        <button @click="addItem" class="text-xs btn bg-primary-50 text-primary-700 hover:bg-primary-100 rounded-full px-3 py-1.5 font-bold">+ Add Row</button>
-      </div>
+      <!-- Items -->
+      <div class="card">
+        <div class="px-5 py-4 border-b border-gray-100/60 flex items-center justify-between bg-gray-50/50 rounded-t-[2rem]">
+          <h2 class="section-title mb-0">Dispatched Items</h2>
+          <span class="text-xs text-gray-400 font-medium">{{ form.items.length }} item{{ form.items.length > 1 ? 's' : '' }}</span>
+        </div>
+        <div class="divide-y divide-gray-100/60">
+          <div v-for="(it, i) in form.items" :key="i" class="p-5 space-y-4">
+            
+            <div v-if="products.length">
+              <label class="form-label">Select Product <span class="text-gray-400 font-normal">(or type manually below)</span></label>
+              <select v-model="it.product_id" class="form-select" @change="pickProduct(i, it.product_id)">
+                <option :value="null">— Type manually —</option>
+                <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
+              </select>
+            </div>
 
-      <div v-for="(it, idx) in form.items" :key="idx" class="bg-gray-50 rounded-2xl p-4 space-y-3">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-gray-400 uppercase tracking-wide">Item {{ idx + 1 }}</span>
-          <button v-if="form.items.length > 1" @click="removeItem(idx)" class="text-gray-400 hover:text-red-500 p-1 rounded-full transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            <div>
+              <label class="form-label">Description *</label>
+              <input v-model="it.description" type="text" class="form-input" placeholder="Item description" required />
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div>
+                <label class="form-label">Quantity</label>
+                <input v-model="it.quantity" type="number" min="0.001" step="0.001" class="form-input" />
+              </div>
+              <div>
+                <label class="form-label">Unit</label>
+                <select v-model="it.unit" class="form-select"><option v-for="u in units" :key="u">{{ u }}</option></select>
+              </div>
+              <div>
+                <label class="form-label">HSN/SAC</label>
+                <input v-model="it.hsn_sac" type="text" class="form-input" placeholder="Optional" />
+              </div>
+            </div>
+
+            <div class="flex items-center justify-end pt-2">
+              <button v-if="form.items.length > 1" type="button" @click="removeItem(i)" class="text-xs text-danger-500 hover:text-danger-700 font-medium transition">Remove Item</button>
+            </div>
+          </div>
+        </div>
+        <div class="px-5 py-4 border-t border-gray-100/60">
+          <button type="button" @click="addItem"
+            class="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-gray-300 text-gray-500 text-sm font-medium hover:border-primary-400 hover:text-primary-600 transition hover:bg-primary-50/50">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Add Another Item
           </button>
         </div>
-
-        <div>
-          <label class="form-label">Product</label>
-          <select v-model="it.product_id" class="form-select" @change="pickProduct(idx, it.product_id)">
-            <option value="">Type manually or select…</option>
-            <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
-          </select>
-        </div>
-        <div>
-          <label class="form-label">Description *</label>
-          <input v-model="it.description" type="text" class="form-input" placeholder="Item description" />
-        </div>
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <div>
-            <label class="form-label">Qty</label>
-            <input v-model="it.quantity" type="number" min="0.01" step="0.01" class="form-input" />
-          </div>
-          <div>
-            <label class="form-label">Unit</label>
-            <select v-model="it.unit" class="form-select">
-              <option v-for="u in units" :key="u">{{ u }}</option>
-            </select>
-          </div>
-          <div>
-            <label class="form-label">HSN/SAC</label>
-            <input v-model="it.hsn_sac" type="text" class="form-input" placeholder="Optional" />
-          </div>
-        </div>
       </div>
-    </div>
 
-    <!-- Notes -->
-    <div class="card card-body animate-fade-in-up anim-delay-150">
-      <label class="form-label">Notes / Instructions</label>
-      <textarea v-model="form.notes" rows="3" class="form-input" placeholder="Any delivery instructions…"></textarea>
-    </div>
+      <!-- Notes -->
+      <div class="card card-body">
+        <label class="form-label">Notes / Instructions</label>
+        <textarea v-model="form.notes" rows="3" class="form-input" placeholder="Any delivery instructions…"></textarea>
+      </div>
 
-    <!-- Submit -->
-    <div class="flex gap-3 animate-fade-in-up anim-delay-200">
-      <button @click="router.push('/delivery-challans')" class="btn-outline flex-1">Cancel</button>
-      <button @click="submit" :disabled="loading" class="btn-primary flex-1">
-        {{ loading ? 'Saving…' : isEdit ? 'Update DC' : 'Create DC' }}
-      </button>
-    </div>
+      <div v-if="error" class="text-sm text-danger-600 bg-danger-50 border border-danger-100 rounded-xl px-4 py-3 font-medium">{{ error }}</div>
+
+      <div class="flex gap-3 pb-6">
+        <button type="button" @click="router.back()" class="btn-outline flex-1">Cancel</button>
+        <button type="submit" class="btn-primary flex-1" :disabled="loading">
+          {{ loading ? 'Saving…' : isEdit ? 'Update DC' : 'Create DC' }}
+        </button>
+      </div>
+    </form>
   </div>
 </template>
