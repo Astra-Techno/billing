@@ -111,14 +111,11 @@ const downloading = ref(false)
 async function downloadPdf() {
   downloading.value = true
   try {
-    const res = await api.post('task/Invoice/pdf', { id: invoice.value.id }, { responseType: 'blob' })
+    const res = await api.get(`invoice/${invoice.value.id}/pdf`, { responseType: 'blob' })
     const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
     const a = Object.assign(document.createElement('a'), { href: url, download: `${invoice.value.number}.pdf` })
     a.click()
     URL.revokeObjectURL(url)
-  } catch {
-    // Backend PDF not available — fallback to browser print
-    window.print()
   } finally { downloading.value = false }
 }
 

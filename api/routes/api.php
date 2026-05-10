@@ -4,6 +4,7 @@ use App\Controllers\AuthController;
 use App\Controllers\SqlController;
 use App\Controllers\TaskController;
 use App\Controllers\EntityController;
+use App\Controllers\InvoicePdfController;
 use App\Middleware\AuthMiddleware;
 
 // ── Guest routes ───────────────────────────────────────────────────────────────
@@ -69,6 +70,8 @@ $app->group('', function ($group) {
 
     $group->get( '/task/{name}/{method}[/{param:.*}]', [TaskController::class, 'action']);
     $group->post('/task/{name}/{method}[/{param:.*}]', [TaskController::class, 'action']);
+
+    $group->get('/invoice/{id:[0-9]+}/pdf', [InvoicePdfController::class, 'download']);
 
     $group->get( '/entity/{path:.*}', [EntityController::class, 'fetch']);
     $group->post('/entity/{path:.*}', [EntityController::class, 'fetch']);
