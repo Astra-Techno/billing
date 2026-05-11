@@ -419,6 +419,27 @@ class Invoice extends Task
         return $this->success(['invoice_id' => $newId, 'next_recur_date' => $nextDate], 'Recurring invoice generated.');
     }
 
+    // ── Generate PDF and stream to browser ───────────────────────────────────
+
+    public function pdf(array $input): never
+    {
+        $id         = (int)($input['id'] ?? 0);
+        $businessId = $this->requireBusiness();
+
+        if (!$id) $this->fail('Invoice ID required.', 422);
+
+        $renderer = new \App\Controllers\InvoicePdfController();
+        [$pdfBytes, $filename] = $renderer->generatePdf($id, $businessId);
+
+        if ($pdfBytes === null) $this->fail('Invoice not found.', 404);
+
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Length: ' . strlen($pdfBytes));
+        echo $pdfBytes;
+        exit;
+    }
+
     // ── Update overdue statuses (run via cron) ────────────────────────────────
 
     public function updateOverdue(array $input): array

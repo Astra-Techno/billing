@@ -19,6 +19,7 @@ class InvoicePdfController
     private const MUTED  = '#64748b';
     private const DARK   = '#1e293b';
 
+    /** Used by the GET /invoice/{id}/pdf route */
     public function download(Request $request, Response $response, array $args): Response
     {
         $invoiceId  = (int)($args['id'] ?? 0);
@@ -29,6 +30,26 @@ class InvoicePdfController
             return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
         }
 
+        [$pdfContent, $filename] = $this->generatePdf($invoiceId, $businessId);
+
+        if ($pdfContent === null) {
+            $response->getBody()->write(json_encode(['success' => false, 'message' => 'Invoice not found']));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+        }
+
+        $response->getBody()->write($pdfContent);
+        return $response
+            ->withHeader('Content-Type', 'application/pdf')
+            ->withHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->withHeader('Content-Length', (string)strlen($pdfContent));
+    }
+
+    /**
+     * Generate PDF bytes for an invoice. Returns [pdfBytes, filename] or [null, ''] on failure.
+     * Public so the Invoice Task can call it directly.
+     */
+    public function generatePdf(int $invoiceId, int $businessId): array
+    {
         $inv = DB::selectOne(
             'SELECT i.*,
                     c.name AS client_name, c.company AS client_company,
@@ -45,10 +66,7 @@ class InvoicePdfController
             [$invoiceId, $businessId]
         );
 
-        if (!$inv) {
-            $response->getBody()->write(json_encode(['success' => false, 'message' => 'Invoice not found']));
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
-        }
+        if (!$inv) return [null, ''];
 
         $items = DB::select(
             'SELECT * FROM invoice_items WHERE invoice_id = ? ORDER BY sort_order ASC',
@@ -83,11 +101,7 @@ class InvoicePdfController
         $pdfContent = $dompdf->output();
         $filename   = preg_replace('/[^a-zA-Z0-9\-_]/', '-', $inv['number'] ?? 'invoice') . '.pdf';
 
-        $response->getBody()->write($pdfContent);
-        return $response
-            ->withHeader('Content-Type', 'application/pdf')
-            ->withHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
-            ->withHeader('Content-Length', (string)strlen($pdfContent));
+        return [$pdfContent, $filename];
     }
 
     // ── Formatting helpers ────────────────────────────────────────────────────
