@@ -2,12 +2,14 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { task, item, all } from '../../api'
+import { useToast } from '../../composables/useToast'
 
 const showMore = ref(false)
 
 const router = useRouter()
 const route  = useRoute()
 const emit   = defineEmits(['refresh'])
+const toast  = useToast()
 
 const states     = ref([])
 const loading    = ref(false)
@@ -58,10 +60,12 @@ async function submit() {
     if (isEdit.value) {
       await task('Client', 'update', { ...form.value, id: route.params.id })
       emit('refresh')
+      toast.success('Customer updated.')
       router.push(`/clients/${route.params.id}`)
     } else {
       await task('Client', 'create', form.value)
       emit('refresh')
+      toast.success('Customer added.')
       router.push('/clients')
     }
   } catch (e) {

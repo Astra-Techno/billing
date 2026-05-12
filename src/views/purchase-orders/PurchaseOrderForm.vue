@@ -212,7 +212,7 @@ async function submit() {
     <!-- Notes -->
     <div class="card card-body animate-fade-in-up anim-delay-150">
       <label class="form-label">Notes / Terms</label>
-      <textarea v-model="form.notes" rows="3" class="form-input" placeholder="Any notes for the supplier…"></textarea>
+      <textarea v-model="form.notes" rows="3" class="form-textarea" placeholder="Any notes for the supplier…"></textarea>
     </div>
 
     <!-- Submit -->

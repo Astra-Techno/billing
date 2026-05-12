@@ -186,7 +186,7 @@ onMounted(load)
 
       <div>
         <label class="form-label">Notes</label>
-        <textarea v-model="form.notes" rows="2" class="form-input" placeholder="Reason or additional info…"></textarea>
+        <textarea v-model="form.notes" rows="2" class="form-textarea" placeholder="Reason or additional info…"></textarea>
       </div>
 
     </div>

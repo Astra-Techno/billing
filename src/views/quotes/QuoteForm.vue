@@ -5,10 +5,12 @@ import { task, item, all, list } from '../../api'
 import { inr } from '../../utils/currency'
 import { today, addDays } from '../../utils/date'
 import { calcInvoice } from '../../utils/invoice'
+import { useToast } from '../../composables/useToast'
 
 const router   = useRouter()
 const route    = useRoute()
 const emit     = defineEmits(['refresh'])
+const toast    = useToast()
 const clients  = ref([])
 const products = ref([])
 const taxRates = ref([])
@@ -102,10 +104,12 @@ async function submit() {
     if (isEdit.value) {
       await task('Quote', 'update', { ...form.value, id: route.params.id })
       emit('refresh')
+      toast.success('Quote updated.')
       router.push('/quotes/' + route.params.id)
     } else {
       const { data } = await task('Quote', 'create', form.value)
       emit('refresh')
+      toast.success('Quote created.')
       router.push('/quotes/' + data.data.quote_id)
     }
   } catch (e) {
@@ -213,11 +217,11 @@ async function submit() {
       <div class="card card-body grid sm:grid-cols-2 gap-4">
         <div>
           <label class="form-label">Message to Customer <span class="text-gray-400 font-normal">(printed on quote)</span></label>
-          <textarea v-model="form.notes" rows="3" class="form-input" placeholder="e.g. Thank you for considering us!"></textarea>
+          <textarea v-model="form.notes" rows="3" class="form-textarea" placeholder="e.g. Thank you for considering us!"></textarea>
         </div>
         <div>
           <label class="form-label">Terms & Conditions</label>
-          <textarea v-model="form.terms" rows="3" class="form-input" placeholder="e.g. Prices valid for 30 days."></textarea>
+          <textarea v-model="form.terms" rows="3" class="form-textarea" placeholder="e.g. Prices valid for 30 days."></textarea>
         </div>
       </div>
 

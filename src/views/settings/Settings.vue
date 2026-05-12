@@ -763,11 +763,11 @@ async function saveInvoice() {
         </div>
         <div>
           <label class="form-label">Message to Customer <span class="text-gray-400 font-normal">(printed at bottom)</span></label>
-          <textarea v-model="invoiceForm.invoice_notes" rows="3" class="form-input" placeholder="e.g. Thank you for your business!"></textarea>
+          <textarea v-model="invoiceForm.invoice_notes" rows="3" class="form-textarea" placeholder="e.g. Thank you for your business!"></textarea>
         </div>
         <div>
           <label class="form-label">Terms & Conditions</label>
-          <textarea v-model="invoiceForm.invoice_terms" rows="3" class="form-input" placeholder="e.g. Payment due within 30 days."></textarea>
+          <textarea v-model="invoiceForm.invoice_terms" rows="3" class="form-textarea" placeholder="e.g. Payment due within 30 days."></textarea>
         </div>
         <div class="pt-2">
           <button @click="saveInvoice" :disabled="saving" class="btn-primary w-full sm:w-auto">

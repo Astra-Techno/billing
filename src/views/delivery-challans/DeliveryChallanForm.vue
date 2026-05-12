@@ -230,7 +230,7 @@ async function submit() {
       <!-- Notes -->
       <div class="card card-body">
         <label class="form-label">Notes / Instructions</label>
-        <textarea v-model="form.notes" rows="3" class="form-input" placeholder="Any delivery instructions…"></textarea>
+        <textarea v-model="form.notes" rows="3" class="form-textarea" placeholder="Any delivery instructions…"></textarea>
       </div>
 
       <div v-if="error" class="text-sm text-danger-600 bg-danger-50 border border-danger-100 rounded-xl px-4 py-3 font-medium">{{ error }}</div>

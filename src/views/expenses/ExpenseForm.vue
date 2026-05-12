@@ -3,12 +3,14 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { item, task, all } from '../../api'
 import { today } from '../../utils/date'
+import { useToast } from '../../composables/useToast'
 import HelpIcon from '../../components/HelpIcon.vue'
 
 const router = useRouter()
 const route  = useRoute()
 const emit   = defineEmits(['refresh'])
 
+const toast         = useToast()
 const categories    = ref([])
 const loading       = ref(false)
 const saving        = ref(false)
@@ -70,8 +72,10 @@ async function save() {
   try {
     if (isEdit) {
       await task('Expense', 'update', { ...form.value, id: expenseId })
+      toast.success('Expense updated.')
     } else {
       await task('Expense', 'create', form.value)
+      toast.success('Expense recorded.')
     }
     emit('refresh')
     router.push('/expenses')
@@ -189,7 +193,7 @@ onMounted(load)
         </div>
         <div>
           <label class="form-label">Notes <span class="text-gray-400 font-normal">(optional)</span></label>
-          <textarea v-model="form.notes" class="form-input" rows="2" placeholder="Any additional details…"></textarea>
+          <textarea v-model="form.notes" class="form-textarea" rows="2" placeholder="Any additional details…"></textarea>
         </div>
       </div>
 

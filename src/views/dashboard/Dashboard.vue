@@ -9,27 +9,45 @@ import { useAuthStore } from '../../stores/auth'
 const router = useRouter()
 const authStore = useAuthStore()
 
-const stats   = ref({ total_due: 0, total_paid_month: 0, total_expenses_month: 0, overdue_count: 0, draft_count: 0, overdue_amount: 0 })
-const recent  = ref([])
-const overdue = ref([])
-const loading = ref(true)
+const stats          = ref({ total_due: 0, total_paid_month: 0, total_expenses_month: 0, overdue_count: 0, draft_count: 0, overdue_amount: 0 })
+const recent         = ref([])
+const overdue        = ref([])
+const monthlyRevenue = ref([])
+const loading        = ref(true)
 
 onMounted(async () => {
   try {
-    const [sR, rR, oR] = await Promise.all([
+    const [sR, rR, oR, mR] = await Promise.all([
       list('Dashboard:stats'),
       list('Invoice', { sort_by: 'i.created_at', sort_order: 'desc', limit: 8 }),
-      list('Invoice:overdue', { limit: 10 }), // Fetched more for the actions list
+      list('Invoice:overdue', { limit: 10 }),
+      list('Dashboard:monthlyRevenue'),
     ])
-    stats.value   = sR.data?.data?.[0] || {}
-    recent.value  = rR.data?.data  || []
-    overdue.value = oR.data?.data  || []
-    
-    // Calculate total overdue amount since it might not be in stats
+    stats.value          = sR.data?.data?.[0] || {}
+    recent.value         = rR.data?.data  || []
+    overdue.value        = oR.data?.data  || []
+    monthlyRevenue.value = mR.data?.data  || []
+
     stats.value.overdue_amount = overdue.value.reduce((sum, inv) => sum + parseFloat(inv.amount_due || 0), 0)
-    
+
   } catch {}
   loading.value = false
+})
+
+// Build last-6-months chart from real revenue data
+const chartMonths = computed(() => {
+  const months = []
+  const now = new Date()
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    const label = d.toLocaleString('default', { month: 'short' })
+    months.push({ key, label })
+  }
+  const revenueMap = Object.fromEntries(monthlyRevenue.value.map(r => [r.month, parseFloat(r.collected || 0)]))
+  const withData = months.map(m => ({ ...m, value: revenueMap[m.key] || 0 }))
+  const max = Math.max(...withData.map(m => m.value), 1)
+  return withData.map(m => ({ ...m, pct: Math.max(4, Math.round((m.value / max) * 100)) }))
 })
 
 const avatarColors = [
@@ -150,49 +168,40 @@ const firstName = computed(() => {
 
           <!-- Chart & Actions Row -->
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-5">
-              <!-- Chart Placeholder (Mocked Visuals for Premium Feel) -->
+              <!-- Revenue Chart (real data) -->
               <div class="col-span-1 lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-200/60 p-6 h-[340px] flex flex-col hidden sm:flex">
-                  <div class="flex justify-between items-center mb-6">
-                      <h2 class="font-bold text-gray-900 text-[15px]">Revenue & Expenses</h2>
-                      <div class="flex gap-2 bg-gray-50 p-1 rounded-lg border border-gray-200">
-                          <button class="px-3 py-1 bg-white shadow-sm rounded-md text-[11px] font-bold text-gray-900">6 Months</button>
-                          <button class="px-3 py-1 rounded-md text-[11px] font-semibold text-gray-500 hover:text-gray-700">1 Year</button>
+                  <div class="flex justify-between items-center mb-4">
+                      <div>
+                        <h2 class="font-bold text-gray-900 text-[15px]">Monthly Revenue</h2>
+                        <p class="text-[11px] text-gray-400 mt-0.5">Collections received — last 6 months</p>
+                      </div>
+                      <RouterLink to="/reports" class="text-[11px] font-bold text-indigo-500 hover:text-indigo-700">View Reports →</RouterLink>
+                  </div>
+                  <div class="flex-1 flex items-end gap-3 px-2 pb-0 relative">
+                      <!-- Grid lines -->
+                      <div class="absolute inset-0 flex flex-col justify-between pointer-events-none pb-6">
+                          <div class="w-full border-t border-gray-100/80 border-dashed"></div>
+                          <div class="w-full border-t border-gray-100/80 border-dashed"></div>
+                          <div class="w-full border-t border-gray-100/80 border-dashed"></div>
+                          <div class="w-full border-t border-gray-100/80 border-dashed"></div>
+                      </div>
+                      <!-- Bars -->
+                      <div v-for="(m, i) in chartMonths" :key="m.key"
+                        class="flex-1 flex flex-col items-center gap-2 relative z-10 group"
+                        :title="`${m.label}: ${inr(m.value)}`">
+                        <span class="text-[10px] font-bold text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">{{ inr(m.value) }}</span>
+                        <div class="w-full rounded-t-lg transition-all duration-700 ease-out"
+                          :style="{ height: m.pct + '%' }"
+                          :class="i === 5 ? 'bg-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.25)]' : 'bg-indigo-100 hover:bg-indigo-200'">
+                        </div>
+                        <span class="text-[10px] font-bold uppercase tracking-wider"
+                          :class="i === 5 ? 'text-indigo-600' : 'text-gray-400'">{{ m.label }}</span>
                       </div>
                   </div>
-                  <div class="flex-1 relative w-full h-full border-b border-gray-100 flex items-end justify-around px-2 pt-2">
-                      <div class="absolute inset-0 flex flex-col justify-between pointer-events-none pb-0">
-                          <div class="w-full border-t border-gray-100 border-dashed"></div>
-                          <div class="w-full border-t border-gray-100 border-dashed"></div>
-                          <div class="w-full border-t border-gray-100 border-dashed"></div>
-                          <div class="w-full border-t border-gray-100 border-dashed"></div>
-                      </div>
-                      <div class="flex gap-1 h-full items-end w-8 sm:w-12 group relative z-10">
-                          <div class="w-full bg-indigo-100 hover:bg-indigo-200 rounded-t-[6px] transition-colors h-[40%]"></div>
-                          <div class="w-full bg-gray-200 hover:bg-gray-300 rounded-t-[6px] transition-colors h-[25%]"></div>
-                      </div>
-                      <div class="flex gap-1 h-full items-end w-8 sm:w-12 group relative z-10">
-                          <div class="w-full bg-indigo-100 hover:bg-indigo-200 rounded-t-[6px] transition-colors h-[55%]"></div>
-                          <div class="w-full bg-gray-200 hover:bg-gray-300 rounded-t-[6px] transition-colors h-[30%]"></div>
-                      </div>
-                      <div class="flex gap-1 h-full items-end w-8 sm:w-12 group relative z-10">
-                          <div class="w-full bg-indigo-100 hover:bg-indigo-200 rounded-t-[6px] transition-colors h-[30%]"></div>
-                          <div class="w-full bg-gray-200 hover:bg-gray-300 rounded-t-[6px] transition-colors h-[40%]"></div>
-                      </div>
-                      <div class="flex gap-1 h-full items-end w-8 sm:w-12 group relative z-10">
-                          <div class="w-full bg-indigo-100 hover:bg-indigo-200 rounded-t-[6px] transition-colors h-[80%]"></div>
-                          <div class="w-full bg-gray-200 hover:bg-gray-300 rounded-t-[6px] transition-colors h-[35%]"></div>
-                      </div>
-                      <div class="flex gap-1 h-full items-end w-8 sm:w-12 group relative z-10">
-                          <div class="w-full bg-indigo-100 hover:bg-indigo-200 rounded-t-[6px] transition-colors h-[65%]"></div>
-                          <div class="w-full bg-gray-200 hover:bg-gray-300 rounded-t-[6px] transition-colors h-[20%]"></div>
-                      </div>
-                      <div class="flex gap-1 h-full items-end w-8 sm:w-12 group relative z-10">
-                          <div class="w-full bg-indigo-500 shadow-[0_0_15px_rgba(79,70,229,0.2)] rounded-t-[6px] transition-colors h-[95%]"></div>
-                          <div class="w-full bg-gray-400 rounded-t-[6px] transition-colors h-[45%]"></div>
-                      </div>
-                  </div>
-                  <div class="flex justify-around px-2 mt-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                      <span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span class="text-indigo-500">Oct</span>
+                  <!-- Empty state if no data -->
+                  <div v-if="!loading && chartMonths.every(m => m.value === 0)" class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                      <p class="text-sm text-gray-400 font-medium">No payment data yet</p>
+                      <p class="text-xs text-gray-300 mt-1">Revenue will appear once payments are recorded</p>
                   </div>
               </div>
               

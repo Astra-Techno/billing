@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { task, item, list, all } from '../../api'
+import { useToast } from '../../composables/useToast'
 import { inr } from '../../utils/currency'
 import { today, addDays } from '../../utils/date'
 import { calcInvoice } from '../../utils/invoice'
@@ -9,6 +10,7 @@ import { calcInvoice } from '../../utils/invoice'
 const router = useRouter()
 const route  = useRoute()
 const emit   = defineEmits(['refresh'])
+const toast  = useToast()
 
 const clients      = ref([])
 const products     = ref([])
@@ -234,10 +236,12 @@ async function submit() {
     if (isEdit.value) {
       await task('Invoice', 'update', { ...form.value, id: route.params.id })
       emit('refresh')
+      toast.success('Invoice updated successfully.')
       router.push('/invoices/' + route.params.id)
     } else {
       const { data } = await task('Invoice', 'create', form.value)
       emit('refresh')
+      toast.success('Invoice created successfully.')
       router.push('/invoices/' + data.data.invoice_id)
     }
   } catch (e) {
@@ -404,11 +408,11 @@ async function submit() {
           <h2 class="section-title mb-0">Notes & Terms</h2>
           <div>
             <label class="form-label">Message to Customer</label>
-            <textarea v-model="form.notes" rows="2" class="form-input text-sm" placeholder="e.g. Thank you for your business!"></textarea>
+            <textarea v-model="form.notes" rows="2" class="form-textarea text-sm" placeholder="e.g. Thank you for your business!"></textarea>
           </div>
           <div>
             <label class="form-label">Terms & Conditions</label>
-            <textarea v-model="form.terms" rows="2" class="form-input text-sm" placeholder="e.g. Payment due within 30 days."></textarea>
+            <textarea v-model="form.terms" rows="2" class="form-textarea text-sm" placeholder="e.g. Payment due within 30 days."></textarea>
           </div>
         </div>
 

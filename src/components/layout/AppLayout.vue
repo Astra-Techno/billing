@@ -5,6 +5,7 @@ import TopBar from './TopBar.vue'
 import DesktopSidebar from './DesktopSidebar.vue'
 import DesktopHeader from './DesktopHeader.vue'
 import HelpPopup from '../HelpPopup.vue'
+import Toast from '../Toast.vue'
 import { useBusinessStore } from '../../stores/business'
 
 const bizStore = useBusinessStore()
@@ -26,7 +27,11 @@ onMounted(() => bizStore.fetchLogo())
       
       <!-- Main Content Container -->
       <main class="flex-1 lg:overflow-hidden overflow-y-auto overflow-x-hidden max-w-2xl mx-auto lg:max-w-none w-full px-4 lg:px-0 pt-5 lg:pt-0 pb-24 lg:pb-0 flex flex-col min-h-0 app-main-scroll">
-        <RouterView />
+        <RouterView v-slot="{ Component, route }">
+          <Transition name="page-fade" mode="out-in">
+            <component :is="Component" :key="route.path.split('/')[1]" />
+          </Transition>
+        </RouterView>
       </main>
     </div>
 
@@ -34,5 +39,6 @@ onMounted(() => bizStore.fetchLogo())
     <Sidebar />
     
     <HelpPopup />
+    <Toast />
   </div>
 </template>
