@@ -20,40 +20,54 @@ const menus = [
 </script>
 
 <template>
-  <div class="hidden lg:flex w-[72px] bg-[#FAFAFA] border-r border-gray-200/60 flex-col items-center py-4 gap-1 shrink-0 z-40 relative overflow-y-auto no-scrollbar">
-      <div class="absolute inset-0 bg-gradient-to-b from-white to-transparent opacity-50 pointer-events-none"></div>
+  <div class="hidden lg:flex w-[68px] bg-white border-r border-gray-200/70 flex-col items-center py-3 gap-0.5 shrink-0 z-40 relative overflow-y-auto no-scrollbar">
 
-      <RouterLink v-for="menu in menus" :key="menu.path" :to="menu.path" :title="menu.title" class="relative group w-full flex flex-col items-center">
-        <div v-if="isActive(menu.path)" class="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-7 bg-gray-900 rounded-r-full z-50"></div>
-        <div class="flex flex-col items-center gap-1 px-1.5 py-2 rounded-xl transition-all z-10 w-full"
-          :class="isActive(menu.path) ? 'text-gray-900' : 'text-gray-400 hover:text-gray-700'">
-          <div class="w-9 h-9 rounded-[10px] flex items-center justify-center transition-all"
-            :class="isActive(menu.path) ? 'bg-gray-900 shadow-[0_4px_12px_rgba(15,23,42,0.25)] text-white' : 'hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-100'">
+    <RouterLink v-for="menu in menus" :key="menu.path" :to="menu.path" :title="menu.title"
+      class="relative w-full flex flex-col items-center py-2 px-1 group">
+      <!-- Active pill indicator -->
+      <div v-if="isActive(menu.path)"
+        class="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-primary-600 rounded-r-full"></div>
+      <div class="flex flex-col items-center gap-1 w-full">
+        <div class="w-9 h-9 rounded-[10px] flex items-center justify-center transition-all duration-150"
+          :class="isActive(menu.path)
+            ? 'bg-primary-50 text-primary-600 ring-1 ring-primary-100'
+            : 'text-gray-400 group-hover:bg-gray-100 group-hover:text-gray-600'">
+          <svg class="w-[17px] h-[17px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path v-for="(d, index) in menu.icon.split(' M').map((p, i) => i === 0 ? p : 'M' + p)" :key="index"
+              stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" :d="d" />
+          </svg>
+        </div>
+        <span class="text-[9px] font-semibold tracking-wide leading-none transition-colors"
+          :class="isActive(menu.path) ? 'text-primary-600' : 'text-gray-400 group-hover:text-gray-500'">
+          {{ menu.label }}
+        </span>
+      </div>
+    </RouterLink>
+
+    <div class="mt-auto pt-2 w-full">
+      <!-- Divider -->
+      <div class="mx-3 border-t border-gray-100 mb-2"></div>
+      <!-- Settings -->
+      <RouterLink to="/settings" title="Settings" class="relative w-full flex flex-col items-center py-2 px-1 group">
+        <div v-if="isActive('/settings')"
+          class="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-primary-600 rounded-r-full"></div>
+        <div class="flex flex-col items-center gap-1 w-full">
+          <div class="w-9 h-9 rounded-[10px] flex items-center justify-center transition-all duration-150"
+            :class="isActive('/settings')
+              ? 'bg-primary-50 text-primary-600 ring-1 ring-primary-100'
+              : 'text-gray-400 group-hover:bg-gray-100 group-hover:text-gray-600'">
             <svg class="w-[17px] h-[17px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path v-for="(d, index) in menu.icon.split(' M').map((p, i) => i === 0 ? p : 'M' + p)" :key="index" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="d" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
             </svg>
           </div>
-          <span class="text-[9px] font-semibold tracking-wide leading-none"
-            :class="isActive(menu.path) ? 'text-gray-900' : 'text-gray-400'">
-            {{ menu.label }}
+          <span class="text-[9px] font-semibold tracking-wide leading-none transition-colors"
+            :class="isActive('/settings') ? 'text-primary-600' : 'text-gray-400 group-hover:text-gray-500'">
+            Settings
           </span>
         </div>
       </RouterLink>
-
-      <div class="mt-auto pt-2"></div>
-
-      <!-- Settings -->
-      <RouterLink to="/settings" title="Settings" class="relative group w-full flex flex-col items-center">
-        <div v-if="isActive('/settings')" class="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-7 bg-gray-900 rounded-r-full z-50"></div>
-        <div class="flex flex-col items-center gap-1 px-1.5 py-2 rounded-xl transition-all z-10 w-full"
-          :class="isActive('/settings') ? 'text-gray-900' : 'text-gray-400 hover:text-gray-700'">
-          <div class="w-9 h-9 rounded-[10px] flex items-center justify-center transition-all"
-            :class="isActive('/settings') ? 'bg-gray-900 shadow-[0_4px_12px_rgba(15,23,42,0.25)] text-white' : 'hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-100'">
-            <svg class="w-[17px] h-[17px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-          </div>
-          <span class="text-[9px] font-semibold tracking-wide leading-none"
-            :class="isActive('/settings') ? 'text-gray-900' : 'text-gray-400'">Settings</span>
-        </div>
-      </RouterLink>
+    </div>
   </div>
 </template>

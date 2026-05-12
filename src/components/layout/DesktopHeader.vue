@@ -70,15 +70,15 @@ const userInitials = computed(() => {
 </script>
 
 <template>
-  <header class="hidden lg:flex h-[52px] border-b border-gray-200/60 bg-white/70 backdrop-blur-xl items-center justify-between px-5 shrink-0 z-50">
+  <header class="hidden lg:flex h-[52px] border-b border-gray-200/70 bg-white items-center justify-between px-5 shrink-0 z-50">
       <div class="flex items-center gap-5">
-          <div class="flex items-center gap-2.5 font-bold text-gray-900 tracking-tight cursor-pointer" @click="$router.push('/')">
-              <div class="w-7 h-7 rounded-[7px] bg-gradient-to-br from-gray-900 to-gray-700 shadow flex items-center justify-center text-white text-xs ring-1 ring-white/20">
+          <div class="flex items-center gap-2.5 font-bold text-gray-900 tracking-tight cursor-pointer select-none" @click="$router.push('/')">
+              <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-primary-600 to-primary-700 shadow-soft-blue flex items-center justify-center text-white text-xs font-bold">
                 {{ businessStore.business?.name?.charAt(0)?.toUpperCase() || 'B' }}
               </div>
-              <span class="text-[15px]">{{ businessStore.business?.name || 'CloudBill' }}</span>
+              <span class="text-[14px] font-semibold text-gray-800">{{ businessStore.business?.name || 'CloudBill' }}</span>
           </div>
-          <div class="h-4 w-[1px] bg-gray-200/80"></div>
+          <div class="h-4 w-px bg-gray-200"></div>
           <div class="flex items-center text-[13px] text-gray-500 gap-1.5 font-medium">
               <template v-for="(crumb, i) in breadcrumbs" :key="i">
                 <span v-if="i > 0">
@@ -90,9 +90,10 @@ const userInitials = computed(() => {
           </div>
       </div>
       <div class="flex items-center gap-4">
-          <button class="flex items-center gap-2 text-xs bg-gray-100 hover:bg-gray-200 px-2.5 py-1.5 rounded-md transition-colors border border-gray-200/50 text-gray-500 hover:text-gray-700">
+          <button class="flex items-center gap-2 text-[12px] bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors border border-gray-200/80 text-gray-400 hover:text-gray-600 font-medium">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-              <div class="flex gap-1"><kbd class="font-sans font-semibold">Ctrl</kbd> <kbd class="font-sans font-semibold">K</kbd></div>
+              <span>Search</span>
+              <div class="flex gap-0.5 ml-1"><kbd class="font-sans text-[10px] bg-white border border-gray-200 rounded px-1 py-0.5 text-gray-400">⌘</kbd><kbd class="font-sans text-[10px] bg-white border border-gray-200 rounded px-1 py-0.5 text-gray-400">K</kbd></div>
           </button>
           
           <div class="relative shrink-0 flex items-center">
@@ -171,7 +172,7 @@ const userInitials = computed(() => {
             </div>
           </div>
 
-          <div class="w-7 h-7 ml-2 rounded-full bg-gradient-to-tr from-indigo-100 to-purple-100 border border-indigo-200 shadow-inner flex items-center justify-center text-indigo-700 text-xs font-bold ring-2 ring-white cursor-pointer hover:scale-105 transition-transform" @click="$router.push('/settings')">
+          <div class="w-8 h-8 ml-1 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-xs font-bold ring-2 ring-white shadow cursor-pointer hover:scale-105 transition-transform" @click="$router.push('/settings')">
             {{ userInitials }}
           </div>
       </div>

@@ -17,11 +17,13 @@ export default {
         danger:  { 50: '#fef2f2', 100: '#fee2e2', 500: '#ef4444', 700: '#b91c1c' },
       },
       fontFamily: {
-        sans: ['Outfit', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
-        'soft': '0 8px 30px rgba(0, 0, 0, 0.04)',
-        'soft-blue': '0 8px 30px rgba(37, 99, 235, 0.08)',
+        'soft':      '0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.05)',
+        'soft-blue': '0 4px 14px rgba(37, 99, 235, 0.18)',
+        'elevated':  '0 4px 24px rgba(0,0,0,0.09)',
+        'ring-soft': '0 0 0 3px rgba(37, 99, 235, 0.12)',
       },
     },
   },

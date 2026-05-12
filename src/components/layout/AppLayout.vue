@@ -13,7 +13,7 @@ onMounted(() => bizStore.fetchLogo())
 </script>
 
 <template>
-  <div class="h-[100dvh] w-full max-w-[100vw] flex flex-col bg-[#FAFAFA] overflow-hidden relative font-sans">
+  <div class="h-[100dvh] w-full max-w-[100vw] flex flex-col bg-[#F4F5F7] overflow-hidden relative font-sans">
     
     <!-- Mobile Header -->
     <TopBar class="lg:hidden" />
