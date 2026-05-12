@@ -213,7 +213,8 @@ onMounted(load)
              <span :class="statusBadge(invoice.status)" class="px-2.5 py-1 text-xs rounded-lg shadow-sm border border-black/5">{{ statusLabel(invoice.status) }}</span>
           </div>
           <div>
-            <h1 class="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">{{ invoice.client_name }}</h1>
+            <RouterLink v-if="invoice.client_id" :to="`/clients/${invoice.client_id}`" class="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight hover:text-indigo-600 transition-colors">{{ invoice.client_name }}</RouterLink>
+            <h1 v-else class="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">{{ invoice.client_name }}</h1>
             <p class="text-sm font-medium text-gray-500 mt-1.5 flex items-center gap-2">
               <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
               Issued {{ fmtDateShort(invoice.issue_date) }} <span class="text-gray-300">•</span> Due {{ fmtDateShort(invoice.due_date) }}

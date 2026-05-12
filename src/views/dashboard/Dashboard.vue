@@ -108,7 +108,7 @@ const firstName = computed(() => {
                   </div>
               </div>
               <!-- Second Stat -->
-              <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-200/60 flex flex-col justify-between group hover:border-gray-300 transition-colors cursor-pointer" @click="router.push('/invoices')">
+              <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-200/60 flex flex-col justify-between group hover:border-gray-300 transition-colors cursor-pointer" @click="router.push('/invoices?status=sent')">
                   <div>
                       <div class="text-gray-400 text-[11px] font-bold uppercase tracking-widest mb-2">Outstanding</div>
                       <div class="text-2xl font-black tabular-nums tracking-tight text-gray-900">{{ inr(stats.total_due || 0) }}</div>

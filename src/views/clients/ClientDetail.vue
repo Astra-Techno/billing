@@ -178,6 +178,25 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
         </div>
       </div>
 
+      <!-- Quick Navigation Links -->
+      <div class="grid grid-cols-3 gap-2 animate-fade-in-up delay-150">
+        <RouterLink :to="`/invoices?client_id=${client.id}&client_name=${encodeURIComponent(client.name)}`"
+          class="flex flex-col items-center gap-1.5 bg-white border border-gray-100 rounded-2xl p-3 hover:border-indigo-200 hover:bg-indigo-50/40 transition-colors shadow-sm text-center">
+          <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span class="text-[11px] font-bold text-gray-700">All Invoices</span>
+        </RouterLink>
+        <RouterLink :to="`/quotes?client_id=${client.id}&client_name=${encodeURIComponent(client.name)}`"
+          class="flex flex-col items-center gap-1.5 bg-white border border-gray-100 rounded-2xl p-3 hover:border-amber-200 hover:bg-amber-50/40 transition-colors shadow-sm text-center">
+          <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+          <span class="text-[11px] font-bold text-gray-700">All Quotes</span>
+        </RouterLink>
+        <RouterLink :to="`/delivery-challans?client_id=${client.id}&client_name=${encodeURIComponent(client.name)}`"
+          class="flex flex-col items-center gap-1.5 bg-white border border-gray-100 rounded-2xl p-3 hover:border-emerald-200 hover:bg-emerald-50/40 transition-colors shadow-sm text-center">
+          <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+          <span class="text-[11px] font-bold text-gray-700">Challans</span>
+        </RouterLink>
+      </div>
+
       <!-- Transaction History (Bills) -->
       <div class="mt-8 animate-fade-in-up delay-200">
         <h2 class="font-bold text-gray-800 text-sm mb-4 px-1">Transaction History</h2>

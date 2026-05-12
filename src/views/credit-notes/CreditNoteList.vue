@@ -12,6 +12,15 @@ const creditNotes = ref([])
 const loading     = ref(true)
 const acting      = ref(null)
 const actError    = ref('')
+const filter      = ref({ search: '', status: '' })
+let timer         = null
+
+const tabs = [
+  { label: 'All',      value: '' },
+  { label: 'Draft',    value: 'draft' },
+  { label: 'Issued',   value: 'issued' },
+  { label: 'Adjusted', value: 'adjusted' },
+]
 
 const statusBadge = (s) => ({
   draft:    'badge-gray',
@@ -22,11 +31,16 @@ const statusBadge = (s) => ({
 async function load() {
   loading.value = true
   try {
-    const cnRes = await list('CreditNote', { sort_by: 'cn.created_at', sort_order: 'desc' })
+    const p = { sort_by: 'cn.created_at', sort_order: 'desc' }
+    if (filter.value.status) p['filter.status'] = filter.value.status
+    if (filter.value.search) p['filter.search'] = `%${filter.value.search}%`
+    const cnRes = await list('CreditNote', p)
     creditNotes.value = cnRes.data?.data  || []
   } catch {}
   loading.value = false
 }
+
+function onSearch() { clearTimeout(timer); timer = setTimeout(load, 350) }
 
 function openCreate() {
   router.push('/credit-notes/new')
@@ -71,6 +85,23 @@ onMounted(load)
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
             </button>
           </div>
+        </div>
+
+        <!-- Search -->
+        <div class="mt-3">
+          <input v-model="filter.search" @input="onSearch" type="text"
+            class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-xs font-semibold rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 block px-3 py-2 transition-all"
+            placeholder="Search by number, invoice, reason..." />
+        </div>
+
+        <!-- Status Tabs -->
+        <div class="flex gap-1 bg-gray-100/80 p-1 rounded-[10px] ring-1 ring-inset ring-gray-200/50 overflow-x-auto hide-scrollbar mt-2">
+          <button v-for="t in tabs" :key="t.value"
+            @click="filter.status = t.value; load()"
+            class="flex-1 text-[11px] font-semibold rounded-md py-1.5 transition-all whitespace-nowrap px-2"
+            :class="filter.status === t.value ? 'bg-white shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-700'">
+            {{ t.label }}
+          </button>
         </div>
 
         <div v-if="actError" class="text-sm text-danger-600 bg-danger-50 rounded-lg px-4 py-3 mt-2 animate-fade-in-up">{{ actError }}</div>

@@ -111,8 +111,8 @@ function exportCsv() {
 }
 
 // ── Date presets ───────────────────────────────────────────────────────────────
-const filter = ref({ status: '', search: '', from_date: '', to_date: '', preset: '' })
-let timer    = null
+const filter       = ref({ status: '', search: '', from_date: '', to_date: '', preset: '', client_id: '', client_name: '' })
+let timer          = null
 
 const presets = [
   { label: 'Today',        value: 'today' },
@@ -160,6 +160,12 @@ function clearDate() {
 }
 
 // ── Load invoices ──────────────────────────────────────────────────────────────
+function clearClientFilter() {
+  filter.value.client_id   = ''
+  filter.value.client_name = ''
+  load()
+}
+
 async function load() {
   loading.value  = true
   selected.value = new Set()
@@ -169,6 +175,7 @@ async function load() {
     if (filter.value.search)    p['filter.search']    = `%${filter.value.search}%`
     if (filter.value.from_date) p['filter.from_date'] = filter.value.from_date
     if (filter.value.to_date)   p['filter.to_date']   = filter.value.to_date
+    if (filter.value.client_id) p['filter.client_id'] = filter.value.client_id
     const { data } = await list('Invoice', p)
     invoices.value = data.data || []
   } catch {}
@@ -183,7 +190,9 @@ function onRowClick(inv) {
 }
 
 onMounted(() => {
-  if (route.query.status) filter.value.status = route.query.status
+  if (route.query.status)      filter.value.status      = route.query.status
+  if (route.query.client_id)   filter.value.client_id   = route.query.client_id
+  if (route.query.client_name) filter.value.client_name = route.query.client_name
   load()
 })
 
@@ -252,6 +261,15 @@ const activeDateLabel = () => {
               <span class="text-gray-400 text-[10px] font-bold uppercase">to</span>
               <input v-model="filter.to_date" type="date" class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-[11px] font-semibold rounded-lg px-2 py-1.5 focus:border-indigo-500 transition-all" @change="load()" />
             </div>
+        </div>
+
+        <!-- Active client filter chip -->
+        <div v-if="filter.client_id" class="flex items-center gap-1.5 bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-1.5 mb-2">
+          <svg class="w-3 h-3 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          <span class="text-[11px] font-bold text-indigo-700 flex-1 truncate">{{ filter.client_name || 'Customer filter active' }}</span>
+          <button @click="clearClientFilter" class="text-indigo-400 hover:text-indigo-700 ml-1">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
         </div>
 
         <!-- Tabs -->

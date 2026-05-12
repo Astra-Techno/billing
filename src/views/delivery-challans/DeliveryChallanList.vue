@@ -1,14 +1,17 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { list } from '../../api'
 import { inr } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
+import HelpIcon from '../../components/HelpIcon.vue'
 
-const router  = useRouter()
-const challans = ref([])
-const loading  = ref(true)
-const filter   = ref({ status: '', search: '' })
+const route    = useRoute()
+const router   = useRouter()
+const challans  = ref([])
+const loading   = ref(true)
+const showFilters = ref(false)
+const filter    = ref({ status: '', search: '', from_date: '', to_date: '', client_id: '', client_name: '' })
 let timer = null
 
 const tabs = [
@@ -24,12 +27,19 @@ const statusLabel = s => ({ draft: 'Draft', issued: 'Issued', delivered: 'Delive
 const avatarColors = ['bg-blue-100 text-blue-700', 'bg-emerald-100 text-emerald-700', 'bg-purple-100 text-purple-700', 'bg-amber-100 text-amber-700', 'bg-pink-100 text-pink-700']
 const avatarColor  = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColors.length]
 
+function clearClientFilter() {
+  filter.value.client_id = ''; filter.value.client_name = ''; load()
+}
+
 async function load() {
   loading.value = true
   try {
     const p = { sort_by: 'dc.created_at', sort_order: 'desc' }
-    if (filter.value.status) p['filter.status'] = filter.value.status
-    if (filter.value.search) p['filter.search'] = `%${filter.value.search}%`
+    if (filter.value.status)    p['filter.status']    = filter.value.status
+    if (filter.value.search)    p['filter.search']    = `%${filter.value.search}%`
+    if (filter.value.from_date) p['filter.from_date'] = filter.value.from_date
+    if (filter.value.to_date)   p['filter.to_date']   = filter.value.to_date
+    if (filter.value.client_id) p['filter.client_id'] = filter.value.client_id
     const { data } = await list('DeliveryChallan', p)
     challans.value = data.data || []
   } catch {}
@@ -37,7 +47,12 @@ async function load() {
 }
 
 function onSearch() { clearTimeout(timer); timer = setTimeout(load, 350) }
-onMounted(load)
+
+onMounted(() => {
+  if (route.query.client_id)   filter.value.client_id   = route.query.client_id
+  if (route.query.client_name) filter.value.client_name = route.query.client_name
+  load()
+})
 </script>
 
 <template>
@@ -52,6 +67,10 @@ onMounted(load)
         <div class="flex justify-between items-center mb-4">
             <h2 class="font-bold text-gray-900 text-sm tracking-tight flex items-center gap-2">Delivery Challans <HelpIcon section="delivery-challans" class="w-3.5 h-3.5" /></h2>
             <div class="flex gap-2">
+                <!-- Search Toggle -->
+                <button @click="showFilters = !showFilters" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center transition-all" :class="showFilters ? 'text-indigo-600 border-indigo-200 bg-indigo-50' : 'text-gray-600'">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </button>
                 <!-- New Challan -->
                 <button @click="router.push('/delivery-challans/new')" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center text-gray-600 transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
@@ -59,11 +78,25 @@ onMounted(load)
             </div>
         </div>
 
-        <!-- Search & Filter -->
-        <div class="mb-4 space-y-2 animate-fade-in-up">
+        <!-- Search / Filter Expansion -->
+        <div v-show="showFilters" class="mb-4 space-y-2 animate-fade-in-up">
             <input v-model="filter.search" @input="onSearch" type="text"
               class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-xs font-semibold rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 block px-3 py-2 transition-all"
               placeholder="Search by DC no. or customer..." />
+            <div class="flex gap-2 items-center">
+              <input v-model="filter.from_date" type="date" class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-[11px] font-semibold rounded-lg px-2 py-1.5 focus:border-indigo-500 transition-all" @change="load()" />
+              <span class="text-gray-400 text-[10px] font-bold uppercase">to</span>
+              <input v-model="filter.to_date" type="date" class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-[11px] font-semibold rounded-lg px-2 py-1.5 focus:border-indigo-500 transition-all" @change="load()" />
+            </div>
+        </div>
+
+        <!-- Active client filter chip -->
+        <div v-if="filter.client_id" class="flex items-center gap-1.5 bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-1.5 mb-2">
+          <svg class="w-3 h-3 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          <span class="text-[11px] font-bold text-indigo-700 flex-1 truncate">{{ filter.client_name || 'Customer filter active' }}</span>
+          <button @click="clearClientFilter" class="text-indigo-400 hover:text-indigo-700 ml-1">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
         </div>
 
         <!-- Status Tabs -->
