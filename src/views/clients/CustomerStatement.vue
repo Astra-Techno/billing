@@ -29,7 +29,7 @@ async function load() {
     const id = route.params.id
     const [cRes, iRes] = await Promise.all([
       item('Client', { id }),
-      list('Invoice', { 'filter.client_id': id, sort_by: 'i.issue_date', sort_order: 'asc', limit: 1000 }),
+      list('Invoice', { 'filter.client_id': id, sort_by: 'i.issue_date', sort_order: 'asc' }),
     ])
     client.value   = cRes.data?.data
     invoices.value = iRes.data?.data || []

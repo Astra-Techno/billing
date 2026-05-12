@@ -21,7 +21,7 @@ const tabs = [
   { key: 'bank',      label: 'Payment Info' },
   { key: 'invoice',   label: 'Bill Settings' },
   { key: 'tax_rates', label: 'Tax Rates' },
-  { key: 'team',      label: 'Team' },
+  ...(can('team') ? [{ key: 'team', label: 'Team' }] : []),
   { key: 'password',  label: 'Password' },
 ]
 

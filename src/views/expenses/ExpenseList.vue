@@ -81,7 +81,7 @@ async function confirmDelete() {
   deleting.value = true
   try {
     await task('Expense', 'delete', { id: deleteTarget.value.id })
-    deleteTarget.value = null; selectedId.value = null
+    deleteTarget.value = null
     await load()
   } catch { deleteTarget.value = null }
   finally { deleting.value = false }

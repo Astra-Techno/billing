@@ -87,6 +87,24 @@ class Expense extends Task
         $this->requireRole(['owner', 'admin']);
         $expense    = $this->findExpense((int)$input['id'], $businessId);
 
+        // Log the deletion for audit trail
+        DB::statement(
+            "INSERT INTO audit_log (business_id, user_id, action, entity_type, entity_id, snapshot)
+             VALUES (?, ?, 'delete', 'expense', ?, ?)",
+            [
+                $businessId,
+                $this->userId(),
+                $expense->id,
+                json_encode([
+                    'description'  => $expense->description,
+                    'vendor_name'  => $expense->vendor_name,
+                    'total_amount' => $expense->total_amount,
+                    'expense_date' => $expense->expense_date,
+                    'method'       => $expense->method,
+                ]),
+            ]
+        );
+
         DB::statement("DELETE FROM expenses WHERE id = ?", [$expense->id]);
 
         return $this->success(null, 'Expense deleted.');

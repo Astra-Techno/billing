@@ -9,10 +9,13 @@ const router = useRouter()
 const route  = useRoute()
 const emit   = defineEmits(['refresh'])
 
-const categories = ref([])
-const loading    = ref(false)
-const saving     = ref(false)
-const error      = ref('')
+const categories    = ref([])
+const loading       = ref(false)
+const saving        = ref(false)
+const error         = ref('')
+const newCatName    = ref('')
+const addingCat     = ref(false)
+const showAddCat    = ref(false)
 
 const isEdit = route.params.id && route.params.id !== 'new'
 const expenseId = isEdit ? route.params.id : null
@@ -26,6 +29,7 @@ const form = ref({
   expense_date: today(),
   method: 'cash',
   reference: '',
+  notes: '',
 })
 
 async function load() {
@@ -47,6 +51,7 @@ async function load() {
           expense_date: exp.expense_date,
           method:       exp.method       || 'cash',
           reference:    exp.reference    || '',
+          notes:        exp.notes        || '',
         }
       }
     }
@@ -75,6 +80,22 @@ async function save() {
   } finally {
     saving.value = false
   }
+}
+
+async function addCategory() {
+  if (!newCatName.value.trim()) return
+  addingCat.value = true
+  try {
+    const res = await task('Expense', 'addCategory', { name: newCatName.value.trim() })
+    const catId = res.data?.data?.category_id
+    const cRes = await all('ExpenseCategory')
+    categories.value = cRes.data?.data || []
+    if (catId) form.value.category_id = catId
+    newCatName.value = ''
+    showAddCat.value = false
+  } catch (e) {
+    error.value = e.response?.data?.message || 'Could not add category.'
+  } finally { addingCat.value = false }
 }
 
 onMounted(load)
@@ -119,11 +140,21 @@ onMounted(load)
         <div class="card card-body space-y-4">
           <h2 class="section-title mb-0">Categorization</h2>
           <div>
-            <label class="form-label">Category</label>
+            <div class="flex items-center justify-between mb-1">
+              <label class="form-label mb-0">Category</label>
+              <button type="button" @click="showAddCat = !showAddCat" class="text-xs text-primary-600 hover:text-primary-700 font-semibold flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                New
+              </button>
+            </div>
             <select v-model="form.category_id" class="form-select">
               <option value="">General</option>
               <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
             </select>
+            <div v-if="showAddCat" class="mt-2 flex gap-2">
+              <input v-model="newCatName" type="text" class="form-input flex-1 py-1.5 text-sm" placeholder="Category name…" @keyup.enter="addCategory" />
+              <button type="button" @click="addCategory" :disabled="addingCat" class="btn-primary text-xs px-3 py-1.5">{{ addingCat ? '…' : 'Add' }}</button>
+            </div>
           </div>
           <div>
             <label class="form-label">GST Paid (₹)</label>
@@ -151,9 +182,15 @@ onMounted(load)
         </div>
       </div>
 
-      <div class="card card-body">
-        <label class="form-label">Reference / Receipt No.</label>
-        <input v-model="form.reference" type="text" class="form-input" placeholder="UTR / cheque no." />
+      <div class="card card-body space-y-4">
+        <div>
+          <label class="form-label">Reference / Receipt No.</label>
+          <input v-model="form.reference" type="text" class="form-input" placeholder="UTR / cheque no." />
+        </div>
+        <div>
+          <label class="form-label">Notes <span class="text-gray-400 font-normal">(optional)</span></label>
+          <textarea v-model="form.notes" class="form-input" rows="2" placeholder="Any additional details…"></textarea>
+        </div>
       </div>
 
       <div class="flex gap-3 pb-6">
