@@ -6,11 +6,12 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-// Attach token + business_id to every request
+// Attach token + business_id to every request; bust GET cache
 api.interceptors.request.use(config => {
   const auth = useAuthStore()
   if (auth.token)      config.headers['Authorization']  = `Bearer ${auth.token}`
   if (auth.businessId) config.headers['X-Business-ID']  = auth.businessId
+  if (config.method === 'get') config.headers['Cache-Control'] = 'no-cache'
   return config
 })
 

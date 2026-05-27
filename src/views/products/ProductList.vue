@@ -1,11 +1,12 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { list, task, all } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 
 const router      = useRouter()
+const route       = useRoute()
 const products    = ref([])
 const taxRates    = ref([])
 const loading     = ref(true)
@@ -60,6 +61,7 @@ function taxLabel(id) {
 const typeColors = { product: 'bg-blue-100 text-blue-700', service: 'bg-purple-100 text-purple-700' }
 
 onMounted(load)
+watch(() => route.name, name => { if (name === 'Products') load() })
 </script>
 
 <template>
