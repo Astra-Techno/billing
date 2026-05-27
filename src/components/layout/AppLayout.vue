@@ -29,7 +29,9 @@ onMounted(() => bizStore.fetchLogo())
       <main class="flex-1 lg:overflow-hidden overflow-y-auto overflow-x-hidden max-w-2xl mx-auto lg:max-w-none w-full px-4 lg:px-0 pt-5 lg:pt-0 pb-24 lg:pb-0 flex flex-col min-h-0 app-main-scroll">
         <RouterView v-slot="{ Component, route }">
           <Transition name="page-fade" mode="out-in">
-            <component :is="Component" :key="route.path.split('/')[1]" />
+            <div :key="route.path.split('/')[1]" class="flex-1 flex flex-col min-h-0 h-full">
+              <component :is="Component" />
+            </div>
           </Transition>
         </RouterView>
       </main>
