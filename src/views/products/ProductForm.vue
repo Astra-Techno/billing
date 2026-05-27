@@ -3,15 +3,18 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { item, task, all } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
+import { useToast } from '../../composables/useToast'
 
 const router = useRouter()
 const route  = useRoute()
 const emit   = defineEmits(['refresh'])
+const toast  = useToast()
 
 const taxRates = ref([])
 const loading  = ref(false)
 const saving   = ref(false)
 const error    = ref('')
+const saved    = ref(false)
 
 const isEdit = route.params.id && route.params.id !== 'new'
 const productId = isEdit ? route.params.id : null
@@ -65,11 +68,16 @@ async function save() {
   try {
     if (isEdit) {
       await task('Product', 'update', { ...form.value, id: productId })
+      emit('refresh')
+      toast.success('Item updated successfully')
+      saved.value = true
     } else {
-      await task('Product', 'create', form.value)
+      const res = await task('Product', 'create', form.value)
+      emit('refresh')
+      toast.success('Item added successfully')
+      const newId = res.data?.data?.product_id
+      router.push(newId ? `/products/${newId}/edit` : '/products')
     }
-    emit('refresh')
-    router.push('/products')
   } catch (e) {
     error.value = e.response?.data?.message || 'Could not save. Please try again.'
   } finally {
@@ -94,7 +102,7 @@ onMounted(load)
 
     <div v-if="loading" class="card p-12 text-center text-gray-400">Loading...</div>
     
-    <form v-else @submit.prevent="save" class="space-y-6 animate-fade-in-up">
+    <form v-else @submit.prevent="save" @input="saved = false" class="space-y-6 animate-fade-in-up">
       <div v-if="error" class="text-sm text-danger-600 bg-danger-50 border border-danger-100 rounded-xl px-4 py-3 font-medium">{{ error }}</div>
 
       <div class="card card-body space-y-5">
@@ -172,7 +180,7 @@ onMounted(load)
       <div class="flex gap-3 pb-6">
         <button type="button" @click="router.back()" class="btn-outline flex-1">Cancel</button>
         <button type="submit" class="btn-primary flex-1" :disabled="saving">
-          {{ saving ? 'Saving…' : 'Save Item' }}
+          {{ saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save Item' }}
         </button>
       </div>
 
