@@ -207,7 +207,7 @@ class Quote extends Task
         ]);
 
         // Mark quote as converted and store the resulting invoice_id
-        $invoiceId = $result['data']['id'] ?? null;
+        $invoiceId = $result['data']['invoice_id'] ?? null;
         DB::statement(
             "UPDATE quotes SET status = 'converted', converted_at = NOW(), invoice_id = ? WHERE id = ?",
             [$invoiceId, $quote->id]

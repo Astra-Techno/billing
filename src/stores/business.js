@@ -3,10 +3,15 @@ import { ref } from 'vue'
 import { item } from '../api/index'
 
 export const useBusinessStore = defineStore('business', () => {
-  const logo = ref('')
+  const logo    = ref('')
+  const stateId = ref(null)
 
   function setLogo(url) {
     logo.value = url || ''
+  }
+
+  function setStateId(id) {
+    stateId.value = id ? parseInt(id) : null
   }
 
   async function fetchLogo() {
@@ -16,5 +21,5 @@ export const useBusinessStore = defineStore('business', () => {
     } catch {}
   }
 
-  return { logo, setLogo, fetchLogo }
+  return { logo, stateId, setLogo, setStateId, fetchLogo }
 })

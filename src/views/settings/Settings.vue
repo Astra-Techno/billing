@@ -319,6 +319,7 @@ onMounted(async () => {
     businessForm.value.city         = biz.city         || ''
     businessForm.value.state_id     = biz.state_id     || ''
     businessForm.value.pincode      = biz.pincode      || ''
+    bizStore.setStateId(biz.state_id)
 
     gstForm.value.gstin = biz.gstin || ''
     gstForm.value.pan   = biz.pan   || ''
@@ -353,10 +354,12 @@ function flash(msg) {
 }
 
 async function saveBusiness() {
+  if (!businessForm.value.state_id) return (error.value = 'State is required for GST billing. Please select your business state.')
   saving.value = true
   error.value  = ''
   try {
     await task('Business', 'updateProfile', businessForm.value)
+    bizStore.setStateId(businessForm.value.state_id)
     flash('Business profile saved.')
   } catch (e) {
     error.value = e.response?.data?.message || 'Failed to save.'
@@ -616,8 +619,8 @@ async function saveInvoice() {
             <input v-model="businessForm.city" type="text" class="form-input" placeholder="City" />
           </div>
           <div>
-            <label class="form-label">State</label>
-            <select v-model="businessForm.state_id" class="form-select">
+            <label class="form-label">State <span class="text-red-500">*</span></label>
+            <select v-model="businessForm.state_id" class="form-select" :class="{ 'border-red-400': !businessForm.state_id }">
               <option value="">Select State</option>
               <option v-for="s in states" :key="s.id" :value="s.id">{{ s.name }}</option>
             </select>

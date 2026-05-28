@@ -105,7 +105,7 @@ class Business extends Task
             'address_line1'   => $input['address_line1']  ?? $business->address_line1,
             'address_line2'   => $input['address_line2']  ?? $business->address_line2,
             'city'            => $input['city']            ?? $business->city,
-            'state_id'        => $input['state_id']        ?? $business->state_id,
+            'state_id'        => !empty($input['state_id']) ? (int)$input['state_id'] : $business->state_id,
             'pincode'         => $input['pincode']         ?? $business->pincode,
             'invoice_prefix'  => strtoupper($input['invoice_prefix'] ?? $business->invoice_prefix),
             'quote_prefix'    => strtoupper($input['quote_prefix']   ?? $business->quote_prefix),

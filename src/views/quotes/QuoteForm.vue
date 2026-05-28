@@ -6,14 +6,17 @@ import { inr } from '../../utils/currency'
 import { today, addDays } from '../../utils/date'
 import { calcInvoice } from '../../utils/invoice'
 import { useToast } from '../../composables/useToast'
+import { useBusinessStore } from '../../stores/business'
 
-const router   = useRouter()
-const route    = useRoute()
-const emit     = defineEmits(['refresh'])
-const toast    = useToast()
-const clients  = ref([])
-const products = ref([])
-const taxRates = ref([])
+const router        = useRouter()
+const route         = useRoute()
+const emit          = defineEmits(['refresh'])
+const toast         = useToast()
+const businessStore = useBusinessStore()
+const clients       = ref([])
+const products      = ref([])
+const taxRates      = ref([])
+const states        = ref([])
 const loading  = ref(false)
 const error    = ref('')
 
@@ -22,10 +25,11 @@ const isEdit = computed(() => !!route.params.id)
 const blankItem = () => ({ description: '', hsn_sac: '', unit: 'Nos', quantity: 1, unit_price: '', discount_pct: 0, gst_rate: 18, product_id: null })
 
 const form = ref({
-  client_id:   '',
-  type:        'quote',
-  issue_date:  today(),
-  valid_until: addDays(today(), 30),
+  client_id:       '',
+  type:            'quote',
+  issue_date:      today(),
+  valid_until:     addDays(today(), 30),
+  place_of_supply: businessStore.stateId || '',
   notes: '', terms: '',
   items: [blankItem()],
 })
@@ -35,10 +39,11 @@ const gstRates = [0, 5, 12, 18, 28]
 const totals   = computed(() => calcInvoice(form.value.items))
 
 onMounted(async () => {
-  const [cRes, pRes, tRes] = await Promise.all([all('Client'), all('Product'), all('TaxRate')])
+  const [cRes, pRes, tRes, sRes] = await Promise.all([all('Client'), all('Product'), all('TaxRate'), all('IndianState')])
   clients.value  = cRes.data?.data  || []
   products.value = pRes.data?.data  || []
   taxRates.value = tRes.data?.data  || []
+  states.value   = sRes.data?.data  || []
 
   if (isEdit.value) {
     try {
@@ -48,12 +53,13 @@ onMounted(async () => {
       ])
       const q = qRes.data?.data
       if (q) {
-        form.value.client_id   = q.client_id
-        form.value.type        = q.type
-        form.value.issue_date  = q.issue_date
-        form.value.valid_until = q.valid_until
-        form.value.notes       = q.notes  || ''
-        form.value.terms       = q.terms  || ''
+        form.value.client_id       = q.client_id
+        form.value.type            = q.type
+        form.value.issue_date      = q.issue_date
+        form.value.valid_until     = q.valid_until
+        form.value.place_of_supply = q.place_of_supply || businessStore.stateId || ''
+        form.value.notes           = q.notes  || ''
+        form.value.terms           = q.terms  || ''
       }
       const its = iRes.data?.data || []
       if (its.length) {
@@ -155,6 +161,13 @@ async function submit() {
           <div>
             <label class="form-label">Valid Until <span class="text-gray-400 font-normal text-xs">(offer expires)</span></label>
             <input v-model="form.valid_until" type="date" class="form-input" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="form-label">Place of Supply <span class="text-red-500">*</span></label>
+            <select v-model="form.place_of_supply" class="form-select">
+              <option value="">Select State</option>
+              <option v-for="s in states" :key="s.id" :value="s.id">{{ s.name }}</option>
+            </select>
           </div>
         </div>
       </div>

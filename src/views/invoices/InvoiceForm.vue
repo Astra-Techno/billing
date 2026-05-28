@@ -3,18 +3,21 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { task, item, list, all } from '../../api'
 import { useToast } from '../../composables/useToast'
+import { useBusinessStore } from '../../stores/business'
 import { inr } from '../../utils/currency'
 import { today, addDays } from '../../utils/date'
 import { calcInvoice } from '../../utils/invoice'
 
-const router = useRouter()
-const route  = useRoute()
-const emit   = defineEmits(['refresh'])
-const toast  = useToast()
+const router        = useRouter()
+const route         = useRoute()
+const emit          = defineEmits(['refresh'])
+const toast         = useToast()
+const businessStore = useBusinessStore()
 
 const clients      = ref([])
 const products     = ref([])
 const taxRates     = ref([])
+const states       = ref([])
 const loading      = ref(false)
 const clientSearch = ref('')
 
@@ -108,10 +111,11 @@ const isDuplicate = computed(() => !!route.query.duplicate)
 const blankItem = () => ({ description: '', hsn_sac: '', unit: 'Nos', quantity: 1, unit_price: '', discount_pct: 0, gst_rate: 18, product_id: null })
 
 const form = ref({
-  client_id:    route.query.client || route.query.client_id || '',
-  invoice_type: 'tax_invoice',
-  issue_date:   today(),
-  due_date:     addDays(today(), 30),
+  client_id:       route.query.client || route.query.client_id || '',
+  invoice_type:    'tax_invoice',
+  issue_date:      today(),
+  due_date:        addDays(today(), 30),
+  place_of_supply: businessStore.stateId || '',
   notes: '', terms: '',
   is_recurring:  false,
   recur_every:   1,
@@ -128,8 +132,9 @@ const totals       = computed(() => calcInvoice(form.value.items))
 const selectedClient = computed(() => clients.value.find(c => c.id == form.value.client_id))
 
 function applySourceInvoice(inv) {
-  form.value.client_id    = inv.client_id
-  form.value.invoice_type = inv.invoice_type
+  form.value.client_id       = inv.client_id
+  form.value.invoice_type    = inv.invoice_type
+  form.value.place_of_supply = inv.place_of_supply || businessStore.stateId || ''
   form.value.notes        = inv.notes  || ''
   form.value.terms        = inv.terms  || ''
   form.value.is_recurring = !!inv.is_recurring
@@ -155,10 +160,11 @@ function applySourceInvoice(inv) {
 }
 
 onMounted(async () => {
-  const [cRes, pRes, tRes] = await Promise.all([all('Client'), all('Product'), all('TaxRate')])
+  const [cRes, pRes, tRes, sRes] = await Promise.all([all('Client'), all('Product'), all('TaxRate'), all('IndianState')])
   clients.value  = cRes.data?.data  || []
   products.value = pRes.data?.data  || []
   taxRates.value = tRes.data?.data  || []
+  states.value   = sRes.data?.data  || []
 
   const sourceId = isEdit.value ? route.params.id : route.query.duplicate
   if (sourceId) {
@@ -315,7 +321,14 @@ async function submit() {
         <div class="grid sm:grid-cols-2 gap-4">
           <div><label class="form-label">Bill Date</label><input v-model="form.issue_date" type="date" class="form-input" /></div>
           <div><label class="form-label">Pay By</label><input v-model="form.due_date" type="date" class="form-input" /></div>
-          <div class="sm:col-span-2">
+          <div>
+            <label class="form-label">Place of Supply <span class="text-red-500">*</span></label>
+            <select v-model="form.place_of_supply" class="form-select">
+              <option value="">Select State</option>
+              <option v-for="s in states" :key="s.id" :value="s.id">{{ s.name }}</option>
+            </select>
+          </div>
+          <div>
             <label class="form-label">Bill Type</label>
             <select v-model="form.invoice_type" class="form-select">
               <option value="tax_invoice">Tax Invoice (with GST)</option>
