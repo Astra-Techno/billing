@@ -7,6 +7,14 @@ export default defineConfig({
   build: {
     outDir: 'public_html',
   },
+  server: {
+    proxy: {
+      '/billing/api': {
+        target: 'http://localhost',
+        changeOrigin: true,
+      },
+    },
+  },
   test: {
     environment: 'node',
     include: ['src/**/*.test.js'],
