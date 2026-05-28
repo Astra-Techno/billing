@@ -115,7 +115,7 @@ const form = ref({
   invoice_type:    'tax_invoice',
   issue_date:      today(),
   due_date:        addDays(today(), 30),
-  place_of_supply: businessStore.stateId || '',
+  place_of_supply: '',
   notes: '', terms: '',
   is_recurring:  false,
   recur_every:   1,
@@ -165,6 +165,10 @@ onMounted(async () => {
   products.value = pRes.data?.data  || []
   taxRates.value = tRes.data?.data  || []
   states.value   = sRes.data?.data  || []
+
+  if (!isEdit.value && !route.query.duplicate) {
+    form.value.place_of_supply = businessStore.stateId || ''
+  }
 
   const sourceId = isEdit.value ? route.params.id : route.query.duplicate
   if (sourceId) {

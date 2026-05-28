@@ -9,7 +9,7 @@ import Toast from '../Toast.vue'
 import { useBusinessStore } from '../../stores/business'
 
 const bizStore = useBusinessStore()
-onMounted(() => bizStore.fetchLogo())
+onMounted(() => bizStore.fetchBusiness())
 </script>
 
 <template>

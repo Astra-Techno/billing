@@ -14,12 +14,13 @@ export const useBusinessStore = defineStore('business', () => {
     stateId.value = id ? parseInt(id) : null
   }
 
-  async function fetchLogo() {
+  async function fetchBusiness() {
     try {
       const res = await item('Business')
       logo.value = res.data?.data?.logo || ''
+      if (res.data?.data?.state_id) stateId.value = parseInt(res.data.data.state_id)
     } catch {}
   }
 
-  return { logo, stateId, setLogo, setStateId, fetchLogo }
+  return { logo, stateId, setLogo, setStateId, fetchBusiness }
 })

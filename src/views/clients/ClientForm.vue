@@ -31,7 +31,7 @@ const isEdit  = computed(() => !!route.params.id)
 const form = ref({
   type: 'business', name: '', company: '', gstin: '', pan: '',
   email: '', mobile: '', phone: '',
-  address_line1: '', address_line2: '', city: '', state_id: businessStore.stateId || '', pincode: '',
+  address_line1: '', address_line2: '', city: '', state_id: '', pincode: '',
   credit_days: 30, notes: '',
   contact_name: '', contact_designation: '', contact_mobile: '', contact_email: '',
 })
@@ -39,6 +39,10 @@ const form = ref({
 onMounted(async () => {
   const [statesRes] = await Promise.all([all('IndianState')])
   states.value = statesRes.data.data || []
+
+  if (!isEdit.value) {
+    form.value.state_id = businessStore.stateId || ''
+  }
 
   if (isEdit.value) {
     try {

@@ -29,7 +29,7 @@ const form = ref({
   type:            'quote',
   issue_date:      today(),
   valid_until:     addDays(today(), 30),
-  place_of_supply: businessStore.stateId || '',
+  place_of_supply: '',
   notes: '', terms: '',
   items: [blankItem()],
 })
@@ -44,6 +44,10 @@ onMounted(async () => {
   products.value = pRes.data?.data  || []
   taxRates.value = tRes.data?.data  || []
   states.value   = sRes.data?.data  || []
+
+  if (!isEdit.value) {
+    form.value.place_of_supply = businessStore.stateId || ''
+  }
 
   if (isEdit.value) {
     try {
