@@ -11,7 +11,7 @@ class User extends Table
 
     protected array $fillable = [
         'name', 'email', 'password', 'role', 'active',
-        'phone', 'company', 'avatar',
+        'mobile', 'phone', 'company', 'avatar',
     ];
 
     protected array $guarded = ['id'];
