@@ -3,10 +3,12 @@ import { ref, onMounted, watch } from 'vue'
 import { task, all, item, list } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { useBusinessStore } from '../../stores/business'
+import { useAuthStore } from '../../stores/auth'
 import { useRole } from '../../composables/useRole'
 
-const bizStore = useBusinessStore()
-const { can }  = useRole()
+const bizStore  = useBusinessStore()
+const authStore = useAuthStore()
+const { can }   = useRole()
 
 const saving   = ref(false)
 const loading  = ref(true)
@@ -22,6 +24,7 @@ const tabs = [
   { key: 'invoice',   label: 'Bill Settings' },
   { key: 'tax_rates', label: 'Tax Rates' },
   ...(can('team') ? [{ key: 'team', label: 'Team' }] : []),
+  { key: 'profile',   label: 'My Profile' },
   { key: 'password',  label: 'Password' },
 ]
 
@@ -195,6 +198,32 @@ const taxDeleteTarget = ref(null)
 const taxDeleting    = ref(false)
 const blankTaxForm   = () => ({ name: '', rate: '', is_default: false })
 const taxForm        = ref(blankTaxForm())
+
+// Profile
+const profileForm    = ref({ name: authStore.user?.name || '', mobile: authStore.user?.mobile || '' })
+const profileSaving  = ref(false)
+const profileSuccess = ref('')
+const profileError   = ref('')
+
+async function saveProfile() {
+  profileError.value   = ''
+  profileSuccess.value = ''
+  if (!profileForm.value.name.trim()) return (profileError.value = 'Name is required.')
+  profileSaving.value = true
+  try {
+    const res = await task('Auth', 'updateProfile', profileForm.value)
+    const updated = res.data?.data
+    if (updated) {
+      authStore.user = { ...authStore.user, ...updated }
+      localStorage.setItem('user', JSON.stringify(authStore.user))
+    }
+    profileSuccess.value = 'Profile updated successfully.'
+  } catch (e) {
+    profileError.value = e.response?.data?.message || 'Failed to update profile.'
+  } finally {
+    profileSaving.value = false
+  }
+}
 
 // Password
 const pwForm = ref({ current_password: '', password: '', password_confirmation: '' })
@@ -1010,6 +1039,36 @@ async function saveInvoice() {
               {{ removing ? 'Removing…' : 'Remove' }}
             </button>
           </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- My Profile -->
+    <template v-if="!loading && activeTab === 'profile'">
+      <div class="card card-body space-y-4">
+        <div>
+          <h2 class="section-title mb-0">My Profile</h2>
+          <p class="text-xs text-gray-400 mt-0.5">Update your personal name and contact number</p>
+        </div>
+        <div>
+          <label class="form-label">Full Name *</label>
+          <input v-model="profileForm.name" type="text" class="form-input" placeholder="Your full name" />
+        </div>
+        <div>
+          <label class="form-label">Mobile <span class="text-gray-400 font-normal">(optional)</span></label>
+          <input v-model="profileForm.mobile" type="tel" class="form-input" placeholder="e.g. 9876543210" />
+        </div>
+        <div>
+          <label class="form-label">Email</label>
+          <input :value="authStore.user?.email" type="email" class="form-input bg-gray-50 text-gray-400 cursor-not-allowed" disabled />
+          <p class="text-[11px] text-gray-400 mt-1">Email cannot be changed here. Contact support if needed.</p>
+        </div>
+        <div v-if="profileSuccess" class="text-sm text-success-700 bg-success-50 rounded-lg px-4 py-3 border border-success-200">{{ profileSuccess }}</div>
+        <div v-if="profileError"   class="text-sm text-danger-600 bg-danger-50 rounded-lg px-4 py-3">{{ profileError }}</div>
+        <div class="pt-2">
+          <button @click="saveProfile" :disabled="profileSaving" class="btn-primary w-full sm:w-auto">
+            {{ profileSaving ? 'Saving…' : 'Save Profile' }}
+          </button>
         </div>
       </div>
     </template>
