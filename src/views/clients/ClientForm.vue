@@ -3,13 +3,15 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { task, item, all } from '../../api'
 import { useToast } from '../../composables/useToast'
+import { useBusinessStore } from '../../stores/business'
 
 const showMore = ref(false)
 
-const router = useRouter()
-const route  = useRoute()
-const emit   = defineEmits(['refresh'])
-const toast  = useToast()
+const router        = useRouter()
+const route         = useRoute()
+const emit          = defineEmits(['refresh'])
+const toast         = useToast()
+const businessStore = useBusinessStore()
 
 const states     = ref([])
 const loading    = ref(false)
@@ -29,7 +31,7 @@ const isEdit  = computed(() => !!route.params.id)
 const form = ref({
   type: 'business', name: '', company: '', gstin: '', pan: '',
   email: '', mobile: '', phone: '',
-  address_line1: '', address_line2: '', city: '', state_id: '', pincode: '',
+  address_line1: '', address_line2: '', city: '', state_id: businessStore.stateId || '', pincode: '',
   credit_days: 30, notes: '',
   contact_name: '', contact_designation: '', contact_mobile: '', contact_email: '',
 })
