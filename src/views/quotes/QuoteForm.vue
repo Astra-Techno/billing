@@ -39,11 +39,13 @@ const gstRates = [0, 5, 12, 18, 28]
 const totals   = computed(() => calcInvoice(form.value.items))
 
 onMounted(async () => {
-  const [cRes, pRes, tRes, sRes] = await Promise.all([all('Client'), all('Product'), all('TaxRate'), all('IndianState')])
+  const [cRes, pRes, tRes, sRes, bizRes] = await Promise.all([all('Client'), all('Product'), all('TaxRate'), all('IndianState'), item('Business')])
   clients.value  = cRes.data?.data  || []
   products.value = pRes.data?.data  || []
   taxRates.value = tRes.data?.data  || []
   states.value   = sRes.data?.data  || []
+  const bizStateId = bizRes.data?.data?.state_id
+  if (bizStateId) businessStore.setStateId(bizStateId)
 
   if (!isEdit.value) {
     form.value.place_of_supply = businessStore.stateId || ''

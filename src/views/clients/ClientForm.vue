@@ -37,10 +37,12 @@ const form = ref({
 })
 
 onMounted(async () => {
-  const [statesRes] = await Promise.all([all('IndianState')])
+  const [statesRes, bizRes] = await Promise.all([all('IndianState'), item('Business')])
   states.value = statesRes.data.data || []
 
   if (!isEdit.value) {
+    const sid = bizRes.data?.data?.state_id
+    if (sid) businessStore.setStateId(sid)
     form.value.state_id = businessStore.stateId || ''
   }
 
