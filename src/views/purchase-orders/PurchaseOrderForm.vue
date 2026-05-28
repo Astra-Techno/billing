@@ -4,14 +4,17 @@ import { useRouter, useRoute } from 'vue-router'
 import { task, item, all } from '../../api'
 import { inr } from '../../utils/currency'
 import { today, addDays } from '../../utils/date'
+import { useToast } from '../../composables/useToast'
 
 const router = useRouter()
 const route  = useRoute()
 const emit   = defineEmits(['refresh'])
 
+const toast      = useToast()
 const suppliers  = ref([])
 const products   = ref([])
 const loading    = ref(false)
+const saved      = ref(false)
 const error      = ref('')
 const supplierSearch = ref('')
 
@@ -95,11 +98,16 @@ async function submit() {
   try {
     if (isEdit.value) {
       await task('PurchaseOrder', 'update', { ...form.value, id: route.params.id })
+      emit('refresh')
+      toast.success('Purchase order updated.')
+      saved.value = true
     } else {
-      await task('PurchaseOrder', 'create', form.value)
+      const res = await task('PurchaseOrder', 'create', form.value)
+      emit('refresh')
+      toast.success('Purchase order created.')
+      const newId = res.data?.data?.id
+      router.push(newId ? `/purchase-orders/${newId}` : '/purchase-orders')
     }
-    emit('refresh')
-    router.push('/purchase-orders')
   } catch (e) {
     error.value = e.response?.data?.message || 'Failed to save. Please try again.'
   }
@@ -108,7 +116,7 @@ async function submit() {
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto space-y-5 pb-10">
+  <div class="max-w-2xl mx-auto space-y-5 pb-10" @input="saved = false">
 
     <!-- Header -->
     <div class="flex items-center gap-3 pt-2">
@@ -219,7 +227,7 @@ async function submit() {
     <div class="flex gap-3 animate-fade-in-up anim-delay-200">
       <button @click="router.push('/purchase-orders')" class="btn-outline flex-1">Cancel</button>
       <button @click="submit" :disabled="loading" class="btn-primary flex-1">
-        {{ loading ? 'Saving…' : isEdit ? 'Update PO' : 'Create PO' }}
+        {{ loading ? 'Saving…' : saved ? 'Saved ✓' : isEdit ? 'Update PO' : 'Create PO' }}
       </button>
     </div>
   </div>

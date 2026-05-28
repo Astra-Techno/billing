@@ -14,6 +14,7 @@ const toast         = useToast()
 const categories    = ref([])
 const loading       = ref(false)
 const saving        = ref(false)
+const saved         = ref(false)
 const error         = ref('')
 const newCatName    = ref('')
 const addingCat     = ref(false)
@@ -72,13 +73,16 @@ async function save() {
   try {
     if (isEdit) {
       await task('Expense', 'update', { ...form.value, id: expenseId })
+      emit('refresh')
       toast.success('Expense updated.')
+      saved.value = true
     } else {
-      await task('Expense', 'create', form.value)
+      const res = await task('Expense', 'create', form.value)
+      emit('refresh')
       toast.success('Expense recorded.')
+      const newId = res.data?.data?.expense_id
+      router.push(newId ? `/expenses/${newId}/edit` : '/expenses')
     }
-    emit('refresh')
-    router.push('/expenses')
   } catch (e) {
     error.value = e.response?.data?.message || 'Could not save. Please try again.'
   } finally {
@@ -119,7 +123,7 @@ onMounted(load)
 
     <div v-if="loading" class="card p-12 text-center text-gray-400">Loading...</div>
     
-    <form v-else @submit.prevent="save" class="space-y-6 animate-fade-in-up">
+    <form v-else @submit.prevent="save" @input="saved = false" class="space-y-6 animate-fade-in-up">
       <div v-if="error" class="text-sm text-danger-600 bg-danger-50 border border-danger-100 rounded-xl px-4 py-3 font-medium">{{ error }}</div>
 
       <div class="card card-body space-y-5">
@@ -200,7 +204,7 @@ onMounted(load)
       <div class="flex gap-3 pb-6">
         <button type="button" @click="router.back()" class="btn-outline flex-1">Cancel</button>
         <button type="submit" class="btn-primary flex-1" :disabled="saving">
-          {{ saving ? 'Saving…' : 'Save Expense' }}
+          {{ saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save Expense' }}
         </button>
       </div>
 

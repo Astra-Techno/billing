@@ -3,14 +3,17 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { task, item, all } from '../../api'
 import { today, addDays } from '../../utils/date'
+import { useToast } from '../../composables/useToast'
 
 const router = useRouter()
 const route  = useRoute()
 const emit   = defineEmits(['refresh'])
 
+const toast     = useToast()
 const clients   = ref([])
 const products  = ref([])
 const loading   = ref(false)
+const saved     = ref(false)
 const error     = ref('')
 const clientSearch = ref('')
 
@@ -86,11 +89,16 @@ async function submit() {
   try {
     if (isEdit.value) {
       await task('DeliveryChallan', 'update', { ...form.value, id: route.params.id })
+      emit('refresh')
+      toast.success('Delivery challan updated.')
+      saved.value = true
     } else {
-      await task('DeliveryChallan', 'create', form.value)
+      const res = await task('DeliveryChallan', 'create', form.value)
+      emit('refresh')
+      toast.success('Delivery challan created.')
+      const newId = res.data?.data?.id
+      router.push(newId ? `/delivery-challans/${newId}` : '/delivery-challans')
     }
-    emit('refresh')
-    router.push('/delivery-challans')
   } catch (e) {
     error.value = e.response?.data?.message || 'Failed to save. Please try again.'
   }
@@ -112,7 +120,7 @@ async function submit() {
       </div>
     </div>
 
-    <form @submit.prevent="submit" class="space-y-6">
+    <form @submit.prevent="submit" @input="saved = false" class="space-y-6">
       
       <!-- Customer -->
       <div class="card card-body space-y-4">
@@ -238,7 +246,7 @@ async function submit() {
       <div class="flex gap-3 pb-6">
         <button type="button" @click="router.back()" class="btn-outline flex-1">Cancel</button>
         <button type="submit" class="btn-primary flex-1" :disabled="loading">
-          {{ loading ? 'Saving…' : isEdit ? 'Update DC' : 'Create DC' }}
+          {{ loading ? 'Saving…' : saved ? 'Saved ✓' : isEdit ? 'Update DC' : 'Create DC' }}
         </button>
       </div>
     </form>

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { list } from '../../api'
 import { inr } from '../../utils/currency'
@@ -53,6 +53,7 @@ onMounted(() => {
   if (route.query.client_name) filter.value.client_name = route.query.client_name
   load()
 })
+watch(() => route.name, name => { if (name === 'DeliveryChallans') load() })
 </script>
 
 <template>

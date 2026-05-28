@@ -5,10 +5,12 @@ import { list, task, item } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 import { today } from '../../utils/date'
+import { useToast } from '../../composables/useToast'
 
 const router = useRouter()
 const route  = useRoute()
 const emit   = defineEmits(['refresh'])
+const toast  = useToast()
 
 const invoices = ref([])
 const loading  = ref(false)
@@ -90,8 +92,9 @@ async function save() {
   
   saving.value = true
   try {
-    await task('CreditNote', 'create', form.value)
+    const res = await task('CreditNote', 'create', form.value)
     emit('refresh')
+    toast.success('Credit note created.')
     router.push('/credit-notes')
   } catch (e) {
     error.value = e.response?.data?.message || 'Failed to create credit note.'

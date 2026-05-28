@@ -24,7 +24,7 @@ class Expense extends Task
         $gstAmt     = (float)($input['gst_amount'] ?? 0);
         $amount     = round($total - $gstAmt, 2);
 
-        ExpenseTable::create([
+        $expense = ExpenseTable::create([
             'business_id'  => $businessId,
             'category_id'  => !empty($input['category_id']) ? (int)$input['category_id'] : null,
             'recorded_by'  => $this->userId(),
@@ -40,7 +40,7 @@ class Expense extends Task
             'notes'        => $input['notes']      ?? null,
         ]);
 
-        return $this->success(null, 'Expense recorded.');
+        return $this->success(['expense_id' => $expense->id], 'Expense recorded.');
     }
 
     // ── Update expense ────────────────────────────────────────────────────────

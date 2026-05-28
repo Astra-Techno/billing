@@ -1,12 +1,13 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { list, task } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
 
 const router = useRouter()
+const route  = useRoute()
 
 const creditNotes  = ref([])
 const loading      = ref(true)
@@ -66,6 +67,7 @@ async function adjustCN(cn) {
 }
 
 onMounted(load)
+watch(() => route.name, name => { if (name === 'CreditNotes') load() })
 </script>
 
 <template>

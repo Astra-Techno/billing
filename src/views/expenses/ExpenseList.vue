@@ -1,12 +1,13 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { list, task, all } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
 
 const router       = useRouter()
+const route        = useRoute()
 const expenses     = ref([])
 const categories   = ref([])
 const loading      = ref(true)
@@ -96,6 +97,7 @@ const methodColors = {
 const methodLabel = m => ({ cash: 'Cash', upi: 'UPI', neft: 'NEFT', cheque: 'Cheque', card: 'Card', other: 'Other' }[m] || m)
 
 onMounted(load)
+watch(() => route.name, name => { if (name === 'Expenses') load() })
 </script>
 
 <template>

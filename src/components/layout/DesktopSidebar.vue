@@ -1,8 +1,18 @@
 <script setup>
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '../../stores/auth'
+import { task } from '../../api'
 
-const route = useRoute()
+const route    = useRoute()
+const router   = useRouter()
+const auth     = useAuthStore()
 const isActive = (to) => to === '/' ? route.path === '/' : route.path.startsWith(to)
+
+async function logout() {
+  try { await task('Auth', 'logout') } catch {}
+  auth.logout()
+  router.push('/login')
+}
 
 const menus = [
   { path: '/', icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z', title: 'Dashboard', label: 'Home' },
@@ -68,6 +78,19 @@ const menus = [
           </span>
         </div>
       </RouterLink>
+      <!-- Logout -->
+      <button @click="logout" title="Sign Out" class="w-full flex flex-col items-center py-2 px-1 group">
+        <div class="flex flex-col items-center gap-1 w-full">
+          <div class="w-9 h-9 rounded-[10px] flex items-center justify-center transition-all duration-150 text-gray-400 group-hover:bg-red-50 group-hover:text-red-500">
+            <svg class="w-[17px] h-[17px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+          </div>
+          <span class="text-[9px] font-semibold tracking-wide leading-none transition-colors text-gray-400 group-hover:text-red-500">
+            Logout
+          </span>
+        </div>
+      </button>
     </div>
   </div>
 </template>

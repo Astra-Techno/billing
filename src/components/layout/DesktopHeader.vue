@@ -14,7 +14,8 @@ const businessStore = useBusinessStore()
 const authStore = useAuthStore()
 
 const { notifications, count: notifCount, loading: notifLoading, load: loadNotifs } = useNotifications()
-const notifOpen = ref(false)
+const notifOpen  = ref(false)
+const userOpen   = ref(false)
 
 function toggleNotif() {
   notifOpen.value = !notifOpen.value
@@ -22,6 +23,13 @@ function toggleNotif() {
 }
 
 function closeNotif() { notifOpen.value = false }
+function closeUser()  { userOpen.value  = false }
+
+async function logout() {
+  try { await import('../../api').then(m => m.task('Auth', 'logout')) } catch {}
+  authStore.logout()
+  router.push('/login')
+}
 
 function goNotif(link) {
   closeNotif()
@@ -172,12 +180,34 @@ const userInitials = computed(() => {
             </div>
           </div>
 
-          <div class="w-8 h-8 ml-1 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-xs font-bold ring-2 ring-white shadow cursor-pointer hover:scale-105 transition-transform" @click="$router.push('/settings')">
-            {{ userInitials }}
+          <!-- User avatar + dropdown -->
+          <div class="relative ml-1 shrink-0">
+            <button @click="userOpen = !userOpen"
+              class="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-xs font-bold ring-2 ring-white shadow hover:scale-105 transition-transform">
+              {{ userInitials }}
+            </button>
+            <div v-if="userOpen"
+              class="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden z-50 py-1">
+              <div class="px-4 py-2.5 border-b border-gray-100">
+                <p class="text-[13px] font-semibold text-gray-900 truncate">{{ authStore.user?.name || 'Account' }}</p>
+                <p class="text-[11px] text-gray-400 truncate">{{ authStore.user?.email || '' }}</p>
+              </div>
+              <button @click="closeUser(); $router.push('/settings')"
+                class="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                Settings
+              </button>
+              <button @click="logout"
+                class="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-red-600 hover:bg-red-50 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                Sign Out
+              </button>
+            </div>
           </div>
       </div>
   </header>
 
-  <!-- Click-outside overlay for notifications -->
+  <!-- Click-outside overlays -->
   <div v-if="notifOpen" class="fixed inset-0 z-40" @click="closeNotif" />
+  <div v-if="userOpen"  class="fixed inset-0 z-40" @click="closeUser" />
 </template>
