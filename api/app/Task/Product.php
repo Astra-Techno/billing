@@ -31,7 +31,16 @@ class Product extends Task
             'active'      => 1,
         ]);
 
-        return $this->success(['product_id' => $product->id], 'Product/service added.');
+        return $this->success([
+            'product_id'  => $product->id,
+            'id'          => $product->id,
+            'name'        => $product->name,
+            'price'       => $product->price,
+            'unit'        => $product->unit,
+            'hsn_sac'     => $product->hsn_sac,
+            'description' => $product->description,
+            'type'        => $product->type,
+        ], 'Product/service added.');
     }
 
     public function update(array $input): array
