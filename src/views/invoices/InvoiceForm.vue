@@ -175,9 +175,14 @@ onMounted(async () => {
   const sourceId = isEdit.value ? route.params.id : route.query.duplicate
   if (sourceId) {
     try {
-      const res = await item('Invoice', { id: sourceId })
-      const inv = res.data?.data
-      if (inv) applySourceInvoice(inv)
+      const fetches = [item('Invoice', { id: sourceId })]
+      if (isEdit.value) fetches.push(list('Invoice:items', { invoice_id: sourceId }))
+      const [invRes, itmRes] = await Promise.all(fetches)
+      const inv = invRes.data?.data
+      if (inv) {
+        if (isEdit.value) inv.items = itmRes?.data?.data || []
+        applySourceInvoice(inv)
+      }
     } catch { error.value = 'Could not load bill data. Please try again.' }
   }
 
