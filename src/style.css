@@ -181,6 +181,58 @@
     box-shadow: 0 8px 28px rgba(26, 95, 212, 0.45), 0 2px 8px rgba(15, 23, 42, 0.15);
   }
 
+  /* ── Desktop split-pane forms (dense layout, sticky actions) ── */
+  .desktop-form-shell {
+    @apply flex flex-col h-full min-h-0 w-full;
+  }
+  .form-toolbar {
+    @apply shrink-0 flex items-center justify-between gap-4 px-4 py-3 border-b border-google-divider bg-white/95 backdrop-blur-md z-20;
+  }
+  @media (min-width: 1024px) {
+    .form-toolbar { @apply px-5 py-3 sticky top-0; }
+  }
+  .form-toolbar-actions {
+    @apply flex items-center gap-2 shrink-0;
+  }
+  .form-body {
+    @apply flex-1 overflow-y-auto custom-scrollbar px-4 py-4 min-h-0;
+  }
+  @media (min-width: 1024px) {
+    .form-body { @apply px-5 py-4; }
+  }
+  .form-layout {
+    @apply space-y-4;
+  }
+  @media (min-width: 1024px) {
+    .form-layout {
+      @apply grid grid-cols-12 gap-4 items-start space-y-0;
+    }
+    .form-main { @apply col-span-8 space-y-4 min-w-0; }
+    .form-sidebar { @apply col-span-4 space-y-4 lg:sticky lg:top-[4.25rem] self-start; }
+  }
+  .form-panel {
+    @apply card card-body !p-4 space-y-3;
+  }
+  .form-panel-compact { @apply card card-body !p-3 space-y-2; }
+  .form-panel-title {
+    @apply text-xs font-bold text-google-muted uppercase tracking-wider;
+  }
+  .form-footer-mobile {
+    @apply shrink-0 flex gap-3 px-4 py-3 border-t border-google-divider bg-white/95 backdrop-blur-md safe-area-pb;
+  }
+  .items-grid-header {
+    @apply hidden lg:grid grid-cols-12 gap-2 px-3 py-2 text-[10px] font-bold text-google-muted uppercase tracking-wider bg-surface-dim/80 rounded-t-lg border border-google-divider border-b-0;
+  }
+  .item-row-desktop {
+    @apply lg:grid lg:grid-cols-12 lg:gap-2 lg:items-end lg:px-3 lg:py-2.5 border-b border-google-divider/50 last:border-0;
+  }
+  .split-pane-right {
+    @apply flex-1 flex flex-col min-h-0 overflow-hidden bg-surface-dim/30;
+  }
+  .split-pane-left {
+    @apply w-full lg:w-[300px] xl:w-[320px] gpay-split-left shrink-0;
+  }
+
   .divider { @apply border-t border-google-divider/80 my-1; }
 
   .hide-scrollbar::-webkit-scrollbar, .no-scrollbar::-webkit-scrollbar { display: none; }

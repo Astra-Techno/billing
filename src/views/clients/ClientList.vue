@@ -33,7 +33,7 @@ const avatarColor  = (name) => avatarColors[(name?.charCodeAt(0) || 0) % avatarC
   <div class="flex flex-col lg:flex-row h-full min-h-0 w-full overflow-hidden">
 
     <!-- Left Pane: List -->
-    <div id="c3-left-panel" :class="{ 'hidden lg:flex': $route.name !== 'Clients', 'w-full lg:w-[340px] gpay-split-left transition-all duration-300 relative z-30 h-full': true }">
+    <div id="c3-left-panel" :class="{ 'hidden lg:flex': $route.name !== 'Clients', 'split-pane-left transition-all duration-300 relative z-30 h-full': true }">
       
       <div class="px-4 py-3 border-b border-google-divider bg-white sticky top-0 z-10">
         <!-- Header & Actions -->
@@ -112,10 +112,7 @@ const avatarColor  = (name) => avatarColors[(name?.charCodeAt(0) || 0) % avatarC
     </div>
 
     <!-- Right Pane: Detail/Form wrapper -->
-    <div v-if="$route.name !== 'Clients'" id="c3-right-view" class="gpay-split-right relative z-20 custom-scrollbar">
-      <!-- Subtle noise/texture overlay -->
-      <div class="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-multiply" style="background-image: url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E');"></div>
-      
+    <div v-if="$route.name !== 'Clients'" id="c3-right-view" class="split-pane-right relative z-20">
       <router-view v-slot="{ Component }">
         <component :is="Component" :key="$route.fullPath" @refresh="load" />
       </router-view>

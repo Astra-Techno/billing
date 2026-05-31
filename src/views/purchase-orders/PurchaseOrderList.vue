@@ -48,7 +48,7 @@ watch(() => route.name, name => { if (name === 'PurchaseOrders') load() })
   <div class="flex flex-col lg:flex-row h-full min-h-0 w-full overflow-hidden">
 
     <!-- Left Pane -->
-    <div id="c3-left-panel" :class="{ 'hidden lg:flex': $route.name !== 'PurchaseOrders', 'w-full lg:w-[340px] border-r border-gray-200/60 flex flex-col shrink-0 bg-surface-dim transition-all duration-300 relative z-30 h-full': true }">
+    <div id="c3-left-panel" :class="{ 'hidden lg:flex': $route.name !== 'PurchaseOrders', 'split-pane-left transition-all duration-300 relative z-30 h-full': true }">
 
       <!-- Sticky Header -->
       <div class="px-5 py-4 border-b border-gray-200/60 bg-white/60 backdrop-blur-md sticky top-0 z-10">
@@ -138,7 +138,7 @@ watch(() => route.name, name => { if (name === 'PurchaseOrders') load() })
     </div>
 
     <!-- Right Pane -->
-    <div v-if="$route.name !== 'PurchaseOrders'" id="c3-right-view" class="flex-1 bg-white overflow-y-auto flex flex-col relative z-20 shadow-[-10px_0_20px_rgba(0,0,0,0.02)] custom-scrollbar">
+    <div v-if="$route.name !== 'PurchaseOrders'" id="c3-right-view" class="split-pane-right relative z-20">
       <router-view v-slot="{ Component }">
         <component :is="Component" :key="$route.fullPath" @refresh="load" />
       </router-view>
