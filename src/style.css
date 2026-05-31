@@ -5,17 +5,16 @@
 @layer base {
   * { box-sizing: border-box; }
   html, body {
-    @apply overflow-x-hidden w-full h-full;
+    @apply overflow-x-hidden w-full h-full text-google-text;
     overscroll-behavior: none;
     overscroll-behavior-x: none;
     max-width: 100vw;
     touch-action: pan-y;
   }
   body {
-    @apply text-gray-800 bg-[#F5F6F8];
+    @apply bg-surface-dim antialiased;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
   html { scroll-behavior: smooth; }
   #app {
@@ -27,51 +26,84 @@
 
 @layer components {
 
-  /* ── Buttons ── */
-  .btn        { @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed; }
-  .btn:active { transform: scale(0.97); }
-  .btn-primary { @apply btn bg-primary-600 text-white hover:bg-primary-700 shadow-soft-blue; }
-  .btn-outline  { @apply btn border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300 shadow-soft; }
+  /* ── Buttons (Google Pay: pill primary, flat secondary) ── */
+  .btn        { @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed; }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { @apply btn bg-primary-600 text-white hover:bg-primary-700 shadow-gpay; }
+  .btn-outline  { @apply btn border border-google-border bg-white text-google-text hover:bg-surface-muted; }
   .btn-danger   { @apply btn bg-danger-500 text-white hover:bg-danger-700; }
-  .btn-sm       { @apply px-3 py-1.5 text-xs rounded-lg; }
-  .btn-lg       { @apply px-6 py-3 text-[15px] rounded-xl; }
+  .btn-sm       { @apply px-4 py-2 text-xs rounded-full; }
+  .btn-lg       { @apply px-6 py-3 text-[15px]; }
 
-  /* ── Cards ── */
-  .card      { @apply bg-white rounded-2xl border border-gray-100 shadow-soft; }
-  .card-body { @apply p-6; }
+  /* ── Cards (flat white, minimal border) ── */
+  .card      { @apply bg-white rounded-gpay-lg border border-google-divider; }
+  .card-body { @apply p-4 sm:p-5; }
 
   /* ── Forms ── */
-  .form-label    { @apply block text-[13px] font-semibold text-gray-600 mb-1.5 tracking-tight; }
-  .form-input    { @apply block w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm text-gray-800 placeholder-gray-400 bg-white focus:border-primary-500 focus:outline-none focus:ring-4 focus:ring-primary-50 transition-all duration-200; }
+  .form-label    { @apply block text-xs font-medium text-google-muted mb-1.5; }
+  .form-input    { @apply block w-full rounded-gpay border border-google-border px-4 py-3 text-[15px] text-google-text placeholder-google-muted/70 bg-white focus:border-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-50 transition-all duration-200; }
   .form-select   { @apply form-input cursor-pointer; }
-  .form-textarea { @apply block w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm text-gray-800 placeholder-gray-400 bg-white focus:border-primary-500 focus:outline-none focus:ring-4 focus:ring-primary-50 transition-all duration-200 resize-none; }
+  .form-textarea { @apply form-input resize-none min-h-[88px]; }
   .form-error    { @apply mt-1.5 text-xs text-danger-500 font-medium; }
 
   /* ── Badges ── */
-  .badge        { @apply inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold tracking-wide; }
-  .badge-green  { @apply badge bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200/60; }
-  .badge-yellow { @apply badge bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200/60; }
-  .badge-red    { @apply badge bg-red-50 text-red-600 ring-1 ring-inset ring-red-200/60; }
-  .badge-blue   { @apply badge bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200/60; }
-  .badge-gray   { @apply badge bg-gray-100 text-gray-500 ring-1 ring-inset ring-gray-200/60; }
+  .badge        { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium; }
+  .badge-green  { @apply badge bg-pay-green-light text-pay-green; }
+  .badge-yellow { @apply badge bg-warning-50 text-warning-700; }
+  .badge-red    { @apply badge bg-danger-50 text-danger-700; }
+  .badge-blue   { @apply badge bg-primary-50 text-primary-700; }
+  .badge-gray   { @apply badge bg-surface-muted text-google-muted; }
 
   /* ── Tables ── */
-  .table-wrap { @apply overflow-x-auto rounded-xl; }
+  .table-wrap { @apply overflow-x-auto rounded-gpay; }
   .table      { @apply w-full text-sm text-left bg-white; }
-  .table thead th  { @apply px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50/80 border-b border-gray-100; }
-  .table tbody td  { @apply px-4 py-3.5 border-b border-gray-50 text-gray-700; }
+  .table thead th  { @apply px-4 py-3 text-[11px] font-medium text-google-muted bg-surface-dim border-b border-google-divider; }
+  .table tbody td  { @apply px-4 py-3.5 border-b border-google-divider/60 text-google-text; }
   .table tbody tr:last-child td { @apply border-0; }
-  .table tbody tr:hover  { @apply bg-blue-50/30 cursor-pointer; }
+  .table tbody tr:hover  { @apply bg-primary-50/40 cursor-pointer; }
 
   /* ── Typography ── */
-  .page-title    { @apply text-xl font-bold text-gray-900 tracking-tight; }
-  .section-title { @apply text-[13px] font-semibold text-gray-500 uppercase tracking-widest mb-3; }
+  .page-title    { @apply text-[22px] font-normal text-google-text tracking-tight leading-tight; }
+  .section-title { @apply text-xs font-medium text-google-muted mb-3; }
 
   /* ── Stat card ── */
   .stat-card { @apply card card-body flex flex-col gap-1; }
 
+  /* ── Google Pay layout primitives ── */
+  .gpay-screen { @apply flex-1 bg-white lg:bg-surface-dim min-h-full; }
+  .gpay-hero-balance {
+    @apply rounded-gpay-xl bg-gradient-to-br from-primary-600 via-primary-600 to-primary-800 text-white p-6 shadow-gpay-lg;
+  }
+  .gpay-activity-row {
+    @apply flex items-center gap-4 py-3.5 px-4 active:bg-surface-muted transition-colors cursor-pointer;
+  }
+  .gpay-activity-icon {
+    @apply w-11 h-11 rounded-full flex items-center justify-center shrink-0 text-[15px] font-medium;
+  }
+  .gpay-chip {
+    @apply shrink-0 px-4 py-2.5 rounded-full bg-white border border-google-divider text-sm font-medium text-google-text shadow-soft active:scale-[0.98] transition-all;
+  }
+  .gpay-split-left { @apply bg-surface-dim border-r border-google-divider flex flex-col shrink-0; }
+  .gpay-split-right { @apply flex-1 bg-white overflow-y-auto custom-scrollbar; }
+  .gpay-list-search { @apply w-full form-input text-sm py-2.5; }
+  .gpay-tabs {
+    @apply flex gap-1 bg-surface-muted p-1 rounded-full overflow-x-auto hide-scrollbar;
+  }
+  .gpay-tab {
+    @apply flex-1 text-xs font-medium rounded-full py-2 px-3 whitespace-nowrap transition-all;
+  }
+  .gpay-tab-active { @apply bg-white text-primary-600 shadow-soft; }
+  .gpay-tab-inactive { @apply text-google-muted hover:text-google-text; }
+  .gpay-list-item {
+    @apply gpay-activity-row border-b border-google-divider/50 last:border-0;
+  }
+  .gpay-list-item-active { @apply bg-primary-50/50; }
+  .gpay-fab {
+    @apply fixed z-40 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-4 lg:hidden w-14 h-14 rounded-full bg-primary-600 text-white shadow-gpay-lg flex items-center justify-center active:scale-95 transition-transform;
+  }
+
   /* ── Divider ── */
-  .divider { @apply border-t border-gray-100 my-1; }
+  .divider { @apply border-t border-google-divider my-1; }
 
   /* ── Scrollbars ── */
   .hide-scrollbar::-webkit-scrollbar, .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -79,10 +111,8 @@
 
   .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
   .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-  .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 99px; }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: #dadce0; border-radius: 99px; }
 
-  /* ── App scroll lock ── */
   .app-main-scroll {
     touch-action: pan-y;
     overscroll-behavior-x: none;
@@ -91,19 +121,15 @@
   }
   .app-main-scroll > * { max-width: 100%; overflow-x: hidden; }
 
-  /* ── Text selection ── */
-  ::selection { background-color: #dbeafe; color: #1e3a8a; }
-
-  /* ── Tabular numerals ── */
+  ::selection { background-color: #d2e3fc; color: #174ea6; }
   .tabular-nums { font-variant-numeric: tabular-nums; }
 
-  /* ── Animations ── */
   @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(16px); }
+    from { opacity: 0; transform: translateY(12px); }
     to   { opacity: 1; transform: translateY(0); }
   }
   .animate-fade-in-up {
-    animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: fadeInUp 0.35s cubic-bezier(0.2, 0, 0, 1) forwards;
     opacity: 0;
   }
   .anim-delay-75  { animation-delay: 75ms; }
@@ -111,33 +137,30 @@
   .anim-delay-200 { animation-delay: 200ms; }
 
   @keyframes fadeSlideUp {
-    from { opacity: 0; transform: translateY(12px) scale(0.99); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
   @keyframes staggerFadeIn {
-    from { opacity: 0; transform: translateX(-8px); }
-    to   { opacity: 1; transform: translateX(0); }
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 
   .animate-doc {
-    animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: fadeSlideUp 0.4s cubic-bezier(0.2, 0, 0, 1) forwards;
   }
-  .list-item-1 { animation: staggerFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; animation-delay: 0.04s; opacity: 0; }
-  .list-item-2 { animation: staggerFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; animation-delay: 0.08s; opacity: 0; }
-  .list-item-3 { animation: staggerFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; animation-delay: 0.12s; opacity: 0; }
-  .list-item-4 { animation: staggerFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; animation-delay: 0.16s; opacity: 0; }
-
+  .list-item-1 { animation: staggerFadeIn 0.3s ease forwards; animation-delay: 0.03s; opacity: 0; }
+  .list-item-2 { animation: staggerFadeIn 0.3s ease forwards; animation-delay: 0.06s; opacity: 0; }
+  .list-item-3 { animation: staggerFadeIn 0.3s ease forwards; animation-delay: 0.09s; opacity: 0; }
+  .list-item-4 { animation: staggerFadeIn 0.3s ease forwards; animation-delay: 0.12s; opacity: 0; }
 }
 
-/* ── Page transitions (outside @layer to prevent Tailwind purge) ── */
-.page-fade-enter-active { transition: opacity 0.16s ease, transform 0.16s ease; }
-.page-fade-leave-active { transition: opacity 0.1s ease, transform 0.1s ease; }
-.page-fade-enter-from   { opacity: 0; transform: translateY(5px); }
-.page-fade-leave-to     { opacity: 0; transform: translateY(-3px); }
+.page-fade-enter-active { transition: opacity 0.2s ease, transform 0.2s ease; }
+.page-fade-leave-active { transition: opacity 0.12s ease, transform 0.12s ease; }
+.page-fade-enter-from   { opacity: 0; transform: translateY(8px); }
+.page-fade-leave-to     { opacity: 0; transform: translateY(-4px); }
 
-/* ── Toast notifications (outside @layer to prevent Tailwind purge) ── */
-.toast-enter-active  { transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.toast-enter-active  { transition: all 0.28s cubic-bezier(0.2, 0, 0, 1); }
 .toast-leave-active  { transition: all 0.18s ease; }
-.toast-enter-from    { opacity: 0; transform: translateY(12px) scale(0.96); }
-.toast-leave-to      { opacity: 0; transform: translateY(6px) scale(0.98); }
-.toast-move          { transition: transform 0.25s ease; }
+.toast-enter-from    { opacity: 0; transform: translateY(16px) scale(0.96); }
+.toast-leave-to      { opacity: 0; transform: translateY(8px); }
+.toast-move          { transition: transform 0.2s ease; }

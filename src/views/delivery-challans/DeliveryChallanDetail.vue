@@ -47,7 +47,7 @@ const statusLabel = s => ({ draft: 'Draft', issued: 'Issued', delivered: 'Delive
 </script>
 
 <template>
-  <div class="max-w-3xl mx-auto space-y-5 pb-10">
+  <div class="gpay-screen px-4 py-4 max-w-3xl lg:mx-auto space-y-5 pb-10">
 
     <!-- Back -->
     <div class="flex items-center gap-3 pt-2">
@@ -64,7 +64,7 @@ const statusLabel = s => ({ draft: 'Draft', issued: 'Issued', delivered: 'Delive
 
       <!-- Hero -->
       <div class="flex flex-col items-center text-center animate-fade-in-up mt-4 mb-2">
-        <div class="w-16 h-16 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
+        <div class="w-16 h-16 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center mb-3">
           <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
         </div>
         <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">{{ dc.client_name }}</p>
@@ -80,7 +80,7 @@ const statusLabel = s => ({ draft: 'Draft', issued: 'Issued', delivered: 'Delive
 
         <!-- Primary action -->
         <button v-if="dc.status === 'draft'" @click="doAction('issue')" :disabled="acting"
-          class="w-full flex items-center justify-center gap-3 py-4 bg-primary-600 text-white font-extrabold text-base rounded-[1.5rem] shadow-soft-blue hover:bg-primary-700 active:scale-[0.98] transition-all">
+          class="w-full flex items-center justify-center gap-3 py-4 bg-primary-600 text-white font-extrabold text-base rounded-[1.5rem] shadow-gpay hover:bg-primary-700 active:scale-[0.98] transition-all">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
           {{ acting ? '…' : 'Issue Challan' }}
         </button>
@@ -132,7 +132,7 @@ const statusLabel = s => ({ draft: 'Draft', issued: 'Issued', delivered: 'Delive
         <!-- Header -->
         <div class="px-5 pt-5 pb-4 border-b border-gray-200 space-y-3">
           <div class="flex items-center justify-between">
-            <p class="text-xl font-black text-indigo-700 uppercase tracking-widest">Delivery Challan</p>
+            <p class="text-xl font-black text-primary-700 uppercase tracking-widest">Delivery Challan</p>
             <p class="text-sm font-bold text-gray-700">{{ dc.number }}</p>
           </div>
         </div>

@@ -74,7 +74,7 @@ watch(() => route.name, name => { if (name === 'CreditNotes') load() })
   <div class="flex flex-col lg:flex-row h-full min-h-0 w-full overflow-hidden">
 
     <!-- Left Pane -->
-    <div id="c3-left-panel" :class="{ 'hidden lg:flex': $route.name !== 'CreditNotes', 'w-full lg:w-[340px] border-r border-gray-200/60 flex flex-col shrink-0 bg-[#FAFAFA] transition-all duration-300 relative z-30 h-full': true }">
+    <div id="c3-left-panel" :class="{ 'hidden lg:flex': $route.name !== 'CreditNotes', 'w-full lg:w-[340px] border-r border-gray-200/60 flex flex-col shrink-0 bg-surface-dim transition-all duration-300 relative z-30 h-full': true }">
 
       <!-- Sticky Header -->
       <div class="px-5 py-4 border-b border-gray-200/60 bg-white/60 backdrop-blur-md sticky top-0 z-10">
@@ -83,7 +83,7 @@ watch(() => route.name, name => { if (name === 'CreditNotes') load() })
           <div class="flex gap-2">
             <button @click="showFilters = !showFilters"
               class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center transition-all"
-              :class="showFilters ? 'text-indigo-600 border-indigo-200 bg-indigo-50' : 'text-gray-600'">
+              :class="showFilters ? 'text-primary-600 border-primary-200 bg-primary-50' : 'text-gray-600'">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             </button>
             <RouterLink to="/credit-notes/new"
@@ -96,7 +96,7 @@ watch(() => route.name, name => { if (name === 'CreditNotes') load() })
         <!-- Search -->
         <div v-show="showFilters" class="mb-3 animate-fade-in-up">
           <input v-model="filter.search" @input="onSearch" type="text"
-            class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-xs font-semibold rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 block px-3 py-2 transition-all"
+            class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-xs font-semibold rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 block px-3 py-2 transition-all"
             placeholder="Search by number, invoice, reason…" />
         </div>
 
@@ -131,7 +131,7 @@ watch(() => route.name, name => { if (name === 'CreditNotes') load() })
           </div>
           <p class="font-bold text-gray-900 text-[13px]">No credit notes yet</p>
           <p class="text-[11px] text-gray-500 mt-1">Issue credit notes to reverse or reduce invoices</p>
-          <RouterLink to="/credit-notes/new" class="btn bg-primary-600 text-white hover:bg-primary-700 shadow-soft-blue rounded-full px-5 py-2 mt-4 inline-flex items-center gap-2 font-bold text-xs">New Credit Note</RouterLink>
+          <RouterLink to="/credit-notes/new" class="btn bg-primary-600 text-white hover:bg-primary-700 shadow-gpay rounded-full px-5 py-2 mt-4 inline-flex items-center gap-2 font-bold text-xs">New Credit Note</RouterLink>
         </div>
 
         <div v-else>
@@ -158,7 +158,7 @@ watch(() => route.name, name => { if (name === 'CreditNotes') load() })
                 <div class="flex gap-1.5">
                   <button v-if="cn.status === 'draft'" @click.stop="issueCN(cn)"
                     :disabled="acting === cn.id + '_issue'"
-                    class="text-[11px] font-semibold px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors disabled:opacity-50">
+                    class="text-[11px] font-semibold px-2.5 py-1 rounded-md bg-primary-50 text-primary-700 hover:bg-primary-100 transition-colors disabled:opacity-50">
                     {{ acting === cn.id + '_issue' ? '…' : 'Issue' }}
                   </button>
                   <button v-if="cn.status === 'issued'" @click.stop="adjustCN(cn)"
@@ -183,7 +183,7 @@ watch(() => route.name, name => { if (name === 'CreditNotes') load() })
     </div>
 
     <!-- Right Pane -->
-    <div v-if="$route.name !== 'CreditNotes'" id="c3-right-view" class="flex-1 bg-[#F4F4F5] overflow-y-auto flex flex-col relative z-20 shadow-[-10px_0_20px_rgba(0,0,0,0.02)] custom-scrollbar">
+    <div v-if="$route.name !== 'CreditNotes'" id="c3-right-view" class="flex-1 bg-white overflow-y-auto flex flex-col relative z-20 shadow-[-10px_0_20px_rgba(0,0,0,0.02)] custom-scrollbar">
       <router-view v-slot="{ Component }">
         <component :is="Component" :key="$route.fullPath" @refresh="load" />
       </router-view>

@@ -60,7 +60,7 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto space-y-6 pb-8">
+  <div class="gpay-screen px-4 py-4 max-w-2xl lg:mx-auto space-y-6 pb-8">
     
     <!-- Top Back Navigation -->
     <div class="flex items-center gap-3 pt-2">
@@ -97,7 +97,7 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
 
       <!-- PRIMARY ACTIONS -->
       <div class="flex justify-center gap-3 w-full max-w-sm mx-auto animate-fade-in-up delay-75">
-        <RouterLink :to="`/invoices/new?client_id=${client.id}`" class="flex-1 btn bg-primary-600 text-white hover:bg-primary-700 shadow-soft-blue flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
+        <RouterLink :to="`/invoices/new?client_id=${client.id}`" class="flex-1 btn bg-primary-600 text-white hover:bg-primary-700 shadow-gpay flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
           <span class="text-xs">Bill</span>
         </RouterLink>
@@ -105,7 +105,7 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
           <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
           <span class="text-xs">Call</span>
         </a>
-        <RouterLink :to="`/clients/${client.id}/statement`" class="flex-1 btn bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
+        <RouterLink :to="`/clients/${client.id}/statement`" class="flex-1 btn bg-primary-50 text-primary-700 border border-primary-100 hover:bg-primary-100 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           <span class="text-xs">Statement</span>
         </RouterLink>
@@ -163,7 +163,7 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
         <div class="bg-white rounded-[2rem] shadow-soft border-0 overflow-hidden divide-y divide-gray-50">
           <div v-for="(item, idx) in topItems.slice(0, 5)" :key="item.description"
             class="flex items-center gap-4 px-5 py-4">
-            <div class="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center shrink-0 text-indigo-600 font-extrabold text-sm">
+            <div class="w-9 h-9 rounded-full bg-primary-50 flex items-center justify-center shrink-0 text-primary-600 font-extrabold text-sm">
               {{ idx + 1 }}
             </div>
             <div class="flex-1 min-w-0">
@@ -181,8 +181,8 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
       <!-- Quick Navigation Links -->
       <div class="grid grid-cols-3 gap-2 animate-fade-in-up delay-150">
         <RouterLink :to="`/invoices?client_id=${client.id}&client_name=${encodeURIComponent(client.name)}`"
-          class="flex flex-col items-center gap-1.5 bg-white border border-gray-100 rounded-2xl p-3 hover:border-indigo-200 hover:bg-indigo-50/40 transition-colors shadow-sm text-center">
-          <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          class="flex flex-col items-center gap-1.5 bg-white border border-gray-100 rounded-2xl p-3 hover:border-primary-200 hover:bg-primary-50/40 transition-colors shadow-sm text-center">
+          <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           <span class="text-[11px] font-bold text-gray-700">All Invoices</span>
         </RouterLink>
         <RouterLink :to="`/quotes?client_id=${client.id}&client_name=${encodeURIComponent(client.name)}`"

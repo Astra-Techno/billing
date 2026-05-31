@@ -126,7 +126,7 @@ const fullAddress = computed(() => {
         <!-- Background gradient -->
         <div class="absolute inset-0 bg-gradient-to-br from-gray-900 via-slate-800 to-gray-900"></div>
         <div class="absolute top-0 right-0 w-48 h-48 bg-primary-500/20 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
-        <div class="absolute bottom-0 left-0 w-48 h-48 bg-indigo-500/15 rounded-full blur-3xl -ml-16 -mb-16 pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 w-48 h-48 bg-primary-500/15 rounded-full blur-3xl -ml-16 -mb-16 pointer-events-none"></div>
 
         <div class="relative z-10 px-7 pt-10 pb-8 flex flex-col items-center text-center">
           <!-- Logo or Avatar -->

@@ -281,10 +281,10 @@ function exportPdf() {
 </script>
 
 <template>
-  <div class="max-w-6xl mx-auto pb-24 px-4 sm:px-6">
+  <div class="gpay-screen px-4 py-4 max-w-6xl lg:mx-auto pb-24 px-4 sm:px-6">
 
     <!-- Premium Hero Section -->
-    <div class="relative bg-gradient-to-br from-primary-600 to-indigo-800 rounded-[2.5rem] p-8 sm:p-12 text-white mb-10 overflow-hidden shadow-soft-blue mt-4">
+    <div class="relative bg-gradient-to-br from-primary-600 to-primary-800 rounded-[2.5rem] p-8 sm:p-12 text-white mb-10 overflow-hidden shadow-gpay mt-4">
       <div class="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-white opacity-10 rounded-full blur-3xl pointer-events-none"></div>
       <div class="absolute bottom-0 left-10 -mb-10 w-48 h-48 bg-primary-400 opacity-20 rounded-full blur-2xl pointer-events-none"></div>
       
@@ -360,7 +360,7 @@ function exportPdf() {
             </div>
 
             <div class="space-y-6 text-sm text-gray-700">
-              <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100/50 rounded-2xl p-5 shadow-sm">
+              <div class="bg-gradient-to-r from-blue-50 to-primary-50 border border-blue-100/50 rounded-2xl p-5 shadow-sm">
                 <p class="font-bold text-blue-900 mb-1.5 text-base">Welcome to CloudBill! 🎉</p>
                 <p class="text-blue-800/80 text-sm leading-relaxed">A simple, premium billing and accounting tool designed specifically for Indian small businesses. Create GST-compliant invoices, manage quotations, and track expenses effortlessly.</p>
               </div>
@@ -575,11 +575,11 @@ function exportPdf() {
 
         <!-- ── Quotations ── -->
         <section :id="'quotes'" class="card p-8 scroll-mt-6 border-0 shadow-soft relative overflow-hidden group">
-          <div class="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+          <div class="absolute top-0 right-0 w-32 h-32 bg-primary-50 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
           <div class="relative z-10">
             <div class="flex items-center gap-4 mb-6">
-              <div class="w-12 h-12 rounded-[1rem] bg-indigo-100 flex items-center justify-center shrink-0 shadow-inner">
-                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <div class="w-12 h-12 rounded-[1rem] bg-primary-100 flex items-center justify-center shrink-0 shadow-inner">
+                <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/>
                 </svg>
               </div>
@@ -1071,7 +1071,7 @@ function exportPdf() {
             <div class="space-y-7 text-sm text-gray-700">
 
               <!-- Headline banner -->
-              <div class="bg-gradient-to-r from-primary-600 to-indigo-700 rounded-2xl p-5 text-white">
+              <div class="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl p-5 text-white">
                 <p class="font-extrabold text-lg mb-1">Clean, fast, and truly free — built for Indian SMBs</p>
                 <p class="text-primary-100 text-sm leading-relaxed">Vyapar is a solid app with many features. CloudBill is for businesses that want a fast, modern billing experience without a yearly subscription or cluttered screens.</p>
               </div>

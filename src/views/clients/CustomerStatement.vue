@@ -115,7 +115,7 @@ function exportCSV() {
 </script>
 
 <template>
-  <div class="max-w-3xl mx-auto space-y-5 pb-10">
+  <div class="gpay-screen px-4 py-4 max-w-3xl lg:mx-auto space-y-5 pb-10">
 
     <!-- Back -->
     <div class="flex items-center gap-3 pt-2">

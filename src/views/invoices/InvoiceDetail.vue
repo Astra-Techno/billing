@@ -194,7 +194,7 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="max-w-3xl mx-auto space-y-5 pt-2 sm:pt-4">
+  <div class="gpay-screen px-4 py-4 max-w-3xl lg:mx-auto space-y-5 pt-2 sm:pt-4">
 
     <div v-if="loading" class="flex justify-center p-12">
       <div class="w-8 h-8 border-4 border-primary-100 border-t-primary-600 rounded-full animate-spin"></div>
@@ -213,7 +213,7 @@ onMounted(load)
              <span :class="statusBadge(invoice.status)" class="px-2.5 py-1 text-xs rounded-lg shadow-sm border border-black/5">{{ statusLabel(invoice.status) }}</span>
           </div>
           <div>
-            <RouterLink v-if="invoice.client_id" :to="`/clients/${invoice.client_id}`" class="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight hover:text-indigo-600 transition-colors">{{ invoice.client_name }}</RouterLink>
+            <RouterLink v-if="invoice.client_id" :to="`/clients/${invoice.client_id}`" class="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight hover:text-primary-600 transition-colors">{{ invoice.client_name }}</RouterLink>
             <h1 v-else class="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">{{ invoice.client_name }}</h1>
             <p class="text-sm font-medium text-gray-500 mt-1.5 flex items-center gap-2">
               <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -240,7 +240,7 @@ onMounted(load)
       <div v-if="invoice.status !== 'cancelled'" class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 mb-8 animate-fade-in-up delay-75 z-20 relative">
         <!-- Primary Action -->
         <button v-if="invoice.status === 'draft'" @click="markSent" :disabled="acting"
-          class="flex items-center justify-center gap-2 px-6 py-3.5 bg-primary-600 text-white font-bold text-sm rounded-xl shadow-soft-blue hover:bg-primary-700 hover:shadow-lg transition-all active:scale-95 shrink-0">
+          class="flex items-center justify-center gap-2 px-6 py-3.5 bg-primary-600 text-white font-bold text-sm rounded-xl shadow-gpay hover:bg-primary-700 hover:shadow-lg transition-all active:scale-95 shrink-0">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
           {{ acting ? 'Sending…' : 'Mark as Sent' }}
         </button>

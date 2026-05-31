@@ -107,7 +107,7 @@ async function submit() {
 </script>
 
 <template>
-  <div class="max-w-3xl mx-auto space-y-6">
+  <div class="gpay-screen px-4 py-4 max-w-3xl lg:mx-auto space-y-6">
 
     <!-- Header -->
     <div class="flex items-center gap-3">

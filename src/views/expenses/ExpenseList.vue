@@ -104,7 +104,7 @@ watch(() => route.name, name => { if (name === 'Expenses') load() })
   <div class="flex flex-col lg:flex-row h-full min-h-0 w-full overflow-hidden">
     
     <!-- Left Pane: List -->
-    <div id="c3-left-panel" :class="{ 'hidden lg:flex': $route.name !== 'Expenses', 'w-full lg:w-[340px] border-r border-gray-200/60 flex flex-col shrink-0 bg-[#FAFAFA] transition-all duration-300 relative z-30 h-full': true }">
+    <div id="c3-left-panel" :class="{ 'hidden lg:flex': $route.name !== 'Expenses', 'w-full lg:w-[340px] border-r border-gray-200/60 flex flex-col shrink-0 bg-surface-dim transition-all duration-300 relative z-30 h-full': true }">
       
       <!-- Top Sticky Header Area -->
       <div class="px-5 py-4 border-b border-gray-200/60 bg-white/60 backdrop-blur-md sticky top-0 z-10">
@@ -113,7 +113,7 @@ watch(() => route.name, name => { if (name === 'Expenses') load() })
             <h2 class="font-bold text-gray-900 text-sm tracking-tight flex items-center gap-2">Expenses <HelpIcon section="expenses" class="w-3.5 h-3.5" /></h2>
             <div class="flex gap-2">
                 <!-- Search Toggle -->
-                <button @click="showFilters = !showFilters" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center transition-all" :class="showFilters ? 'text-indigo-600 border-indigo-200 bg-indigo-50' : 'text-gray-600'">
+                <button @click="showFilters = !showFilters" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center transition-all" :class="showFilters ? 'text-primary-600 border-primary-200 bg-primary-50' : 'text-gray-600'">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 </button>
                 <!-- New Expense -->
@@ -126,13 +126,13 @@ watch(() => route.name, name => { if (name === 'Expenses') load() })
         <!-- Search / Filter Expansion -->
         <div v-show="showFilters" class="mb-4 space-y-2 animate-fade-in-up">
             <input v-model="searchQ" type="text"
-              class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-xs font-semibold rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 block px-3 py-2 transition-all"
+              class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-xs font-semibold rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 block px-3 py-2 transition-all"
               placeholder="Search description or vendor..." />
             
             <div class="flex gap-2 items-center">
-              <input v-model="filter.from_date" type="date" class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-[11px] font-semibold rounded-lg px-2 py-1.5 focus:border-indigo-500 transition-all" @change="filter.preset = ''; load()" />
+              <input v-model="filter.from_date" type="date" class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-[11px] font-semibold rounded-lg px-2 py-1.5 focus:border-primary-500 transition-all" @change="filter.preset = ''; load()" />
               <span class="text-gray-400 text-[10px] font-bold uppercase">to</span>
-              <input v-model="filter.to_date" type="date" class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-[11px] font-semibold rounded-lg px-2 py-1.5 focus:border-indigo-500 transition-all" @change="filter.preset = ''; load()" />
+              <input v-model="filter.to_date" type="date" class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-[11px] font-semibold rounded-lg px-2 py-1.5 focus:border-primary-500 transition-all" @change="filter.preset = ''; load()" />
             </div>
         </div>
 
@@ -185,7 +185,7 @@ watch(() => route.name, name => { if (name === 'Expenses') load() })
                 <div class="flex-1 min-w-0">
                     <div class="flex justify-between items-start mb-0.5">
                         <span class="text-[14px] font-bold truncate pr-2 tracking-tight transition-colors"
-                              :class="$route.params.id == e.id ? 'text-indigo-600' : 'text-gray-900 group-hover:text-indigo-600'">
+                              :class="$route.params.id == e.id ? 'text-primary-600' : 'text-gray-900 group-hover:text-primary-600'">
                               {{ e.description }}
                         </span>
                         <span class="text-[14px] font-bold tabular-nums text-gray-900 shrink-0">
@@ -217,7 +217,7 @@ watch(() => route.name, name => { if (name === 'Expenses') load() })
     </div>
 
     <!-- Right Pane: Detail/Form wrapper -->
-    <div v-if="$route.name !== 'Expenses'" id="c3-right-view" class="flex-1 bg-[#F4F4F5] overflow-y-auto flex flex-col relative z-20 shadow-[-10px_0_20px_rgba(0,0,0,0.02)] custom-scrollbar">
+    <div v-if="$route.name !== 'Expenses'" id="c3-right-view" class="flex-1 bg-white overflow-y-auto flex flex-col relative z-20 shadow-[-10px_0_20px_rgba(0,0,0,0.02)] custom-scrollbar">
       <!-- Subtle noise/texture overlay -->
       <div class="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-multiply" style="background-image: url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E');"></div>
       

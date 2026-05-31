@@ -68,7 +68,7 @@ watch(() => route.name, name => { if (name === 'Products') load() })
   <div class="flex flex-col lg:flex-row h-full min-h-0 w-full overflow-hidden">
     
     <!-- Left Pane: List -->
-    <div id="c3-left-panel" :class="{ 'hidden lg:flex': $route.name !== 'Products', 'w-full lg:w-[340px] border-r border-gray-200/60 flex flex-col shrink-0 bg-[#FAFAFA] transition-all duration-300 relative z-30 h-full': true }">
+    <div id="c3-left-panel" :class="{ 'hidden lg:flex': $route.name !== 'Products', 'w-full lg:w-[340px] border-r border-gray-200/60 flex flex-col shrink-0 bg-surface-dim transition-all duration-300 relative z-30 h-full': true }">
       
       <!-- Top Sticky Header Area -->
       <div class="px-5 py-4 border-b border-gray-200/60 bg-white/60 backdrop-blur-md sticky top-0 z-10">
@@ -87,11 +87,11 @@ watch(() => route.name, name => { if (name === 'Products') load() })
         <div class="mb-2 space-y-2 animate-fade-in-up">
             <div class="flex gap-2">
                 <input v-model="searchQ" type="text"
-                  class="flex-1 bg-white border border-gray-200 shadow-sm text-gray-900 text-xs font-semibold rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 block px-3 py-2 transition-all min-w-0"
+                  class="flex-1 bg-white border border-gray-200 shadow-sm text-gray-900 text-xs font-semibold rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 block px-3 py-2 transition-all min-w-0"
                   placeholder="Search item or HSN..." />
                   
                 <div class="shrink-0 w-24 relative">
-                  <select v-model="typeFilter" class="w-full h-full bg-white border border-gray-200 shadow-sm text-gray-700 text-[11px] rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 pl-2.5 pr-6 appearance-none cursor-pointer font-bold transition-all">
+                  <select v-model="typeFilter" class="w-full h-full bg-white border border-gray-200 shadow-sm text-gray-700 text-[11px] rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 pl-2.5 pr-6 appearance-none cursor-pointer font-bold transition-all">
                     <option value="">All</option>
                     <option value="product">Products</option>
                     <option value="service">Services</option>
@@ -140,7 +140,7 @@ watch(() => route.name, name => { if (name === 'Products') load() })
                 <div class="flex-1 min-w-0">
                     <div class="flex justify-between items-start mb-0.5">
                         <span class="text-[14px] font-bold truncate pr-2 tracking-tight transition-colors"
-                              :class="$route.params.id == p.id ? 'text-indigo-600' : 'text-gray-900 group-hover:text-indigo-600'">
+                              :class="$route.params.id == p.id ? 'text-primary-600' : 'text-gray-900 group-hover:text-primary-600'">
                               {{ p.name }}
                         </span>
                         <span class="text-[13px] font-bold tabular-nums text-gray-900 shrink-0">
@@ -165,7 +165,7 @@ watch(() => route.name, name => { if (name === 'Products') load() })
     </div>
 
     <!-- Right Pane: Detail/Form wrapper -->
-    <div v-if="$route.name !== 'Products'" id="c3-right-view" class="flex-1 bg-[#F4F4F5] overflow-y-auto flex flex-col relative z-20 shadow-[-10px_0_20px_rgba(0,0,0,0.02)] custom-scrollbar">
+    <div v-if="$route.name !== 'Products'" id="c3-right-view" class="flex-1 bg-white overflow-y-auto flex flex-col relative z-20 shadow-[-10px_0_20px_rgba(0,0,0,0.02)] custom-scrollbar">
       <!-- Subtle noise/texture overlay -->
       <div class="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-multiply" style="background-image: url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E');"></div>
       

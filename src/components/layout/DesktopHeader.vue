@@ -78,10 +78,10 @@ const userInitials = computed(() => {
 </script>
 
 <template>
-  <header class="hidden lg:flex h-[52px] border-b border-gray-200/70 bg-white items-center justify-between px-5 shrink-0 z-50">
+  <header class="hidden lg:flex h-[56px] border-b border-google-divider bg-white items-center justify-between px-5 shrink-0 z-50">
       <div class="flex items-center gap-5">
           <div class="flex items-center gap-2.5 font-bold text-gray-900 tracking-tight cursor-pointer select-none" @click="$router.push('/')">
-              <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-primary-600 to-primary-700 shadow-soft-blue flex items-center justify-center text-white text-xs font-bold">
+              <div class="w-8 h-8 rounded-full bg-primary-600 shadow-gpay flex items-center justify-center text-white text-xs font-medium">
                 {{ businessStore.business?.name?.charAt(0)?.toUpperCase() || 'B' }}
               </div>
               <span class="text-[14px] font-semibold text-gray-800">{{ businessStore.business?.name || 'CloudBill' }}</span>

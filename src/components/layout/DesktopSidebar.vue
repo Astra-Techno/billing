@@ -30,7 +30,7 @@ const menus = [
 </script>
 
 <template>
-  <div class="hidden lg:flex w-[68px] bg-white border-r border-gray-200/70 flex-col items-center py-3 gap-0.5 shrink-0 z-40 relative overflow-y-auto no-scrollbar">
+  <div class="hidden lg:flex w-[72px] bg-white border-r border-google-divider flex-col items-center py-3 gap-0.5 shrink-0 z-40 relative overflow-y-auto no-scrollbar">
 
     <RouterLink v-for="menu in menus" :key="menu.path" :to="menu.path" :title="menu.title"
       class="relative w-full flex flex-col items-center py-2 px-1 group">

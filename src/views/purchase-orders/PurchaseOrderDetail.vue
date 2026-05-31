@@ -48,7 +48,7 @@ const statusLabel = s => ({ draft: 'Draft', sent: 'Sent', received: 'Received', 
 </script>
 
 <template>
-  <div class="max-w-3xl mx-auto space-y-5 pb-10">
+  <div class="gpay-screen px-4 py-4 max-w-3xl lg:mx-auto space-y-5 pb-10">
 
     <!-- Back -->
     <div class="flex items-center gap-3 pt-2">
@@ -65,7 +65,7 @@ const statusLabel = s => ({ draft: 'Draft', sent: 'Sent', received: 'Received', 
 
       <!-- Hero -->
       <div class="flex flex-col items-center text-center animate-fade-in-up mt-4 mb-2">
-        <div class="w-16 h-16 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
+        <div class="w-16 h-16 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center mb-3">
           <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
         </div>
         <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">{{ po.supplier_name }}</p>
@@ -79,7 +79,7 @@ const statusLabel = s => ({ draft: 'Draft', sent: 'Sent', received: 'Received', 
       <!-- Action Pills -->
       <div class="flex flex-wrap justify-center gap-2 w-full max-w-lg mx-auto animate-fade-in-up mb-4">
         <button v-if="po.status === 'draft'" @click="doAction('send')" :disabled="acting"
-          class="flex-1 min-w-[100px] btn bg-primary-600 text-white hover:bg-primary-700 shadow-soft-blue flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
+          class="flex-1 min-w-[100px] btn bg-primary-600 text-white hover:bg-primary-700 shadow-gpay flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
           <span class="text-xs">Mark Sent</span>
         </button>
@@ -117,7 +117,7 @@ const statusLabel = s => ({ draft: 'Draft', sent: 'Sent', received: 'Received', 
         <!-- Header -->
         <div class="px-5 pt-5 pb-4 border-b border-gray-200 space-y-3">
           <div class="flex items-center justify-between">
-            <p class="text-xl font-black text-indigo-700 uppercase tracking-widest">Purchase Order</p>
+            <p class="text-xl font-black text-primary-700 uppercase tracking-widest">Purchase Order</p>
             <p class="text-sm font-bold text-gray-700">{{ po.number }}</p>
           </div>
         </div>

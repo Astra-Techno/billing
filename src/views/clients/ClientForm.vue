@@ -44,6 +44,7 @@ onMounted(async () => {
     const sid = bizRes.data?.data?.state_id
     if (sid) businessStore.setStateId(sid)
     form.value.state_id = businessStore.stateId || ''
+
   }
 
   if (isEdit.value) {
@@ -85,9 +86,9 @@ async function submit() {
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto space-y-5">
+  <div class="gpay-screen max-w-2xl lg:mx-auto px-4 py-4 space-y-4">
     <div class="flex items-center gap-3">
-      <button @click="router.back()" class="p-2 rounded-lg hover:bg-gray-100">
+      <button type="button" @click="router.back()" class="p-2 -ml-2 rounded-full hover:bg-surface-muted">
         <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
       <div>

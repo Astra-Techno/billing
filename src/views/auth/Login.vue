@@ -29,12 +29,12 @@ async function submit() {
   <div class="min-h-screen flex flex-col md:flex-row">
 
     <!-- Left: Brand panel -->
-    <div class="md:w-5/12 bg-gradient-to-br from-primary-600 via-primary-700 to-blue-800 flex flex-col items-center justify-center px-10 py-16 md:min-h-screen">
+    <div class="md:w-5/12 bg-primary-600 flex flex-col items-center justify-center px-10 py-16 md:min-h-screen">
       <div class="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center mb-5 shadow-xl">
         <span class="text-white font-black text-3xl">B</span>
       </div>
-      <h1 class="text-3xl font-black text-white tracking-tight text-center">CloudBill</h1>
-      <p class="text-primary-200 text-sm mt-2 text-center leading-relaxed max-w-xs">
+      <h1 class="text-3xl font-normal text-white text-center">CloudBill</h1>
+      <p class="text-white/80 text-sm mt-2 text-center leading-relaxed max-w-xs">
         Simple GST billing, invoicing &amp; expense tracking for Indian businesses
       </p>
 

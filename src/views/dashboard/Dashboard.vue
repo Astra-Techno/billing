@@ -87,34 +87,51 @@ const firstName = computed(() => {
 </script>
 
 <template>
-  <div class="flex-1 overflow-y-auto min-h-full custom-scrollbar">
-      <!-- Dashboard Container -->
-      <div class="px-5 lg:px-8 pt-6 lg:pt-8 pb-10 max-w-[1280px] mx-auto w-full animate-doc">
+  <div class="gpay-screen overflow-y-auto custom-scrollbar">
+      <div class="lg:px-8 lg:pt-8 lg:pb-10 max-w-[1280px] lg:mx-auto w-full animate-doc">
 
-          <!-- Header Row -->
-          <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
-              <div>
-                  <h1 class="text-[22px] font-extrabold text-gray-900 tracking-tight mb-0.5">Good morning, {{ firstName }}</h1>
-                  <p class="text-gray-400 text-[13px]">Here's your business snapshot for today.</p>
-              </div>
-              <div class="flex gap-2 w-full lg:w-auto overflow-x-auto pb-1 lg:pb-0 hide-scrollbar shrink-0">
-                  <button @click="router.push('/expenses/new')"
-                    class="px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-[13px] font-semibold text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors flex items-center gap-1.5 whitespace-nowrap shadow-soft">
-                      <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                      Record Expense
-                  </button>
-                  <button @click="router.push('/invoices/new')"
-                    class="px-3.5 py-2 bg-primary-600 text-white rounded-xl text-[13px] font-semibold hover:bg-primary-700 transition-colors flex items-center gap-1.5 whitespace-nowrap shadow-soft-blue">
-                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                      New Invoice
-                  </button>
+          <!-- Mobile: Google Pay style home header -->
+          <div class="px-4 pt-4 pb-2 lg:hidden">
+              <p class="text-sm text-google-muted">Hi, {{ firstName }}</p>
+              <h1 class="text-[26px] font-normal text-google-text mt-0.5">Business overview</h1>
+          </div>
+
+          <!-- Hero balance (mobile) -->
+          <div class="px-4 lg:hidden mb-4">
+              <div class="gpay-hero-balance cursor-pointer" @click="router.push('/invoices?status=sent')">
+                  <p class="text-white/80 text-sm">Pending to collect</p>
+                  <p class="text-[32px] font-normal tabular-nums mt-1 leading-none">{{ inr(stats.total_due || 0) }}</p>
+                  <p class="text-white/70 text-xs mt-3">{{ inr(stats.total_paid_month || 0) }} collected this month</p>
               </div>
           </div>
 
-          <!-- Stat Cards -->
-          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+          <!-- Quick actions chips (mobile) -->
+          <div class="flex gap-2 overflow-x-auto hide-scrollbar px-4 pb-4 lg:hidden">
+              <button type="button" class="gpay-chip flex items-center gap-2" @click="router.push('/invoices/new')">
+                  <span class="w-8 h-8 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center text-lg leading-none">+</span>
+                  New bill
+              </button>
+              <button type="button" class="gpay-chip" @click="router.push('/clients/new')">Add customer</button>
+              <button type="button" class="gpay-chip" @click="router.push('/expenses/new')">Expense</button>
+              <button type="button" class="gpay-chip" @click="router.push('/invoices')">All bills</button>
+          </div>
+
+          <!-- Desktop header -->
+          <div class="hidden lg:flex flex-row justify-between items-center mb-8 gap-4 px-0">
+              <div>
+                  <h1 class="text-[22px] font-normal text-google-text mb-0.5">Good morning, {{ firstName }}</h1>
+                  <p class="text-google-muted text-[13px]">Here's your business snapshot for today.</p>
+              </div>
+              <div class="flex gap-2 shrink-0">
+                  <button @click="router.push('/expenses/new')" class="btn-outline btn-sm">Record expense</button>
+                  <button @click="router.push('/invoices/new')" class="btn-primary btn-sm">New invoice</button>
+              </div>
+          </div>
+
+          <!-- Stat Cards (desktop) -->
+          <div class="hidden lg:grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 px-4 lg:px-0">
               <!-- Collected -->
-              <div class="bg-gray-900 rounded-2xl p-5 text-white relative overflow-hidden group cursor-pointer col-span-2 lg:col-span-1"
+              <div class="gpay-hero-balance relative overflow-hidden group cursor-pointer col-span-2 lg:col-span-1 hidden lg:block"
                 @click="router.push('/invoices?status=paid')">
                   <div class="absolute -right-6 -top-6 w-20 h-20 bg-primary-500/20 rounded-full blur-xl group-hover:bg-primary-400/30 transition-all duration-500"></div>
                   <div class="absolute -right-2 bottom-0 w-12 h-12 bg-primary-500/10 rounded-full blur-lg"></div>
@@ -130,7 +147,7 @@ const firstName = computed(() => {
                   </div>
               </div>
               <!-- Outstanding -->
-              <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-soft flex flex-col justify-between group hover:border-gray-200 transition-colors cursor-pointer"
+              <div class="card card-body flex flex-col justify-between group hover:shadow-gpay transition-shadow cursor-pointer"
                 @click="router.push('/invoices?status=sent')">
                   <div class="flex items-center justify-between mb-3">
                       <span class="text-gray-400 text-[10px] font-semibold uppercase tracking-widest">Pending</span>
@@ -142,7 +159,7 @@ const firstName = computed(() => {
                   <div class="mt-2 text-gray-400 text-[11px]">Outstanding invoices</div>
               </div>
               <!-- Expenses -->
-              <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-soft flex flex-col justify-between group hover:border-gray-200 transition-colors cursor-pointer"
+              <div class="card card-body flex flex-col justify-between group hover:shadow-gpay transition-shadow cursor-pointer"
                 @click="router.push('/expenses')">
                   <div class="flex items-center justify-between mb-3">
                       <span class="text-gray-400 text-[10px] font-semibold uppercase tracking-widest">Expenses</span>
@@ -154,8 +171,8 @@ const firstName = computed(() => {
                   <div class="mt-2 text-gray-400 text-[11px]">Recorded this month</div>
               </div>
               <!-- Overdue -->
-              <div class="rounded-2xl p-5 border shadow-soft flex flex-col justify-between group transition-colors cursor-pointer"
-                   :class="stats.overdue_amount > 0 ? 'bg-red-50 border-red-100 hover:bg-red-50/80' : 'bg-white border-gray-100 hover:border-gray-200'"
+              <div class="card card-body flex flex-col justify-between group transition-shadow cursor-pointer"
+                   :class="stats.overdue_amount > 0 ? 'bg-danger-50 border-danger-100' : ''"
                    @click="router.push('/invoices?status=overdue')">
                   <div class="flex items-center justify-between mb-3">
                       <span class="text-[10px] font-semibold uppercase tracking-widest"
@@ -176,8 +193,45 @@ const firstName = computed(() => {
               </div>
           </div>
 
+          <!-- Mobile: Recent activity -->
+          <div class="lg:hidden mt-2 bg-white border-t border-google-divider">
+              <div class="flex items-center justify-between px-4 py-3">
+                  <h2 class="text-base font-medium text-google-text">Recent bills</h2>
+                  <RouterLink to="/invoices" class="text-sm text-primary-600 font-medium">See all</RouterLink>
+              </div>
+              <div v-if="loading" class="py-8 flex justify-center">
+                  <div class="w-6 h-6 border-2 border-primary-100 border-t-primary-600 rounded-full animate-spin"></div>
+              </div>
+              <div v-else-if="!recent.length" class="px-4 py-8 text-center text-google-muted text-sm">No invoices yet</div>
+              <div v-else>
+                  <div
+                    v-for="inv in recent.slice(0, 8)"
+                    :key="inv.id"
+                    class="gpay-activity-row"
+                    @click="router.push(`/invoices/${inv.id}`)"
+                  >
+                      <div class="gpay-activity-icon" :class="avatarColor(inv.client_name)">
+                          {{ inv.client_name?.charAt(0)?.toUpperCase() }}
+                      </div>
+                      <div class="flex-1 min-w-0">
+                          <p class="text-[15px] text-google-text truncate">{{ inv.client_name }}</p>
+                          <p class="text-xs text-google-muted mt-0.5">{{ inv.number }} · {{ fmtDateShort(inv.issue_date) }}</p>
+                      </div>
+                      <div class="text-right shrink-0">
+                          <p class="text-[15px] font-medium tabular-nums text-google-text">{{ inr(inv.total) }}</p>
+                          <span class="text-[11px] font-medium" :class="{
+                            'text-pay-green': inv.status === 'paid',
+                            'text-danger-500': inv.status === 'overdue',
+                            'text-google-muted': inv.status === 'draft',
+                            'text-primary-600': inv.status === 'sent',
+                          }">{{ inv.status }}</span>
+                      </div>
+                  </div>
+              </div>
+          </div>
+
           <!-- Chart & Actions Row -->
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+          <div class="hidden lg:grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4 px-4 lg:px-0">
               <!-- Revenue Chart -->
               <div class="col-span-1 lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-soft p-6 h-[300px] flex-col hidden sm:flex relative">
                   <div class="flex justify-between items-center mb-5">

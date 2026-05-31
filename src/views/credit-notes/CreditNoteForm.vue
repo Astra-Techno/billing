@@ -107,7 +107,7 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="max-w-3xl mx-auto space-y-6 pb-20">
+  <div class="gpay-screen px-4 py-4 max-w-3xl lg:mx-auto space-y-6 pb-20">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
         <button @click="router.push('/credit-notes')" class="w-10 h-10 rounded-full bg-white shadow-soft flex items-center justify-center text-gray-500 hover:text-gray-900 transition-colors">

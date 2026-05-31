@@ -6,7 +6,7 @@ const { helpSection, closeHelp } = useHelp()
 const titles = {
   dashboard:      { label: 'Dashboard',              color: 'bg-blue-100 text-blue-600' },
   bills:          { label: 'Bills / Invoices',        color: 'bg-primary-100 text-primary-600' },
-  quotes:         { label: 'Quotations',              color: 'bg-indigo-100 text-indigo-600' },
+  quotes:         { label: 'Quotations',              color: 'bg-primary-100 text-primary-600' },
   customers:      { label: 'Customers',               color: 'bg-purple-100 text-purple-600' },
   expenses:       { label: 'Expenses',                color: 'bg-orange-100 text-orange-600' },
   products:       { label: 'Products & Services',     color: 'bg-emerald-100 text-emerald-600' },
@@ -14,7 +14,7 @@ const titles = {
   gst:            { label: 'GST Filing',              color: 'bg-teal-100 text-teal-600' },
   reports:        { label: 'Reports',                 color: 'bg-violet-100 text-violet-600' },
   settings:       { label: 'Settings',                color: 'bg-gray-100 text-gray-600' },
-  team:           { label: 'Team & Staff Access',     color: 'bg-indigo-100 text-indigo-600' },
+  team:           { label: 'Team & Staff Access',     color: 'bg-primary-100 text-primary-600' },
 }
 </script>
 
@@ -123,9 +123,9 @@ const titles = {
               <p class="text-xs text-gray-400 mt-1.5">Or: <span class="badge badge-red text-[10px]">Declined</span> / <span class="badge badge-yellow text-[10px]">Expired</span></p>
             </div>
             <div class="space-y-2">
-              <div class="bg-indigo-50 rounded-xl p-3">
-                <p class="font-semibold text-indigo-800 text-xs mb-1">Convert to Invoice</p>
-                <p class="text-xs text-indigo-700">Open an accepted quote → tap <strong>Convert to Invoice</strong>. All items copy over automatically.</p>
+              <div class="bg-primary-50 rounded-xl p-3">
+                <p class="font-semibold text-primary-800 text-xs mb-1">Convert to Invoice</p>
+                <p class="text-xs text-primary-700">Open an accepted quote → tap <strong>Convert to Invoice</strong>. All items copy over automatically.</p>
               </div>
               <div class="bg-gray-50 rounded-xl p-3">
                 <p class="font-semibold text-gray-800 text-xs mb-1">Valid Until Date</p>
@@ -264,7 +264,7 @@ const titles = {
               <ol class="space-y-2">
                 <li v-for="(s, i) in ['Go to Settings → Team tab.','Tap Invite Member and enter their mobile/email and role.','Share the invite link via WhatsApp.','They open the link, create a password, and get instant access.']"
                   :key="i" class="flex gap-2 text-xs text-gray-600">
-                  <span class="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center shrink-0 text-[10px]">{{i+1}}</span>
+                  <span class="w-5 h-5 rounded-full bg-primary-100 text-primary-700 font-bold flex items-center justify-center shrink-0 text-[10px]">{{i+1}}</span>
                   <span>{{s}}</span>
                 </li>
               </ol>

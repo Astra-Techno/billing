@@ -33,13 +33,12 @@ const avatarColor  = (name) => avatarColors[(name?.charCodeAt(0) || 0) % avatarC
   <div class="flex flex-col lg:flex-row h-full min-h-0 w-full overflow-hidden">
 
     <!-- Left Pane: List -->
-    <div id="c3-left-panel" :class="{ 'hidden lg:flex': $route.name !== 'Clients', 'w-full lg:w-[340px] border-r border-gray-200/60 flex flex-col shrink-0 bg-[#FAFAFA] transition-all duration-300 relative z-30 h-full': true }">
+    <div id="c3-left-panel" :class="{ 'hidden lg:flex': $route.name !== 'Clients', 'w-full lg:w-[340px] gpay-split-left transition-all duration-300 relative z-30 h-full': true }">
       
-      <!-- Top Sticky Header Area -->
-      <div class="px-5 py-4 border-b border-gray-200/60 bg-white/60 backdrop-blur-md sticky top-0 z-10">
+      <div class="px-4 py-3 border-b border-google-divider bg-white sticky top-0 z-10">
         <!-- Header & Actions -->
         <div class="flex justify-between items-center mb-4">
-            <h2 class="font-bold text-gray-900 text-sm tracking-tight flex items-center gap-2">Customers <HelpIcon section="customers" class="w-3.5 h-3.5" /></h2>
+            <h2 class="font-medium text-google-text text-base flex items-center gap-2">Customers <HelpIcon section="customers" class="w-4 h-4" /></h2>
             <div class="flex gap-2">
                 <!-- Search Toggle (Using inline expansion for clients) -->
                 <!-- New Customer -->
@@ -52,7 +51,7 @@ const avatarColor  = (name) => avatarColors[(name?.charCodeAt(0) || 0) % avatarC
         <!-- Search -->
         <div class="mb-2 space-y-2 animate-fade-in-up">
             <input v-model="search" @input="onSearch" type="text"
-              class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-xs font-semibold rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 block px-3 py-2.5 transition-all"
+              class="gpay-list-search"
               placeholder="Search customers..." />
         </div>
       </div>
@@ -84,7 +83,7 @@ const avatarColor  = (name) => avatarColors[(name?.charCodeAt(0) || 0) % avatarC
             @click="router.push(`/clients/${c.id}`)">
             
             <!-- Active Indicator Line -->
-            <div v-if="$route.params.id == c.id" class="absolute left-0 top-0 bottom-0 w-[3px] bg-gray-900 rounded-l-xl"></div>
+            <div v-if="$route.params.id == c.id" class="absolute left-0 top-0 bottom-0 w-[3px] bg-primary-600 rounded-l-xl"></div>
             
             <div class="flex gap-3 items-center">
                 <div class="w-10 h-10 rounded-[10px] flex items-center justify-center font-bold text-sm border group-hover:scale-105 transition-transform shrink-0" :class="avatarColor(c.name)">
@@ -94,7 +93,7 @@ const avatarColor  = (name) => avatarColors[(name?.charCodeAt(0) || 0) % avatarC
                 <div class="flex-1 min-w-0">
                     <div class="flex justify-between items-start mb-0.5">
                         <span class="text-[14px] font-bold truncate pr-2 tracking-tight transition-colors"
-                              :class="$route.params.id == c.id ? 'text-indigo-600' : 'text-gray-900 group-hover:text-indigo-600'">
+                              :class="$route.params.id == c.id ? 'text-primary-600' : 'text-gray-900 group-hover:text-primary-600'">
                               {{ c.name }}
                         </span>
                         <span v-if="parseFloat(c.outstanding_balance) > 0" class="text-[11px] font-bold text-red-600 tabular-nums bg-red-50 px-1.5 py-0.5 rounded border border-red-100 shrink-0">
@@ -113,7 +112,7 @@ const avatarColor  = (name) => avatarColors[(name?.charCodeAt(0) || 0) % avatarC
     </div>
 
     <!-- Right Pane: Detail/Form wrapper -->
-    <div v-if="$route.name !== 'Clients'" id="c3-right-view" class="flex-1 bg-[#F4F4F5] overflow-y-auto flex flex-col relative z-20 shadow-[-10px_0_20px_rgba(0,0,0,0.02)] custom-scrollbar">
+    <div v-if="$route.name !== 'Clients'" id="c3-right-view" class="gpay-split-right relative z-20 custom-scrollbar">
       <!-- Subtle noise/texture overlay -->
       <div class="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-multiply" style="background-image: url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E');"></div>
       

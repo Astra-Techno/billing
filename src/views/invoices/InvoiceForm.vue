@@ -263,7 +263,7 @@ async function submit() {
 </script>
 
 <template>
-  <div class="max-w-3xl mx-auto space-y-6">
+  <div class="gpay-screen px-4 py-4 max-w-3xl lg:mx-auto space-y-6">
 
     <!-- Header -->
     <div class="flex items-center gap-3">
@@ -300,7 +300,7 @@ async function submit() {
               <input v-model="clientSearch" type="text" placeholder="Search by name, mobile…" class="form-input pl-10" />
             </div>
             <button type="button" @click="openAddClient" title="Add New Customer"
-              class="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-primary-600 hover:bg-primary-700 text-white transition-colors shadow-soft-blue">
+              class="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-primary-600 hover:bg-primary-700 text-white transition-colors shadow-gpay">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
             </button>
           </div>

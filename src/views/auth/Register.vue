@@ -66,7 +66,7 @@ async function submit() {
   <div class="h-screen flex flex-col md:flex-row overflow-hidden">
 
     <!-- Left: Brand panel -->
-    <div class="md:w-5/12 bg-gradient-to-br from-primary-600 via-primary-700 to-blue-800 flex flex-col items-center justify-center px-10 py-8 md:h-full overflow-y-auto">
+    <div class="md:w-5/12 bg-primary-600 via-primary-700 to-blue-800 flex flex-col items-center justify-center px-10 py-8 md:h-full overflow-y-auto">
       <div class="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center mb-5 shadow-xl">
         <span class="text-white font-black text-3xl">B</span>
       </div>

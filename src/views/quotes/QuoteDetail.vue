@@ -99,7 +99,7 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="max-w-3xl mx-auto space-y-5">
+  <div class="gpay-screen px-4 py-4 max-w-3xl lg:mx-auto space-y-5">
 
     <!-- Header -->
     <div class="flex items-center gap-3 pt-2">
@@ -130,7 +130,7 @@ onMounted(load)
       <!-- Action Pills -->
       <div class="flex flex-wrap justify-center gap-2 w-full max-w-lg mx-auto animate-fade-in-up delay-75 mb-6">
         
-        <button v-if="quote.status === 'draft'" @click="act('markSent', 'sent')" :disabled="!!acting" class="flex-1 min-w-[120px] btn bg-primary-600 text-white hover:bg-primary-700 shadow-soft-blue flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
+        <button v-if="quote.status === 'draft'" @click="act('markSent', 'sent')" :disabled="!!acting" class="flex-1 min-w-[120px] btn bg-primary-600 text-white hover:bg-primary-700 shadow-gpay flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
           <span class="text-xs">{{ acting === 'sent' ? 'Sending…' : 'Mark Sent' }}</span>
         </button>
@@ -155,7 +155,7 @@ onMounted(load)
           <span class="text-xs">Share</span>
         </button>
 
-        <RouterLink v-if="quote.status === 'converted' && quote.invoice_id" :to="`/invoices/${quote.invoice_id}`" class="flex-1 min-w-[120px] btn bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
+        <RouterLink v-if="quote.status === 'converted' && quote.invoice_id" :to="`/invoices/${quote.invoice_id}`" class="flex-1 min-w-[120px] btn bg-primary-50 text-primary-700 border border-primary-100 hover:bg-primary-100 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           <span class="text-xs">View Invoice</span>
         </RouterLink>
