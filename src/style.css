@@ -107,7 +107,7 @@
 
   /* ── Layout primitives ── */
   .gpay-screen {
-    @apply flex-1 min-h-full relative z-[1];
+    @apply flex-1 min-h-full relative z-[1] lg:overflow-y-auto lg:custom-scrollbar;
     background: transparent;
   }
   .gpay-hero-balance {

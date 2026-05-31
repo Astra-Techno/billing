@@ -376,13 +376,13 @@ async function submit() {
         </div>
 
         <div class="items-grid-header">
-          <span class="col-span-3">Product</span>
+          <span class="col-span-4">Product</span>
           <span class="col-span-3">Description</span>
           <span class="col-span-1">Unit</span>
           <span class="col-span-1">Qty</span>
           <span class="col-span-1">Price</span>
           <span class="col-span-1">GST</span>
-          <span class="col-span-2 text-right">Amount</span>
+          <span class="col-span-1 text-right">Amount</span>
         </div>
 
         <div class="divide-y divide-google-divider/50 lg:border lg:border-t-0 lg:border-google-divider lg:rounded-b-lg">
@@ -390,14 +390,11 @@ async function submit() {
 
             <!-- Desktop: compact row -->
             <div class="hidden lg:contents">
-              <div class="col-span-3 flex gap-1">
-                <select v-if="products.length" v-model="it.product_id" class="form-select !py-2 text-xs min-w-0 flex-1" @change="pickProduct(i, it.product_id)">
-                  <option :value="null">Manual</option>
+              <div class="col-span-4">
+                <select v-if="products.length" v-model="it.product_id" class="form-select !py-2 text-xs w-full" @change="pickProduct(i, it.product_id)">
+                  <option :value="null">— Type manually —</option>
                   <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
                 </select>
-                <button type="button" @click="openAddProduct(i)" class="shrink-0 w-9 h-9 rounded-lg bg-primary-600 text-white flex items-center justify-center" title="New product">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                </button>
               </div>
               <div class="col-span-3">
                 <input v-model="it.description" type="text" class="form-input !py-2 text-sm" placeholder="Description" required />
@@ -413,13 +410,13 @@ async function submit() {
               </div>
               <div class="col-span-1">
                 <select v-model="it.gst_rate" class="form-select !py-2 text-xs" :disabled="form.invoice_type === 'bill_of_supply'">
-                  <option v-for="r in gstRates" :key="r" :value="r">{{ form.invoice_type === 'bill_of_supply' ? '0' : r }}</option>
+                  <option v-for="r in gstRates" :key="r" :value="r">{{ form.invoice_type === 'bill_of_supply' ? '0%' : r + '%' }}</option>
                 </select>
               </div>
-              <div class="col-span-2 flex items-center justify-end gap-2">
+              <div class="col-span-1 flex items-center justify-end gap-1">
                 <span class="text-sm font-bold tabular-nums text-ink">{{ inr(lineTotal(it)) }}</span>
-                <button v-if="form.items.length > 1" type="button" @click="removeItem(i)" class="p-1.5 text-danger-500 hover:bg-danger-50 rounded-lg" title="Remove">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                <button v-if="form.items.length > 1" type="button" @click="removeItem(i)" class="p-1 text-danger-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg shrink-0" title="Remove">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
               </div>
             </div>
