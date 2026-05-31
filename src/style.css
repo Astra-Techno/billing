@@ -226,6 +226,15 @@
   .item-row-desktop {
     @apply lg:grid lg:grid-cols-12 lg:gap-2 lg:items-end lg:px-3 lg:py-2.5 border-b border-google-divider/50 last:border-0;
   }
+  /* Invoice line items table — explicit column widths */
+  .invoice-items-header {
+    @apply hidden lg:grid gap-2 px-4 py-2 text-[10px] font-bold text-google-muted uppercase tracking-wider bg-surface-dim/60 border-b border-google-divider;
+    grid-template-columns: 1.8fr 2fr 90px 75px 110px 80px 110px 36px;
+  }
+  .invoice-items-row {
+    @apply gap-2 px-4 py-2.5 items-center;
+    grid-template-columns: 1.8fr 2fr 90px 75px 110px 80px 110px 36px;
+  }
   .split-pane-right {
     @apply flex-1 flex flex-col min-h-0 overflow-hidden bg-surface-dim/30;
   }

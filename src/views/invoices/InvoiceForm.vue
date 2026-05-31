@@ -293,136 +293,140 @@ async function submit() {
     </div>
 
     <div class="form-body">
-    <form id="invoice-form" @submit.prevent="submit" class="form-layout">
+    <form id="invoice-form" @submit.prevent="submit" class="max-w-5xl mx-auto space-y-4">
 
-      <div class="form-main space-y-4">
-
-      <!-- Customer + Bill details: side by side on desktop -->
+      <!-- Row 1: Bill To + Bill Details -->
       <div class="grid lg:grid-cols-2 gap-4">
-      <div class="form-panel">
-        <h2 class="form-panel-title">Bill to</h2>
-        <div v-if="form.client_id" class="flex items-center gap-3 px-4 py-3 bg-primary-50/50 border border-primary-100 rounded-[1.25rem]">
-          <div class="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center shrink-0">
-            <span class="text-primary-700 text-sm font-bold">{{ selectedClient?.name?.charAt(0)?.toUpperCase() }}</span>
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-primary-900 truncate">{{ selectedClient?.name }}</p>
-            <p class="text-xs text-primary-600 truncate">{{ selectedClient?.mobile || selectedClient?.email }}</p>
-          </div>
-          <button type="button" @click="form.client_id = ''; clientSearch = ''" class="text-xs text-primary-600 font-semibold hover:underline shrink-0">Change</button>
-        </div>
-        <div v-else class="space-y-3">
-          <div class="relative flex items-center gap-2">
-            <div class="relative flex-1">
-              <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-              <input v-model="clientSearch" type="text" placeholder="Search by name, mobile…" class="form-input pl-10" />
+        <div class="form-panel">
+          <h2 class="form-panel-title">Bill to</h2>
+          <div v-if="form.client_id" class="flex items-center gap-3 px-4 py-3 bg-primary-50/50 border border-primary-100 rounded-[1.25rem]">
+            <div class="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center shrink-0">
+              <span class="text-primary-700 text-sm font-bold">{{ selectedClient?.name?.charAt(0)?.toUpperCase() }}</span>
             </div>
-            <button type="button" @click="openAddClient" title="Add New Customer"
-              class="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-primary-600 hover:bg-primary-700 text-white transition-colors shadow-gpay">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-            </button>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-primary-900 truncate">{{ selectedClient?.name }}</p>
+              <p class="text-xs text-primary-600 truncate">{{ selectedClient?.mobile || selectedClient?.email }}</p>
+            </div>
+            <button type="button" @click="form.client_id = ''; clientSearch = ''" class="text-xs text-primary-600 font-semibold hover:underline shrink-0">Change</button>
           </div>
-          <div v-if="clientSearch || filteredClients.length > 0" class="max-h-56 overflow-y-auto rounded-[1rem] border border-gray-200 divide-y divide-gray-50">
-            <div v-if="!filteredClients.length" class="px-4 py-4 text-center text-sm text-gray-400">No customers match "{{ clientSearch }}"</div>
-            <button v-for="c in filteredClients" :key="c.id" type="button"
-              @click="form.client_id = c.id; clientSearch = ''"
-              class="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition text-left group">
-              <div class="w-8 h-8 rounded-full bg-gray-100 group-hover:bg-primary-50 flex items-center justify-center shrink-0 transition">
-                <span class="text-xs font-bold text-gray-600 group-hover:text-primary-600">{{ c.name?.charAt(0)?.toUpperCase() }}</span>
+          <div v-else class="space-y-3">
+            <div class="relative flex items-center gap-2">
+              <div class="relative flex-1">
+                <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input v-model="clientSearch" type="text" placeholder="Search by name, mobile…" class="form-input pl-10" />
               </div>
-              <div class="min-w-0 flex-1">
-                <p class="text-sm font-semibold text-gray-800 group-hover:text-primary-700 truncate">{{ c.name }}</p>
-                <p class="text-xs text-gray-400 truncate">{{ c.mobile || c.email || 'Customer' }}</p>
-              </div>
-            </button>
+              <button type="button" @click="openAddClient" title="Add New Customer"
+                class="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-primary-600 hover:bg-primary-700 text-white transition-colors shadow-gpay">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+              </button>
+            </div>
+            <div v-if="clientSearch || filteredClients.length > 0" class="max-h-56 overflow-y-auto rounded-[1rem] border border-gray-200 divide-y divide-gray-50">
+              <div v-if="!filteredClients.length" class="px-4 py-4 text-center text-sm text-gray-400">No customers match "{{ clientSearch }}"</div>
+              <button v-for="c in filteredClients" :key="c.id" type="button"
+                @click="form.client_id = c.id; clientSearch = ''"
+                class="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition text-left group">
+                <div class="w-8 h-8 rounded-full bg-gray-100 group-hover:bg-primary-50 flex items-center justify-center shrink-0 transition">
+                  <span class="text-xs font-bold text-gray-600 group-hover:text-primary-600">{{ c.name?.charAt(0)?.toUpperCase() }}</span>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm font-semibold text-gray-800 group-hover:text-primary-700 truncate">{{ c.name }}</p>
+                  <p class="text-xs text-gray-400 truncate">{{ c.mobile || c.email || 'Customer' }}</p>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-panel">
+          <h2 class="form-panel-title">Bill details</h2>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="form-label">Bill date</label><input v-model="form.issue_date" type="date" class="form-input !py-2 text-sm" /></div>
+            <div><label class="form-label">Pay by</label><input v-model="form.due_date" type="date" class="form-input !py-2 text-sm" /></div>
+            <div class="col-span-2">
+              <label class="form-label">Place of supply <span class="text-danger-500">*</span></label>
+              <select v-model="form.place_of_supply" class="form-select !py-2 text-sm">
+                <option value="">Select state</option>
+                <option v-for="s in states" :key="s.id" :value="s.id">{{ s.name }}</option>
+              </select>
+            </div>
+            <div class="col-span-2">
+              <label class="form-label">Bill type</label>
+              <select v-model="form.invoice_type" class="form-select !py-2 text-sm">
+                <option value="tax_invoice">Tax invoice (GST)</option>
+                <option value="bill_of_supply">Bill of supply</option>
+                <option value="retail">Retail invoice</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="form-panel">
-        <h2 class="form-panel-title">Bill details</h2>
-        <div class="grid grid-cols-2 gap-2">
-          <div><label class="form-label">Bill date</label><input v-model="form.issue_date" type="date" class="form-input !py-2 text-sm" /></div>
-          <div><label class="form-label">Pay by</label><input v-model="form.due_date" type="date" class="form-input !py-2 text-sm" /></div>
-          <div class="col-span-2">
-            <label class="form-label">Place of supply <span class="text-danger-500">*</span></label>
-            <select v-model="form.place_of_supply" class="form-select !py-2 text-sm">
-              <option value="">Select state</option>
-              <option v-for="s in states" :key="s.id" :value="s.id">{{ s.name }}</option>
-            </select>
-          </div>
-          <div class="col-span-2">
-            <label class="form-label">Bill type</label>
-            <select v-model="form.invoice_type" class="form-select !py-2 text-sm">
-              <option value="tax_invoice">Tax invoice (GST)</option>
-              <option value="bill_of_supply">Bill of supply</option>
-              <option value="retail">Retail invoice</option>
-            </select>
-          </div>
-        </div>
-      </div>
-      </div>
-
-      <!-- Items -->
+      <!-- Row 2: Line Items (full width) -->
       <div class="card overflow-hidden">
         <div class="px-4 py-2.5 border-b border-google-divider flex items-center justify-between bg-surface-dim/50">
           <h2 class="form-panel-title mb-0">Line items</h2>
           <div class="flex items-center gap-2">
             <span class="text-xs text-google-muted font-medium">{{ form.items.length }} line{{ form.items.length > 1 ? 's' : '' }}</span>
-            <button type="button" @click="addItem" class="btn-primary btn-sm !py-1.5 !px-3 text-xs">
-              + Add line
-            </button>
+            <button type="button" @click="addItem" class="btn-primary btn-sm !py-1.5 !px-3 text-xs hidden lg:inline-flex">+ Add line</button>
           </div>
         </div>
 
-        <div class="items-grid-header">
-          <span class="col-span-4">Product</span>
-          <span class="col-span-3">Description</span>
-          <span class="col-span-1">Unit</span>
-          <span class="col-span-1">Qty</span>
-          <span class="col-span-1">Price</span>
-          <span class="col-span-1">GST</span>
-          <span class="col-span-1 text-right">Amount</span>
+        <!-- Desktop table header -->
+        <div class="invoice-items-header">
+          <span>Product</span>
+          <span>Description *</span>
+          <span>Unit</span>
+          <span>Qty</span>
+          <span>Price (₹)</span>
+          <span>GST</span>
+          <span class="text-right">Amount</span>
+          <span></span>
         </div>
 
-        <div class="divide-y divide-google-divider/50 lg:border lg:border-t-0 lg:border-google-divider lg:rounded-b-lg">
-          <div v-for="(it, i) in form.items" :key="i" class="p-4 space-y-3 item-row-desktop">
+        <!-- Items -->
+        <div class="divide-y divide-google-divider/40">
+          <div v-for="(it, i) in form.items" :key="i">
 
-            <!-- Desktop: compact row -->
-            <div class="hidden lg:contents">
-              <div class="col-span-4">
-                <select v-if="products.length" v-model="it.product_id" class="form-select !py-2 text-xs w-full" @change="pickProduct(i, it.product_id)">
+            <!-- Desktop row -->
+            <div class="invoice-items-row hidden lg:grid">
+              <div>
+                <select v-if="products.length" v-model="it.product_id" class="form-select !py-2 text-sm w-full" @change="pickProduct(i, it.product_id)">
                   <option :value="null">— Type manually —</option>
                   <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
                 </select>
               </div>
-              <div class="col-span-3">
-                <input v-model="it.description" type="text" class="form-input !py-2 text-sm" placeholder="Description" required />
+              <div>
+                <input v-model="it.description" type="text" class="form-input !py-2 text-sm" placeholder="Item description" required />
               </div>
-              <div class="col-span-1">
-                <select v-model="it.unit" class="form-select !py-2 text-xs"><option v-for="u in units" :key="u">{{ u }}</option></select>
+              <div>
+                <select v-model="it.unit" class="form-select !py-2 text-sm">
+                  <option v-for="u in units" :key="u">{{ u }}</option>
+                </select>
               </div>
-              <div class="col-span-1">
+              <div>
                 <input v-model="it.quantity" type="number" min="0.001" step="0.001" class="form-input !py-2 text-sm tabular-nums" />
               </div>
-              <div class="col-span-1">
-                <input v-model="it.unit_price" type="number" min="0" step="0.01" class="form-input !py-2 text-sm tabular-nums" />
+              <div>
+                <input v-model="it.unit_price" type="number" min="0" step="0.01" class="form-input !py-2 text-sm tabular-nums" placeholder="0.00" />
               </div>
-              <div class="col-span-1">
-                <select v-model="it.gst_rate" class="form-select !py-2 text-xs" :disabled="form.invoice_type === 'bill_of_supply'">
+              <div>
+                <select v-model="it.gst_rate" class="form-select !py-2 text-sm" :disabled="form.invoice_type === 'bill_of_supply'">
                   <option v-for="r in gstRates" :key="r" :value="r">{{ form.invoice_type === 'bill_of_supply' ? '0%' : r + '%' }}</option>
                 </select>
               </div>
-              <div class="col-span-1 flex items-center justify-end gap-1">
+              <div class="flex items-center justify-end">
                 <span class="text-sm font-bold tabular-nums text-ink">{{ inr(lineTotal(it)) }}</span>
-                <button v-if="form.items.length > 1" type="button" @click="removeItem(i)" class="p-1 text-danger-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg shrink-0" title="Remove">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              </div>
+              <div class="flex items-center justify-center">
+                <button v-if="form.items.length > 1" type="button" @click="removeItem(i)"
+                  class="w-7 h-7 flex items-center justify-center text-danger-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition" title="Remove">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
               </div>
             </div>
 
             <!-- Mobile: stacked -->
-            <div class="lg:hidden space-y-3">
+            <div class="lg:hidden p-4 space-y-3">
               <div class="flex items-center gap-2">
                 <div v-if="products.length" class="flex-1">
                   <label class="form-label">Product</label>
@@ -435,10 +439,7 @@ async function submit() {
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                 </button>
               </div>
-              <div>
-                <label class="form-label">Description *</label>
-                <input v-model="it.description" type="text" class="form-input" required />
-              </div>
+              <div><label class="form-label">Description *</label><input v-model="it.description" type="text" class="form-input" required /></div>
               <div class="grid grid-cols-2 gap-2">
                 <div><label class="form-label">Unit</label><select v-model="it.unit" class="form-select"><option v-for="u in units" :key="u">{{ u }}</option></select></div>
                 <div><label class="form-label">Qty</label><input v-model="it.quantity" type="number" min="0.001" step="0.001" class="form-input" /></div>
@@ -458,15 +459,15 @@ async function submit() {
           </div>
         </div>
 
-        <div class="px-4 py-2 border-t border-google-divider lg:hidden">
+        <div class="px-4 py-2.5 border-t border-google-divider">
           <button type="button" @click="addItem" class="w-full py-2.5 text-sm font-semibold text-primary-600 border border-dashed border-primary-200 rounded-xl hover:bg-primary-50">
             + Add another item
           </button>
         </div>
       </div>
 
-      <!-- Notes (main column, compact) -->
-      <div class="form-panel lg:col-span-full">
+      <!-- Row 3: Notes & Terms (full width) -->
+      <div class="form-panel">
         <h2 class="form-panel-title">Notes & terms</h2>
         <div class="grid lg:grid-cols-2 gap-3">
           <div>
@@ -480,31 +481,11 @@ async function submit() {
         </div>
       </div>
 
-      <div v-if="error" class="lg:hidden text-sm text-danger-600 bg-danger-50 border border-danger-100 rounded-xl px-4 py-3 font-medium">{{ error }}</div>
+      <!-- Row 4: Auto-Repeat + Summary side by side -->
+      <div class="grid lg:grid-cols-2 gap-4">
 
-      </div><!-- /form-main -->
-
-      <!-- Sidebar: totals + recurring (sticky on desktop) -->
-      <aside class="form-sidebar">
-        <div class="card-premium p-4 space-y-3">
-          <h2 class="form-panel-title">Summary</h2>
-          <div class="space-y-2 text-sm">
-            <div class="flex justify-between text-google-muted"><span>Subtotal</span><span class="font-semibold text-ink tabular-nums">{{ inr(totals.subtotal) }}</span></div>
-            <div v-if="totals.tax > 0" class="flex justify-between text-google-muted"><span>GST</span><span class="font-semibold text-ink tabular-nums">{{ inr(totals.tax) }}</span></div>
-            <div class="flex justify-between items-center pt-3 border-t border-google-divider">
-              <span class="font-bold text-ink">Grand total</span>
-              <span class="text-2xl font-bold text-primary-600 tabular-nums">{{ inr(totals.total) }}</span>
-            </div>
-          </div>
-          <div class="hidden lg:flex flex-col gap-2 pt-2">
-            <button type="submit" class="btn-primary w-full" :disabled="loading">
-              {{ loading ? 'Saving…' : isEdit ? 'Save changes' : 'Create bill' }}
-            </button>
-            <button type="button" @click="router.back()" class="btn-outline w-full">Cancel</button>
-          </div>
-        </div>
-
-        <div class="form-panel-compact">
+        <!-- Auto-Repeat -->
+        <div class="form-panel">
           <div class="flex items-center justify-between gap-2">
             <div>
               <h2 class="form-panel-title mb-0">Auto-repeat</h2>
@@ -529,8 +510,27 @@ async function submit() {
           </div>
         </div>
 
-        <div v-if="error" class="hidden lg:block text-sm text-danger-600 bg-danger-50 border border-danger-100 rounded-xl px-4 py-3 font-medium">{{ error }}</div>
-      </aside>
+        <!-- Summary -->
+        <div class="card-premium p-4 space-y-3">
+          <h2 class="form-panel-title">Summary</h2>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between text-google-muted"><span>Subtotal</span><span class="font-semibold text-ink tabular-nums">{{ inr(totals.subtotal) }}</span></div>
+            <div v-if="totals.tax > 0" class="flex justify-between text-google-muted"><span>GST</span><span class="font-semibold text-ink tabular-nums">{{ inr(totals.tax) }}</span></div>
+            <div class="flex justify-between items-center pt-3 border-t border-google-divider">
+              <span class="font-bold text-ink">Grand total</span>
+              <span class="text-2xl font-bold text-primary-600 tabular-nums">{{ inr(totals.total) }}</span>
+            </div>
+          </div>
+          <div class="hidden lg:flex flex-col gap-2 pt-1">
+            <button type="submit" class="btn-primary w-full" :disabled="loading">
+              {{ loading ? 'Saving…' : isEdit ? 'Save changes' : 'Create bill' }}
+            </button>
+            <button type="button" @click="router.back()" class="btn-outline w-full">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="error" class="text-sm text-danger-600 bg-danger-50 border border-danger-100 rounded-xl px-4 py-3 font-medium">{{ error }}</div>
 
     </form>
     </div>
