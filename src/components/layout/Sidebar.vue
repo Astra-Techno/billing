@@ -15,44 +15,40 @@ const items = [
 </script>
 
 <template>
-  <nav class="fixed z-50 bottom-0 inset-x-0 bg-white border-t border-google-divider lg:hidden safe-area-pb">
-    <div class="flex items-stretch justify-around max-w-lg mx-auto h-[3.25rem]">
-      <RouterLink
-        v-for="item in items"
-        :key="item.to"
-        :to="item.to"
-        class="flex-1 flex flex-col items-center justify-center gap-0.5 min-w-0 relative"
-        :class="item.primary ? '-mt-3' : ''"
-      >
-        <div
-          v-if="item.primary"
-          class="w-12 h-12 rounded-full bg-primary-600 text-white flex items-center justify-center shadow-gpay-lg ring-4 ring-white"
+  <nav class="fixed z-50 bottom-0 inset-x-0 lg:hidden safe-area-pb">
+    <div class="mx-3 mb-2 rounded-2xl glass border border-white/60 shadow-premium overflow-hidden">
+      <div class="flex items-stretch justify-around h-[3.5rem] px-1">
+        <RouterLink
+          v-for="item in items"
+          :key="item.to"
+          :to="item.to"
+          class="flex-1 flex flex-col items-center justify-center gap-0.5 min-w-0 relative"
+          :class="item.primary ? '-mt-5' : ''"
         >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" :d="item.icon" />
-          </svg>
-        </div>
-        <template v-else>
-          <svg
-            class="w-6 h-6 transition-colors"
-            :class="isActive(item.to) ? 'text-primary-600' : 'text-google-muted'"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.75"
-            viewBox="0 0 24 24"
+          <div
+            v-if="item.primary"
+            class="w-[3.25rem] h-[3.25rem] rounded-2xl text-white flex items-center justify-center bg-fab-premium shadow-premium ring-4 ring-white/90"
           >
-            <path stroke-linecap="round" stroke-linejoin="round" :d="item.icon" />
-          </svg>
-          <span
-            class="text-[10px] font-medium truncate max-w-full px-0.5"
-            :class="isActive(item.to) ? 'text-primary-600' : 'text-google-muted'"
-          >{{ item.label }}</span>
-          <span
-            v-if="isActive(item.to)"
-            class="absolute bottom-1 w-1 h-1 rounded-full bg-primary-600"
-          />
-        </template>
-      </RouterLink>
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2.25" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" :d="item.icon" />
+            </svg>
+          </div>
+          <template v-else>
+            <div
+              class="p-1.5 rounded-xl transition-all duration-200"
+              :class="isActive(item.to) ? 'bg-primary-50 text-primary-600' : 'text-google-muted'"
+            >
+              <svg class="w-[22px] h-[22px]" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" :d="item.icon" />
+              </svg>
+            </div>
+            <span
+              class="text-[10px] font-semibold truncate max-w-full"
+              :class="isActive(item.to) ? 'text-primary-700' : 'text-google-muted'"
+            >{{ item.label }}</span>
+          </template>
+        </RouterLink>
+      </div>
     </div>
   </nav>
 </template>

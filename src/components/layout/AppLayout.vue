@@ -13,15 +13,14 @@ onMounted(() => bizStore.fetchBusiness())
 </script>
 
 <template>
-  <div class="h-[100dvh] w-full max-w-[100vw] flex flex-col bg-white lg:bg-surface-dim overflow-hidden relative font-sans">
-
-    <TopBar class="lg:hidden safe-area-pt" />
+  <div class="app-shell">
+    <TopBar class="lg:hidden safe-area-pt relative z-30" />
     <DesktopHeader />
 
-    <div class="flex-1 flex overflow-hidden">
+    <div class="flex-1 flex overflow-hidden relative z-[1]">
       <DesktopSidebar />
 
-      <main class="flex-1 lg:overflow-hidden overflow-y-auto overflow-x-hidden w-full lg:max-w-none px-0 lg:px-0 pt-0 lg:pt-0 pb-[calc(4.25rem+env(safe-area-inset-bottom))] lg:pb-0 flex flex-col min-h-0 app-main-scroll">
+      <main class="flex-1 lg:overflow-hidden overflow-y-auto overflow-x-hidden w-full lg:max-w-none pt-0 pb-[calc(4.75rem+env(safe-area-inset-bottom))] lg:pb-0 flex flex-col min-h-0 app-main-scroll">
         <RouterView v-slot="{ Component, route }">
           <Transition name="page-fade" mode="out-in">
             <div :key="route.path.split('/')[1]" class="flex-1 flex flex-col min-h-0 h-full">

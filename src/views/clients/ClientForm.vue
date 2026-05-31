@@ -104,13 +104,13 @@ async function submit() {
         <label class="form-label">What type of customer is this?</label>
         <div class="flex gap-3 mt-1">
           <button type="button" @click="form.type='business'"
-            class="flex-1 py-3 rounded-xl text-sm font-medium border-2 transition"
-            :class="form.type==='business' ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'">
+            class="flex-1 py-3.5 rounded-gpay-lg text-sm font-semibold border transition-all duration-200"
+            :class="form.type==='business' ? 'btn-primary !shadow-gpay border-transparent' : 'bg-white text-ink-soft border-google-border hover:border-primary-200 shadow-soft'">
             Business / Shop
           </button>
           <button type="button" @click="form.type='individual'"
-            class="flex-1 py-3 rounded-xl text-sm font-medium border-2 transition"
-            :class="form.type==='individual' ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'">
+            class="flex-1 py-3.5 rounded-gpay-lg text-sm font-semibold border transition-all duration-200"
+            :class="form.type==='individual' ? 'btn-primary !shadow-gpay border-transparent' : 'bg-white text-ink-soft border-google-border hover:border-primary-200 shadow-soft'">
             Individual Person
           </button>
         </div>

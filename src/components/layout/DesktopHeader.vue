@@ -78,7 +78,7 @@ const userInitials = computed(() => {
 </script>
 
 <template>
-  <header class="hidden lg:flex h-[56px] border-b border-google-divider bg-white items-center justify-between px-5 shrink-0 z-50">
+  <header class="hidden lg:flex h-[60px] border-b border-white/60 glass items-center justify-between px-6 shrink-0 z-50 shadow-soft">
       <div class="flex items-center gap-5">
           <div class="flex items-center gap-2.5 font-bold text-gray-900 tracking-tight cursor-pointer select-none" @click="$router.push('/')">
               <div class="w-8 h-8 rounded-full bg-primary-600 shadow-gpay flex items-center justify-center text-white text-xs font-medium">

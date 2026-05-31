@@ -90,14 +90,16 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
 </script>
 
 <template>
-  <header class="bg-white border-b border-google-divider sticky top-0 z-30 w-full">
-    <div class="w-full px-4 py-2.5 flex items-center gap-3">
+  <header class="glass border-b border-white/50 sticky top-0 z-30 w-full shadow-soft">
+    <div class="w-full px-4 py-3 flex items-center gap-3">
 
       <RouterLink to="/settings" class="shrink-0" title="Profile">
-        <div class="w-10 h-10 rounded-full overflow-hidden bg-primary-100 flex items-center justify-center ring-2 ring-white shadow-soft">
-          <img v-if="bizStore.logo" :src="bizStore.logo" class="w-full h-full object-cover" alt="" />
-          <span v-else-if="auth.user?.name" class="text-primary-700 text-sm font-medium">{{ auth.user.name.charAt(0).toUpperCase() }}</span>
-          <span v-else class="text-primary-700 text-sm font-medium">B</span>
+        <div class="w-11 h-11 rounded-2xl overflow-hidden bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center ring-2 ring-white shadow-gpay p-0.5">
+          <div class="w-full h-full rounded-[14px] overflow-hidden bg-white flex items-center justify-center">
+            <img v-if="bizStore.logo" :src="bizStore.logo" class="w-full h-full object-cover" alt="" />
+            <span v-else-if="auth.user?.name" class="text-primary-700 text-sm font-bold">{{ auth.user.name.charAt(0).toUpperCase() }}</span>
+            <span v-else class="text-primary-700 text-sm font-bold">B</span>
+          </div>
         </div>
       </RouterLink>
 
@@ -105,7 +107,7 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
 
         <!-- Trigger (closed state) -->
         <div v-if="!open"
-          class="flex items-center gap-2.5 text-sm text-google-muted bg-surface-muted rounded-full px-4 py-2.5 cursor-text hover:bg-google-divider/50 transition-colors select-none w-full"
+          class="flex items-center gap-2.5 text-sm text-google-muted bg-white/70 rounded-full px-4 py-3 cursor-text border border-white/80 shadow-soft hover:shadow-gpay transition-all select-none w-full"
           @click="openSearch">
           <svg class="w-4 h-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>

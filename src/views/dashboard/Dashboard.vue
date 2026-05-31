@@ -90,30 +90,65 @@ const firstName = computed(() => {
   <div class="gpay-screen overflow-y-auto custom-scrollbar">
       <div class="lg:px-8 lg:pt-8 lg:pb-10 max-w-[1280px] lg:mx-auto w-full animate-doc">
 
-          <!-- Mobile: Google Pay style home header -->
-          <div class="px-4 pt-4 pb-2 lg:hidden">
-              <p class="text-sm text-google-muted">Hi, {{ firstName }}</p>
-              <h1 class="text-[26px] font-normal text-google-text mt-0.5">Business overview</h1>
+          <!-- Mobile: premium home -->
+          <div class="px-4 pt-5 pb-1 lg:hidden">
+              <p class="text-xs font-semibold text-primary-600 uppercase tracking-widest">Welcome back</p>
+              <h1 class="page-title mt-1">{{ firstName }}</h1>
+              <p class="page-subtitle">Your business at a glance</p>
           </div>
 
-          <!-- Hero balance (mobile) -->
-          <div class="px-4 lg:hidden mb-4">
-              <div class="gpay-hero-balance cursor-pointer" @click="router.push('/invoices?status=sent')">
-                  <p class="text-white/80 text-sm">Pending to collect</p>
-                  <p class="text-[32px] font-normal tabular-nums mt-1 leading-none">{{ inr(stats.total_due || 0) }}</p>
-                  <p class="text-white/70 text-xs mt-3">{{ inr(stats.total_paid_month || 0) }} collected this month</p>
+          <div class="px-4 lg:hidden mb-5">
+              <div class="gpay-hero-balance" @click="router.push('/invoices?status=sent')">
+                  <div class="relative z-10">
+                      <div class="flex items-start justify-between">
+                          <p class="text-white/85 text-sm font-medium">Pending to collect</p>
+                          <span v-if="stats.overdue_count > 0" class="text-[10px] font-bold uppercase tracking-wide bg-white/20 backdrop-blur px-2 py-1 rounded-full">
+                              {{ stats.overdue_count }} overdue
+                          </span>
+                      </div>
+                      <p class="display-amount text-white mt-2">{{ inr(stats.total_due || 0) }}</p>
+                      <div class="flex gap-6 mt-5 pt-4 border-t border-white/15">
+                          <div>
+                              <p class="text-white/60 text-[11px] font-medium uppercase tracking-wide">Collected</p>
+                              <p class="text-lg font-bold text-white tabular-nums mt-0.5">{{ inrCompact(stats.total_paid_month || 0) }}</p>
+                          </div>
+                          <div>
+                              <p class="text-white/60 text-[11px] font-medium uppercase tracking-wide">Expenses</p>
+                              <p class="text-lg font-bold text-white tabular-nums mt-0.5">{{ inrCompact(stats.total_expenses_month || 0) }}</p>
+                          </div>
+                      </div>
+                  </div>
               </div>
           </div>
 
-          <!-- Quick actions chips (mobile) -->
-          <div class="flex gap-2 overflow-x-auto hide-scrollbar px-4 pb-4 lg:hidden">
-              <button type="button" class="gpay-chip flex items-center gap-2" @click="router.push('/invoices/new')">
-                  <span class="w-8 h-8 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center text-lg leading-none">+</span>
-                  New bill
-              </button>
-              <button type="button" class="gpay-chip" @click="router.push('/clients/new')">Add customer</button>
-              <button type="button" class="gpay-chip" @click="router.push('/expenses/new')">Expense</button>
-              <button type="button" class="gpay-chip" @click="router.push('/invoices')">All bills</button>
+          <div class="px-4 pb-5 lg:hidden">
+              <p class="section-title mb-3 px-0">Quick actions</p>
+              <div class="flex gap-3 overflow-x-auto hide-scrollbar pb-1">
+                  <button type="button" class="gpay-action-tile" @click="router.push('/invoices/new')">
+                      <div class="gpay-action-tile-icon">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                      </div>
+                      <span class="text-[11px] font-semibold text-ink-soft">New bill</span>
+                  </button>
+                  <button type="button" class="gpay-action-tile" @click="router.push('/clients/new')">
+                      <div class="gpay-action-tile-icon !bg-gradient-to-br from-accent-teal to-emerald-600">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                      </div>
+                      <span class="text-[11px] font-semibold text-ink-soft">Customer</span>
+                  </button>
+                  <button type="button" class="gpay-action-tile" @click="router.push('/expenses/new')">
+                      <div class="gpay-action-tile-icon !bg-gradient-to-br from-amber-400 to-orange-500">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                      </div>
+                      <span class="text-[11px] font-semibold text-ink-soft">Expense</span>
+                  </button>
+                  <button type="button" class="gpay-action-tile" @click="router.push('/reports')">
+                      <div class="gpay-action-tile-icon !bg-gradient-to-br from-violet-500 to-purple-600">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                      </div>
+                      <span class="text-[11px] font-semibold text-ink-soft">Reports</span>
+                  </button>
+              </div>
           </div>
 
           <!-- Desktop header -->
@@ -194,37 +229,48 @@ const firstName = computed(() => {
           </div>
 
           <!-- Mobile: Recent activity -->
-          <div class="lg:hidden mt-2 bg-white border-t border-google-divider">
-              <div class="flex items-center justify-between px-4 py-3">
-                  <h2 class="text-base font-medium text-google-text">Recent bills</h2>
-                  <RouterLink to="/invoices" class="text-sm text-primary-600 font-medium">See all</RouterLink>
-              </div>
-              <div v-if="loading" class="py-8 flex justify-center">
-                  <div class="w-6 h-6 border-2 border-primary-100 border-t-primary-600 rounded-full animate-spin"></div>
-              </div>
-              <div v-else-if="!recent.length" class="px-4 py-8 text-center text-google-muted text-sm">No invoices yet</div>
-              <div v-else>
-                  <div
-                    v-for="inv in recent.slice(0, 8)"
-                    :key="inv.id"
-                    class="gpay-activity-row"
-                    @click="router.push(`/invoices/${inv.id}`)"
-                  >
-                      <div class="gpay-activity-icon" :class="avatarColor(inv.client_name)">
-                          {{ inv.client_name?.charAt(0)?.toUpperCase() }}
+          <div class="lg:hidden px-4 pb-8">
+              <div class="gpay-section-card !mx-0">
+                  <div class="flex items-center justify-between px-4 py-4 border-b border-google-divider/60">
+                      <h2 class="text-base font-bold text-ink">Recent activity</h2>
+                      <RouterLink to="/invoices" class="text-sm text-primary-600 font-semibold">See all</RouterLink>
+                  </div>
+                  <div v-if="loading" class="py-10 flex justify-center">
+                      <div class="w-7 h-7 border-2 border-primary-100 border-t-primary-600 rounded-full animate-spin"></div>
+                  </div>
+                  <div v-else-if="!recent.length" class="px-4 py-10 text-center">
+                      <div class="w-14 h-14 rounded-2xl bg-primary-50 text-primary-600 flex items-center justify-center mx-auto mb-3">
+                          <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                       </div>
-                      <div class="flex-1 min-w-0">
-                          <p class="text-[15px] text-google-text truncate">{{ inv.client_name }}</p>
-                          <p class="text-xs text-google-muted mt-0.5">{{ inv.number }} · {{ fmtDateShort(inv.issue_date) }}</p>
-                      </div>
-                      <div class="text-right shrink-0">
-                          <p class="text-[15px] font-medium tabular-nums text-google-text">{{ inr(inv.total) }}</p>
-                          <span class="text-[11px] font-medium" :class="{
-                            'text-pay-green': inv.status === 'paid',
-                            'text-danger-500': inv.status === 'overdue',
-                            'text-google-muted': inv.status === 'draft',
-                            'text-primary-600': inv.status === 'sent',
-                          }">{{ inv.status }}</span>
+                      <p class="font-semibold text-ink">No bills yet</p>
+                      <p class="text-sm text-google-muted mt-1">Create your first invoice</p>
+                      <button type="button" class="btn-primary btn-sm mt-4" @click="router.push('/invoices/new')">New bill</button>
+                  </div>
+                  <div v-else>
+                      <div
+                        v-for="(inv, idx) in recent.slice(0, 8)"
+                        :key="inv.id"
+                        class="gpay-activity-row"
+                        :class="{ 'list-item-1': idx < 4 }"
+                        :style="idx >= 4 ? {} : { animationDelay: (idx * 0.05) + 's' }"
+                        @click="router.push(`/invoices/${inv.id}`)"
+                      >
+                          <div class="premium-avatar w-12 h-12 text-sm" :class="avatarColor(inv.client_name)">
+                              {{ inv.client_name?.charAt(0)?.toUpperCase() }}
+                          </div>
+                          <div class="flex-1 min-w-0">
+                              <p class="text-[15px] font-semibold text-ink truncate">{{ inv.client_name }}</p>
+                              <p class="text-xs text-google-muted mt-0.5">{{ inv.number }} · {{ fmtDateShort(inv.issue_date) }}</p>
+                          </div>
+                          <div class="text-right shrink-0">
+                              <p class="text-[15px] font-bold tabular-nums text-ink">{{ inr(inv.total) }}</p>
+                              <span class="badge mt-1" :class="{
+                                'badge-green': inv.status === 'paid',
+                                'badge-red': inv.status === 'overdue',
+                                'badge-gray': inv.status === 'draft',
+                                'badge-blue': inv.status === 'sent' || inv.status === 'partial',
+                              }">{{ inv.status }}</span>
+                          </div>
                       </div>
                   </div>
               </div>
