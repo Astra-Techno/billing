@@ -194,7 +194,20 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="gpay-screen px-4 py-4 max-w-3xl lg:mx-auto space-y-5 pt-2 sm:pt-4">
+  <div class="gpay-screen px-4 py-4 max-w-3xl lg:mx-auto space-y-5 pt-2 sm:pt-4 pb-24">
+
+    <!-- Sticky Header: Invozen mockup style on mobile -->
+    <div v-if="invoice" class="lg:hidden sticky top-0 z-30 bg-[#1a56db] text-white flex items-center justify-between gap-3 px-4 py-3 shrink-0 shadow-sm -mx-4 -mt-4 mb-4">
+      <div class="flex items-center gap-3">
+        <button type="button" @click="router.back()" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 text-white">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <span class="text-base font-semibold">Invoice Preview</span>
+      </div>
+      <RouterLink :to="`/invoices/${invoice.id}/edit`" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 text-white">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+      </RouterLink>
+    </div>
 
     <div v-if="loading" class="flex justify-center p-12">
       <div class="w-8 h-8 border-4 border-primary-100 border-t-primary-600 rounded-full animate-spin"></div>
@@ -202,8 +215,25 @@ onMounted(load)
 
     <template v-else-if="invoice">
 
-      <!-- Premium Header Card -->
-      <div class="bg-gradient-to-br from-white to-gray-50/80 rounded-[2rem] p-6 sm:p-8 shadow-md shadow-gray-200/50 border border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative overflow-hidden animate-fade-in-up mt-2 mb-6">
+      <!-- Success Badge (Invozen Preview Mockup Style) -->
+      <div v-if="route.query.newly_created === 'true'" class="w-full bg-white rounded-[2rem] border border-gray-100 p-6 text-center space-y-4 shadow-sm animate-fade-in-up">
+        <!-- checkmark in dashed circle -->
+        <div class="relative w-16 h-16 mx-auto flex items-center justify-center">
+          <!-- dotted outer ring -->
+          <div class="absolute inset-0 rounded-full border-2 border-dashed border-emerald-400 animate-spin" style="animation-duration: 20s;"></div>
+          <!-- inner green circle with check -->
+          <div class="w-12 h-12 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-500 shadow-sm">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          </div>
+        </div>
+        <div>
+          <h2 class="text-lg font-black text-gray-900 tracking-tight">Your Invoice Is Ready</h2>
+          <p class="text-xs text-gray-400 mt-1">Print the invoice or send it to your customer</p>
+        </div>
+      </div>
+
+      <!-- Premium Header Card (Hidden on Mobile if newly created success card is showing) -->
+      <div v-if="route.query.newly_created !== 'true'" class="bg-gradient-to-br from-white to-gray-50/80 rounded-[2rem] p-6 sm:p-8 shadow-md shadow-gray-200/50 border border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative overflow-hidden animate-fade-in-up mt-2 mb-6">
         <!-- decorative background blur -->
         <div class="absolute -top-10 -right-10 w-40 h-40 bg-primary-100 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
 
@@ -236,8 +266,8 @@ onMounted(load)
         </div>
       </div>
 
-      <!-- Unified Action Bar -->
-      <div v-if="invoice.status !== 'cancelled'" class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 mb-8 animate-fade-in-up delay-75 z-20 relative">
+      <!-- Unified Action Bar (Desktop / Tablet view) -->
+      <div v-if="invoice.status !== 'cancelled'" class="hidden lg:flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 mb-8 animate-fade-in-up delay-75 z-20 relative">
         <!-- Primary Action -->
         <button v-if="invoice.status === 'draft'" @click="markSent" :disabled="acting"
           class="flex items-center justify-center gap-2 px-6 py-3.5 bg-primary-600 text-white font-bold text-sm rounded-xl shadow-gpay hover:bg-primary-700 hover:shadow-lg transition-all active:scale-95 shrink-0">
@@ -330,7 +360,7 @@ onMounted(load)
         </div>
       </div>
 
-      <!-- Invoice body — proper Indian GST Tax Invoice -->
+      <!-- Invoice body — proper Indian GST Tax Invoice (Acts as scaled-down A4 document preview) -->
       <div class="bg-white rounded-[2rem] shadow-xl shadow-gray-200/40 border border-gray-100 ring-1 ring-black/5 overflow-hidden animate-fade-in-up delay-150">
 
         <!-- Top: TAX INVOICE title row + Business info row -->
@@ -435,7 +465,7 @@ onMounted(load)
         <div class="p-5 border-t border-gray-200 flex flex-col sm:flex-row gap-6">
           <!-- Amount in words -->
           <div class="flex-1">
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Amount in Words</p>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 pt-1">Amount in Words</p>
             <p class="text-sm font-medium text-gray-700 italic">{{ amountInWords(invoice.total) }}</p>
           </div>
           <!-- Totals -->
@@ -506,6 +536,27 @@ onMounted(load)
       </div>
 
     </template>
+
+    <!-- Mobile Floating Circular Action Buttons (Invozen Preview Mockup Style) -->
+    <div v-if="invoice && invoice.status !== 'cancelled'" class="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-gray-900/90 backdrop-blur-md px-4 py-2.5 rounded-full shadow-2xl flex items-center gap-4 border border-white/10">
+      <!-- Print -->
+      <button @click="printInvoice" class="w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center hover:bg-white/20 transition active:scale-95" title="Print Invoice">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+      </button>
+      <!-- Download PDF -->
+      <button @click="downloadPdf" :disabled="downloading" class="w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center hover:bg-white/20 transition active:scale-95" title="Download PDF">
+        <svg v-if="downloading" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+        <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+      </button>
+      <!-- WhatsApp Share -->
+      <button @click="shareWhatsApp" class="w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center hover:bg-white/20 transition active:scale-95" title="Share via WhatsApp">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.137.565 4.147 1.554 5.887L0 24l6.305-1.524A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.375l-.359-.214-3.735.902.948-3.632-.234-.373A9.818 9.818 0 1112 21.818z"/></svg>
+      </button>
+      <!-- Edit Link -->
+      <RouterLink :to="`/invoices/${invoice.id}/edit`" class="w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center hover:bg-white/20 transition active:scale-95" title="Edit Invoice">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+      </RouterLink>
+    </div>
 
     <!-- Record Payment Modal -->
     <div v-if="showPayModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40">
