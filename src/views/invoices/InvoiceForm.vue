@@ -342,8 +342,8 @@ async function submit() {
                       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
                       <input v-model="it.unit_price" type="number" min="0" step="0.01" class="inv-input pl-7 text-right tabular-nums !bg-white" placeholder="0.00" />
                     </div>
-                    <select v-model="it.gst_rate" class="inv-select text-center text-xs !bg-white" :disabled="form.invoice_type === 'bill_of_supply'">
-                      <option v-for="r in gstRates" :key="r" :value="r">{{ form.invoice_type === 'bill_of_supply' ? '0%' : r + '%' }} GST</option>
+                    <select v-model="it.gst_rate" class="inv-select text-center text-xs !bg-white">
+                      <option v-for="r in gstRates" :key="r" :value="r">{{ r }}% GST</option>
                     </select>
                   </div>
 
@@ -381,8 +381,8 @@ async function submit() {
                   <div><label class="inv-label">Price (₹)</label><input v-model="it.unit_price" type="number" min="0" step="0.01" class="inv-input w-full" /></div>
                   <div>
                     <label class="inv-label">GST</label>
-                    <select v-model="it.gst_rate" class="inv-select w-full" :disabled="form.invoice_type === 'bill_of_supply'">
-                      <option v-for="r in gstRates" :key="r" :value="r">{{ form.invoice_type === 'bill_of_supply' ? 'No GST' : r + '%' }}</option>
+                    <select v-model="it.gst_rate" class="inv-select w-full">
+                      <option v-for="r in gstRates" :key="r" :value="r">{{ r }}%</option>
                     </select>
                   </div>
                 </div>
