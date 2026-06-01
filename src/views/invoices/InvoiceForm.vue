@@ -301,51 +301,51 @@ async function submit() {
               <span class="text-xs text-gray-400">{{ form.items.length }} item{{ form.items.length > 1 ? 's' : '' }}</span>
             </div>
 
-            <!-- Desktop table -->
+            <!-- Desktop table (Redesigned Grid) -->
             <div class="hidden lg:block">
-              <!-- Header -->
-              <div class="inv-items-th">
-                <span>Items</span>
-                <span class="text-center">QTY</span>
-                <span class="text-center">Unit</span>
-                <span class="text-right">Price (₹)</span>
-                <span class="text-center">GST</span>
-                <span class="text-right">Amount</span>
-                <span></span>
+              <!-- Table Header -->
+              <div class="grid grid-cols-12 gap-4 px-5 py-2.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-gray-50 border-b border-gray-100">
+                <span class="col-span-5">Items</span>
+                <span class="col-span-2 text-center">QTY / Unit</span>
+                <span class="col-span-3 text-right">Price / Tax</span>
+                <span class="col-span-2 text-right pr-2">Amount</span>
               </div>
               <!-- Rows -->
-              <div class="divide-y divide-gray-50">
-                <div v-for="(it, i) in form.items" :key="i" class="inv-item-row">
-                  <!-- Item name + optional product picker -->
-                  <div class="space-y-1 min-w-0">
-                    <input v-model="it.description" type="text" class="inv-input font-medium" placeholder="Enter item name or description" required />
-                    <select v-if="products.length" v-model="it.product_id" class="inv-select text-xs text-gray-400 w-full" @change="pickProduct(i, it.product_id)">
+              <div class="divide-y divide-gray-100">
+                <div v-for="(it, i) in form.items" :key="i" class="grid grid-cols-12 gap-4 px-5 py-4 items-start hover:bg-gray-50/20 transition-colors">
+                  <!-- Column 1: Item details + product picker -->
+                  <div class="col-span-5 space-y-2">
+                    <input v-model="it.description" type="text" class="inv-input font-medium !bg-white" placeholder="Enter item name or description" required />
+                    <select v-if="products.length" v-model="it.product_id" class="inv-select text-xs text-gray-400 w-full !bg-white" @change="pickProduct(i, it.product_id)">
                       <option :value="null">— Select from products —</option>
                       <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
                     </select>
                   </div>
-                  <div>
-                    <input v-model="it.quantity" type="number" min="0.001" step="0.001" class="inv-input text-center tabular-nums" />
-                  </div>
-                  <div>
-                    <select v-model="it.unit" class="inv-select text-center">
+
+                  <!-- Column 2: QTY + Unit -->
+                  <div class="col-span-2 space-y-2">
+                    <input v-model="it.quantity" type="number" min="0.001" step="0.001" class="inv-input text-center tabular-nums !bg-white" />
+                    <select v-model="it.unit" class="inv-select text-center text-xs !bg-white">
                       <option v-for="u in units" :key="u">{{ u }}</option>
                     </select>
                   </div>
-                  <div>
-                    <input v-model="it.unit_price" type="number" min="0" step="0.01" class="inv-input text-right tabular-nums" placeholder="0.00" />
-                  </div>
-                  <div>
-                    <select v-model="it.gst_rate" class="inv-select text-center" :disabled="form.invoice_type === 'bill_of_supply'">
-                      <option v-for="r in gstRates" :key="r" :value="r">{{ form.invoice_type === 'bill_of_supply' ? '0%' : r + '%' }}</option>
+
+                  <!-- Column 3: Price + Tax/GST -->
+                  <div class="col-span-3 space-y-2">
+                    <div class="relative">
+                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
+                      <input v-model="it.unit_price" type="number" min="0" step="0.01" class="inv-input pl-7 text-right tabular-nums !bg-white" placeholder="0.00" />
+                    </div>
+                    <select v-model="it.gst_rate" class="inv-select text-center text-xs !bg-white" :disabled="form.invoice_type === 'bill_of_supply'">
+                      <option v-for="r in gstRates" :key="r" :value="r">{{ form.invoice_type === 'bill_of_supply' ? '0%' : r + '%' }} GST</option>
                     </select>
                   </div>
-                  <div class="flex items-center justify-end">
-                    <span class="text-sm font-semibold text-gray-800 tabular-nums">{{ inr(lineTotal(it)) }}</span>
-                  </div>
-                  <div class="flex items-center justify-center">
+
+                  <!-- Column 4: calculated line amount + remove button -->
+                  <div class="col-span-2 flex flex-col items-end justify-between h-[86px] py-1">
+                    <span class="text-sm font-semibold text-gray-800 tabular-nums pr-2">{{ inr(lineTotal(it)) }}</span>
                     <button v-if="form.items.length > 1" type="button" @click="removeItem(i)"
-                      class="w-7 h-7 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="Remove">
+                      class="mr-1 w-7 h-7 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="Remove">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     </button>
                   </div>

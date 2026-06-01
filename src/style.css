@@ -340,20 +340,12 @@
   .inv-card {
     @apply bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden;
   }
-  .inv-items-th {
-    @apply grid gap-x-2 px-5 py-2.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-gray-50 border-b border-gray-100;
-    grid-template-columns: 3fr 1fr 1.2fr 1.8fr 1.2fr 1.8fr 2rem;
-  }
-  .inv-item-row {
-    @apply grid gap-x-2 px-5 py-3 items-start;
-    grid-template-columns: 3fr 1fr 1.2fr 1.8fr 1.2fr 1.8fr 2rem;
-  }
-  .inv-item-row input[type=number]::-webkit-outer-spin-button,
-  .inv-item-row input[type=number]::-webkit-inner-spin-button {
+  .inv-shell input[type=number]::-webkit-outer-spin-button,
+  .inv-shell input[type=number]::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
   }
-  .inv-item-row input[type=number] { -moz-appearance: textfield; }
+  .inv-shell input[type=number] { -moz-appearance: textfield; }
   .inv-input {
     @apply w-full text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400 transition;
   }
