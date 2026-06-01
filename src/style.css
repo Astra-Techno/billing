@@ -229,12 +229,19 @@
   /* Invoice line items table — explicit column widths */
   .invoice-items-header {
     @apply hidden lg:grid gap-2 px-4 py-2 text-[10px] font-bold text-google-muted uppercase tracking-wider bg-surface-dim/60 border-b border-google-divider;
-    grid-template-columns: 1.8fr 2fr 90px 75px 110px 80px 110px 36px;
+    grid-template-columns: 1.8fr 2fr 90px 90px 130px 90px 120px 36px;
   }
   .invoice-items-row {
     @apply gap-2 px-4 py-2.5 items-center;
-    grid-template-columns: 1.8fr 2fr 90px 75px 110px 80px 110px 36px;
+    grid-template-columns: 1.8fr 2fr 90px 90px 130px 90px 120px 36px;
   }
+  /* Hide number spinners inside line items to prevent overlap */
+  .invoice-items-row input[type=number]::-webkit-outer-spin-button,
+  .invoice-items-row input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .invoice-items-row input[type=number] { -moz-appearance: textfield; }
   .split-pane-right {
     @apply flex-1 flex flex-col min-h-0 overflow-hidden bg-surface-dim/30;
   }
