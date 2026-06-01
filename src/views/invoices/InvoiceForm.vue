@@ -125,8 +125,12 @@ const form = ref({
 })
 
 const units        = ['Nos', 'Kg', 'Ltr', 'Hrs', 'Pcs', 'Mtr', 'Box', 'Set', 'Pair']
-const countableUnits = new Set(['Nos', 'Pcs', 'Box', 'Set', 'Pair'])
-function qtyStep(unit) { return countableUnits.has(unit) ? 1 : 0.001 }
+function qtyStep(unit) {
+  if (['Nos', 'Pcs', 'Box', 'Set', 'Pair'].includes(unit)) return 1
+  if (unit === 'Hrs') return 0.5
+  if (['Kg', 'Ltr', 'Mtr'].includes(unit)) return 0.1
+  return 1
+}
 const gstRates     = [0, 5, 12, 18, 28]
 const recurPeriods = ['day', 'week', 'month', 'year']
 const totals       = computed(() => calcInvoice(form.value.items))
