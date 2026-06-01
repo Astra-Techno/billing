@@ -44,7 +44,6 @@ onMounted(async () => {
     const sid = bizRes.data?.data?.state_id
     if (sid) businessStore.setStateId(sid)
     form.value.state_id = businessStore.stateId || ''
-
   }
 
   if (isEdit.value) {
@@ -86,157 +85,203 @@ async function submit() {
 </script>
 
 <template>
-  <div class="gpay-screen max-w-2xl lg:mx-auto px-4 py-4 space-y-4">
-    <div class="flex items-center gap-3">
-      <button type="button" @click="router.back()" class="p-2 -ml-2 rounded-full hover:bg-surface-muted">
-        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-      </button>
-      <div>
-        <h1 class="page-title">{{ isEdit ? 'Edit Customer' : 'Add New Customer' }}</h1>
-        <p class="text-sm text-gray-500 mt-0.5">{{ isEdit ? 'Update customer information' : 'Save your customer\'s details for quick billing' }}</p>
+  <div class="inv-shell">
+    <!-- Toolbar -->
+    <div class="inv-toolbar">
+      <div class="flex items-center gap-3 min-w-0">
+        <button type="button" @click="router.back()" class="inv-back-btn">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="inv-page-title">{{ isEdit ? 'Edit Customer' : 'Add New Customer' }}</h1>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" @click="router.back()" class="inv-btn-secondary hidden sm:inline-flex">Cancel</button>
+        <button type="submit" form="client-form" class="inv-btn-primary" :disabled="loading">
+          {{ loading ? 'Saving…' : (isEdit ? 'Save Changes' : 'Add Customer') }}
+        </button>
       </div>
     </div>
 
-    <form @submit.prevent="submit" class="space-y-5">
-
-      <!-- Type toggle -->
-      <div class="card card-body">
-        <label class="form-label">What type of customer is this?</label>
-        <div class="flex gap-3 mt-1">
-          <button type="button" @click="form.type='business'"
-            class="flex-1 py-3.5 rounded-gpay-lg text-sm font-semibold border transition-all duration-200"
-            :class="form.type==='business' ? 'btn-primary !shadow-gpay border-transparent' : 'bg-white text-ink-soft border-google-border hover:border-primary-200 shadow-soft'">
-            Business / Shop
-          </button>
-          <button type="button" @click="form.type='individual'"
-            class="flex-1 py-3.5 rounded-gpay-lg text-sm font-semibold border transition-all duration-200"
-            :class="form.type==='individual' ? 'btn-primary !shadow-gpay border-transparent' : 'bg-white text-ink-soft border-google-border hover:border-primary-200 shadow-soft'">
-            Individual Person
-          </button>
-        </div>
-      </div>
-
-      <!-- Required: Name + Mobile -->
-      <div class="card card-body space-y-4">
-        <h2 class="section-title">Basic Details</h2>
-        <div class="grid sm:grid-cols-2 gap-4">
-          <div class="sm:col-span-2">
-            <label class="form-label">{{ form.type === 'business' ? 'Business Name' : 'Full Name' }} *</label>
-            <input v-model="form.name" type="text" class="form-input" required :placeholder="form.type === 'business' ? 'e.g. Sharma Traders' : 'e.g. Rajesh Kumar'" />
+    <!-- Body -->
+    <div class="inv-body">
+      <form id="client-form" @submit.prevent="submit" class="inv-layout">
+        <!-- Main Column -->
+        <div class="inv-main">
+          <div v-if="error" class="text-sm text-danger-600 bg-danger-50 border border-danger-100 rounded-xl px-4 py-3 font-medium">
+            {{ error }}
           </div>
-          <div v-if="form.type === 'business'">
-            <label class="form-label">Owner / Contact Person</label>
-            <input v-model="form.company" type="text" class="form-input" placeholder="Owner or manager name" />
-          </div>
-          <div>
-            <label class="form-label">Mobile Number *</label>
-            <input v-model="form.mobile" type="tel" class="form-input" placeholder="9876543210" maxlength="10" />
-          </div>
-        </div>
 
-        <!-- "More Details" toggle -->
-        <button type="button" @click="showMore = !showMore"
-          class="flex items-center gap-2 text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors mt-1">
-          <svg class="w-4 h-4 transition-transform" :class="showMore ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-          {{ showMore ? 'Hide extra details' : 'Add email, GST, address…' }}
-        </button>
-      </div>
+          <!-- Basic Details Card -->
+          <div class="inv-card p-5 space-y-4">
+            <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider mb-2">Basic Details</h2>
+            
+            <div class="grid sm:grid-cols-2 gap-4">
+              <div class="sm:col-span-2">
+                <label class="inv-label">{{ form.type === 'business' ? 'Business Name' : 'Full Name' }} *</label>
+                <input v-model="form.name" type="text" class="inv-input !bg-white" required :placeholder="form.type === 'business' ? 'e.g. Sharma Traders' : 'e.g. Rajesh Kumar'" />
+              </div>
+              
+              <div v-if="form.type === 'business'">
+                <label class="inv-label">Owner / Contact Person</label>
+                <input v-model="form.company" type="text" class="inv-input !bg-white" placeholder="Owner or manager name" />
+              </div>
+              
+              <div>
+                <label class="inv-label">Mobile Number *</label>
+                <input v-model="form.mobile" type="tel" class="inv-input !bg-white" placeholder="9876543210" maxlength="10" required />
+              </div>
+            </div>
 
-      <!-- Optional details (expandable) -->
-      <template v-if="showMore">
-        <div class="card card-body space-y-4">
-          <h2 class="section-title">Contact & Tax</h2>
-          <div class="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label class="form-label">Email Address</label>
-              <input v-model="form.email" type="email" class="form-input" placeholder="email@example.com" />
+            <!-- "More Details" Toggle -->
+            <div class="pt-2">
+              <button type="button" @click="showMore = !showMore" class="flex items-center gap-2 text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors">
+                <svg class="w-4 h-4 transition-transform" :class="showMore ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                </svg>
+                {{ showMore ? 'Hide Contact & Tax Details' : 'Add email, GST, PAN & Address details…' }}
+              </button>
             </div>
-            <div>
-              <label class="form-label">GST Number <span class="text-gray-400 font-normal">(if registered)</span></label>
-              <input v-model="form.gstin" type="text" @blur="validateGstin"
-                class="form-input font-mono uppercase" :class="gstinError ? 'border-red-400 focus:ring-red-200' : ''"
-                placeholder="e.g. 27AABCU9603R1Z6" maxlength="15" />
-              <p v-if="gstinError" class="text-xs text-red-500 mt-1">{{ gstinError }}</p>
+          </div>
+
+          <!-- Optional contact & tax details (expandable) -->
+          <div v-if="showMore" class="space-y-4 animate-fade-in-up">
+            <!-- Contact & Tax -->
+            <div class="inv-card p-5 space-y-4">
+              <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider mb-2">Tax & Contact Details</h2>
+              <div class="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="inv-label">Email Address</label>
+                  <input v-model="form.email" type="email" class="inv-input !bg-white" placeholder="email@example.com" />
+                </div>
+                
+                <div>
+                  <label class="inv-label">GST Number <span class="text-gray-400 font-normal">(if registered)</span></label>
+                  <input v-model="form.gstin" type="text" @blur="validateGstin"
+                    class="inv-input font-mono uppercase !bg-white" :class="gstinError ? 'border-red-400 focus:ring-red-200' : ''"
+                    placeholder="e.g. 27AABCU9603R1Z6" maxlength="15" />
+                  <p v-if="gstinError" class="text-xs text-red-500 mt-1">{{ gstinError }}</p>
+                </div>
+                
+                <div>
+                  <label class="inv-label">PAN Number</label>
+                  <input v-model="form.pan" type="text" class="inv-input font-mono uppercase !bg-white" placeholder="e.g. AABCU9603R" maxlength="10" />
+                </div>
+              </div>
             </div>
-            <div>
-              <label class="form-label">PAN Number</label>
-              <input v-model="form.pan" type="text" class="form-input font-mono uppercase" placeholder="e.g. AABCU9603R" maxlength="10" />
+
+            <!-- Address -->
+            <div class="inv-card p-5 space-y-4">
+              <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider mb-2">Billing Address</h2>
+              <div class="grid sm:grid-cols-2 gap-4">
+                <div class="sm:col-span-2">
+                  <label class="inv-label">Street / Shop Number</label>
+                  <input v-model="form.address_line1" type="text" class="inv-input !bg-white" placeholder="e.g. Shop No. 12, Main Market" />
+                </div>
+                
+                <div class="sm:col-span-2">
+                  <label class="inv-label">Area / Locality</label>
+                  <input v-model="form.address_line2" type="text" class="inv-input !bg-white" placeholder="e.g. Near Bus Stand, Gandhi Road" />
+                </div>
+                
+                <div>
+                  <label class="inv-label">City</label>
+                  <input v-model="form.city" type="text" class="inv-input !bg-white" placeholder="Mumbai" />
+                </div>
+                
+                <div>
+                  <label class="inv-label">PIN Code</label>
+                  <input v-model="form.pincode" type="text" class="inv-input !bg-white" placeholder="400001" maxlength="6" />
+                </div>
+                
+                <div class="sm:col-span-2">
+                  <label class="inv-label">State</label>
+                  <select v-model="form.state_id" class="inv-select !bg-white">
+                    <option value="">Select State</option>
+                    <option v-for="s in states" :key="s.id" :value="s.id">{{ s.name }}</option>
+                  </select>
+                </div>
+              </div>
             </div>
-            <div>
-              <label class="form-label">Payment Terms <span class="text-gray-400 font-normal text-xs">(days to pay)</span></label>
-              <div class="flex items-center gap-2">
-                <input v-model="form.credit_days" type="number" class="form-input" min="0" max="365" />
-                <span class="text-sm text-gray-500 shrink-0">days</span>
+
+            <!-- Primary contact (optional) -->
+            <div class="inv-card p-5 space-y-4">
+              <div>
+                <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider">Additional Contact Person</h2>
+                <p class="text-xs text-gray-400 mt-0.5">Add a billing or accounts contact for this customer</p>
+              </div>
+              <div class="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="inv-label">Contact Name</label>
+                  <input v-model="form.contact_name" type="text" class="inv-input !bg-white" placeholder="e.g. Priya Sharma" />
+                </div>
+                
+                <div>
+                  <label class="inv-label">Role / Designation</label>
+                  <input v-model="form.contact_designation" type="text" class="inv-input !bg-white" placeholder="e.g. Accounts Manager" />
+                </div>
+                
+                <div>
+                  <label class="inv-label">Mobile</label>
+                  <input v-model="form.contact_mobile" type="tel" class="inv-input !bg-white" placeholder="9876543210" />
+                </div>
+                
+                <div>
+                  <label class="inv-label">Email</label>
+                  <input v-model="form.contact_email" type="email" class="inv-input !bg-white" placeholder="contact@example.com" />
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Address -->
-        <div class="card card-body space-y-4">
-          <h2 class="section-title">Address <span class="text-gray-400 font-normal text-sm">(for bills)</span></h2>
-          <div class="grid sm:grid-cols-2 gap-4">
-            <div class="sm:col-span-2">
-              <label class="form-label">Street / Shop Number</label>
-              <input v-model="form.address_line1" type="text" class="form-input" placeholder="e.g. Shop No. 12, Main Market" />
-            </div>
-            <div class="sm:col-span-2">
-              <label class="form-label">Area / Locality</label>
-              <input v-model="form.address_line2" type="text" class="form-input" placeholder="e.g. Near Bus Stand, Gandhi Road" />
-            </div>
+        <!-- Sidebar Column -->
+        <div class="inv-sidebar">
+          <!-- Customer Type / Settings -->
+          <div class="inv-card p-5 space-y-4">
+            <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider mb-2">Customer Profile</h2>
+            
             <div>
-              <label class="form-label">City</label>
-              <input v-model="form.city" type="text" class="form-input" placeholder="Mumbai" />
+              <label class="inv-label">Customer Type</label>
+              <div class="flex gap-2 p-1 bg-gray-50 rounded-2xl w-full border border-gray-100/60 mt-1">
+                <button type="button" @click="form.type='business'"
+                  class="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm"
+                  :class="form.type==='business' ? 'bg-white text-primary-700 ring-1 ring-gray-200/50' : 'bg-transparent text-gray-500 hover:text-gray-700 shadow-none'">
+                  Business / Shop
+                </button>
+                <button type="button" @click="form.type='individual'"
+                  class="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm"
+                  :class="form.type==='individual' ? 'bg-white text-primary-700 ring-1 ring-gray-200/50' : 'bg-transparent text-gray-500 hover:text-gray-700 shadow-none'">
+                  Individual
+                </button>
+              </div>
             </div>
+
             <div>
-              <label class="form-label">PIN Code</label>
-              <input v-model="form.pincode" type="text" class="form-input" placeholder="400001" maxlength="6" />
+              <label class="inv-label">Payment Terms</label>
+              <div class="flex items-center gap-2 mt-1">
+                <input v-model="form.credit_days" type="number" class="inv-input !bg-white text-right pr-4" min="0" max="365" />
+                <span class="text-sm text-gray-500 shrink-0">days</span>
+              </div>
             </div>
-            <div class="sm:col-span-2">
-              <label class="form-label">State</label>
-              <select v-model="form.state_id" class="form-select">
-                <option value="">Select State</option>
-                <option v-for="s in states" :key="s.id" :value="s.id">{{ s.name }}</option>
-              </select>
+          </div>
+
+          <!-- Notes -->
+          <div class="inv-card p-5 space-y-4">
+            <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider mb-2">Internal Notes</h2>
+            <div>
+              <textarea v-model="form.notes" class="inv-textarea !bg-white" rows="4" placeholder="Add any private notes about this customer…"></textarea>
             </div>
           </div>
         </div>
+      </form>
+    </div>
 
-        <!-- Primary contact (optional) -->
-        <div class="card card-body space-y-4">
-          <div>
-            <h2 class="section-title mb-0">Contact Person <span class="text-gray-400 font-normal text-sm">(optional)</span></h2>
-            <p class="text-xs text-gray-400 mt-0.5">Add a billing or accounts contact for this customer</p>
-          </div>
-          <div class="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label class="form-label">Contact Name</label>
-              <input v-model="form.contact_name" type="text" class="form-input" placeholder="e.g. Priya Sharma" />
-            </div>
-            <div>
-              <label class="form-label">Role / Designation</label>
-              <input v-model="form.contact_designation" type="text" class="form-input" placeholder="e.g. Accounts Manager" />
-            </div>
-            <div>
-              <label class="form-label">Mobile</label>
-              <input v-model="form.contact_mobile" type="tel" class="form-input" placeholder="9876543210" />
-            </div>
-            <div>
-              <label class="form-label">Email</label>
-              <input v-model="form.contact_email" type="email" class="form-input" placeholder="contact@example.com" />
-            </div>
-          </div>
-        </div>
-      </template>
-
-      <div v-if="error" class="text-sm text-danger-500 bg-danger-50 rounded-lg px-4 py-3">{{ error }}</div>
-
-      <div class="flex gap-3 pb-6">
-        <button type="button" @click="router.back()" class="btn-outline flex-1">Cancel</button>
-        <button type="submit" class="btn-primary flex-1" :disabled="loading">
-          {{ loading ? 'Saving…' : (isEdit ? 'Save Changes' : 'Add Customer') }}
-        </button>
-      </div>
-    </form>
+    <!-- Mobile Footer Actions -->
+    <div class="form-footer-mobile lg:hidden">
+      <button type="button" @click="router.back()" class="inv-btn-secondary flex-1 justify-center">Cancel</button>
+      <button type="submit" form="client-form" class="inv-btn-primary flex-1 justify-center" :disabled="loading">
+        {{ loading ? 'Saving…' : (isEdit ? 'Save Changes' : 'Add Customer') }}
+      </button>
+    </div>
   </div>
 </template>
