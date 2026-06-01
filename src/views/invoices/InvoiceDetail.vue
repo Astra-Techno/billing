@@ -232,36 +232,36 @@ onMounted(load)
         </div>
       </div>
 
-      <!-- Premium Header Card (Hidden on Mobile if newly created success card is showing) -->
-      <div v-if="route.query.newly_created !== 'true'" class="bg-gradient-to-br from-white to-gray-50/80 rounded-[2rem] p-6 sm:p-8 shadow-md shadow-gray-200/50 border border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative overflow-hidden animate-fade-in-up mt-2 mb-6">
+      <!-- Premium Header Card -->
+      <div class="bg-white lg:bg-gradient-to-br lg:from-white lg:to-gray-50/80 rounded-[2rem] p-6 sm:p-8 shadow-sm lg:shadow-md lg:shadow-gray-200/50 border border-gray-100 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative overflow-hidden animate-fade-in-up mt-2 mb-6">
         <!-- decorative background blur -->
-        <div class="absolute -top-10 -right-10 w-40 h-40 bg-primary-100 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+        <div class="hidden lg:block absolute -top-10 -right-10 w-40 h-40 bg-primary-100 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
 
-        <div class="relative z-10 space-y-4">
-          <div class="flex items-center gap-3">
-             <span class="text-sm font-bold text-gray-400 uppercase tracking-widest">Invoice {{ invoice.number }}</span>
-             <span :class="statusBadge(invoice.status)" class="px-2.5 py-1 text-xs rounded-lg shadow-sm border border-black/5">{{ statusLabel(invoice.status) }}</span>
+        <div class="relative z-10 w-full lg:w-auto flex flex-col gap-3">
+          <div class="flex items-center justify-between w-full lg:justify-start lg:gap-3">
+             <span class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Invoice {{ invoice.number }}</span>
+             <span :class="statusBadge(invoice.status)" class="px-2.5 py-0.5 text-[11px] font-bold rounded-full border border-black/5">{{ statusLabel(invoice.status) }}</span>
           </div>
           <div>
-            <RouterLink v-if="invoice.client_id" :to="`/clients/${invoice.client_id}`" class="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight hover:text-primary-600 transition-colors">{{ invoice.client_name }}</RouterLink>
-            <h1 v-else class="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">{{ invoice.client_name }}</h1>
-            <p class="text-sm font-medium text-gray-500 mt-1.5 flex items-center gap-2">
-              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-              Issued {{ fmtDateShort(invoice.issue_date) }} <span class="text-gray-300">•</span> Due {{ fmtDateShort(invoice.due_date) }}
+            <RouterLink v-if="invoice.client_id" :to="`/clients/${invoice.client_id}`" class="text-2xl lg:text-4xl font-black text-gray-900 tracking-tight hover:text-primary-600 transition-colors leading-tight">{{ invoice.client_name }}</RouterLink>
+            <h1 v-else class="text-2xl lg:text-4xl font-black text-gray-900 tracking-tight leading-tight">{{ invoice.client_name }}</h1>
+            <p class="text-xs font-semibold text-gray-400 mt-2 flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              Issued {{ fmtDateShort(invoice.issue_date) }} <span class="text-gray-300 font-normal">•</span> Due {{ fmtDateShort(invoice.due_date) }}
             </p>
           </div>
         </div>
 
-        <div class="relative z-10 flex flex-col items-start sm:items-end w-full sm:w-auto bg-gray-50/80 sm:bg-transparent p-4 sm:p-0 rounded-2xl border border-gray-100/50 sm:border-transparent">
-          <p class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Amount</p>
-          <p class="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">{{ inr(invoice.total) }}</p>
-          <div v-if="invoice.amount_due > 0 && invoice.status !== 'paid'" class="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-danger-50 text-danger-700 text-sm font-bold shadow-sm border border-danger-100/50">
+        <div class="relative z-10 flex flex-col items-start lg:items-end w-full lg:w-auto mt-2 lg:mt-0 pt-4 lg:pt-0 border-t border-gray-100/60 lg:border-t-0">
+          <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Amount</p>
+          <p class="text-3xl lg:text-4xl font-black text-gray-900 tracking-tight">{{ inr(invoice.total) }}</p>
+          <div v-if="invoice.status === 'paid'" class="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold shadow-sm border border-emerald-100/50">
+            <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Fully Paid
+          </div>
+          <div v-else-if="invoice.amount_due > 0" class="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-danger-50 text-danger-700 text-xs font-bold shadow-sm border border-danger-100/50">
             <span class="w-2 h-2 rounded-full bg-danger-500 animate-pulse"></span>
             Balance Due: {{ inr(invoice.amount_due) }}
-          </div>
-          <div v-else class="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-success-50 text-success-700 text-sm font-bold shadow-sm border border-success-100/50">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-            Fully Paid
           </div>
         </div>
       </div>

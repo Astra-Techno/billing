@@ -91,10 +91,14 @@ const firstName = computed(() => {
       <div class="lg:px-8 lg:pt-8 lg:pb-10 max-w-[1280px] lg:mx-auto w-full animate-doc">
 
           <!-- Mobile: premium home -->
-          <div class="px-4 pt-5 pb-1 lg:hidden">
-              <p class="text-xs font-semibold text-primary-600 uppercase tracking-widest">Welcome back</p>
-              <h1 class="page-title mt-1">{{ firstName }}</h1>
-              <p class="page-subtitle">Your business at a glance</p>
+          <div class="px-4 pt-6 pb-2 lg:hidden flex justify-between items-center">
+              <div>
+                  <p class="text-[10px] font-bold text-primary-600 uppercase tracking-widest">Welcome back</p>
+                  <h1 class="text-2xl font-black text-slate-800 mt-0.5 tracking-tight leading-none">{{ firstName }}</h1>
+              </div>
+              <span class="text-[10px] font-bold text-slate-400 bg-white border border-gray-100 px-2.5 py-1 rounded-full shadow-sm select-none">
+                {{ new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) }}
+              </span>
           </div>
 
           <div class="px-4 lg:hidden mb-5">
@@ -121,32 +125,32 @@ const firstName = computed(() => {
               </div>
           </div>
 
-          <div class="px-4 pb-5 lg:hidden">
-              <p class="section-title mb-3 px-0">Quick actions</p>
-              <div class="flex gap-3 overflow-x-auto hide-scrollbar pb-1">
-                  <button type="button" class="gpay-action-tile" @click="router.push('/invoices/new')">
-                      <div class="gpay-action-tile-icon">
+          <div class="px-4 pb-6 lg:hidden">
+              <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Quick actions</p>
+              <div class="flex gap-3 pb-1">
+                  <button type="button" class="flex-1 bg-white border border-gray-100 shadow-sm rounded-2xl py-3 flex flex-col items-center justify-center gap-1.5 transition-all duration-200 active:scale-95" @click="router.push('/invoices/new')">
+                      <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100/30 flex items-center justify-center shrink-0">
                           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                       </div>
-                      <span class="text-[11px] font-semibold text-ink-soft">New bill</span>
+                      <span class="text-[11px] font-bold text-slate-700">New bill</span>
                   </button>
-                  <button type="button" class="gpay-action-tile" @click="router.push('/clients/new')">
-                      <div class="gpay-action-tile-icon !bg-gradient-to-br from-accent-teal to-emerald-600">
+                  <button type="button" class="flex-1 bg-white border border-gray-100 shadow-sm rounded-2xl py-3 flex flex-col items-center justify-center gap-1.5 transition-all duration-200 active:scale-95" @click="router.push('/clients/new')">
+                      <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100/30 flex items-center justify-center shrink-0">
                           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
                       </div>
-                      <span class="text-[11px] font-semibold text-ink-soft">Customer</span>
+                      <span class="text-[11px] font-bold text-slate-700">Customer</span>
                   </button>
-                  <button type="button" class="gpay-action-tile" @click="router.push('/expenses/new')">
-                      <div class="gpay-action-tile-icon !bg-gradient-to-br from-amber-400 to-orange-500">
+                  <button type="button" class="flex-1 bg-white border border-gray-100 shadow-sm rounded-2xl py-3 flex flex-col items-center justify-center gap-1.5 transition-all duration-200 active:scale-95" @click="router.push('/expenses/new')">
+                      <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 border border-amber-100/30 flex items-center justify-center shrink-0">
                           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                       </div>
-                      <span class="text-[11px] font-semibold text-ink-soft">Expense</span>
+                      <span class="text-[11px] font-bold text-slate-700">Expense</span>
                   </button>
-                  <button type="button" class="gpay-action-tile" @click="router.push('/reports')">
-                      <div class="gpay-action-tile-icon !bg-gradient-to-br from-violet-500 to-purple-600">
-                          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                  <button type="button" class="flex-1 bg-white border border-gray-100 shadow-sm rounded-2xl py-3 flex flex-col items-center justify-center gap-1.5 transition-all duration-200 active:scale-95" @click="router.push('/reports')">
+                      <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 border border-purple-100/30 flex items-center justify-center shrink-0">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                       </div>
-                      <span class="text-[11px] font-semibold text-ink-soft">Reports</span>
+                      <span class="text-[11px] font-bold text-slate-700">Reports</span>
                   </button>
               </div>
           </div>
@@ -230,15 +234,15 @@ const firstName = computed(() => {
 
           <!-- Mobile: Recent activity -->
           <div class="lg:hidden px-4 pb-8">
-              <div class="gpay-section-card !mx-0">
-                  <div class="flex items-center justify-between px-4 py-4 border-b border-google-divider/60">
-                      <h2 class="text-base font-bold text-ink">Recent activity</h2>
-                      <RouterLink to="/invoices" class="text-sm text-primary-600 font-semibold">See all</RouterLink>
+              <div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden animate-fade-in-up mt-2">
+                  <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                      <h2 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Recent activity</h2>
+                      <RouterLink to="/invoices" class="text-xs text-primary-600 font-bold hover:text-primary-700 transition-colors">See all</RouterLink>
                   </div>
                   <div v-if="loading" class="py-10 flex justify-center">
                       <div class="w-7 h-7 border-2 border-primary-100 border-t-primary-600 rounded-full animate-spin"></div>
                   </div>
-                  <div v-else-if="!recent.length" class="px-4 py-10 text-center">
+                  <div v-else-if="!recent.length" class="px-5 py-10 text-center">
                       <div class="w-14 h-14 rounded-2xl bg-primary-50 text-primary-600 flex items-center justify-center mx-auto mb-3">
                           <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                       </div>
@@ -250,25 +254,26 @@ const firstName = computed(() => {
                       <div
                         v-for="(inv, idx) in recent.slice(0, 8)"
                         :key="inv.id"
-                        class="gpay-activity-row"
+                        class="flex items-center gap-4 py-3.5 px-5 border-b border-gray-50 last:border-b-0 cursor-pointer active:bg-gray-50/50 active:scale-[0.99] transition-all duration-200"
                         :class="{ 'list-item-1': idx < 4 }"
                         :style="idx >= 4 ? {} : { animationDelay: (idx * 0.05) + 's' }"
                         @click="router.push(`/invoices/${inv.id}`)"
                       >
-                          <div class="premium-avatar w-12 h-12 text-sm" :class="avatarColor(inv.client_name)">
+                          <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm border border-gray-100/50 shrink-0 select-none shadow-sm" :class="avatarColor(inv.client_name)">
                               {{ inv.client_name?.charAt(0)?.toUpperCase() }}
                           </div>
                           <div class="flex-1 min-w-0">
-                              <p class="text-[15px] font-semibold text-ink truncate">{{ inv.client_name }}</p>
-                              <p class="text-xs text-google-muted mt-0.5">{{ inv.number }} · {{ fmtDateShort(inv.issue_date) }}</p>
+                              <p class="text-[14px] font-bold text-slate-800 truncate leading-snug">{{ inv.client_name }}</p>
+                              <p class="text-[11px] text-gray-400 mt-0.5 font-medium">{{ inv.number }} · {{ fmtDateShort(inv.issue_date) }}</p>
                           </div>
                           <div class="text-right shrink-0">
-                              <p class="text-[15px] font-bold tabular-nums text-ink">{{ inr(inv.total) }}</p>
-                              <span class="badge mt-1" :class="{
-                                'badge-green': inv.status === 'paid',
-                                'badge-red': inv.status === 'overdue',
-                                'badge-gray': inv.status === 'draft',
-                                'badge-blue': inv.status === 'sent' || inv.status === 'partial',
+                              <p class="text-[14px] font-black text-slate-800 tabular-nums leading-none">{{ inr(inv.total) }}</p>
+                              <span class="inline-block mt-1.5 text-[9px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider whitespace-nowrap" :class="{
+                                'text-emerald-700 bg-emerald-50': inv.status === 'paid',
+                                'text-amber-700 bg-amber-50': inv.status === 'draft',
+                                'text-blue-700 bg-blue-50': inv.status === 'sent',
+                                'text-red-700 bg-red-50': inv.status === 'overdue',
+                                'text-purple-700 bg-purple-50': inv.status === 'partial',
                               }">{{ inv.status }}</span>
                           </div>
                       </div>
