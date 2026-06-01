@@ -125,6 +125,8 @@ const form = ref({
 })
 
 const units        = ['Nos', 'Kg', 'Ltr', 'Hrs', 'Pcs', 'Mtr', 'Box', 'Set', 'Pair']
+const countableUnits = new Set(['Nos', 'Pcs', 'Box', 'Set', 'Pair'])
+function qtyStep(unit) { return countableUnits.has(unit) ? 1 : 0.001 }
 const gstRates     = [0, 5, 12, 18, 28]
 const recurPeriods = ['day', 'week', 'month', 'year']
 const totals       = computed(() => calcInvoice(form.value.items))
@@ -324,7 +326,7 @@ async function submit() {
 
                   <!-- Column 2: QTY + Unit -->
                   <div class="col-span-2 space-y-2">
-                    <input v-model="it.quantity" type="number" min="0.001" step="0.001" class="inv-input text-center tabular-nums !bg-white" />
+                    <input v-model="it.quantity" type="number" :min="qtyStep(it.unit)" :step="qtyStep(it.unit)" class="inv-input text-center tabular-nums !bg-white" />
                     <select v-model="it.unit" class="inv-select text-center text-xs !bg-white">
                       <option v-for="u in units" :key="u">{{ u }}</option>
                     </select>
@@ -371,7 +373,7 @@ async function submit() {
                 <div><label class="inv-label">Description *</label><input v-model="it.description" type="text" class="inv-input w-full" required /></div>
                 <div class="grid grid-cols-2 gap-2">
                   <div><label class="inv-label">Unit</label><select v-model="it.unit" class="inv-select w-full"><option v-for="u in units" :key="u">{{ u }}</option></select></div>
-                  <div><label class="inv-label">Qty</label><input v-model="it.quantity" type="number" min="0.001" step="0.001" class="inv-input w-full" /></div>
+                  <div><label class="inv-label">Qty</label><input v-model="it.quantity" type="number" :min="qtyStep(it.unit)" :step="qtyStep(it.unit)" class="inv-input w-full" /></div>
                   <div><label class="inv-label">Price (₹)</label><input v-model="it.unit_price" type="number" min="0" step="0.01" class="inv-input w-full" /></div>
                   <div>
                     <label class="inv-label">GST</label>
