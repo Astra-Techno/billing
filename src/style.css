@@ -296,6 +296,76 @@
   .list-item-1 { animation: fadeSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.04s; opacity: 0; }
   .list-item-2 { animation: fadeSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.08s; opacity: 0; }
   .list-item-3 { animation: fadeSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.12s; opacity: 0; }
+
+  /* ── Invoice form — two-column redesign ── */
+  .inv-shell {
+    @apply flex flex-col h-full overflow-hidden;
+  }
+  .inv-toolbar {
+    @apply flex items-center justify-between gap-3 px-4 py-3 bg-white/80 backdrop-blur-md border-b border-gray-100 shrink-0 lg:px-6;
+  }
+  .inv-back-btn {
+    @apply w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 transition shrink-0;
+  }
+  .inv-page-title {
+    @apply text-base font-bold text-gray-900 truncate;
+  }
+  .inv-btn-primary {
+    @apply inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white transition disabled:opacity-50 disabled:cursor-not-allowed;
+    background: linear-gradient(135deg, #3b7ded 0%, #1a5fd4 100%);
+  }
+  .inv-btn-primary:hover { filter: brightness(1.05); }
+  .inv-btn-secondary {
+    @apply inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition;
+  }
+  .inv-body {
+    @apply flex-1 overflow-y-auto custom-scrollbar;
+    background: #f8faff;
+  }
+  .inv-layout {
+    @apply max-w-7xl mx-auto w-full p-4 lg:p-6 flex flex-col gap-4 lg:gap-5;
+  }
+  @media (min-width: 1024px) {
+    .inv-layout {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+    }
+  }
+  .inv-main {
+    @apply flex flex-col gap-4;
+  }
+  .inv-sidebar {
+    @apply flex flex-col gap-4;
+  }
+  .inv-card {
+    @apply bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden;
+  }
+  .inv-items-th {
+    @apply grid gap-2 px-5 py-2.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-gray-50 border-b border-gray-100;
+    grid-template-columns: 5fr 1fr 1fr 2fr 1fr 2fr 36px;
+  }
+  .inv-item-row {
+    @apply grid gap-2 px-5 py-3 items-start;
+    grid-template-columns: 5fr 1fr 1fr 2fr 1fr 2fr 36px;
+  }
+  .inv-item-row input[type=number]::-webkit-outer-spin-button,
+  .inv-item-row input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .inv-item-row input[type=number] { -moz-appearance: textfield; }
+  .inv-input {
+    @apply w-full text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400 transition;
+  }
+  .inv-select {
+    @apply w-full text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400 transition appearance-none;
+  }
+  .inv-textarea {
+    @apply w-full text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400 transition resize-none;
+  }
+  .inv-label {
+    @apply block text-xs font-medium text-gray-500 mb-1;
+  }
 }
 
 .page-fade-enter-active { transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1); }
