@@ -549,13 +549,6 @@ async function submit() {
             </div>
 
             <div v-if="error" class="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{{ error }}</div>
-
-            <div class="flex flex-col gap-2 pt-1">
-              <button type="submit" form="invoice-form" class="inv-btn-primary w-full justify-center" :disabled="loading">
-                {{ loading ? 'Saving…' : isEdit ? 'Save Changes' : 'Save and Continue' }}
-              </button>
-              <button type="button" @click="router.back()" class="inv-btn-secondary w-full justify-center">Cancel</button>
-            </div>
           </div>
 
         </aside>
