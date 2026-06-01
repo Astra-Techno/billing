@@ -183,35 +183,88 @@ async function submit() {
           <h2 class="section-title mb-0">Items / Services</h2>
           <span class="text-xs text-gray-400">What are you quoting?</span>
         </div>
-        <div class="divide-y divide-gray-100">
+        <!-- Desktop items table (Redesigned Grid) -->
+        <div class="hidden lg:block">
+          <!-- Table Header -->
+          <div class="grid grid-cols-12 gap-4 px-5 py-2.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-gray-50 border-b border-gray-100 rounded-t-2xl">
+            <span class="col-span-5">Items</span>
+            <span class="col-span-2 text-center">QTY / Unit</span>
+            <span class="col-span-3 text-right">Price / Tax</span>
+            <span class="col-span-2 text-right pr-2">Amount</span>
+          </div>
+          <!-- Rows -->
+          <div class="divide-y divide-gray-100 bg-white border-x border-b border-gray-100 rounded-b-2xl overflow-hidden">
+            <div v-for="(it, i) in form.items" :key="i" class="grid grid-cols-12 gap-4 px-5 py-4 items-start hover:bg-gray-50/20 transition-colors">
+              <!-- Column 1: Item details + product picker -->
+              <div class="col-span-5 space-y-2">
+                <input v-model="it.description" type="text" class="inv-input font-medium !bg-white" placeholder="What are you offering?" required />
+                <select v-if="products.length" v-model="it.product_id" class="inv-select text-xs text-gray-400 w-full !bg-white" @change="pickProduct(i, it.product_id)">
+                  <option :value="null">— Select from products —</option>
+                  <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
+                </select>
+              </div>
+
+              <!-- Column 2: QTY + Unit -->
+              <div class="col-span-2 space-y-2">
+                <input v-model="it.quantity" type="number" min="0.001" step="0.001" class="inv-input text-center tabular-nums !bg-white" />
+                <select v-model="it.unit" class="inv-select text-center text-xs !bg-white">
+                  <option v-for="u in units" :key="u">{{ u }}</option>
+                </select>
+              </div>
+
+              <!-- Column 3: Price + Tax/GST -->
+              <div class="col-span-3 space-y-2">
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
+                  <input v-model="it.unit_price" type="number" min="0" step="0.01" class="inv-input pl-7 text-right tabular-nums !bg-white" placeholder="0.00" />
+                </div>
+                <select v-model="it.gst_rate" class="inv-select text-center text-xs !bg-white">
+                  <option v-for="r in gstRates" :key="r" :value="r">{{ r }}% GST</option>
+                </select>
+              </div>
+
+              <!-- Column 4: calculated line amount + remove button -->
+              <div class="col-span-2 flex flex-col items-end justify-between h-[86px] py-1">
+                <span class="text-sm font-semibold text-gray-800 tabular-nums pr-2">{{ inr(lineTotal(it)) }}</span>
+                <button v-if="form.items.length > 1" type="button" @click="removeItem(i)"
+                  class="mr-1 w-7 h-7 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="Remove">
+                  <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile items layout (stacked cards) -->
+        <div class="lg:hidden divide-y divide-gray-100">
           <div v-for="(it, i) in form.items" :key="i" class="p-4 space-y-3">
             <div v-if="products.length">
               <label class="form-label">Pick from your Products <span class="text-gray-400 font-normal">(or type manually below)</span></label>
-              <select v-model="it.product_id" class="form-select" @change="pickProduct(i, it.product_id)">
+              <select v-model="it.product_id" class="form-select !bg-white" @change="pickProduct(i, it.product_id)">
                 <option :value="null">— Type manually —</option>
                 <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
               </select>
             </div>
             <div>
               <label class="form-label">Description *</label>
-              <input v-model="it.description" type="text" class="form-input" placeholder="What are you offering?" required />
+              <input v-model="it.description" type="text" class="form-input !bg-white" placeholder="What are you offering?" required />
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div><label class="form-label">Unit</label>
-                <select v-model="it.unit" class="form-select"><option v-for="u in units" :key="u">{{ u }}</option></select>
+                <select v-model="it.unit" class="form-select !bg-white"><option v-for="u in units" :key="u">{{ u }}</option></select>
               </div>
               <div><label class="form-label">Quantity</label>
-                <input v-model="it.quantity" type="number" min="0.001" step="0.001" class="form-input" />
+                <input v-model="it.quantity" type="number" min="0.001" step="0.001" class="form-input !bg-white" />
               </div>
               <div><label class="form-label">Price (₹)</label>
-                <input v-model="it.unit_price" type="number" min="0" step="0.01" class="form-input" placeholder="0.00" />
+                <input v-model="it.unit_price" type="number" min="0" step="0.01" class="form-input !bg-white" placeholder="0.00" />
               </div>
               <div><label class="form-label">GST Rate %</label>
-                <select v-model="it.gst_rate" class="form-select">
+                <select v-model="it.gst_rate" class="form-select !bg-white">
                   <option v-for="r in gstRates" :key="r" :value="r">{{ r }}%</option>
                 </select>
               </div>
-              <div class="col-span-2 flex items-center justify-between">
+              <div class="col-span-2 flex items-center justify-between pt-1">
                 <p class="text-sm font-semibold text-gray-800">Total: {{ inr(lineTotal(it)) }}</p>
                 <button v-if="form.items.length > 1" type="button" @click="removeItem(i)" class="text-xs text-danger-500">Remove</button>
               </div>
