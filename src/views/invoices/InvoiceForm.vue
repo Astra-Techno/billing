@@ -305,42 +305,42 @@ async function submit() {
             <div class="hidden lg:block">
               <!-- Header -->
               <div class="inv-items-th">
-                <span class="col-span-5">Items</span>
-                <span class="col-span-1 text-center">QTY</span>
-                <span class="col-span-1 text-center">Unit</span>
-                <span class="col-span-2 text-right">Price (₹)</span>
-                <span class="col-span-1 text-center">GST</span>
-                <span class="col-span-2 text-right">Amount</span>
+                <span>Items</span>
+                <span class="text-center">QTY</span>
+                <span class="text-center">Unit</span>
+                <span class="text-right">Price (₹)</span>
+                <span class="text-center">GST</span>
+                <span class="text-right">Amount</span>
                 <span></span>
               </div>
               <!-- Rows -->
               <div class="divide-y divide-gray-50">
                 <div v-for="(it, i) in form.items" :key="i" class="inv-item-row">
                   <!-- Item name + optional product picker -->
-                  <div class="col-span-5 space-y-1">
+                  <div class="space-y-1 min-w-0">
                     <input v-model="it.description" type="text" class="inv-input font-medium" placeholder="Enter item name or description" required />
                     <select v-if="products.length" v-model="it.product_id" class="inv-select text-xs text-gray-400 w-full" @change="pickProduct(i, it.product_id)">
                       <option :value="null">— Select from products —</option>
                       <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
                     </select>
                   </div>
-                  <div class="col-span-1">
+                  <div>
                     <input v-model="it.quantity" type="number" min="0.001" step="0.001" class="inv-input text-center tabular-nums" />
                   </div>
-                  <div class="col-span-1">
+                  <div>
                     <select v-model="it.unit" class="inv-select text-center">
                       <option v-for="u in units" :key="u">{{ u }}</option>
                     </select>
                   </div>
-                  <div class="col-span-2">
+                  <div>
                     <input v-model="it.unit_price" type="number" min="0" step="0.01" class="inv-input text-right tabular-nums" placeholder="0.00" />
                   </div>
-                  <div class="col-span-1">
+                  <div>
                     <select v-model="it.gst_rate" class="inv-select text-center" :disabled="form.invoice_type === 'bill_of_supply'">
                       <option v-for="r in gstRates" :key="r" :value="r">{{ form.invoice_type === 'bill_of_supply' ? '0%' : r + '%' }}</option>
                     </select>
                   </div>
-                  <div class="col-span-2 flex items-center justify-end">
+                  <div class="flex items-center justify-end">
                     <span class="text-sm font-semibold text-gray-800 tabular-nums">{{ inr(lineTotal(it)) }}</span>
                   </div>
                   <div class="flex items-center justify-center">
