@@ -246,7 +246,7 @@ test('Create invoice', function() {
                 'description' => 'Test Item 1',
                 'quantity'    => 2,
                 'unit'        => 'Nos',
-                'price'       => 500,
+                'unit_price'  => 500,
                 'gst_rate'    => 18,
             ],
         ],
@@ -286,7 +286,7 @@ test('Update invoice', function() {
                 'description' => 'Updated Item 1',
                 'quantity'    => 3,
                 'unit'        => 'Nos',
-                'price'       => 600,
+                'unit_price'  => 600,
                 'gst_rate'    => 18,
             ],
         ],
@@ -318,7 +318,7 @@ test('Create quote', function() {
                 'description' => 'Quote Item 1',
                 'quantity'    => 1,
                 'unit'        => 'Nos',
-                'price'       => 1000,
+                'unit_price'  => 1000,
                 'gst_rate'    => 18,
             ],
         ],
@@ -330,7 +330,10 @@ test('Create quote', function() {
 test('Convert quote to invoice', function() {
     global $testQuoteId;
     if (!$testQuoteId) return 'SKIP';
-    $res = api('POST', 'task/Quote/convertToInvoice', ['id' => $testQuoteId]);
+    $res = api('POST', 'task/Quote/convertToInvoice', [
+        'id'       => $testQuoteId,
+        'due_date' => date('Y-m-d', strtotime('+30 days')),
+    ]);
     assert_true($res['success'] === true, $res['message'] ?? 'Failed');
 });
 
