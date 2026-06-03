@@ -96,10 +96,10 @@ section('AUTH');
 
 test('Login', function() {
     global $token, $businessId, $EMAIL, $PASSWORD;
-    $res = api('POST', 'task/Auth/login', ['email' => $EMAIL, 'password' => $PASSWORD], false);
+    $res = api('POST', 'login', ['email' => $EMAIL, 'password' => $PASSWORD], false);
     assert_true($res['success'] === true, $res['message'] ?? 'Login failed');
     $token = $res['data']['token'] ?? null;
-    $businessId = $res['data']['businesses'][0]['id'] ?? null;
+    $businessId = $res['data']['business_id'] ?? ($res['data']['businesses'][0]->id ?? null);
     assert_true(!empty($token), 'No token returned');
     assert_true(!empty($businessId), 'No business found');
 });
