@@ -327,6 +327,20 @@ test('Create quote', function() {
     $testQuoteId = $res['data']['quote_id'] ?? $res['data']['id'] ?? null;
 });
 
+test('Mark quote sent', function() {
+    global $testQuoteId;
+    if (!$testQuoteId) return 'SKIP';
+    $res = api('POST', 'task/Quote/markSent', ['id' => $testQuoteId]);
+    assert_true($res['success'] === true, $res['message'] ?? 'Failed');
+});
+
+test('Accept quote', function() {
+    global $testQuoteId;
+    if (!$testQuoteId) return 'SKIP';
+    $res = api('POST', 'task/Quote/accept', ['id' => $testQuoteId]);
+    assert_true($res['success'] === true, $res['message'] ?? 'Failed');
+});
+
 test('Convert quote to invoice', function() {
     global $testQuoteId;
     if (!$testQuoteId) return 'SKIP';
@@ -417,12 +431,11 @@ test('List credit notes', function() {
 
 section('CLEANUP');
 
-test('Delete test invoice', function() {
+test('Cancel test invoice', function() {
     global $testInvoiceId;
     if (!$testInvoiceId) return 'SKIP';
-    $res = api('POST', 'task/Invoice/delete', ['id' => $testInvoiceId]);
-    // Some invoices can't be deleted if they have a sequence, that's ok
-    assert_true($res['success'] === true || strpos($res['message'] ?? '', 'cannot') !== false, $res['message'] ?? 'Failed');
+    $res = api('POST', 'task/Invoice/cancel', ['id' => $testInvoiceId]);
+    assert_true($res['success'] === true, $res['message'] ?? 'Failed');
 });
 
 test('Delete test client', function() {
