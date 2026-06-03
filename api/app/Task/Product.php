@@ -18,11 +18,11 @@ class Product extends Task
 
         $businessId = $this->requireBusiness();
 
-        $exists = DB::query(
+        $exists = DB::selectOne(
             "SELECT id FROM products WHERE business_id = ? AND LOWER(name) = LOWER(?) AND active = 1 LIMIT 1",
             [$businessId, trim($input['name'])]
         );
-        if (!empty($exists))
+        if ($exists)
             $this->fail('A product/service with this name already exists.');
 
         $product = ProductTable::create([
