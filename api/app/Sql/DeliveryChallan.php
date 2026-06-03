@@ -57,11 +57,11 @@ class DeliveryChallan extends Sql
             ->from('delivery_challan_items di')
             ->left('products p ON p.id = di.product_id')
             ->select('list', '
-                di.id, di.delivery_challan_id AS dc_id, di.product_id, di.description, di.hsn_sac, di.unit,
+                di.id, di.dc_id AS dc_id, di.product_id, di.description, di.hsn_sac, di.unit,
                 di.quantity, di.sort_order,
                 p.name AS product_name, p.type AS product_type
             ')
-            ->filter('di.delivery_challan_id = {dc_id}')
+            ->filter('di.dc_id = {dc_id}')
             ->order('di.sort_order', 'asc');
     }
 }
