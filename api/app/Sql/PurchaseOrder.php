@@ -44,6 +44,11 @@ class PurchaseOrder extends Sql
                 c.address_line1 AS supplier_address1, c.address_line2 AS supplier_address2,
                 c.city AS supplier_city, c.pincode AS supplier_pincode
             ')
+            ->select('list', '
+                po.*,
+                c.name AS supplier_name, c.company AS supplier_company,
+                c.gstin AS supplier_gstin, c.mobile AS supplier_mobile
+            ')
             ->filter('po.id = {id}')
             ->filter('po.business_id = {business_id}');
     }
