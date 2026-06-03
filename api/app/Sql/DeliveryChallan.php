@@ -14,7 +14,7 @@ class DeliveryChallan extends Sql
             ->inner('clients c ON c.id = d.client_id')
             ->select('list', '
                 d.id, d.number, d.status,
-                d.issue_date, d.delivery_date,
+                d.challan_date, d.vehicle_no, d.driver_name, d.destination,
                 d.created_at,
                 c.id AS client_id, c.name AS client_name, c.company AS client_company,
                 c.mobile AS client_mobile, c.gstin AS client_gstin
@@ -23,8 +23,8 @@ class DeliveryChallan extends Sql
             ->filter('d.business_id = {business_id}')
             ->filterOptional('d.status = {filter.status}')
             ->filterOptional('d.client_id = {filter.client_id}')
-            ->filterOptional('d.issue_date >= {filter.from_date}')
-            ->filterOptional('d.issue_date <= {filter.to_date}')
+            ->filterOptional('d.challan_date >= {filter.from_date}')
+            ->filterOptional('d.challan_date <= {filter.to_date}')
             ->filterOptional('(d.number LIKE {filter.search} OR c.name LIKE {filter.search})')
             ->order('{sort_by}', '{sort_order}');
     }

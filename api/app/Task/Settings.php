@@ -32,7 +32,7 @@ class Settings extends Task
 
     // ── Set one or many settings ──────────────────────────────────────────────
 
-    public function set(array $input): array
+    public function save(array $input): array
     {
         $this->validate(['settings' => 'required']);
 

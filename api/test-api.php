@@ -115,7 +115,7 @@ test('Fetch business', function() {
 });
 
 test('List Indian states', function() {
-    $res = api('GET', 'list/IndianState');
+    $res = api('GET', 'all/IndianState');
     assert_true($res['success'] === true, $res['message'] ?? 'Failed');
     assert_true(is_array($res['data']) && count($res['data']) > 0, 'No states returned');
 });
@@ -194,6 +194,7 @@ test('Create client', function() {
     global $testClientId;
     $res = api('POST', 'task/Client/create', [
         'name'  => 'ZZ-Test-Client-' . time(),
+        'type'  => 'business',
         'email' => 'testclient' . time() . '@test.com',
         'phone' => '9876543210',
     ]);
@@ -343,7 +344,7 @@ test('List expenses', function() {
 });
 
 test('List expense categories', function() {
-    $res = api('GET', 'list/ExpenseCategory');
+    $res = api('GET', 'all/ExpenseCategory');
     assert_true($res['success'] === true, $res['message'] ?? 'Failed');
 });
 
@@ -351,17 +352,25 @@ test('List expense categories', function() {
 
 section('DASHBOARD & REPORTS');
 
-test('Dashboard data', function() {
-    $res = api('GET', 'list/Dashboard');
+test('Dashboard stats', function() {
+    $res = api('GET', 'list/Dashboard:stats');
     assert_true($res['success'] === true, $res['message'] ?? 'Failed');
 });
 
-test('Reports - revenue', function() {
-    $res = api('GET', 'list/Report', [
-        'type'      => 'revenue',
-        'from_date' => date('Y-01-01'),
-        'to_date'   => date('Y-m-d'),
+test('Dashboard summary', function() {
+    $res = api('GET', 'list/Dashboard:summary');
+    assert_true($res['success'] === true, $res['message'] ?? 'Failed');
+});
+
+test('Reports - profit/loss', function() {
+    $res = api('GET', 'list/Report:profitLoss', [
+        'financial_year' => '2025-26',
     ]);
+    assert_true($res['success'] === true, $res['message'] ?? 'Failed');
+});
+
+test('Reports - ageing', function() {
+    $res = api('GET', 'list/Report:ageing');
     assert_true($res['success'] === true, $res['message'] ?? 'Failed');
 });
 

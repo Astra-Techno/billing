@@ -30,7 +30,7 @@ class DeliveryChallan extends Task
             'client_id'   => (int)$input['client_id'],
             'number'      => $number,
             'status'      => 'draft',
-            'issue_date'  => $input['challan_date'],
+            'challan_date' => $input['challan_date'],
             'vehicle_no'  => $input['vehicle_no']  ?? null,
             'driver_name' => $input['driver_name'] ?? null,
             'destination' => $input['destination'] ?? null,
@@ -62,7 +62,7 @@ class DeliveryChallan extends Task
 
         $dc->fill([
             'client_id'   => (int)$input['client_id'],
-            'issue_date'  => $input['challan_date'] ?? $dc->issue_date,
+            'challan_date' => $input['challan_date'] ?? $dc->challan_date,
             'vehicle_no'  => $input['vehicle_no']   ?? $dc->vehicle_no,
             'driver_name' => $input['driver_name']  ?? $dc->driver_name,
             'destination' => $input['destination']  ?? $dc->destination,
@@ -71,7 +71,7 @@ class DeliveryChallan extends Task
         $dc->save();
 
         if (!empty($input['items'])) {
-            DB::statement("DELETE FROM delivery_challan_items WHERE delivery_challan_id = ?", [$dc->id]);
+            DB::statement("DELETE FROM delivery_challan_items WHERE dc_id = ?", [$dc->id]);
             $this->saveItems((int)$dc->id, $input['items']);
         }
 
@@ -90,7 +90,7 @@ class DeliveryChallan extends Task
         if (!$dc || $dc->business_id != $businessId)
             $this->fail('Delivery challan not found.');
 
-        DB::statement("DELETE FROM delivery_challan_items WHERE delivery_challan_id = ?", [$dc->id]);
+        DB::statement("DELETE FROM delivery_challan_items WHERE dc_id = ?", [$dc->id]);
         $dc->delete();
 
         return $this->success(null, 'Delivery challan deleted.');
@@ -103,7 +103,7 @@ class DeliveryChallan extends Task
         foreach ($items as $i => $it) {
             if (empty($it['description'])) continue;
             DeliveryChallanItem::create([
-                'delivery_challan_id' => $dcId,
+                'dc_id' => $dcId,
                 'product_id'          => !empty($it['product_id']) ? (int)$it['product_id'] : null,
                 'description'         => trim($it['description']),
                 'hsn_sac'             => $it['hsn_sac'] ?? null,
