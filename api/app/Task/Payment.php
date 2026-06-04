@@ -39,7 +39,7 @@ class Payment extends Task
         }
 
         // Create payment record
-        PaymentTable::create([
+        $payment = PaymentTable::create([
             'business_id'  => $businessId,
             'invoice_id'   => (int)$input['invoice_id'],
             'client_id'    => $invoice->client_id,
@@ -66,6 +66,7 @@ class Payment extends Task
         );
 
         return $this->success([
+            'payment_id'  => $payment->id,
             'amount_paid' => $newPaid,
             'amount_due'  => $newDue,
             'status'      => $status,
