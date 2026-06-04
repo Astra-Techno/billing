@@ -47,7 +47,7 @@ const menus = [
               stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" :d="d" />
           </svg>
         </div>
-        <span class="text-[9px] font-semibold tracking-wide leading-none transition-colors"
+        <span class="text-[11px] font-semibold tracking-wide leading-none transition-colors"
           :class="isActive(menu.path) ? 'text-primary-600' : 'text-gray-400 group-hover:text-gray-500'">
           {{ menu.label }}
         </span>
@@ -72,7 +72,7 @@ const menus = [
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
             </svg>
           </div>
-          <span class="text-[9px] font-semibold tracking-wide leading-none transition-colors"
+          <span class="text-[11px] font-semibold tracking-wide leading-none transition-colors"
             :class="isActive('/settings') ? 'text-primary-600' : 'text-gray-400 group-hover:text-gray-500'">
             Settings
           </span>
@@ -86,7 +86,7 @@ const menus = [
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
             </svg>
           </div>
-          <span class="text-[9px] font-semibold tracking-wide leading-none transition-colors text-gray-400 group-hover:text-red-500">
+          <span class="text-[11px] font-semibold tracking-wide leading-none transition-colors text-gray-400 group-hover:text-red-500">
             Logout
           </span>
         </div>
