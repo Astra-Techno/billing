@@ -19,6 +19,7 @@ const states   = ref([])
 
 const tabs = [
   { key: 'business',  label: 'My Business' },
+  { key: 'features',  label: 'Features' },
   { key: 'gst',       label: 'GST Details' },
   { key: 'bank',      label: 'Payment Info' },
   { key: 'invoice',   label: 'Bill Settings' },
@@ -27,6 +28,24 @@ const tabs = [
   { key: 'profile',   label: 'My Profile' },
   { key: 'password',  label: 'Password' },
 ]
+
+// Features toggles
+const featureToggles = [
+  { key: 'quotes',           label: 'Quotes / Estimates',  desc: 'Send price estimates to clients before creating invoices' },
+  { key: 'expenses',         label: 'Expense Tracking',    desc: 'Record and categorize your business expenses' },
+  { key: 'purchase_orders',  label: 'Purchase Orders',     desc: 'Create orders for your suppliers when buying goods' },
+  { key: 'delivery_challans',label: 'Delivery Challans',   desc: 'Track goods shipped to clients with delivery proof' },
+  { key: 'credit_notes',     label: 'Credit / Debit Notes',desc: 'Issue refunds or additional charges against invoices' },
+  { key: 'gst_returns',      label: 'GST Returns',         desc: 'View GST filing summaries (GSTR-1, HSN, etc.)' },
+  { key: 'reports',          label: 'Reports & Analytics',  desc: 'Revenue, ageing, P&L, and payment collection reports' },
+]
+
+async function saveFeatures() {
+  saving.value = true
+  await bizStore.saveFeatures()
+  saving.value = false
+  flash('Features updated. Sidebar will refresh.')
+}
 
 // Team
 const teamMembers   = ref([])
@@ -341,6 +360,7 @@ onMounted(async () => {
     currentLogo.value = biz.logo || ''
     bizSlug.value     = biz.slug || ''
     bizStore.setLogo(biz.logo || '')  // sync TopBar avatar
+    await bizStore.loadFeatures()
   } catch {}
   loading.value = false
 })
@@ -633,6 +653,32 @@ async function saveInvoice() {
         <div class="pt-2">
           <button @click="saveBusiness" :disabled="saving" class="btn-primary w-full sm:w-auto">
             {{ saving ? 'Saving…' : 'Save Business Profile' }}
+          </button>
+        </div>
+      </div>
+    </template>
+
+    <!-- Features -->
+    <template v-if="!loading && activeTab === 'features'">
+      <div class="card card-body space-y-1">
+        <h2 class="text-lg font-bold text-gray-800 mb-1">Enable Features</h2>
+        <p class="text-sm text-gray-500 mb-4">Turn on only what you need. You can always enable more later.</p>
+
+        <div v-for="ft in featureToggles" :key="ft.key"
+          class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+          <div class="flex-1 min-w-0 pr-4">
+            <div class="font-semibold text-sm text-gray-800">{{ ft.label }}</div>
+            <div class="text-xs text-gray-500 mt-0.5">{{ ft.desc }}</div>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer shrink-0">
+            <input type="checkbox" v-model="bizStore.features[ft.key]" class="sr-only peer">
+            <div class="w-10 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-600"></div>
+          </label>
+        </div>
+
+        <div class="pt-4">
+          <button @click="saveFeatures" :disabled="saving" class="btn-primary btn-sm">
+            {{ saving ? 'Saving…' : 'Save Features' }}
           </button>
         </div>
       </div>

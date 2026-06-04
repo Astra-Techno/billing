@@ -12,7 +12,7 @@ import { useBusinessStore } from '../../stores/business'
 const bizStore = useBusinessStore()
 const route = useRoute()
 
-onMounted(() => bizStore.fetchBusiness())
+onMounted(() => { bizStore.fetchBusiness(); bizStore.loadFeatures() })
 
 const showNavbar = computed(() => {
   return ['Dashboard', 'Invoices', 'Quotes', 'Expenses', 'Products', 'CreditNotes', 'PurchaseOrders', 'DeliveryChallans', 'GstReturns', 'Reports', 'Settings', 'Help', 'More', 'Clients'].includes(route.name)
