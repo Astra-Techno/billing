@@ -62,7 +62,7 @@ async function load() {
   loading.value = true
   try {
     const invRes = await list('Invoice', { sort_by: 'i.created_at', sort_order: 'desc', limit: 500 })
-    invoices.value = invRes.data?.data || []
+    invoices.value = (invRes.data?.data || []).filter(i => i.status !== 'cancelled')
     // Prefill if coming from an invoice detail page
     const fromId = route.query.from_invoice
     if (fromId) {
