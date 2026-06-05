@@ -352,6 +352,14 @@ test('Create client — invalid type', function() {
     ok($res['success'] === false, 'Should have failed');
 });
 
+test('Quick-add client (name + type only, like invoice form)', function() {
+    $res = api('POST', 'task/Client/create', ['name' => 'ZZ-QuickAdd-' . time(), 'type' => 'customer']);
+    ok($res['success'] === true, $res['message'] ?? 'Failed');
+    // Cleanup
+    $cid = $res['data']['client_id'] ?? $res['data']['id'] ?? null;
+    if ($cid) api('POST', 'task/Client/delete', ['id' => $cid]);
+});
+
 test('Fetch single client (item/Client)', function() {
     global $testClientId;
     if (!$testClientId) return 'SKIP';

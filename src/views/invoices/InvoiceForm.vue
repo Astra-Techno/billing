@@ -46,21 +46,21 @@ const error    = ref('')
 const showAddClient = ref(false)
 const addingClient = ref(false)
 const addClientError = ref('')
-const newClient = ref({ name: '', mobile: '', email: '' })
+const newClient = ref({ name: '', mobile: '', email: '', type: 'customer' })
 
 async function saveNewClient() {
   addClientError.value = ''
   if (!newClient.value.name) return addClientError.value = 'Customer name is required.'
   addingClient.value = true
   try {
-    const res = await task('Client', 'create', newClient.value)
+    const res = await task('Client', 'create', { ...newClient.value, type: 'customer' })
     const created = res.data?.data
     clients.value.push(created)
     clients.value.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
     form.value.client_id = created.id
     showAddClient.value = false
     clientSearch.value = ''
-    newClient.value = { name: '', mobile: '', email: '' }
+    newClient.value = { name: '', mobile: '', email: '', type: 'customer' }
   } catch (e) {
     addClientError.value = e.response?.data?.message || 'Failed to save customer.'
   }
@@ -69,7 +69,7 @@ async function saveNewClient() {
 
 function openAddClient() {
   addClientError.value = ''
-  newClient.value = { name: clientSearch.value, mobile: '', email: '' }
+  newClient.value = { name: clientSearch.value, mobile: '', email: '', type: 'customer' }
   showAddClient.value = true
 }
 
