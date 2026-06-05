@@ -785,9 +785,9 @@ async function submit() {
                 </div>
 
                 <!-- Dropdown results -->
-                <div v-if="clientDropdownOpen && clientSearch.trim()" class="absolute left-0 right-0 top-full mt-1 z-20 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
+                <div v-if="clientDropdownOpen" class="absolute left-0 right-0 top-full mt-1 z-20 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
                   <!-- Matching clients -->
-                  <div v-if="filteredClients.length" class="max-h-40 overflow-y-auto divide-y divide-gray-50">
+                  <div v-if="filteredClients.length" class="max-h-48 overflow-y-auto divide-y divide-gray-50">
                     <button v-for="c in filteredClients" :key="c.id" type="button"
                       @click="form.client_id = c.id; clientSearch = ''; clientDropdownOpen = false"
                       class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition text-left">
