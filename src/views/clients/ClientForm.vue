@@ -4,10 +4,12 @@ import { useRouter, useRoute } from 'vue-router'
 import { task, item, all } from '../../api'
 import { useToast } from '../../composables/useToast'
 import { useBusinessStore } from '../../stores/business'
+import { useFormKeys } from '../../composables/useFormKeys'
 
 const showMore = ref(false)
 
 const router        = useRouter()
+useFormKeys({ formId: 'client-form' })
 const route         = useRoute()
 const emit          = defineEmits(['refresh'])
 const toast         = useToast()
@@ -96,8 +98,8 @@ async function submit() {
       </div>
       <div class="flex items-center gap-2">
         <button type="button" @click="router.back()" class="inv-btn-secondary hidden sm:inline-flex">Cancel</button>
-        <button type="submit" form="client-form" class="inv-btn-primary" :disabled="loading">
-          {{ loading ? 'Saving…' : (isEdit ? 'Save Changes' : 'Add Customer') }}
+        <button type="submit" form="client-form" class="inv-btn-primary" :disabled="loading" title="Ctrl+Enter">
+          {{ loading ? 'Saving…' : (isEdit ? 'Save Changes' : 'Add Customer') }} <kbd v-if="!loading" class="ml-1 opacity-60 text-[10px] font-mono">⌃↵</kbd>
         </button>
       </div>
     </div>

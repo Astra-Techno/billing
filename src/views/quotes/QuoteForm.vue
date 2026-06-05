@@ -7,12 +7,18 @@ import { today, addDays } from '../../utils/date'
 import { calcInvoice } from '../../utils/invoice'
 import { useToast } from '../../composables/useToast'
 import { useBusinessStore } from '../../stores/business'
+import { useFormKeys, handleLineItemTab } from '../../composables/useFormKeys'
 
 const router        = useRouter()
 const route         = useRoute()
 const emit          = defineEmits(['refresh'])
 const toast         = useToast()
 const businessStore = useBusinessStore()
+useFormKeys({ formId: 'quote-form' })
+
+function onLastFieldTab(i, e) {
+  handleLineItemTab(i, e, form.value.items, addItem, '.line-desc')
+}
 const clients       = ref([])
 const products      = ref([])
 const taxRates      = ref([])
@@ -143,8 +149,8 @@ async function submit() {
       </div>
       <div class="flex items-center gap-2">
         <button type="button" @click="router.back()" class="inv-btn-secondary hidden sm:inline-flex">Cancel</button>
-        <button type="submit" form="quote-form" class="inv-btn-primary" :disabled="loading">
-          {{ loading ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Quotation' }}
+        <button type="submit" form="quote-form" class="inv-btn-primary" :disabled="loading" title="Ctrl+Enter">
+          {{ loading ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Quotation' }} <kbd v-if="!loading" class="ml-1 opacity-60 text-[10px] font-mono">⌃↵</kbd>
         </button>
       </div>
     </div>
@@ -175,7 +181,7 @@ async function submit() {
                 <div v-for="(it, i) in form.items" :key="i" class="grid grid-cols-12 gap-4 px-5 py-4 items-start hover:bg-gray-50/20 transition-colors">
                   <!-- Col 1: Description + product picker -->
                   <div class="col-span-5 space-y-2">
-                    <input v-model="it.description" type="text" class="inv-input font-medium !bg-white" placeholder="What are you offering?" required />
+                    <input v-model="it.description" type="text" class="inv-input font-medium !bg-white line-desc" placeholder="What are you offering?" required />
                     <select v-if="products.length" v-model="it.product_id" class="inv-select text-xs text-gray-400 w-full !bg-white" @change="pickProduct(i, it.product_id)">
                       <option :value="null">— Select from products —</option>
                       <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
@@ -194,7 +200,7 @@ async function submit() {
                       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
                       <input v-model="it.unit_price" type="number" min="0" step="0.01" class="inv-input pl-7 text-right tabular-nums !bg-white" placeholder="0.00" />
                     </div>
-                    <select v-model="it.gst_rate" class="inv-select text-center text-xs !bg-white">
+                    <select v-model="it.gst_rate" class="inv-select text-center text-xs !bg-white" @keydown.tab="onLastFieldTab(i, $event)">
                       <option v-for="r in gstRates" :key="r" :value="r">{{ r }}% GST</option>
                     </select>
                   </div>

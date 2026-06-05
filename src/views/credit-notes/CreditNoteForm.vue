@@ -6,11 +6,17 @@ import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 import { today } from '../../utils/date'
 import { useToast } from '../../composables/useToast'
+import { useFormKeys, handleLineItemTab } from '../../composables/useFormKeys'
 
 const router = useRouter()
 const route  = useRoute()
 const emit   = defineEmits(['refresh'])
 const toast  = useToast()
+useFormKeys({ formId: 'credit-note-form' })
+
+function onLastFieldTab(i, e) {
+  handleLineItemTab(i, e, form.value.items, addItem, '.line-desc')
+}
 
 const invoices = ref([])
 const loading  = ref(false)
@@ -121,9 +127,9 @@ onMounted(load)
       </div>
       <div class="flex items-center gap-2">
         <button type="button" @click="router.push('/credit-notes')" class="inv-btn-secondary hidden sm:inline-flex">Cancel</button>
-        <button type="submit" form="credit-note-form" class="inv-btn-primary" :disabled="saving || loading">
+        <button type="submit" form="credit-note-form" class="inv-btn-primary" :disabled="saving || loading" title="Ctrl+Enter">
           <svg v-if="saving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-          {{ saving ? 'Creating…' : 'Create Credit Note' }}
+          {{ saving ? 'Creating…' : 'Create Credit Note' }} <kbd v-if="!saving" class="ml-1 opacity-60 text-[10px] font-mono">⌃↵</kbd>
         </button>
       </div>
     </div>
@@ -157,7 +163,7 @@ onMounted(load)
                   <div v-for="(it, i) in form.items" :key="i" class="grid grid-cols-12 gap-4 px-5 py-4 items-start hover:bg-gray-50/20 transition-colors">
                     <!-- Col 1: Description -->
                     <div class="col-span-5">
-                      <input v-model="it.description" type="text" class="inv-input font-medium !bg-white" placeholder="Description *" required />
+                      <input v-model="it.description" type="text" class="inv-input font-medium !bg-white line-desc" placeholder="Description *" required />
                     </div>
                     <!-- Col 2: QTY -->
                     <div class="col-span-2">
@@ -169,7 +175,7 @@ onMounted(load)
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
                         <input v-model="it.unit_price" type="number" min="0" step="0.01" class="inv-input pl-7 text-right tabular-nums !bg-white" placeholder="0.00" />
                       </div>
-                      <select v-model="it.gst_rate" class="inv-select text-center text-xs !bg-white">
+                      <select v-model="it.gst_rate" class="inv-select text-center text-xs !bg-white" @keydown.tab="onLastFieldTab(i, $event)">
                         <option v-for="r in gstRates" :key="r" :value="r">{{ r }}% GST</option>
                       </select>
                     </div>

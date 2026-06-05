@@ -4,12 +4,18 @@ import { useRouter, useRoute } from 'vue-router'
 import { task, item, all } from '../../api'
 import { today, addDays } from '../../utils/date'
 import { useToast } from '../../composables/useToast'
+import { useFormKeys, handleLineItemTab } from '../../composables/useFormKeys'
 
 const router = useRouter()
 const route  = useRoute()
 const emit   = defineEmits(['refresh'])
 
 const toast     = useToast()
+useFormKeys({ formId: 'dc-form' })
+
+function onLastFieldTab(i, e) {
+  handleLineItemTab(i, e, form.value.items, addItem, '.line-desc')
+}
 const clients   = ref([])
 const products  = ref([])
 const loading   = ref(false)
@@ -119,8 +125,8 @@ async function submit() {
       </div>
       <div class="flex items-center gap-2">
         <button type="button" @click="router.back()" class="inv-btn-secondary hidden sm:inline-flex">Cancel</button>
-        <button type="submit" form="dc-form" class="inv-btn-primary" :disabled="loading">
-          {{ loading ? 'Saving…' : saved ? 'Saved ✓' : isEdit ? 'Save Changes' : 'Create Challan' }}
+        <button type="submit" form="dc-form" class="inv-btn-primary" :disabled="loading" title="Ctrl+Enter">
+          {{ loading ? 'Saving…' : saved ? 'Saved ✓' : isEdit ? 'Save Changes' : 'Create Challan' }} <kbd v-if="!loading" class="ml-1 opacity-60 text-[10px] font-mono">⌃↵</kbd>
         </button>
       </div>
     </div>
@@ -151,7 +157,7 @@ async function submit() {
                 <div v-for="(it, i) in form.items" :key="i" class="grid grid-cols-12 gap-4 px-5 py-4 items-start hover:bg-gray-50/20 transition-colors">
                   <!-- Col 1: Description + product picker -->
                   <div class="col-span-5 space-y-2">
-                    <input v-model="it.description" type="text" class="inv-input font-medium !bg-white" placeholder="Item description" required />
+                    <input v-model="it.description" type="text" class="inv-input font-medium !bg-white line-desc" placeholder="Item description" required />
                     <select v-if="products.length" v-model="it.product_id" class="inv-select text-xs text-gray-400 w-full !bg-white" @change="pickProduct(i, it.product_id)">
                       <option :value="null">— Select from products —</option>
                       <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
@@ -166,7 +172,7 @@ async function submit() {
                   </div>
                   <!-- Col 3: HSN/SAC -->
                   <div class="col-span-3">
-                    <input v-model="it.hsn_sac" type="text" class="inv-input text-center !bg-white" placeholder="Optional HSN/SAC" />
+                    <input v-model="it.hsn_sac" type="text" class="inv-input text-center !bg-white" placeholder="Optional HSN/SAC" @keydown.tab="onLastFieldTab(i, $event)" />
                   </div>
                   <!-- Col 4: Remove -->
                   <div class="col-span-2 flex justify-end pt-1 pr-2">

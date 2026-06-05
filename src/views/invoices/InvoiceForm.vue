@@ -7,12 +7,15 @@ import { useBusinessStore } from '../../stores/business'
 import { inr } from '../../utils/currency'
 import { today, addDays } from '../../utils/date'
 import { calcInvoice } from '../../utils/invoice'
+import { useFormKeys, handleLineItemTab } from '../../composables/useFormKeys'
 
 const router        = useRouter()
 const route         = useRoute()
 const emit          = defineEmits(['refresh'])
 const toast         = useToast()
 const businessStore = useBusinessStore()
+
+useFormKeys({ formId: 'invoice-form', autoFocus: false })
 
 const clients      = ref([])
 const products     = ref([])
@@ -265,6 +268,10 @@ function pickProduct(i, productId) {
   if (tr) it.gst_rate = parseFloat(tr.rate)
 }
 
+function onLastFieldTab(i, e) {
+  handleLineItemTab(i, e, form.value.items, addItem, '.line-desc')
+}
+
 function lineTotal(it) {
   return parseFloat(it.quantity||0) * parseFloat(it.unit_price||0)
        * (1 - parseFloat(it.discount_pct||0)/100)
@@ -341,8 +348,9 @@ async function submit() {
       </div>
       <div class="flex items-center gap-2">
         <button type="button" @click="router.back()" class="inv-btn-secondary hidden sm:inline-flex">Cancel</button>
-        <button type="submit" form="invoice-form" class="inv-btn-primary hidden sm:inline-flex" :disabled="loading">
+        <button type="submit" form="invoice-form" class="inv-btn-primary hidden sm:inline-flex" :disabled="loading" title="Ctrl+Enter">
           {{ loading ? 'Saving…' : isEdit ? 'Save Changes' : 'Save and Continue' }}
+          <kbd class="ml-1.5 text-[10px] opacity-60 bg-white/20 px-1.5 py-0.5 rounded">Ctrl+Enter</kbd>
         </button>
         <!-- Mockup avatar image displayed on right side for mobile -->
         <div class="lg:hidden w-8 h-8 rounded-full border border-white/20 overflow-hidden bg-white/10 flex items-center justify-center shrink-0">
@@ -520,7 +528,7 @@ async function submit() {
                   <div v-for="(it, i) in form.items" :key="i" class="grid grid-cols-12 gap-4 px-5 py-4 items-start hover:bg-gray-50/20 transition-colors">
                     <!-- Column 1: Item details + product picker -->
                     <div class="col-span-5 space-y-2">
-                      <input v-model="it.description" type="text" class="inv-input font-medium !bg-white" placeholder="Enter item name or description" required />
+                      <input v-model="it.description" type="text" class="inv-input font-medium !bg-white line-desc" placeholder="Enter item name or description" required />
                       <select v-if="products.length" v-model="it.product_id" class="inv-select text-xs text-gray-400 w-full !bg-white" @change="pickProduct(i, it.product_id)">
                         <option :value="null">— Select from products —</option>
                         <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
@@ -541,7 +549,7 @@ async function submit() {
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
                         <input v-model="it.unit_price" type="number" min="0" step="0.01" class="inv-input pl-7 text-right tabular-nums !bg-white" placeholder="0.00" />
                       </div>
-                      <select v-model="it.gst_rate" class="inv-select text-center text-xs !bg-white">
+                      <select v-model="it.gst_rate" class="inv-select text-center text-xs !bg-white" @keydown.tab="onLastFieldTab(i, $event)">
                         <option v-for="r in gstRates" :key="r" :value="r">{{ r }}% GST</option>
                       </select>
                     </div>

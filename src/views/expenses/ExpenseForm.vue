@@ -5,12 +5,14 @@ import { item, task, all } from '../../api'
 import { today } from '../../utils/date'
 import { useToast } from '../../composables/useToast'
 import HelpIcon from '../../components/HelpIcon.vue'
+import { useFormKeys } from '../../composables/useFormKeys'
 
 const router = useRouter()
 const route  = useRoute()
 const emit   = defineEmits(['refresh'])
 
 const toast         = useToast()
+useFormKeys({ formId: 'expense-form' })
 const categories    = ref([])
 const loading       = ref(false)
 const saving        = ref(false)
@@ -121,8 +123,8 @@ onMounted(load)
       </div>
       <div class="flex items-center gap-2">
         <button type="button" @click="router.back()" class="inv-btn-secondary hidden sm:inline-flex">Cancel</button>
-        <button type="submit" form="expense-form" class="inv-btn-primary" :disabled="saving">
-          {{ saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save Expense' }}
+        <button type="submit" form="expense-form" class="inv-btn-primary" :disabled="saving" title="Ctrl+Enter">
+          {{ saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save Expense' }} <kbd v-if="!saving" class="ml-1 opacity-60 text-[10px] font-mono">⌃↵</kbd>
         </button>
       </div>
     </div>
