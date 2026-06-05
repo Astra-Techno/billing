@@ -85,12 +85,37 @@ function onClientSearchInput() {
   addClientError.value = ''
 }
 
-// Quick-add product modal
-const showAddProduct   = ref(false)
+// Inline product autocomplete
 const addingProduct    = ref(false)
 const addProductError  = ref('')
-const pendingItemIndex = ref(null)
+const productSearchIdx = ref(null)  // which line item has product dropdown open
+const productSearch    = ref('')
 const newProduct = ref({ type: 'service', name: '', price: '', unit: 'Nos', gst_rate: 18 })
+
+const filteredProducts = computed(() => {
+  const q = productSearch.value.trim().toLowerCase()
+  if (!q) return products.value
+  return products.value.filter(p => p.name?.toLowerCase().includes(q))
+})
+const showProductInlineCreate = computed(() => productSearch.value.trim().length >= 2 && filteredProducts.value.length === 0)
+
+function openProductSearch(i) {
+  productSearchIdx.value = i
+  productSearch.value = ''
+  addProductError.value = ''
+  newProduct.value = { type: 'service', name: '', price: '', unit: 'Nos', gst_rate: 18 }
+}
+
+function closeProductSearch() {
+  productSearchIdx.value = null
+  productSearch.value = ''
+}
+
+function selectProduct(i, p) {
+  pickProduct(i, p.id)
+  form.value.items[i].product_id = p.id
+  closeProductSearch()
+}
 
 async function saveNewProduct() {
   addProductError.value = ''
@@ -108,23 +133,14 @@ async function saveNewProduct() {
     const created = res.data?.data
     products.value.push(created)
     products.value.sort((a, b) => a.name.localeCompare(b.name))
-    if (pendingItemIndex.value !== null) {
-      form.value.items[pendingItemIndex.value].product_id = created.id
-      pickProduct(pendingItemIndex.value, created.id)
+    if (productSearchIdx.value !== null) {
+      selectProduct(productSearchIdx.value, created)
     }
-    showAddProduct.value = false
     newProduct.value = { type: 'service', name: '', price: '', unit: 'Nos', gst_rate: 18 }
   } catch (e) {
     addProductError.value = e.response?.data?.message || 'Failed to save product.'
   }
   addingProduct.value = false
-}
-
-function openAddProduct(i) {
-  pendingItemIndex.value = i
-  addProductError.value = ''
-  newProduct.value = { type: 'service', name: '', price: '', unit: 'Nos', gst_rate: 18 }
-  showAddProduct.value = true
 }
 
 const isEdit      = computed(() => !!route.params.id)
@@ -546,13 +562,55 @@ async function submit() {
                 <!-- Rows -->
                 <div class="divide-y divide-gray-100">
                   <div v-for="(it, i) in form.items" :key="i" class="grid grid-cols-12 gap-4 px-5 py-4 items-start hover:bg-gray-50/20 transition-colors">
-                    <!-- Column 1: Item details + product picker -->
-                    <div class="col-span-5 space-y-2">
+                    <!-- Column 1: Item details + product autocomplete -->
+                    <div class="col-span-5 space-y-2 relative">
                       <input v-model="it.description" type="text" class="inv-input font-medium !bg-white line-desc" placeholder="Enter item name or description" required />
-                      <select v-if="products.length" v-model="it.product_id" class="inv-select text-xs text-gray-400 w-full !bg-white" @change="pickProduct(i, it.product_id)">
-                        <option :value="null">— Select from products —</option>
-                        <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
-                      </select>
+                      <!-- Product autocomplete trigger -->
+                      <div class="relative">
+                        <button v-if="productSearchIdx !== i" type="button" @click="openProductSearch(i)"
+                          class="w-full inv-input text-xs text-left !bg-white flex items-center gap-1.5"
+                          :class="it.product_id ? 'text-gray-700' : 'text-gray-400'">
+                          <svg class="w-3.5 h-3.5 shrink-0 text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                          <span class="truncate">{{ it.product_id ? products.find(p => p.id == it.product_id)?.name : 'Search or add product…' }}</span>
+                        </button>
+                        <!-- Inline search input -->
+                        <div v-else>
+                          <div class="relative">
+                            <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            <input v-model="productSearch" type="text" class="inv-input w-full pl-8 text-xs !bg-white" placeholder="Search product…"
+                              @input="newProduct.name = productSearch" autofocus />
+                          </div>
+                          <!-- Product dropdown -->
+                          <div class="absolute left-0 right-0 top-full mt-1 z-50 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
+                            <div v-if="filteredProducts.length" class="max-h-36 overflow-y-auto divide-y divide-gray-50">
+                              <button v-for="p in filteredProducts" :key="p.id" type="button"
+                                @click="selectProduct(i, p)"
+                                class="w-full flex items-center justify-between px-3 py-2 hover:bg-gray-50 transition text-left text-xs">
+                                <span class="font-medium text-gray-800 truncate">{{ p.name }}</span>
+                                <span class="text-gray-400 tabular-nums shrink-0 ml-2">{{ inr(p.price) }}</span>
+                              </button>
+                            </div>
+                            <!-- No match → inline create -->
+                            <div v-if="showProductInlineCreate" class="border-t border-gray-100 p-3 space-y-2 bg-gray-50/50">
+                              <p class="text-[11px] font-semibold text-gray-500">No product found — create new:</p>
+                              <input v-model="newProduct.name" type="text" class="inv-input w-full text-xs" placeholder="Product name *" />
+                              <div class="grid grid-cols-2 gap-2">
+                                <input v-model="newProduct.price" type="number" min="0" step="0.01" class="inv-input w-full text-xs" placeholder="Price *" />
+                                <select v-model="newProduct.unit" class="inv-select w-full text-xs">
+                                  <option v-for="u in units" :key="u">{{ u }}</option>
+                                </select>
+                              </div>
+                              <div v-if="addProductError" class="text-[11px] text-red-600 bg-red-50 rounded px-2 py-1">{{ addProductError }}</div>
+                              <button type="button" @click="saveNewProduct" :disabled="addingProduct"
+                                class="w-full py-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold transition flex items-center justify-center gap-1">
+                                {{ addingProduct ? 'Creating…' : 'Create & Select' }}
+                              </button>
+                            </div>
+                          </div>
+                          <!-- Click outside to close -->
+                          <div class="fixed inset-0 z-40" @click="closeProductSearch"></div>
+                        </div>
+                      </div>
                     </div>
 
                     <!-- Column 2: QTY + Unit -->
@@ -630,17 +688,39 @@ async function submit() {
 
                   <!-- Expanded input fields for edit -->
                   <div v-show="activeItemIndex === i" class="px-4 pb-5 pt-3 space-y-3 bg-gray-50/70 border-t border-gray-100">
-                    <div class="flex items-center gap-2">
-                      <div v-if="products.length" class="flex-1">
-                        <label class="inv-label">Select Catalog Product</label>
-                        <select v-model="it.product_id" class="inv-select w-full !bg-white" @change="pickProduct(i, it.product_id)">
-                          <option :value="null">— Select product —</option>
-                          <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }} — {{ inr(p.price) }}</option>
-                        </select>
+                    <div>
+                      <label class="inv-label">Search or Add Product</label>
+                      <div class="relative">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <input v-model="productSearch" type="text" class="inv-input w-full pl-9 !bg-white text-sm" placeholder="Type product name…"
+                          @focus="openProductSearch(i)" @input="newProduct.name = productSearch" />
                       </div>
-                      <button type="button" @click="openAddProduct(i)" class="shrink-0 w-9 h-9 mt-5 rounded-xl bg-primary-600 text-white flex items-center justify-center">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                      </button>
+                      <!-- Mobile product results -->
+                      <div v-if="productSearchIdx === i && productSearch.trim()" class="mt-1.5 space-y-1.5">
+                        <div v-if="filteredProducts.length" class="max-h-36 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-50 bg-white">
+                          <button v-for="p in filteredProducts" :key="p.id" type="button"
+                            @click="selectProduct(i, p)"
+                            class="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 text-left text-sm">
+                            <span class="font-medium text-gray-800 truncate">{{ p.name }}</span>
+                            <span class="text-gray-400 text-xs tabular-nums shrink-0 ml-2">{{ inr(p.price) }}</span>
+                          </button>
+                        </div>
+                        <div v-if="showProductInlineCreate" class="rounded-xl border border-gray-200 p-3 space-y-2 bg-white">
+                          <p class="text-xs font-semibold text-gray-500">No product found — create new:</p>
+                          <input v-model="newProduct.name" type="text" class="inv-input w-full text-sm !bg-white" placeholder="Product name *" />
+                          <div class="grid grid-cols-2 gap-2">
+                            <input v-model="newProduct.price" type="number" min="0" step="0.01" class="inv-input w-full text-sm !bg-white" placeholder="Price *" />
+                            <select v-model="newProduct.unit" class="inv-select w-full text-sm !bg-white">
+                              <option v-for="u in units" :key="u">{{ u }}</option>
+                            </select>
+                          </div>
+                          <div v-if="addProductError" class="text-xs text-red-600 bg-red-50 rounded-lg px-2 py-1.5">{{ addProductError }}</div>
+                          <button type="button" @click="saveNewProduct" :disabled="addingProduct"
+                            class="w-full py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold transition">
+                            {{ addingProduct ? 'Creating…' : 'Create & Select' }}
+                          </button>
+                        </div>
+                      </div>
                     </div>
                     <div>
                       <label class="inv-label">Item Name / Description *</label>
@@ -900,76 +980,5 @@ async function submit() {
     </div>
   </div>
 
-  <!-- ── Quick Add Product Modal ── -->
-  <Teleport to="body">
-    <div v-if="showAddProduct" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm" @click.stop>
-        <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-          <h3 class="font-bold text-gray-900 text-lg">Add New Product</h3>
-          <button @click="showAddProduct = false" class="text-gray-400 hover:text-gray-600 transition bg-gray-50 rounded-full p-1.5 hover:bg-gray-100">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
-        </div>
-        <div class="p-6 space-y-5">
-          <div class="flex gap-2">
-            <button type="button" @click="newProduct.type = 'service'"
-              class="flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition"
-              :class="newProduct.type === 'service' ? 'bg-primary-50 text-primary-700 border-primary-600' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'">
-              Service
-            </button>
-            <button type="button" @click="newProduct.type = 'product'"
-              class="flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition"
-              :class="newProduct.type === 'product' ? 'bg-primary-50 text-primary-700 border-primary-600' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'">
-              Product
-            </button>
-          </div>
-
-          <div>
-            <label class="form-label">Name *</label>
-            <input v-model="newProduct.name" type="text" class="form-input" placeholder="e.g. Web Development" autofocus />
-          </div>
-
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="form-label">Price (₹) *</label>
-              <input v-model="newProduct.price" type="number" min="0" class="form-input" placeholder="0.00" />
-            </div>
-            <div>
-              <label class="form-label">Unit</label>
-              <select v-model="newProduct.unit" class="form-select">
-                <option>Nos</option><option>Kg</option><option>Ltr</option>
-                <option>Mtr</option><option>Box</option><option>Project</option>
-                <option>Month</option><option>Year</option><option>Hour</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label class="form-label">GST Rate (%)</label>
-            <select v-model="newProduct.gst_rate" class="form-select">
-              <option :value="0">0% — Exempt</option>
-              <option :value="5">5%</option>
-              <option :value="12">12%</option>
-              <option :value="18">18%</option>
-              <option :value="28">28%</option>
-            </select>
-          </div>
-
-          <div v-if="addProductError" class="flex items-center gap-2 text-sm text-danger-600 bg-danger-50 border border-danger-100 rounded-xl px-4 py-3">
-            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            {{ addProductError }}
-          </div>
-
-          <div class="flex gap-3 pt-2">
-            <button type="button" @click="showAddProduct = false" class="btn-outline flex-1">Cancel</button>
-            <button type="button" @click="saveNewProduct" :disabled="addingProduct" class="btn-primary flex-1">
-              <svg v-if="addingProduct" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-              {{ addingProduct ? 'Saving…' : 'Save & Select' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </Teleport>
 
 </template>
