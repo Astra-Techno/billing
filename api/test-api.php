@@ -353,7 +353,7 @@ test('Create client — invalid type', function() {
 });
 
 test('Quick-add client (name + type only, like invoice form)', function() {
-    $res = api('POST', 'task/Client/create', ['name' => 'ZZ-QuickAdd-' . time(), 'type' => 'customer']);
+    $res = api('POST', 'task/Client/create', ['name' => 'ZZ-QuickAdd-' . time(), 'type' => 'individual']);
     ok($res['success'] === true, $res['message'] ?? 'Failed');
     // Cleanup
     $cid = $res['data']['client_id'] ?? $res['data']['id'] ?? null;
