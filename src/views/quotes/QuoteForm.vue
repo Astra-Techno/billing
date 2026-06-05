@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { task, item, all, list } from '../../api'
 import { inr } from '../../utils/currency'
@@ -7,24 +7,170 @@ import { today, addDays } from '../../utils/date'
 import { calcInvoice } from '../../utils/invoice'
 import { useToast } from '../../composables/useToast'
 import { useBusinessStore } from '../../stores/business'
-import { useFormKeys, handleLineItemTab } from '../../composables/useFormKeys'
+import { useFormKeys } from '../../composables/useFormKeys'
 
 const router        = useRouter()
 const route         = useRoute()
 const emit          = defineEmits(['refresh'])
 const toast         = useToast()
 const businessStore = useBusinessStore()
-useFormKeys({ formId: 'quote-form' })
+useFormKeys({ formId: 'quote-form', autoFocus: false })
 
-function onLastFieldTab(i, e) {
-  handleLineItemTab(i, e, form.value.items, addItem, '.line-desc')
+// Keyboard shortcuts
+function onFormShortcut(e) {
+  if (e.target.closest('[class*="fixed inset-0"]')) return
+
+  // Alt+A → Add new line item
+  if (e.altKey && e.key === 'a') {
+    e.preventDefault()
+    addItem()
+  }
+  // Alt+C → Focus customer search
+  if (e.altKey && e.key === 'c') {
+    e.preventDefault()
+    form.value.client_id = ''
+    clientDropdownOpen.value = true
+    nextTick(() => {
+      const el = document.querySelector('.client-search-input')
+      if (el) el.focus()
+    })
+  }
+  // Alt+N → Focus notes
+  if (e.altKey && e.key === 'n') {
+    e.preventDefault()
+    const el = document.querySelector('.notes-input')
+    if (el) el.focus()
+  }
+  // Escape → Close product/client dropdowns
+  if (e.key === 'Escape') {
+    closeProductSearch()
+    clientDropdownOpen.value = false
+  }
 }
+onMounted(() => document.addEventListener('keydown', onFormShortcut))
+onUnmounted(() => document.removeEventListener('keydown', onFormShortcut))
+
 const clients       = ref([])
 const products      = ref([])
 const taxRates      = ref([])
 const states        = ref([])
-const loading  = ref(false)
-const error    = ref('')
+const loading       = ref(false)
+const error         = ref('')
+const clientSearch  = ref('')
+
+const clientDropdownOpen = ref(false)
+
+const filteredClients = computed(() => {
+  const q = clientSearch.value.trim().toLowerCase()
+  if (!q) return clients.value
+  return clients.value.filter(c =>
+    c.name?.toLowerCase().includes(q) ||
+    c.mobile?.includes(q) ||
+    c.company?.toLowerCase().includes(q)
+  )
+})
+const showInlineCreate = computed(() => clientSearch.value.trim().length >= 2 && filteredClients.value.length === 0)
+
+// Quick-add client
+const showAddClient  = ref(false)
+const addingClient   = ref(false)
+const addClientError = ref('')
+const newClient      = ref({ name: '', mobile: '', email: '', type: 'individual' })
+
+async function saveNewClient() {
+  addClientError.value = ''
+  if (!newClient.value.name) return addClientError.value = 'Customer name is required.'
+  addingClient.value = true
+  try {
+    const res = await task('Client', 'create', { ...newClient.value, type: 'individual' })
+    const created = res.data?.data
+    clients.value.push(created)
+    clients.value.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+    form.value.client_id = created.id
+    showAddClient.value = false
+    clientSearch.value = ''
+    clientDropdownOpen.value = false
+    newClient.value = { name: '', mobile: '', email: '', type: 'individual' }
+  } catch (e) {
+    addClientError.value = e.response?.data?.message || 'Failed to save customer.'
+  }
+  addingClient.value = false
+}
+
+function onClientSearchInput() {
+  clientDropdownOpen.value = true
+  newClient.value.name = clientSearch.value
+  newClient.value.mobile = ''
+  newClient.value.email = ''
+  addClientError.value = ''
+}
+
+// Inline product autocomplete
+const addingProduct    = ref(false)
+const addProductError  = ref('')
+const productSearchIdx = ref(null)
+const productSearch    = ref('')
+const newProduct = ref({ type: 'service', name: '', price: '', unit: 'Nos', gst_rate: 18 })
+
+const filteredProducts = computed(() => {
+  const idx = productSearchIdx.value
+  const q = idx !== null && form.value.items[idx]
+    ? form.value.items[idx].description?.trim().toLowerCase() || ''
+    : productSearch.value.trim().toLowerCase()
+  if (!q) return products.value.slice(0, 8)
+  return products.value.filter(p => p.name?.toLowerCase().includes(q))
+})
+const showProductInlineCreate = computed(() => {
+  const idx = productSearchIdx.value
+  const q = idx !== null && form.value.items[idx]
+    ? form.value.items[idx].description?.trim() || ''
+    : productSearch.value.trim()
+  return q.length >= 2 && filteredProducts.value.length === 0
+})
+
+function openProductSearch(i) {
+  productSearchIdx.value = i
+  productSearch.value = form.value.items[i]?.description || ''
+  addProductError.value = ''
+  newProduct.value = { type: 'service', name: form.value.items[i]?.description || '', price: '', unit: 'Nos', gst_rate: 18 }
+}
+
+function closeProductSearch() {
+  productSearchIdx.value = null
+  productSearch.value = ''
+}
+
+function selectProduct(i, p) {
+  pickProduct(i, p.id)
+  form.value.items[i].product_id = p.id
+  closeProductSearch()
+}
+
+async function saveNewProduct() {
+  addProductError.value = ''
+  if (!newProduct.value.name) return addProductError.value = 'Product name is required.'
+  if (!newProduct.value.price) return addProductError.value = 'Price is required.'
+  addingProduct.value = true
+  try {
+    const res = await task('Product', 'create', {
+      type:     newProduct.value.type,
+      name:     newProduct.value.name,
+      price:    parseFloat(newProduct.value.price),
+      unit:     newProduct.value.unit,
+      gst_rate: newProduct.value.gst_rate,
+    })
+    const created = res.data?.data
+    products.value.push(created)
+    products.value.sort((a, b) => a.name.localeCompare(b.name))
+    if (productSearchIdx.value !== null) {
+      selectProduct(productSearchIdx.value, created)
+    }
+    newProduct.value = { type: 'service', name: '', price: '', unit: 'Nos', gst_rate: 18 }
+  } catch (e) {
+    addProductError.value = e.response?.data?.message || 'Failed to save product.'
+  }
+  addingProduct.value = false
+}
 
 const isEdit = computed(() => !!route.params.id)
 
@@ -39,6 +185,8 @@ const form = ref({
   notes: '', terms: '',
   items: [blankItem()],
 })
+
+const selectedClient = computed(() => clients.value.find(c => c.id == form.value.client_id))
 
 const units    = ['Nos', 'Kg', 'Ltr', 'Hrs', 'Pcs', 'Mtr', 'Box', 'Set']
 const gstRates = [0, 5, 12, 18, 28]
@@ -90,9 +238,25 @@ onMounted(async () => {
       error.value = 'Could not load quotation data. Please try again.'
     }
   }
+
+  // Auto-focus first item description
+  nextTick(() => {
+    setTimeout(() => {
+      const el = document.querySelector('.line-desc')
+      if (el) el.focus()
+    }, 150)
+  })
 })
 
-function addItem() { form.value.items.push(blankItem()) }
+function addItem() {
+  form.value.items.push(blankItem())
+  // Focus the new row's description input
+  nextTick(() => {
+    const descs = document.querySelectorAll('.line-desc')
+    const last = descs[descs.length - 1]
+    if (last) last.focus()
+  })
+}
 function removeItem(i) { if (form.value.items.length > 1) form.value.items.splice(i, 1) }
 
 function pickProduct(i, productId) {
@@ -105,6 +269,11 @@ function pickProduct(i, productId) {
   it.hsn_sac     = p.hsn_sac || ''
   const tr = taxRates.value.find(t => t.id == p.tax_rate_id)
   if (tr) it.gst_rate = parseFloat(tr.rate)
+}
+
+// No longer auto-add row on Tab — let Tab flow naturally to next fields
+function onLastFieldTab(i, e) {
+  // Just let default tab behavior proceed
 }
 
 function lineTotal(it) {
@@ -155,6 +324,15 @@ async function submit() {
       </div>
     </div>
 
+    <!-- Keyboard shortcuts hint (desktop only) -->
+    <div class="hidden lg:flex items-center gap-4 px-6 py-1.5 bg-gray-50 border-b border-gray-100 text-[10px] text-gray-400 font-medium">
+      <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded text-[9px] font-mono">Alt+A</kbd> Add item</span>
+      <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded text-[9px] font-mono">Alt+C</kbd> Customer</span>
+      <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded text-[9px] font-mono">Alt+N</kbd> Notes</span>
+      <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded text-[9px] font-mono">Ctrl+↵</kbd> Save</span>
+      <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded text-[9px] font-mono">Esc</kbd> Close</span>
+    </div>
+
     <!-- Body: two-column on desktop -->
     <div class="inv-body">
       <form id="quote-form" @submit.prevent="submit" class="inv-layout">
@@ -163,7 +341,7 @@ async function submit() {
         <div class="inv-main">
 
           <!-- Items card -->
-          <div class="inv-card">
+          <div class="inv-card !overflow-visible">
             <div class="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
               <h2 class="text-sm font-semibold text-gray-800">Items / Services</h2>
               <span class="text-xs text-gray-400">{{ form.items.length }} item{{ form.items.length > 1 ? 's' : '' }}</span>
@@ -179,13 +357,38 @@ async function submit() {
               </div>
               <div class="divide-y divide-gray-100">
                 <div v-for="(it, i) in form.items" :key="i" class="grid grid-cols-12 gap-4 px-5 py-4 items-start hover:bg-gray-50/20 transition-colors">
-                  <!-- Col 1: Description + product picker -->
-                  <div class="col-span-5 space-y-2">
-                    <input v-model="it.description" type="text" class="inv-input font-medium !bg-white line-desc" placeholder="What are you offering?" required />
-                    <select v-if="products.length" v-model="it.product_id" class="inv-select text-xs text-gray-400 w-full !bg-white" @change="pickProduct(i, it.product_id)">
-                      <option :value="null">— Select from products —</option>
-                      <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
-                    </select>
+                  <!-- Col 1: Combined description + product autocomplete -->
+                  <div class="col-span-5 relative">
+                    <input v-model="it.description" type="text" class="inv-input font-medium !bg-white line-desc" placeholder="Type item name or search product…" required
+                      @focus="openProductSearch(i)" @input="productSearch = it.description; newProduct.name = it.description" />
+                    <!-- Product autocomplete dropdown -->
+                    <div v-if="productSearchIdx === i && it.description?.trim().length >= 1" class="absolute left-0 right-0 top-full mt-1 z-50 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
+                      <div v-if="filteredProducts.length" class="max-h-36 overflow-y-auto divide-y divide-gray-50">
+                        <button v-for="p in filteredProducts" :key="p.id" type="button"
+                          @click="selectProduct(i, p)"
+                          class="w-full flex items-center justify-between px-3 py-2 hover:bg-gray-50 transition text-left text-xs">
+                          <span class="font-medium text-gray-800 truncate">{{ p.name }}</span>
+                          <span class="text-gray-400 tabular-nums shrink-0 ml-2">{{ inr(p.price) }}</span>
+                        </button>
+                      </div>
+                      <!-- No match → inline create -->
+                      <div v-if="showProductInlineCreate" class="border-t border-gray-100 p-3 space-y-2 bg-gray-50/50">
+                        <p class="text-[11px] font-semibold text-gray-500">No product found — save as new:</p>
+                        <div class="grid grid-cols-2 gap-2">
+                          <input v-model="newProduct.price" type="number" min="0" step="0.01" class="inv-input w-full text-xs" placeholder="Price (₹) *" />
+                          <select v-model="newProduct.unit" class="inv-select w-full text-xs">
+                            <option v-for="u in units" :key="u">{{ u }}</option>
+                          </select>
+                        </div>
+                        <div v-if="addProductError" class="text-[11px] text-red-600 bg-red-50 rounded px-2 py-1">{{ addProductError }}</div>
+                        <button type="button" @click="saveNewProduct" :disabled="addingProduct"
+                          class="w-full py-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold transition">
+                          {{ addingProduct ? 'Creating…' : 'Save as Product' }}
+                        </button>
+                      </div>
+                    </div>
+                    <!-- Click outside to close -->
+                    <div v-if="productSearchIdx === i" class="fixed inset-0 z-40" @click="closeProductSearch"></div>
                   </div>
                   <!-- Col 2: QTY + Unit -->
                   <div class="col-span-2 space-y-2">
@@ -219,16 +422,36 @@ async function submit() {
             <!-- Mobile: stacked cards -->
             <div class="lg:hidden divide-y divide-gray-100">
               <div v-for="(it, i) in form.items" :key="i" class="p-4 space-y-3">
-                <div v-if="products.length" class="flex items-center gap-2">
-                  <div class="flex-1">
-                    <label class="inv-label">Product</label>
-                    <select v-model="it.product_id" class="inv-select w-full" @change="pickProduct(i, it.product_id)">
-                      <option :value="null">— Type manually —</option>
-                      <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
-                    </select>
+                <div>
+                  <label class="inv-label">Item Name / Description *</label>
+                  <input v-model="it.description" type="text" class="inv-input w-full !bg-white text-sm line-desc" required placeholder="Type item name or search product…"
+                    @focus="openProductSearch(i)" @input="productSearch = it.description; newProduct.name = it.description" />
+                  <!-- Mobile product autocomplete -->
+                  <div v-if="productSearchIdx === i && it.description?.trim().length >= 1" class="mt-1.5 space-y-1.5">
+                    <div v-if="filteredProducts.length" class="max-h-36 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-50 bg-white">
+                      <button v-for="p in filteredProducts" :key="p.id" type="button"
+                        @click="selectProduct(i, p)"
+                        class="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 text-left text-sm">
+                        <span class="font-medium text-gray-800 truncate">{{ p.name }}</span>
+                        <span class="text-gray-400 text-xs tabular-nums shrink-0 ml-2">{{ inr(p.price) }}</span>
+                      </button>
+                    </div>
+                    <div v-if="showProductInlineCreate" class="rounded-xl border border-gray-200 p-3 space-y-2 bg-white">
+                      <p class="text-xs font-semibold text-gray-500">No product found — save as new:</p>
+                      <div class="grid grid-cols-2 gap-2">
+                        <input v-model="newProduct.price" type="number" min="0" step="0.01" class="inv-input w-full text-sm !bg-white" placeholder="Price (₹) *" />
+                        <select v-model="newProduct.unit" class="inv-select w-full text-sm !bg-white">
+                          <option v-for="u in units" :key="u">{{ u }}</option>
+                        </select>
+                      </div>
+                      <div v-if="addProductError" class="text-xs text-red-600 bg-red-50 rounded-lg px-2 py-1.5">{{ addProductError }}</div>
+                      <button type="button" @click="saveNewProduct" :disabled="addingProduct"
+                        class="w-full py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold transition">
+                        {{ addingProduct ? 'Creating…' : 'Save as Product' }}
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <div><label class="inv-label">Description *</label><input v-model="it.description" type="text" class="inv-input w-full" required /></div>
                 <div class="grid grid-cols-2 gap-2">
                   <div><label class="inv-label">Qty</label><input v-model="it.quantity" type="number" class="inv-input w-full" /></div>
                   <div><label class="inv-label">Unit</label><select v-model="it.unit" class="inv-select w-full"><option v-for="u in units" :key="u">{{ u }}</option></select></div>
@@ -258,7 +481,7 @@ async function submit() {
             <div class="grid sm:grid-cols-2 gap-3">
               <div>
                 <label class="inv-label">Message to customer</label>
-                <textarea v-model="form.notes" rows="3" class="inv-textarea w-full" placeholder="e.g. Thank you for considering us!"></textarea>
+                <textarea v-model="form.notes" rows="3" class="inv-textarea w-full notes-input" placeholder="e.g. Thank you for considering us!"></textarea>
               </div>
               <div>
                 <label class="inv-label">Terms &amp; conditions</label>
@@ -272,18 +495,74 @@ async function submit() {
         <!-- RIGHT: Sidebar -->
         <aside class="inv-sidebar">
 
-          <!-- Quote To -->
-          <div class="inv-card">
+          <!-- Quote To — Inline autocomplete -->
+          <div class="inv-card !overflow-visible">
             <div class="px-5 py-3.5 border-b border-gray-100">
               <h2 class="text-sm font-semibold text-gray-800">Quote To</h2>
-              <p class="text-xs text-gray-400 mt-0.5">*Select one customer</p>
             </div>
             <div class="p-4">
-              <label class="inv-label">Customer *</label>
-              <select v-model="form.client_id" class="inv-select w-full" required>
-                <option value="">Choose a customer…</option>
-                <option v-for="c in clients" :key="c.id" :value="c.id">{{ c.name }}</option>
-              </select>
+              <!-- Selected client chip -->
+              <div v-if="form.client_id" class="flex items-center gap-3 p-3 bg-primary-50 rounded-xl border border-primary-100">
+                <div class="w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center shrink-0">
+                  <span class="text-white text-sm font-bold">{{ selectedClient?.name?.charAt(0)?.toUpperCase() }}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold text-gray-900 truncate">{{ selectedClient?.name }}</p>
+                  <p class="text-xs text-gray-500 truncate">{{ selectedClient?.mobile || selectedClient?.email || '—' }}</p>
+                </div>
+                <button type="button" @click="form.client_id = ''; clientSearch = ''; clientDropdownOpen = true" class="text-xs text-primary-600 font-semibold shrink-0 hover:underline">Change</button>
+              </div>
+
+              <!-- Autocomplete search -->
+              <div v-else class="relative">
+                <div class="relative">
+                  <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                  <input v-model="clientSearch" type="text" placeholder="Type customer name or mobile…"
+                    class="inv-input w-full pl-9 pr-3 client-search-input"
+                    @focus="clientDropdownOpen = true"
+                    @input="onClientSearchInput" />
+                </div>
+
+                <!-- Dropdown results -->
+                <div v-if="clientDropdownOpen" class="absolute left-0 right-0 top-full mt-1 z-50 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
+                  <!-- Matching clients -->
+                  <div v-if="filteredClients.length" class="max-h-48 overflow-y-auto divide-y divide-gray-50">
+                    <button v-for="c in filteredClients" :key="c.id" type="button"
+                      @click="form.client_id = c.id; clientSearch = ''; clientDropdownOpen = false"
+                      class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition text-left">
+                      <div class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                        <span class="text-xs font-bold text-gray-500">{{ c.name?.charAt(0)?.toUpperCase() }}</span>
+                      </div>
+                      <div class="min-w-0">
+                        <p class="text-sm font-medium text-gray-800 truncate">{{ c.name }}</p>
+                        <p class="text-xs text-gray-400 truncate">{{ c.mobile || c.email || '' }}</p>
+                      </div>
+                    </button>
+                  </div>
+
+                  <!-- No match → inline create form -->
+                  <div v-if="showInlineCreate" class="border-t border-gray-100 p-3 space-y-2.5 bg-gray-50/50">
+                    <p class="text-xs font-semibold text-gray-500">No customer found — create new:</p>
+                    <div>
+                      <input v-model="newClient.name" type="text" class="inv-input w-full text-sm" placeholder="Customer name *" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                      <input v-model="newClient.mobile" type="tel" class="inv-input w-full text-xs" placeholder="Mobile (optional)" />
+                      <input v-model="newClient.email" type="email" class="inv-input w-full text-xs" placeholder="Email (optional)" />
+                    </div>
+                    <div v-if="addClientError" class="text-xs text-red-600 bg-red-50 rounded-lg px-2 py-1.5">{{ addClientError }}</div>
+                    <button type="button" @click="saveNewClient" :disabled="addingClient"
+                      class="w-full py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5">
+                      <svg v-if="addingClient" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                      <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                      {{ addingClient ? 'Creating…' : 'Create & Select' }}
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Click-outside to close -->
+                <div v-if="clientDropdownOpen" class="fixed inset-0 z-10" @click="clientDropdownOpen = false"></div>
+              </div>
             </div>
           </div>
 

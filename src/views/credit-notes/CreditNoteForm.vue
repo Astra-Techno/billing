@@ -1,27 +1,33 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { list, task, item } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 import { today } from '../../utils/date'
 import { useToast } from '../../composables/useToast'
-import { useFormKeys, handleLineItemTab } from '../../composables/useFormKeys'
+import { useFormKeys } from '../../composables/useFormKeys'
 
 const router = useRouter()
 const route  = useRoute()
 const emit   = defineEmits(['refresh'])
 const toast  = useToast()
-useFormKeys({ formId: 'credit-note-form' })
+useFormKeys({ formId: 'credit-note-form', autoFocus: false })
 
-function onLastFieldTab(i, e) {
-  handleLineItemTab(i, e, form.value.items, addItem, '.line-desc')
-}
+function onLastFieldTab(i, e) {}
 
 const invoices = ref([])
+const products = ref([])
 const loading  = ref(false)
 const saving   = ref(false)
 const error    = ref('')
+
+// Inline product autocomplete
+const addingProduct    = ref(false)
+const addProductError  = ref('')
+const productSearchIdx = ref(null)
+const productSearch    = ref('')
+const newProduct = ref({ type: 'service', name: '', price: '', unit: 'Nos', gst_rate: 18 })
 
 const blankItem = () => ({ description: '', hsn_sac: '', unit: 'Nos', quantity: 1, unit_price: '', gst_rate: 18 })
 
@@ -64,11 +70,100 @@ const reasons = [
 const units    = ['Nos', 'Kg', 'Ltr', 'Hrs', 'Pcs', 'Mtr', 'Box', 'Set']
 const gstRates = [0, 5, 12, 18, 28]
 
+const filteredProducts = computed(() => {
+  const idx = productSearchIdx.value
+  const q = idx !== null && form.value.items[idx]
+    ? form.value.items[idx].description?.trim().toLowerCase() || ''
+    : productSearch.value.trim().toLowerCase()
+  if (!q) return products.value.slice(0, 8)
+  return products.value.filter(p => p.name?.toLowerCase().includes(q))
+})
+
+const showProductInlineCreate = computed(() => {
+  const idx = productSearchIdx.value
+  const q = idx !== null && form.value.items[idx]
+    ? form.value.items[idx].description?.trim() || ''
+    : productSearch.value.trim()
+  return q.length >= 2 && filteredProducts.value.length === 0
+})
+
+function openProductSearch(i) {
+  productSearchIdx.value = i
+  productSearch.value = form.value.items[i]?.description || ''
+  addProductError.value = ''
+  newProduct.value = { type: 'service', name: form.value.items[i]?.description || '', price: '', unit: 'Nos', gst_rate: 18 }
+}
+
+function closeProductSearch() {
+  productSearchIdx.value = null
+  productSearch.value = ''
+}
+
+function selectProduct(i, p) {
+  const it = form.value.items[i]
+  it.description = p.name
+  it.unit        = p.unit || 'Nos'
+  it.unit_price  = p.price
+  it.hsn_sac     = p.hsn_sac || ''
+  it.gst_rate    = parseFloat(p.gst_rate || 18)
+  closeProductSearch()
+}
+
+async function saveNewProduct() {
+  addProductError.value = ''
+  if (!newProduct.value.name) return addProductError.value = 'Product name is required.'
+  if (!newProduct.value.price) return addProductError.value = 'Price is required.'
+  addingProduct.value = true
+  try {
+    const res = await task('Product', 'create', {
+      type:     newProduct.value.type,
+      name:     newProduct.value.name,
+      price:    parseFloat(newProduct.value.price),
+      unit:     newProduct.value.unit,
+      gst_rate: newProduct.value.gst_rate,
+    })
+    const created = res.data?.data
+    products.value.push(created)
+    products.value.sort((a, b) => a.name.localeCompare(b.name))
+    if (productSearchIdx.value !== null) {
+      selectProduct(productSearchIdx.value, created)
+    }
+    newProduct.value = { type: 'service', name: '', price: '', unit: 'Nos', gst_rate: 18 }
+  } catch (e) {
+    addProductError.value = e.response?.data?.message || 'Failed to save product.'
+  }
+  addingProduct.value = false
+}
+
+// Keyboard shortcuts
+function onFormShortcut(e) {
+  if (e.target.closest('[class*="fixed inset-0"]')) return
+
+  if (e.altKey && e.key === 'a') {
+    e.preventDefault()
+    addItem()
+  }
+  if (e.altKey && e.key === 'n') {
+    e.preventDefault()
+    const el = document.querySelector('.notes-input')
+    if (el) el.focus()
+  }
+  if (e.key === 'Escape') {
+    closeProductSearch()
+  }
+}
+onMounted(() => document.addEventListener('keydown', onFormShortcut))
+onUnmounted(() => document.removeEventListener('keydown', onFormShortcut))
+
 async function load() {
   loading.value = true
   try {
-    const invRes = await list('Invoice', { sort_by: 'i.created_at', sort_order: 'desc', limit: 500 })
+    const [invRes, pRes] = await Promise.all([
+      list('Invoice', { sort_by: 'i.created_at', sort_order: 'desc', limit: 500 }),
+      list('Product'),
+    ])
     invoices.value = (invRes.data?.data || []).filter(i => i.status !== 'cancelled')
+    products.value = pRes.data?.data || []
     // Prefill if coming from an invoice detail page
     const fromId = route.query.from_invoice
     if (fromId) {
@@ -79,9 +174,24 @@ async function load() {
     error.value = 'Failed to load invoices.'
   }
   loading.value = false
+
+  // Auto-focus first item description
+  nextTick(() => {
+    setTimeout(() => {
+      const el = document.querySelector('.line-desc')
+      if (el) el.focus()
+    }, 150)
+  })
 }
 
-function addItem() { form.value.items.push(blankItem()) }
+function addItem() {
+  form.value.items.push(blankItem())
+  nextTick(() => {
+    const descs = document.querySelectorAll('.line-desc')
+    const last = descs[descs.length - 1]
+    if (last) last.focus()
+  })
+}
 function removeItem(i) { if (form.value.items.length > 1) form.value.items.splice(i, 1) }
 
 function lineTotal(it) {
@@ -134,6 +244,14 @@ onMounted(load)
       </div>
     </div>
 
+    <!-- Keyboard shortcuts hint (desktop only) -->
+    <div class="hidden lg:flex items-center gap-4 px-6 py-1.5 bg-gray-50 border-b border-gray-100 text-[10px] text-gray-400 font-medium">
+      <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded text-[9px] font-mono">Alt+A</kbd> Add item</span>
+      <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded text-[9px] font-mono">Alt+N</kbd> Notes</span>
+      <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded text-[9px] font-mono">Ctrl+↵</kbd> Save</span>
+      <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded text-[9px] font-mono">Esc</kbd> Close</span>
+    </div>
+
     <!-- Body: two-column on desktop -->
     <div class="inv-body">
       <form id="credit-note-form" @submit.prevent="save" class="inv-layout">
@@ -142,7 +260,7 @@ onMounted(load)
         <div class="inv-main">
 
           <!-- Items card -->
-          <div class="inv-card">
+          <div class="inv-card !overflow-visible">
             <div class="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
               <h2 class="text-sm font-semibold text-gray-800">Items to Credit</h2>
               <span class="text-xs text-gray-400">{{ form.items.length }} item{{ form.items.length > 1 ? 's' : '' }}</span>
@@ -161,9 +279,38 @@ onMounted(load)
                 </div>
                 <div class="divide-y divide-gray-100">
                   <div v-for="(it, i) in form.items" :key="i" class="grid grid-cols-12 gap-4 px-5 py-4 items-start hover:bg-gray-50/20 transition-colors">
-                    <!-- Col 1: Description -->
-                    <div class="col-span-5">
-                      <input v-model="it.description" type="text" class="inv-input font-medium !bg-white line-desc" placeholder="Description *" required />
+                    <!-- Col 1: Description + product autocomplete -->
+                    <div class="col-span-5 relative">
+                      <input v-model="it.description" type="text" class="inv-input font-medium !bg-white line-desc" placeholder="Type item name or search product…" required
+                        @focus="openProductSearch(i)" @input="productSearch = it.description; newProduct.name = it.description" />
+                      <!-- Product autocomplete dropdown -->
+                      <div v-if="productSearchIdx === i && it.description?.trim().length >= 1" class="absolute left-0 right-0 top-full mt-1 z-50 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
+                        <div v-if="filteredProducts.length" class="max-h-36 overflow-y-auto divide-y divide-gray-50">
+                          <button v-for="p in filteredProducts" :key="p.id" type="button"
+                            @click="selectProduct(i, p)"
+                            class="w-full flex items-center justify-between px-3 py-2 hover:bg-gray-50 transition text-left text-xs">
+                            <span class="font-medium text-gray-800 truncate">{{ p.name }}</span>
+                            <span class="text-gray-400 tabular-nums shrink-0 ml-2">{{ inr(p.price) }}</span>
+                          </button>
+                        </div>
+                        <!-- No match → inline create -->
+                        <div v-if="showProductInlineCreate" class="border-t border-gray-100 p-3 space-y-2 bg-gray-50/50">
+                          <p class="text-[11px] font-semibold text-gray-500">No product found — save as new:</p>
+                          <div class="grid grid-cols-2 gap-2">
+                            <input v-model="newProduct.price" type="number" min="0" step="0.01" class="inv-input w-full text-xs" placeholder="Price (₹) *" />
+                            <select v-model="newProduct.unit" class="inv-select w-full text-xs">
+                              <option v-for="u in units" :key="u">{{ u }}</option>
+                            </select>
+                          </div>
+                          <div v-if="addProductError" class="text-[11px] text-red-600 bg-red-50 rounded px-2 py-1">{{ addProductError }}</div>
+                          <button type="button" @click="saveNewProduct" :disabled="addingProduct"
+                            class="w-full py-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold transition">
+                            {{ addingProduct ? 'Creating…' : 'Save as Product' }}
+                          </button>
+                        </div>
+                      </div>
+                      <!-- Click outside to close -->
+                      <div v-if="productSearchIdx === i" class="fixed inset-0 z-40" @click="closeProductSearch"></div>
                     </div>
                     <!-- Col 2: QTY -->
                     <div class="col-span-2">
@@ -194,9 +341,41 @@ onMounted(load)
               <!-- Mobile: stacked cards -->
               <div class="lg:hidden divide-y divide-gray-100">
                 <div v-for="(it, i) in form.items" :key="i" class="p-4 space-y-3">
-                  <div class="flex items-start justify-between gap-3">
-                    <input v-model="it.description" type="text" class="inv-input flex-1" placeholder="Description *" required />
-                    <button v-if="form.items.length > 1" type="button" @click="removeItem(i)" class="text-gray-300 hover:text-red-500 p-2 transition">✕</button>
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wide">Item {{ i + 1 }}</span>
+                    <button v-if="form.items.length > 1" @click="removeItem(i)" class="text-gray-400 hover:text-red-500 p-1 rounded-full transition-colors">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                  </div>
+                  <div>
+                    <label class="inv-label">Item Name / Description *</label>
+                    <input v-model="it.description" type="text" class="inv-input w-full !bg-white text-sm" required placeholder="Type item name or search product…"
+                      @focus="openProductSearch(i)" @input="productSearch = it.description; newProduct.name = it.description" />
+                    <!-- Mobile product autocomplete -->
+                    <div v-if="productSearchIdx === i && it.description?.trim().length >= 1" class="mt-1.5 space-y-1.5">
+                      <div v-if="filteredProducts.length" class="max-h-36 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-50 bg-white">
+                        <button v-for="p in filteredProducts" :key="p.id" type="button"
+                          @click="selectProduct(i, p)"
+                          class="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 text-left text-sm">
+                          <span class="font-medium text-gray-800 truncate">{{ p.name }}</span>
+                          <span class="text-gray-400 text-xs tabular-nums shrink-0 ml-2">{{ inr(p.price) }}</span>
+                        </button>
+                      </div>
+                      <div v-if="showProductInlineCreate" class="rounded-xl border border-gray-200 p-3 space-y-2 bg-white">
+                        <p class="text-xs font-semibold text-gray-500">No product found — save as new:</p>
+                        <div class="grid grid-cols-2 gap-2">
+                          <input v-model="newProduct.price" type="number" min="0" step="0.01" class="inv-input w-full text-sm !bg-white" placeholder="Price (₹) *" />
+                          <select v-model="newProduct.unit" class="inv-select w-full text-sm !bg-white">
+                            <option v-for="u in units" :key="u">{{ u }}</option>
+                          </select>
+                        </div>
+                        <div v-if="addProductError" class="text-xs text-red-600 bg-red-50 rounded-lg px-2 py-1.5">{{ addProductError }}</div>
+                        <button type="button" @click="saveNewProduct" :disabled="addingProduct"
+                          class="w-full py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold transition">
+                          {{ addingProduct ? 'Creating…' : 'Save as Product' }}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                   <div class="grid grid-cols-2 gap-2">
                     <div><label class="inv-label">Qty</label><input v-model="it.quantity" type="number" class="inv-input w-full" /></div>
@@ -222,7 +401,7 @@ onMounted(load)
           <div class="inv-card p-5 space-y-3">
             <h2 class="text-sm font-semibold text-gray-700">Notes</h2>
             <label class="inv-label">Additional information</label>
-            <textarea v-model="form.notes" rows="3" class="inv-textarea w-full" placeholder="Reason or additional info…"></textarea>
+            <textarea v-model="form.notes" rows="3" class="inv-textarea w-full notes-input" placeholder="Reason or additional info…"></textarea>
           </div>
 
         </div><!-- /inv-main -->
