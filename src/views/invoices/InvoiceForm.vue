@@ -554,7 +554,7 @@ async function submit() {
           <!-- Line Items card -->
           <div>
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 px-1 lg:hidden">Item Detail</p>
-            <div class="inv-card">
+            <div class="inv-card !overflow-visible">
               <div class="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between hidden lg:flex">
                 <h2 class="text-sm font-semibold text-gray-800">Items</h2>
                 <span class="text-xs text-gray-400">{{ form.items.length }} item{{ form.items.length > 1 ? 's' : '' }}</span>
