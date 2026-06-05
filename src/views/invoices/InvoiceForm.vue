@@ -757,7 +757,7 @@ async function submit() {
         <aside class="inv-sidebar hidden lg:block">
 
           <!-- Bill To — Inline autocomplete -->
-          <div class="inv-card">
+          <div class="inv-card !overflow-visible">
             <div class="px-5 py-3.5 border-b border-gray-100">
               <h2 class="text-sm font-semibold text-gray-800">Bill To</h2>
             </div>
@@ -785,7 +785,7 @@ async function submit() {
                 </div>
 
                 <!-- Dropdown results -->
-                <div v-if="clientDropdownOpen" class="absolute left-0 right-0 top-full mt-1 z-20 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
+                <div v-if="clientDropdownOpen" class="absolute left-0 right-0 top-full mt-1 z-50 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
                   <!-- Matching clients -->
                   <div v-if="filteredClients.length" class="max-h-48 overflow-y-auto divide-y divide-gray-50">
                     <button v-for="c in filteredClients" :key="c.id" type="button"
