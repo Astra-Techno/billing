@@ -40,6 +40,8 @@ const filteredClients = computed(() => {
     c.company?.toLowerCase().includes(q)
   )
 })
+const showInlineCreate = computed(() => clientSearch.value.trim().length >= 2 && filteredClients.value.length === 0)
+const clientDropdownOpen = ref(false)
 const error    = ref('')
 
 // Quick-add client modal
@@ -60,6 +62,7 @@ async function saveNewClient() {
     form.value.client_id = created.id
     showAddClient.value = false
     clientSearch.value = ''
+    clientDropdownOpen.value = false
     newClient.value = { name: '', mobile: '', email: '', type: 'individual' }
   } catch (e) {
     addClientError.value = e.response?.data?.message || 'Failed to save customer.'
@@ -71,6 +74,15 @@ function openAddClient() {
   addClientError.value = ''
   newClient.value = { name: clientSearch.value, mobile: '', email: '', type: 'individual' }
   showAddClient.value = true
+}
+
+// Keep inline create name in sync with search
+function onClientSearchInput() {
+  clientDropdownOpen.value = true
+  newClient.value.name = clientSearch.value
+  newClient.value.mobile = ''
+  newClient.value.email = ''
+  addClientError.value = ''
 }
 
 // Quick-add product modal
@@ -473,19 +485,13 @@ async function submit() {
 
                 <!-- Expanded search & selection area under To Row -->
                 <div v-if="editingClient" class="p-4 bg-gray-50/50 space-y-3 animate-fade-in-up">
-                  <div class="relative flex items-center gap-2">
-                    <div class="relative flex-1">
-                      <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                      <input v-model="clientSearch" type="text" placeholder="Search customer…" class="inv-input w-full pl-9 !bg-white" />
-                    </div>
-                    <button type="button" @click="openAddClient" title="Add new"
-                      class="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg bg-primary-600 hover:bg-primary-700 text-white transition">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                    </button>
+                  <div class="relative">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <input v-model="clientSearch" type="text" placeholder="Type customer name or mobile…" class="inv-input w-full pl-9 !bg-white" @input="onClientSearchInput" />
                   </div>
-                  
-                  <div v-if="clientSearch || filteredClients.length > 0" class="max-h-48 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-50 bg-white shadow-sm">
-                    <div v-if="!filteredClients.length" class="px-3 py-3 text-center text-sm text-gray-400">No match for "{{ clientSearch }}"</div>
+
+                  <!-- Matching clients -->
+                  <div v-if="filteredClients.length && clientSearch.trim()" class="max-h-40 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-50 bg-white shadow-sm">
                     <button v-for="c in filteredClients" :key="c.id" type="button"
                       @click="form.client_id = c.id; clientSearch = ''; editingClient = false"
                       class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition text-left">
@@ -494,8 +500,22 @@ async function submit() {
                       </div>
                       <div class="min-w-0">
                         <p class="text-sm font-medium text-gray-800 truncate">{{ c.name }}</p>
-                        <p class="text-xs text-gray-400 truncate">{{ c.mobile || c.email || 'Customer' }}</p>
+                        <p class="text-xs text-gray-400 truncate">{{ c.mobile || c.email || '' }}</p>
                       </div>
+                    </button>
+                  </div>
+
+                  <!-- No match → inline create -->
+                  <div v-if="showInlineCreate" class="rounded-xl border border-gray-200 p-3 space-y-2.5 bg-white">
+                    <p class="text-xs font-semibold text-gray-500">No match — create new customer:</p>
+                    <input v-model="newClient.name" type="text" class="inv-input w-full text-sm !bg-white" placeholder="Customer name *" />
+                    <input v-model="newClient.mobile" type="tel" class="inv-input w-full text-xs !bg-white" placeholder="Mobile (optional)" />
+                    <input v-model="newClient.email" type="email" class="inv-input w-full text-xs !bg-white" placeholder="Email (optional)" />
+                    <div v-if="addClientError" class="text-xs text-red-600 bg-red-50 rounded-lg px-2 py-1.5">{{ addClientError }}</div>
+                    <button type="button" @click="saveNewClient" :disabled="addingClient"
+                      class="w-full py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold transition flex items-center justify-center gap-1.5">
+                      <svg v-if="addingClient" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                      {{ addingClient ? 'Creating…' : 'Create & Select' }}
                     </button>
                   </div>
                 </div>
@@ -736,13 +756,13 @@ async function submit() {
         <!-- ── RIGHT: Sidebar (Hidden on Mobile) ── -->
         <aside class="inv-sidebar hidden lg:block">
 
-          <!-- Bill To -->
+          <!-- Bill To — Inline autocomplete -->
           <div class="inv-card">
             <div class="px-5 py-3.5 border-b border-gray-100">
               <h2 class="text-sm font-semibold text-gray-800">Bill To</h2>
-              <p class="text-xs text-gray-400 mt-0.5">*Select one recipient</p>
             </div>
             <div class="p-4">
+              <!-- Selected client chip -->
               <div v-if="form.client_id" class="flex items-center gap-3 p-3 bg-primary-50 rounded-xl border border-primary-100">
                 <div class="w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center shrink-0">
                   <span class="text-white text-sm font-bold">{{ selectedClient?.name?.charAt(0)?.toUpperCase() }}</span>
@@ -751,33 +771,58 @@ async function submit() {
                   <p class="text-sm font-semibold text-gray-900 truncate">{{ selectedClient?.name }}</p>
                   <p class="text-xs text-gray-500 truncate">{{ selectedClient?.mobile || selectedClient?.email || '—' }}</p>
                 </div>
-                <button type="button" @click="form.client_id = ''; clientSearch = ''" class="text-xs text-primary-600 font-semibold shrink-0 hover:underline">Change</button>
+                <button type="button" @click="form.client_id = ''; clientSearch = ''; clientDropdownOpen = true" class="text-xs text-primary-600 font-semibold shrink-0 hover:underline">Change</button>
               </div>
-              <div v-else class="space-y-2">
-                <div class="relative flex items-center gap-2">
-                  <div class="relative flex-1">
-                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                    <input v-model="clientSearch" type="text" placeholder="Search customer…" class="inv-input w-full pl-9" />
+
+              <!-- Autocomplete search -->
+              <div v-else class="relative">
+                <div class="relative">
+                  <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                  <input v-model="clientSearch" type="text" placeholder="Type customer name or mobile…"
+                    class="inv-input w-full pl-9 pr-3"
+                    @focus="clientDropdownOpen = true"
+                    @input="onClientSearchInput" />
+                </div>
+
+                <!-- Dropdown results -->
+                <div v-if="clientDropdownOpen && clientSearch.trim()" class="absolute left-0 right-0 top-full mt-1 z-20 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
+                  <!-- Matching clients -->
+                  <div v-if="filteredClients.length" class="max-h-40 overflow-y-auto divide-y divide-gray-50">
+                    <button v-for="c in filteredClients" :key="c.id" type="button"
+                      @click="form.client_id = c.id; clientSearch = ''; clientDropdownOpen = false"
+                      class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition text-left">
+                      <div class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                        <span class="text-xs font-bold text-gray-500">{{ c.name?.charAt(0)?.toUpperCase() }}</span>
+                      </div>
+                      <div class="min-w-0">
+                        <p class="text-sm font-medium text-gray-800 truncate">{{ c.name }}</p>
+                        <p class="text-xs text-gray-400 truncate">{{ c.mobile || c.email || '' }}</p>
+                      </div>
+                    </button>
                   </div>
-                  <button type="button" @click="openAddClient" title="Add new"
-                    class="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg bg-primary-600 hover:bg-primary-700 text-white transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                  </button>
-                </div>
-                <div v-if="clientSearch || filteredClients.length > 0" class="max-h-48 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-50 bg-white shadow-sm">
-                  <div v-if="!filteredClients.length" class="px-3 py-3 text-center text-sm text-gray-400">No match for "{{ clientSearch }}"</div>
-                  <button v-for="c in filteredClients" :key="c.id" type="button"
-                    @click="form.client_id = c.id; clientSearch = ''"
-                    class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition text-left">
-                    <div class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                      <span class="text-xs font-bold text-gray-500">{{ c.name?.charAt(0)?.toUpperCase() }}</span>
+
+                  <!-- No match → inline create form -->
+                  <div v-if="showInlineCreate" class="border-t border-gray-100 p-3 space-y-2.5 bg-gray-50/50">
+                    <p class="text-xs font-semibold text-gray-500">No customer found — create new:</p>
+                    <div>
+                      <input v-model="newClient.name" type="text" class="inv-input w-full text-sm" placeholder="Customer name *" />
                     </div>
-                    <div class="min-w-0">
-                      <p class="text-sm font-medium text-gray-800 truncate">{{ c.name }}</p>
-                      <p class="text-xs text-gray-400 truncate">{{ c.mobile || c.email || 'Customer' }}</p>
+                    <div class="grid grid-cols-2 gap-2">
+                      <input v-model="newClient.mobile" type="tel" class="inv-input w-full text-xs" placeholder="Mobile (optional)" />
+                      <input v-model="newClient.email" type="email" class="inv-input w-full text-xs" placeholder="Email (optional)" />
                     </div>
-                  </button>
+                    <div v-if="addClientError" class="text-xs text-red-600 bg-red-50 rounded-lg px-2 py-1.5">{{ addClientError }}</div>
+                    <button type="button" @click="saveNewClient" :disabled="addingClient"
+                      class="w-full py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5">
+                      <svg v-if="addingClient" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                      <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                      {{ addingClient ? 'Creating…' : 'Create & Select' }}
+                    </button>
+                  </div>
                 </div>
+
+                <!-- Click-outside to close -->
+                <div v-if="clientDropdownOpen" class="fixed inset-0 z-10" @click="clientDropdownOpen = false"></div>
               </div>
             </div>
           </div>
@@ -927,44 +972,4 @@ async function submit() {
     </div>
   </Teleport>
 
-  <!-- ── Quick Add Customer Modal ── -->
-  <Teleport to="body">
-    <div v-if="showAddClient" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm" @click.stop>
-        <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-          <h3 class="font-bold text-gray-900 text-lg">Add New Customer</h3>
-          <button @click="showAddClient = false" class="text-gray-400 hover:text-gray-600 transition bg-gray-50 rounded-full p-1.5 hover:bg-gray-100">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
-        </div>
-        <div class="p-6 space-y-4">
-          <div>
-            <label class="form-label">Customer Name *</label>
-            <input v-model="newClient.name" type="text" class="form-input" placeholder="e.g. Acme Corp" autofocus />
-          </div>
-          <div>
-            <label class="form-label">Mobile Number</label>
-            <input v-model="newClient.mobile" type="tel" class="form-input" placeholder="Optional" />
-          </div>
-          <div>
-            <label class="form-label">Email Address</label>
-            <input v-model="newClient.email" type="email" class="form-input" placeholder="Optional" />
-          </div>
-
-          <div v-if="addClientError" class="flex items-center gap-2 text-sm text-danger-600 bg-danger-50 border border-danger-100 rounded-xl px-4 py-3">
-            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            {{ addClientError }}
-          </div>
-
-          <div class="flex gap-3 pt-2">
-            <button type="button" @click="showAddClient = false" class="btn-outline flex-1">Cancel</button>
-            <button type="button" @click="saveNewClient" :disabled="addingClient" class="btn-primary flex-1">
-              <svg v-if="addingClient" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-              {{ addingClient ? 'Saving…' : 'Save & Select' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </Teleport>
 </template>
