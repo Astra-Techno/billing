@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { task, item, list, all } from '../../api'
 import { useToast } from '../../composables/useToast'
@@ -16,6 +16,41 @@ const toast         = useToast()
 const businessStore = useBusinessStore()
 
 useFormKeys({ formId: 'invoice-form', autoFocus: false })
+
+// Keyboard shortcuts
+function onFormShortcut(e) {
+  // Skip if inside a modal or typing in an input that shouldn't trigger shortcuts
+  if (e.target.closest('[class*="fixed inset-0"]')) return
+
+  // Alt+A → Add new line item
+  if (e.altKey && e.key === 'a') {
+    e.preventDefault()
+    addItem()
+  }
+  // Alt+C → Focus customer search
+  if (e.altKey && e.key === 'c') {
+    e.preventDefault()
+    form.value.client_id = ''
+    clientDropdownOpen.value = true
+    nextTick(() => {
+      const el = document.querySelector('.client-search-input')
+      if (el) el.focus()
+    })
+  }
+  // Alt+N → Focus notes
+  if (e.altKey && e.key === 'n') {
+    e.preventDefault()
+    const el = document.querySelector('.notes-input')
+    if (el) el.focus()
+  }
+  // Escape → Close product/client dropdowns
+  if (e.key === 'Escape') {
+    closeProductSearch()
+    clientDropdownOpen.value = false
+  }
+}
+onMounted(() => document.addEventListener('keydown', onFormShortcut))
+onUnmounted(() => document.removeEventListener('keydown', onFormShortcut))
 
 const clients      = ref([])
 const products     = ref([])
@@ -272,6 +307,14 @@ onMounted(async () => {
       }
     } catch { /* silently ignore prefill failure */ }
   }
+
+  // Auto-focus first item description
+  nextTick(() => {
+    setTimeout(() => {
+      const el = document.querySelector('.line-desc')
+      if (el) el.focus()
+    }, 150)
+  })
 })
 
 watch(() => form.value.invoice_type, (type) => {
@@ -402,6 +445,15 @@ async function submit() {
           <svg class="w-4 h-4 text-white/80" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
         </div>
       </div>
+    </div>
+
+    <!-- Keyboard shortcuts hint (desktop only) -->
+    <div class="hidden lg:flex items-center gap-4 px-6 py-1.5 bg-gray-50 border-b border-gray-100 text-[10px] text-gray-400 font-medium">
+      <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded text-[9px] font-mono">Alt+A</kbd> Add item</span>
+      <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded text-[9px] font-mono">Alt+C</kbd> Customer</span>
+      <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded text-[9px] font-mono">Alt+N</kbd> Notes</span>
+      <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded text-[9px] font-mono">Ctrl+↵</kbd> Save</span>
+      <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded text-[9px] font-mono">Esc</kbd> Close</span>
     </div>
 
     <!-- Body: two-column on desktop -->
@@ -782,7 +834,7 @@ async function submit() {
             <div class="grid sm:grid-cols-2 gap-3">
               <div>
                 <label class="inv-label">Message to customer</label>
-                <textarea v-model="form.notes" rows="3" class="inv-textarea w-full !bg-white" placeholder="Thank you for your business"></textarea>
+                <textarea v-model="form.notes" rows="3" class="inv-textarea w-full !bg-white notes-input" placeholder="Thank you for your business"></textarea>
               </div>
               <div>
                 <label class="inv-label">Terms & conditions</label>
@@ -851,7 +903,7 @@ async function submit() {
                 <div class="relative">
                   <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                   <input v-model="clientSearch" type="text" placeholder="Type customer name or mobile…"
-                    class="inv-input w-full pl-9 pr-3"
+                    class="inv-input w-full pl-9 pr-3 client-search-input"
                     @focus="clientDropdownOpen = true"
                     @input="onClientSearchInput" />
                 </div>
