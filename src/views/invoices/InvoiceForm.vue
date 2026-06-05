@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { task, item, list, all } from '../../api'
 import { useToast } from '../../composables/useToast'
@@ -283,6 +283,12 @@ watch(() => form.value.invoice_type, (type) => {
 function addItem() {
   form.value.items.push(blankItem())
   activeItemIndex.value = form.value.items.length - 1
+  // Focus the new row's description input
+  nextTick(() => {
+    const descs = document.querySelectorAll('.line-desc')
+    const last = descs[descs.length - 1]
+    if (last) last.focus()
+  })
 }
 
 function removeItem(i) {
@@ -306,8 +312,9 @@ function pickProduct(i, productId) {
   if (tr) it.gst_rate = parseFloat(tr.rate)
 }
 
+// No longer auto-add row on Tab — let Tab flow naturally to next fields
 function onLastFieldTab(i, e) {
-  handleLineItemTab(i, e, form.value.items, addItem, '.line-desc')
+  // Just let default tab behavior proceed
 }
 
 function lineTotal(it) {
@@ -638,8 +645,8 @@ async function submit() {
 
                 <!-- Desktop Add item -->
                 <div class="px-5 py-3 border-t border-gray-100 bg-gray-50/50">
-                  <button type="button" @click="addItem"
-                    class="flex items-center gap-2 text-sm text-primary-600 font-medium hover:text-primary-700 transition">
+                  <button type="button" @click="addItem" @keydown.enter.prevent="addItem"
+                    class="flex items-center gap-2 text-sm text-primary-600 font-medium hover:text-primary-700 transition focus:outline-none focus:ring-2 focus:ring-primary-300 rounded-lg px-2 py-1 -mx-2 -my-1">
                     <span class="w-5 h-5 rounded-full border-2 border-primary-300 flex items-center justify-center text-primary-500 text-xs leading-none">+</span>
                     Add item
                   </button>
