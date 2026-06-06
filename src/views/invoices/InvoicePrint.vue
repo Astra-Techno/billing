@@ -14,12 +14,19 @@ const loading  = ref(true)
 const error    = ref('')
 const qrDataUrl = ref('')
 
+// Print modes: normal, dc (delivery challan — no prices), proforma
+const mode = computed(() => route.query.mode || 'normal')
+const isDC = computed(() => mode.value === 'dc')
+const isProforma = computed(() => mode.value === 'proforma')
+
 const invoiceTitle = computed(() => {
-  const map = { tax_invoice: 'Tax Invoice', bill_of_supply: 'Bill of Supply', retail: 'Retail Invoice', export: 'Export Invoice' }
+  if (isDC.value) return 'Delivery Challan'
+  if (isProforma.value) return 'Proforma Invoice'
+  const map = { tax_invoice: 'Tax Invoice', bill_of_supply: 'Bill of Supply', retail: 'Retail Invoice', export: 'Export Invoice', proforma: 'Proforma Invoice' }
   return map[invoice.value?.invoice_type] || 'Tax Invoice'
 })
 
-const isGst = computed(() => invoice.value?.invoice_type !== 'bill_of_supply')
+const isGst = computed(() => !isDC.value && invoice.value?.invoice_type !== 'bill_of_supply')
 
 const ones = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine',
   'Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen']
@@ -111,11 +118,11 @@ onMounted(async () => {
           <p v-if="invoice.client_mobile" class="text-xs text-gray-500">{{ invoice.client_mobile }}</p>
         </div>
         <div>
-          <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Invoice Details</p>
+          <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{{ isDC ? 'Challan Details' : 'Invoice Details' }}</p>
           <table class="text-xs w-full">
-            <tr><td class="text-gray-400 pb-1 pr-3">Invoice No</td><td class="font-semibold text-gray-800">{{ invoice.number }}</td></tr>
-            <tr><td class="text-gray-400 pb-1 pr-3">Invoice Date</td><td class="font-medium text-gray-700">{{ fmtDateShort(invoice.issue_date) }}</td></tr>
-            <tr><td class="text-gray-400 pb-1 pr-3">Due Date</td><td class="font-medium text-gray-700">{{ fmtDateShort(invoice.due_date) }}</td></tr>
+            <tr><td class="text-gray-400 pb-1 pr-3">{{ isDC ? 'Ref Invoice' : 'Invoice No' }}</td><td class="font-semibold text-gray-800">{{ invoice.number }}</td></tr>
+            <tr><td class="text-gray-400 pb-1 pr-3">{{ isDC ? 'Challan Date' : 'Invoice Date' }}</td><td class="font-medium text-gray-700">{{ fmtDateShort(invoice.issue_date) }}</td></tr>
+            <tr v-if="!isDC"><td class="text-gray-400 pb-1 pr-3">Due Date</td><td class="font-medium text-gray-700">{{ fmtDateShort(invoice.due_date) }}</td></tr>
             <tr><td class="text-gray-400 pr-3">Place of Supply</td><td class="font-medium text-gray-700">{{ invoice.place_of_supply_name || invoice.supply_type }}</td></tr>
           </table>
         </div>
@@ -129,10 +136,11 @@ onMounted(async () => {
             <th class="px-2 py-2 text-left text-xs font-semibold">Description</th>
             <th class="px-2 py-2 text-center text-xs font-semibold">HSN/SAC</th>
             <th class="px-2 py-2 text-right text-xs font-semibold">Qty</th>
-            <th class="px-2 py-2 text-right text-xs font-semibold">Rate</th>
-            <th class="px-2 py-2 text-right text-xs font-semibold">Taxable</th>
+            <th class="px-2 py-2 text-center text-xs font-semibold">Unit</th>
+            <th v-if="!isDC" class="px-2 py-2 text-right text-xs font-semibold">Rate</th>
+            <th v-if="!isDC" class="px-2 py-2 text-right text-xs font-semibold">Taxable</th>
             <th v-if="isGst" class="px-2 py-2 text-right text-xs font-semibold">Tax</th>
-            <th class="px-2 py-2 text-right text-xs font-semibold">Amount</th>
+            <th v-if="!isDC" class="px-2 py-2 text-right text-xs font-semibold">Amount</th>
           </tr>
         </thead>
         <tbody>
@@ -140,12 +148,12 @@ onMounted(async () => {
             <td class="px-2 py-2 text-gray-400 text-xs">{{ idx + 1 }}</td>
             <td class="px-2 py-2">
               <p class="font-medium text-gray-800">{{ it.description }}</p>
-              <p v-if="it.unit" class="text-xs text-gray-400">{{ it.unit }}</p>
             </td>
             <td class="px-2 py-2 text-center font-mono text-xs text-gray-500">{{ it.hsn_sac || '—' }}</td>
             <td class="px-2 py-2 text-right text-gray-700">{{ it.quantity }}</td>
-            <td class="px-2 py-2 text-right text-gray-700">{{ inr(it.unit_price) }}</td>
-            <td class="px-2 py-2 text-right text-gray-700">{{ inr(it.taxable_amt) }}</td>
+            <td class="px-2 py-2 text-center text-gray-700 text-xs">{{ it.unit || 'Nos' }}</td>
+            <td v-if="!isDC" class="px-2 py-2 text-right text-gray-700">{{ inr(it.unit_price) }}</td>
+            <td v-if="!isDC" class="px-2 py-2 text-right text-gray-700">{{ inr(it.taxable_amt) }}</td>
             <td v-if="isGst" class="px-2 py-2 text-right text-xs">
               <div v-if="it.cgst_amt > 0" class="space-y-0.5">
                 <div class="text-gray-600">CGST {{ it.cgst_rate }}%: {{ inr(it.cgst_amt) }}</div>
@@ -154,13 +162,24 @@ onMounted(async () => {
               <div v-else-if="it.igst_amt > 0" class="text-gray-600">IGST {{ it.igst_rate }}%: {{ inr(it.igst_amt) }}</div>
               <div v-else class="text-gray-400">Nil</div>
             </td>
-            <td class="px-2 py-2 text-right font-semibold text-gray-900">{{ inr(it.total) }}</td>
+            <td v-if="!isDC" class="px-2 py-2 text-right font-semibold text-gray-900">{{ inr(it.total) }}</td>
           </tr>
         </tbody>
       </table>
 
-      <!-- Totals + Words -->
-      <div class="flex gap-6 mb-4 pb-4 border-b border-gray-200">
+      <!-- Proforma disclaimer -->
+      <div v-if="isProforma" class="mb-4 px-3 py-2 border-2 border-dashed border-amber-400 bg-amber-50 text-center">
+        <p class="text-xs font-bold text-amber-700 uppercase tracking-wider">This is not a tax invoice — for reference only</p>
+      </div>
+
+      <!-- DC: simple item count summary -->
+      <div v-if="isDC" class="mb-4 pb-4 border-b border-gray-200 text-right">
+        <p class="text-sm text-gray-600">Total Items: <span class="font-bold text-gray-900">{{ items.length }}</span></p>
+        <p class="text-sm text-gray-600">Total Quantity: <span class="font-bold text-gray-900">{{ items.reduce((s, it) => s + parseFloat(it.quantity || 0), 0) }}</span></p>
+      </div>
+
+      <!-- Totals + Words (hidden in DC mode) -->
+      <div v-if="!isDC" class="flex gap-6 mb-4 pb-4 border-b border-gray-200">
         <div class="flex-1">
           <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Amount in Words</p>
           <p class="text-sm font-medium text-gray-700 italic">{{ amountInWords(invoice.total) }}</p>
@@ -182,9 +201,9 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- Bank + Notes -->
+      <!-- Bank + Notes (hidden in DC mode) -->
       <div class="grid grid-cols-2 gap-6 mb-6">
-        <div v-if="business?.bank_name || business?.upi_id">
+        <div v-if="!isDC && (business?.bank_name || business?.upi_id)">
           <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Payment Details</p>
           <div class="flex gap-4 items-start">
             <div class="space-y-0.5 text-xs flex-1">

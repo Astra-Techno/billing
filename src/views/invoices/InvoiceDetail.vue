@@ -100,8 +100,16 @@ function printInvoice() {
   window.open('/print/invoice/' + invoice.value.id, '_blank')
 }
 
+function printDeliveryChallan() {
+  window.open('/print/invoice/' + invoice.value.id + '?mode=dc', '_blank')
+}
+
+function printProforma() {
+  window.open('/print/invoice/' + invoice.value.id + '?mode=proforma', '_blank')
+}
+
 const invoiceTitle = computed(() => {
-  const map = { tax_invoice: 'Tax Invoice', bill_of_supply: 'Bill of Supply', retail: 'Retail Invoice', export: 'Export Invoice' }
+  const map = { tax_invoice: 'Tax Invoice', bill_of_supply: 'Bill of Supply', retail: 'Retail Invoice', export: 'Export Invoice', proforma: 'Proforma Invoice' }
   return map[invoice.value?.invoice_type] || 'Tax Invoice'
 })
 
@@ -298,6 +306,11 @@ onMounted(load)
           <button @click="printInvoice" class="flex items-center gap-2 px-4 py-3 sm:py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 font-semibold text-xs transition-colors shrink-0 shadow-sm">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
             Print
+          </button>
+
+          <button @click="printDeliveryChallan" class="flex items-center gap-2 px-4 py-3 sm:py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-amber-50 hover:border-amber-200 hover:text-amber-700 font-semibold text-xs transition-colors shrink-0 shadow-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/></svg>
+            DC Print
           </button>
 
           <button @click="downloadPdf" :disabled="downloading" class="flex items-center gap-2 px-4 py-3 sm:py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-red-50 hover:border-red-200 hover:text-red-700 font-semibold text-xs transition-colors shrink-0 shadow-sm">
