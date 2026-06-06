@@ -116,12 +116,14 @@ const invoiceTitle = computed(() => {
 const isGst = computed(() => invoice.value?.invoice_type !== 'bill_of_supply')
 
 const downloading = ref(false)
-async function downloadPdf() {
+async function downloadPdf(mode = '') {
   downloading.value = true
   try {
-    const res = await api.get(`invoice/${invoice.value.id}/pdf`, { responseType: 'blob' })
+    const modeParam = mode ? `?mode=${mode}` : ''
+    const res = await api.get(`invoice/${invoice.value.id}/pdf${modeParam}`, { responseType: 'blob' })
+    const prefix = mode === 'dc' ? 'DC-' : mode === 'proforma' ? 'PROFORMA-' : ''
     const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
-    const a = Object.assign(document.createElement('a'), { href: url, download: `${invoice.value.number}.pdf` })
+    const a = Object.assign(document.createElement('a'), { href: url, download: `${prefix}${invoice.value.number}.pdf` })
     a.click()
     URL.revokeObjectURL(url)
   } finally { downloading.value = false }
@@ -308,12 +310,17 @@ onMounted(load)
             Print
           </button>
 
-          <button @click="printDeliveryChallan" class="flex items-center gap-2 px-4 py-3 sm:py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-amber-50 hover:border-amber-200 hover:text-amber-700 font-semibold text-xs transition-colors shrink-0 shadow-sm">
+          <button @click="printDeliveryChallan" class="flex items-center gap-2 px-4 py-3 sm:py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-amber-50 hover:border-amber-200 hover:text-amber-700 font-semibold text-xs transition-colors shrink-0 shadow-sm" title="Print Delivery Challan (no prices)">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/></svg>
             DC Print
           </button>
 
-          <button @click="downloadPdf" :disabled="downloading" class="flex items-center gap-2 px-4 py-3 sm:py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-red-50 hover:border-red-200 hover:text-red-700 font-semibold text-xs transition-colors shrink-0 shadow-sm">
+          <button @click="downloadPdf('dc')" :disabled="downloading" class="flex items-center gap-2 px-4 py-3 sm:py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-amber-50 hover:border-amber-200 hover:text-amber-700 font-semibold text-xs transition-colors shrink-0 shadow-sm" title="Download DC as PDF">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            DC PDF
+          </button>
+
+          <button @click="downloadPdf()" :disabled="downloading" class="flex items-center gap-2 px-4 py-3 sm:py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-red-50 hover:border-red-200 hover:text-red-700 font-semibold text-xs transition-colors shrink-0 shadow-sm">
             <svg v-if="downloading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
             <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
             PDF

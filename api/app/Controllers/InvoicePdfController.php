@@ -19,18 +19,19 @@ class InvoicePdfController
     private const MUTED  = '#64748b';
     private const DARK   = '#1e293b';
 
-    /** Used by the GET /invoice/{id}/pdf route */
+    /** Used by the GET /invoice/{id}/pdf route. Supports ?mode=dc|proforma */
     public function download(Request $request, Response $response, array $args): Response
     {
         $invoiceId  = (int)($args['id'] ?? 0);
         $businessId = Auth::businessId();
+        $mode       = $request->getQueryParams()['mode'] ?? 'normal';
 
         if (!$invoiceId || !$businessId) {
             $response->getBody()->write(json_encode(['success' => false, 'message' => 'Unauthorized']));
             return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
         }
 
-        [$pdfContent, $filename] = $this->generatePdf($invoiceId, $businessId);
+        [$pdfContent, $filename] = $this->generatePdf($invoiceId, $businessId, $mode);
 
         if ($pdfContent === null) {
             $response->getBody()->write(json_encode(['success' => false, 'message' => 'Invoice not found']));
@@ -48,7 +49,7 @@ class InvoicePdfController
      * Generate PDF bytes for an invoice. Returns [pdfBytes, filename] or [null, ''] on failure.
      * Public so the Invoice Task can call it directly.
      */
-    public function generatePdf(int $invoiceId, int $businessId): array
+    public function generatePdf(int $invoiceId, int $businessId, string $mode = 'normal'): array
     {
         $inv = DB::selectOne(
             'SELECT i.*,
@@ -85,7 +86,7 @@ class InvoicePdfController
         $biz   = (array)($biz ?? []);
         $items = array_map(fn($r) => (array)$r, $items);
 
-        $html = $this->renderHtml($inv, $items, $biz);
+        $html = $this->renderHtml($inv, $items, $biz, $mode);
 
         $options = new Options();
         $options->set('isHtml5ParserEnabled', true);
@@ -99,7 +100,8 @@ class InvoicePdfController
         $dompdf->render();
 
         $pdfContent = $dompdf->output();
-        $filename   = preg_replace('/[^a-zA-Z0-9\-_]/', '-', $inv['number'] ?? 'invoice') . '.pdf';
+        $prefix     = $mode === 'dc' ? 'DC-' : ($mode === 'proforma' ? 'PROFORMA-' : '');
+        $filename   = $prefix . preg_replace('/[^a-zA-Z0-9\-_]/', '-', $inv['number'] ?? 'invoice') . '.pdf';
 
         return [$pdfContent, $filename];
     }
@@ -180,16 +182,25 @@ class InvoicePdfController
 
     // ── HTML template ─────────────────────────────────────────────────────────
 
-    private function renderHtml(array $inv, array $items, array $biz): string
+    private function renderHtml(array $inv, array $items, array $biz, string $mode = 'normal'): string
     {
-        $isGst = ($inv['invoice_type'] ?? '') !== 'bill_of_supply';
+        $isDC       = $mode === 'dc';
+        $isProforma = $mode === 'proforma';
+        $isGst      = !$isDC && ($inv['invoice_type'] ?? '') !== 'bill_of_supply';
         $titles = [
             'tax_invoice'    => 'Tax Invoice',
             'bill_of_supply' => 'Bill of Supply',
             'retail'         => 'Retail Invoice',
             'export'         => 'Export Invoice',
+            'proforma'       => 'Proforma Invoice',
         ];
-        $title = $titles[$inv['invoice_type'] ?? ''] ?? 'Tax Invoice';
+        if ($isDC) {
+            $title = 'Delivery Challan';
+        } elseif ($isProforma) {
+            $title = 'Proforma Invoice';
+        } else {
+            $title = $titles[$inv['invoice_type'] ?? ''] ?? 'Tax Invoice';
+        }
 
         $logoSrc = !empty($biz['logo']) ? ($this->logoBase64($biz['logo']) ?? '') : '';
         $qrSrc   = $biz['upi_qr_image'] ?? '';
@@ -210,10 +221,12 @@ class InvoicePdfController
         $clientCity = implode(' &ndash; ', array_filter([$inv['client_city'] ?? '', $inv['client_pincode'] ?? '']));
 
         // ── Items table body ──────────────────────────────────────────────────
-        $colSpan   = $isGst ? 8 : 7;
+        $colSpan   = $isDC ? 5 : ($isGst ? 8 : 7);
         $itemsHtml = '';
+        $totalQty  = 0;
         foreach ($items as $idx => $it) {
             $bg = ($idx % 2 === 0) ? '#ffffff' : '#f8fafc';
+            $totalQty += (float)($it['quantity'] ?? 0);
 
             $taxCell = '';
             if ($isGst) {
@@ -231,14 +244,14 @@ class InvoicePdfController
                 . '<td style="padding:9px 10px;color:' . self::MUTED . ';font-size:11px;text-align:center">' . ($idx + 1) . '</td>'
                 . '<td style="padding:9px 10px">'
                 .   '<div style="font-weight:600;color:' . self::DARK . ';font-size:12px">' . $this->h($it['description']) . '</div>'
-                .   ($it['unit'] ? '<div style="font-size:10px;color:' . self::MUTED . ';margin-top:1px">' . $this->h($it['unit']) . '</div>' : '')
                 . '</td>'
                 . '<td style="padding:9px 10px;text-align:center;font-family:monospace;font-size:11px;color:' . self::MUTED . '">' . ($it['hsn_sac'] ? $this->h($it['hsn_sac']) : '&mdash;') . '</td>'
                 . '<td style="padding:9px 10px;text-align:right;color:' . self::DARK . ';font-size:12px">' . $this->h($it['quantity']) . '</td>'
-                . '<td style="padding:9px 10px;text-align:right;color:' . self::DARK . ';font-size:12px">' . $this->inr($it['unit_price']) . '</td>'
-                . '<td style="padding:9px 10px;text-align:right;color:' . self::DARK . ';font-size:12px">' . $this->inr($it['taxable_amt']) . '</td>'
+                . '<td style="padding:9px 10px;text-align:center;color:' . self::DARK . ';font-size:11px">' . $this->h($it['unit'] ?? 'Nos') . '</td>'
+                . ($isDC ? '' : '<td style="padding:9px 10px;text-align:right;color:' . self::DARK . ';font-size:12px">' . $this->inr($it['unit_price']) . '</td>')
+                . ($isDC ? '' : '<td style="padding:9px 10px;text-align:right;color:' . self::DARK . ';font-size:12px">' . $this->inr($it['taxable_amt']) . '</td>')
                 . ($isGst ? '<td style="padding:9px 10px;text-align:right;font-size:11px;color:#475569">' . $taxCell . '</td>' : '')
-                . '<td style="padding:9px 10px;text-align:right;font-weight:700;font-size:12px;color:' . self::NAVY . '">' . $this->inr($it['total']) . '</td>'
+                . ($isDC ? '' : '<td style="padding:9px 10px;text-align:right;font-weight:700;font-size:12px;color:' . self::NAVY . '">' . $this->inr($it['total']) . '</td>')
                 . '</tr>';
         }
 
@@ -307,7 +320,26 @@ class InvoicePdfController
               . '<div style="color:white;font-size:18px;font-weight:900">' . mb_strtoupper(mb_substr($biz['name'] ?? 'B', 0, 1)) . '</div>'
               . '</div>';
 
-        $taxTh = $isGst ? '<th style="padding:10px 10px;text-align:right;font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:0.05em;text-transform:uppercase">Tax</th>' : '';
+        $taxTh  = $isGst ? '<th style="padding:10px 10px;text-align:right;font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:0.05em;text-transform:uppercase">Tax</th>' : '';
+        $rateTh = $isDC ? '' : '<th style="padding:10px 10px;text-align:right;font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:0.05em;text-transform:uppercase">Rate</th>';
+        $taxableTh = $isDC ? '' : '<th style="padding:10px 10px;text-align:right;font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:0.05em;text-transform:uppercase">Taxable</th>';
+        $amountTh  = $isDC ? '' : '<th style="padding:10px 10px;text-align:right;font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:0.05em;text-transform:uppercase">Amount</th>';
+
+        // DC mode: summary row with total items and quantity
+        $dcSummary = '';
+        if ($isDC) {
+            $dcSummary = '<div style="text-align:right;padding:12px 28px;border-top:1px solid ' . self::BORDER . ';font-size:12px;color:' . self::DARK . '">'
+                . 'Total Items: <strong>' . count($items) . '</strong> &nbsp;&nbsp;&nbsp; Total Qty: <strong>' . $totalQty . '</strong>'
+                . '</div>';
+        }
+
+        // Proforma disclaimer
+        $proformaDisclaimer = '';
+        if ($isProforma) {
+            $proformaDisclaimer = '<div style="margin:0;padding:10px 28px;background:#fffbeb;border-bottom:2px dashed #f59e0b;text-align:center">'
+                . '<div style="font-size:11px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:0.1em">This is not a tax invoice &mdash; for reference only</div>'
+                . '</div>';
+        }
 
         return '<!DOCTYPE html>
 <html lang="en">
@@ -365,11 +397,11 @@ class InvoicePdfController
 
       <!-- Invoice Details -->
       <td style="width:50%;padding:20px 28px">
-        <div style="font-size:10px;font-weight:700;color:' . self::ACCENT . ';text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px">Invoice Details</div>
+        <div style="font-size:10px;font-weight:700;color:' . self::ACCENT . ';text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px">' . ($isDC ? 'Challan Details' : 'Invoice Details') . '</div>
         <table style="font-size:12px">
-          <tr><td style="color:' . self::MUTED . ';padding-bottom:6px;padding-right:16px;white-space:nowrap">Invoice No</td>     <td style="font-weight:700;color:' . self::NAVY . ';font-family:monospace">' . $this->h($inv['number'] ?? '') . '</td></tr>
-          <tr><td style="color:' . self::MUTED . ';padding-bottom:6px;padding-right:16px">Invoice Date</td>  <td style="color:' . self::DARK . '">' . $this->fmtDate($inv['issue_date'] ?? null) . '</td></tr>
-          <tr><td style="color:' . self::MUTED . ';padding-bottom:6px;padding-right:16px">Due Date</td>      <td style="color:' . self::DARK . ';font-weight:600">' . $this->fmtDate($inv['due_date'] ?? null) . '</td></tr>
+          <tr><td style="color:' . self::MUTED . ';padding-bottom:6px;padding-right:16px;white-space:nowrap">' . ($isDC ? 'Ref Invoice' : 'Invoice No') . '</td><td style="font-weight:700;color:' . self::NAVY . ';font-family:monospace">' . $this->h($inv['number'] ?? '') . '</td></tr>
+          <tr><td style="color:' . self::MUTED . ';padding-bottom:6px;padding-right:16px">' . ($isDC ? 'Challan Date' : 'Invoice Date') . '</td><td style="color:' . self::DARK . '">' . $this->fmtDate($inv['issue_date'] ?? null) . '</td></tr>
+          ' . ($isDC ? '' : '<tr><td style="color:' . self::MUTED . ';padding-bottom:6px;padding-right:16px">Due Date</td><td style="color:' . self::DARK . ';font-weight:600">' . $this->fmtDate($inv['due_date'] ?? null) . '</td></tr>') . '
           <tr><td style="color:' . self::MUTED . ';padding-right:16px;white-space:nowrap">Place of Supply</td><td style="color:' . self::DARK . '">' . $this->h($inv['place_of_supply_name'] ?? $inv['supply_type'] ?? '') . '</td></tr>
         </table>
       </td>
@@ -385,16 +417,21 @@ class InvoicePdfController
           <th style="padding:10px 10px;text-align:left;font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:0.05em;text-transform:uppercase">Description</th>
           <th style="padding:10px 10px;text-align:center;font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:0.05em;text-transform:uppercase">HSN/SAC</th>
           <th style="padding:10px 10px;text-align:right;font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:0.05em;text-transform:uppercase">Qty</th>
-          <th style="padding:10px 10px;text-align:right;font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:0.05em;text-transform:uppercase">Rate</th>
-          <th style="padding:10px 10px;text-align:right;font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:0.05em;text-transform:uppercase">Taxable</th>
+          <th style="padding:10px 10px;text-align:center;font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:0.05em;text-transform:uppercase">Unit</th>
+          ' . $rateTh . '
+          ' . $taxableTh . '
           ' . $taxTh . '
-          <th style="padding:10px 10px;text-align:right;font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:0.05em;text-transform:uppercase">Amount</th>
+          ' . $amountTh . '
         </tr>
       </thead>
       <tbody>' . $itemsHtml . '</tbody>
     </table>
   </div>
 
+  ' . $dcSummary . '
+  ' . $proformaDisclaimer . '
+
+  ' . ($isDC ? '' : '
   <!-- ═══ TOTALS + WORDS ════════════════════════════════════════════════════ -->
   <div style="border-top:2px solid ' . self::BORDER . ';padding:20px 28px">
     <table>
@@ -413,10 +450,10 @@ class InvoicePdfController
         </td>
       </tr>
     </table>
-  </div>
+  </div>') . '
 
   <!-- ═══ PAYMENT + NOTES ══════════════════════════════════════════════════ -->
-  ' . ($hasBank || $notesHtml ? '
+  ' . ((!$isDC && ($hasBank || $notesHtml)) ? '
   <div style="border-top:1px solid ' . self::BORDER . ';padding:20px 28px;background:#f8fafc">
     <table>
       <tr>
