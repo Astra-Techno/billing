@@ -76,4 +76,22 @@ $app->group('', function ($group) {
     $group->get( '/entity/{path:.*}', [EntityController::class, 'fetch']);
     $group->post('/entity/{path:.*}', [EntityController::class, 'fetch']);
 
+    // Run pending migrations
+    $group->post('/migrate', function ($request, $response) {
+        $results = [];
+        $migrations = [
+            'nullable_client_id' => "ALTER TABLE invoices MODIFY client_id INT UNSIGNED NULL DEFAULT NULL",
+        ];
+        foreach ($migrations as $name => $sql) {
+            try {
+                \App\Core\DB::statement($sql);
+                $results[$name] = 'OK';
+            } catch (\Throwable $e) {
+                $results[$name] = $e->getMessage();
+            }
+        }
+        $response->getBody()->write(json_encode(['success' => true, 'data' => $results]));
+        return $response->withHeader('Content-Type', 'application/json');
+    });
+
 })->add(new AuthMiddleware());

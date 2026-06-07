@@ -11,28 +11,10 @@ class Invoice extends Task
 {
     protected bool $useTransaction = true;
 
-    private static bool $clientIdMigrated = false;
-
-    private static function ensureNullableClientId(): void
-    {
-        if (self::$clientIdMigrated) return;
-        try {
-            $col = DB::selectOne("SELECT IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'invoices' AND COLUMN_NAME = 'client_id'");
-            if ($col && $col->IS_NULLABLE === 'NO') {
-                DB::statement("ALTER TABLE invoices MODIFY client_id INT UNSIGNED NULL DEFAULT NULL");
-            }
-            self::$clientIdMigrated = true;
-        } catch (\Throwable) {
-            self::$clientIdMigrated = true;
-        }
-    }
-
     // ── Create invoice ────────────────────────────────────────────────────────
 
     public function create(array $input): array
     {
-        if (empty($input['client_id'])) self::ensureNullableClientId();
-
         $this->validate([
             'client_id'    => 'nullable|integer',
             'issue_date'   => 'required|date',
@@ -109,8 +91,6 @@ class Invoice extends Task
 
     public function update(array $input): array
     {
-        if (empty($input['client_id'])) self::ensureNullableClientId();
-
         $this->validate([
             'id'        => 'required|integer',
             'client_id' => 'nullable|integer',
