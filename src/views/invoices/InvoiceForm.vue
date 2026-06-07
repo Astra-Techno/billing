@@ -423,7 +423,7 @@ async function submit() {
   <!-- Page shell -->
   <div class="inv-shell">
 
-    <!-- Toolbar: Invozen mockup style on mobile -->
+    <!-- Toolbar -->
     <div class="inv-toolbar max-lg:bg-[#1a56db] max-lg:text-white max-lg:border-none">
       <div class="flex items-center gap-3 min-w-0">
         <button type="button" @click="router.back()" class="inv-back-btn max-lg:bg-white/10 max-lg:text-white max-lg:hover:bg-white/20">
@@ -434,25 +434,22 @@ async function submit() {
         </h1>
       </div>
       <div class="flex items-center gap-2">
+        <!-- Shortcut hints — desktop only, inline in toolbar right -->
+        <div class="hidden lg:flex items-center gap-3 mr-2 text-[10px] text-gray-400 font-medium">
+          <span><kbd class="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-[9px] font-mono">Alt+A</kbd> Add</span>
+          <span><kbd class="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-[9px] font-mono">Alt+C</kbd> Client</span>
+          <span><kbd class="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-[9px] font-mono">Alt+N</kbd> Notes</span>
+          <span><kbd class="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-[9px] font-mono">Ctrl+↵</kbd> Save</span>
+        </div>
         <button type="button" @click="router.back()" class="inv-btn-secondary hidden sm:inline-flex">Cancel</button>
         <button type="submit" form="invoice-form" class="inv-btn-primary hidden sm:inline-flex" :disabled="loading" title="Ctrl+Enter">
           {{ loading ? 'Saving…' : isEdit ? 'Save Changes' : 'Save and Continue' }}
-          <kbd class="ml-1.5 text-[10px] opacity-60 bg-white/20 px-1.5 py-0.5 rounded">Ctrl+Enter</kbd>
         </button>
-        <!-- Mockup avatar image displayed on right side for mobile -->
+        <!-- Mobile avatar -->
         <div class="lg:hidden w-8 h-8 rounded-full border border-white/20 overflow-hidden bg-white/10 flex items-center justify-center shrink-0">
           <svg class="w-4 h-4 text-white/80" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
         </div>
       </div>
-    </div>
-
-    <!-- Keyboard shortcuts hint (desktop only) -->
-    <div class="hidden lg:flex items-center gap-4 px-6 py-1.5 bg-gray-50 border-b border-gray-100 text-[10px] text-gray-400 font-medium">
-      <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded text-[9px] font-mono">Alt+A</kbd> Add item</span>
-      <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded text-[9px] font-mono">Alt+C</kbd> Customer</span>
-      <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded text-[9px] font-mono">Alt+N</kbd> Notes</span>
-      <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded text-[9px] font-mono">Ctrl+↵</kbd> Save</span>
-      <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded text-[9px] font-mono">Esc</kbd> Close</span>
     </div>
 
     <!-- Body: two-column on desktop -->
@@ -462,15 +459,14 @@ async function submit() {
         <!-- ── LEFT: Main content ── -->
         <div class="inv-main">
 
-          <!-- Mobile Only Section: Invoice Details & Business Info -->
+          <!-- Mobile Only: Invoice Details & Business Info -->
           <div class="lg:hidden space-y-4">
-            
-            <!-- Invoice Details Card (Mockup Style Summary-First View) -->
+
+            <!-- Invoice Details Card -->
             <div>
               <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 px-1">Invoice Details</p>
-
               <div class="inv-card p-4">
-                <!-- 1. Collapsed state (Text grid matching Mockup screenshot) -->
+                <!-- Collapsed -->
                 <div v-if="!editingInvoiceDetails" class="flex items-center justify-between gap-2 text-sm">
                   <div class="flex-1 grid grid-cols-3 gap-2">
                     <div>
@@ -486,14 +482,12 @@ async function submit() {
                       <p class="font-bold text-gray-800 mt-1 truncate">{{ formatDateDisplay(form.due_date) }}</p>
                     </div>
                   </div>
-                  <!-- Edit Icon (Blue outline circular icon with pencil inside card) -->
                   <button type="button" @click="editingInvoiceDetails = true"
                     class="w-9 h-9 rounded-full bg-blue-50 text-[#1a56db] flex items-center justify-center shrink-0 border border-blue-100/50 hover:bg-blue-100 transition ml-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                   </button>
                 </div>
-
-                <!-- 2. Expanded editor state (Inputs show only when pencil is clicked) -->
+                <!-- Expanded -->
                 <div v-else class="flex items-start justify-between gap-2 animate-fade-in-up">
                   <div class="flex-1 grid grid-cols-2 gap-3">
                     <div>
@@ -525,7 +519,6 @@ async function submit() {
                       </select>
                     </div>
                   </div>
-                  <!-- Save checkmark button placed inside the card on the right -->
                   <button type="button" @click="editingInvoiceDetails = false"
                     class="w-9 h-9 rounded-full bg-[#1a56db] text-white flex items-center justify-center shrink-0 border border-blue-500 hover:bg-blue-700 transition ml-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
@@ -534,11 +527,11 @@ async function submit() {
               </div>
             </div>
 
-            <!-- Business Info Card (Mockup Style List Rows) -->
+            <!-- Business Info Card -->
             <div>
               <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 px-1">Business Info</p>
               <div class="inv-card divide-y divide-gray-100">
-                <!-- From Row (Read-only list representation) -->
+                <!-- From Row -->
                 <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50/30 transition">
                   <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-full bg-blue-50 text-[#1a56db] flex items-center justify-center shrink-0 shadow-sm border border-blue-100/50">
@@ -551,8 +544,7 @@ async function submit() {
                   </div>
                   <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                 </div>
-
-                <!-- To Row (Expandable customer selector) -->
+                <!-- To Row -->
                 <div @click="editingClient = !editingClient" class="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50/30 transition">
                   <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-sm border border-emerald-100/50">
@@ -567,15 +559,12 @@ async function submit() {
                   </div>
                   <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="editingClient ? 'rotate-90' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                 </div>
-
-                <!-- Expanded search & selection area under To Row -->
+                <!-- Expanded client search -->
                 <div v-if="editingClient" class="p-4 bg-gray-50/50 space-y-3 animate-fade-in-up">
                   <div class="relative">
                     <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     <input v-model="clientSearch" type="text" placeholder="Type customer name or mobile…" class="inv-input w-full pl-9 !bg-white" @input="onClientSearchInput" />
                   </div>
-
-                  <!-- Matching clients -->
                   <div v-if="filteredClients.length && clientSearch.trim()" class="max-h-40 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-50 bg-white shadow-sm">
                     <button v-for="c in filteredClients" :key="c.id" type="button"
                       @click="form.client_id = c.id; clientSearch = ''; editingClient = false"
@@ -589,8 +578,6 @@ async function submit() {
                       </div>
                     </button>
                   </div>
-
-                  <!-- No match → inline create -->
                   <div v-if="showInlineCreate" class="rounded-xl border border-gray-200 p-3 space-y-2.5 bg-white">
                     <p class="text-xs font-semibold text-gray-500">No match — create new customer:</p>
                     <input v-model="newClient.name" type="text" class="inv-input w-full text-sm !bg-white" placeholder="Customer name *" />
@@ -604,121 +591,120 @@ async function submit() {
                     </button>
                   </div>
                 </div>
-
               </div>
             </div>
 
-          </div>
+          </div><!-- /lg:hidden mobile section -->
 
           <!-- Line Items card -->
           <div>
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 px-1 lg:hidden">Item Detail</p>
             <div class="inv-card !overflow-visible">
-              <div class="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between hidden lg:flex">
+              <div class="px-5 py-3.5 border-b border-gray-100 items-center justify-between hidden lg:flex">
                 <h2 class="text-sm font-semibold text-gray-800">Items</h2>
                 <span class="text-xs text-gray-400">{{ form.items.length }} item{{ form.items.length > 1 ? 's' : '' }}</span>
               </div>
 
-              <!-- Desktop table (Redesigned Grid) -->
+              <!-- Desktop: chip-based item rows -->
               <div class="hidden lg:block">
-                <!-- Table Header -->
-                <div class="grid grid-cols-12 gap-4 px-5 py-2.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-gray-50 border-b border-gray-100">
-                  <span class="col-span-5">Items</span>
-                  <span class="col-span-2 text-center">QTY / Unit</span>
-                  <span class="col-span-3 text-right">Price / Tax</span>
-                  <span class="col-span-2 text-right pr-2">Amount</span>
-                </div>
-                <!-- Rows -->
-                <div class="divide-y divide-gray-100">
-                  <div v-for="(it, i) in form.items" :key="i" class="grid grid-cols-12 gap-4 px-5 py-4 items-start hover:bg-gray-50/20 transition-colors">
-                    <!-- Column 1: Combined description + product autocomplete -->
-                    <div class="col-span-5 relative">
-                      <input v-model="it.description" type="text" class="inv-input font-medium !bg-white line-desc" placeholder="Type item name or search product…" required
-                        @focus="openProductSearch(i)" @input="productSearch = it.description; newProduct.name = it.description" />
-                      <!-- Product autocomplete dropdown -->
-                      <div v-if="productSearchIdx === i && it.description?.trim().length >= 1" class="absolute left-0 right-0 top-full mt-1 z-50 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
-                        <div v-if="filteredProducts.length" class="max-h-36 overflow-y-auto divide-y divide-gray-50">
-                          <button v-for="p in filteredProducts" :key="p.id" type="button"
-                            @click="selectProduct(i, p)"
-                            class="w-full flex items-center justify-between px-3 py-2 hover:bg-gray-50 transition text-left text-xs">
-                            <span class="font-medium text-gray-800 truncate">{{ p.name }}</span>
-                            <span class="text-gray-400 tabular-nums shrink-0 ml-2">{{ inr(p.price) }}</span>
-                          </button>
-                        </div>
-                        <!-- No match → inline create -->
-                        <div v-if="showProductInlineCreate" class="border-t border-gray-100 p-3 space-y-2 bg-gray-50/50">
-                          <p class="text-[11px] font-semibold text-gray-500">No product found — save as new:</p>
-                          <div class="grid grid-cols-2 gap-2">
-                            <input v-model="newProduct.price" type="number" min="0" step="0.01" class="inv-input w-full text-xs" placeholder="Price (₹) *" />
-                            <select v-model="newProduct.unit" class="inv-select w-full text-xs">
-                              <option v-for="u in units" :key="u">{{ u }}</option>
-                            </select>
-                          </div>
-                          <div v-if="addProductError" class="text-[11px] text-red-600 bg-red-50 rounded px-2 py-1">{{ addProductError }}</div>
-                          <button type="button" @click="saveNewProduct" :disabled="addingProduct"
-                            class="w-full py-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold transition">
-                            {{ addingProduct ? 'Creating…' : 'Save as Product' }}
-                          </button>
-                        </div>
-                      </div>
-                      <!-- Click outside to close -->
-                      <div v-if="productSearchIdx === i" class="fixed inset-0 z-40" @click="closeProductSearch"></div>
-                    </div>
+                <div>
+                  <div v-for="(it, i) in form.items" :key="i" class="item-row group relative">
+                    <!-- Item number badge -->
+                    <div class="item-num mt-1">{{ i + 1 }}</div>
 
-                    <!-- Column 2: QTY + Unit -->
-                    <div class="col-span-2 space-y-2">
-                      <input v-model="it.quantity" type="number" :min="qtyStep(it.unit)" :step="qtyStep(it.unit)" class="inv-input text-center tabular-nums !bg-white" />
-                      <select v-model="it.unit" class="inv-select text-center text-xs !bg-white">
-                        <option v-for="u in units" :key="u">{{ u }}</option>
-                      </select>
-                    </div>
-
-                    <!-- Column 3: Price + Tax/GST -->
-                    <div class="col-span-3 space-y-2">
+                    <!-- Left: description + chips -->
+                    <div class="flex-1 min-w-0">
+                      <!-- Description input + product autocomplete -->
                       <div class="relative">
-                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
-                        <input v-model="it.unit_price" type="number" min="0" step="0.01" class="inv-input pl-7 text-right tabular-nums !bg-white" placeholder="0.00" />
+                        <input v-model="it.description" type="text" class="inv-input font-medium !bg-white line-desc w-full" placeholder="Type item name or search product…" required
+                          @focus="openProductSearch(i)" @input="productSearch = it.description; newProduct.name = it.description" />
+                        <!-- Product autocomplete dropdown -->
+                        <div v-if="productSearchIdx === i && it.description?.trim().length >= 1" class="absolute left-0 right-0 top-full mt-1 z-50 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
+                          <div v-if="filteredProducts.length" class="max-h-36 overflow-y-auto divide-y divide-gray-50">
+                            <button v-for="p in filteredProducts" :key="p.id" type="button"
+                              @click="selectProduct(i, p)"
+                              class="w-full flex items-center justify-between px-3 py-2 hover:bg-gray-50 transition text-left text-xs">
+                              <span class="font-medium text-gray-800 truncate">{{ p.name }}</span>
+                              <span class="text-gray-400 tabular-nums shrink-0 ml-2">{{ inr(p.price) }}</span>
+                            </button>
+                          </div>
+                          <div v-if="showProductInlineCreate" class="border-t border-gray-100 p-3 space-y-2 bg-gray-50/50">
+                            <p class="text-[11px] font-semibold text-gray-500">No product found — save as new:</p>
+                            <div class="grid grid-cols-2 gap-2">
+                              <input v-model="newProduct.price" type="number" min="0" step="0.01" class="inv-input w-full text-xs" placeholder="Price (₹) *" />
+                              <select v-model="newProduct.unit" class="inv-select w-full text-xs">
+                                <option v-for="u in units" :key="u">{{ u }}</option>
+                              </select>
+                            </div>
+                            <div v-if="addProductError" class="text-[11px] text-red-600 bg-red-50 rounded px-2 py-1">{{ addProductError }}</div>
+                            <button type="button" @click="saveNewProduct" :disabled="addingProduct"
+                              class="w-full py-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold transition">
+                              {{ addingProduct ? 'Creating…' : 'Save as Product' }}
+                            </button>
+                          </div>
+                        </div>
+                        <!-- Click outside to close -->
+                        <div v-if="productSearchIdx === i" class="fixed inset-0 z-40" @click="closeProductSearch"></div>
                       </div>
-                      <select v-model="it.gst_rate" class="inv-select text-center text-xs !bg-white" @keydown.tab="onLastFieldTab(i, $event)">
-                        <option v-for="r in gstRates" :key="r" :value="r">{{ r }}% GST</option>
-                      </select>
+
+                      <!-- Chips row -->
+                      <div class="item-chips">
+                        <!-- Qty + Unit chip -->
+                        <div class="chip-qty">
+                          <input v-model="it.quantity" type="number" :min="qtyStep(it.unit)" :step="qtyStep(it.unit)"
+                            class="w-12 text-center tabular-nums" />
+                          <span class="text-gray-300 select-none">×</span>
+                          <select v-model="it.unit" class="max-w-[52px]">
+                            <option v-for="u in units" :key="u">{{ u }}</option>
+                          </select>
+                        </div>
+                        <!-- Price chip -->
+                        <div class="chip-price">
+                          <span class="shrink-0">₹</span>
+                          <input v-model="it.unit_price" type="number" min="0" step="0.01"
+                            class="w-20 text-right tabular-nums" placeholder="0.00" />
+                        </div>
+                        <!-- GST chip -->
+                        <div class="chip-tax">
+                          <select v-model="it.gst_rate" @keydown.tab="onLastFieldTab(i, $event)">
+                            <option v-for="r in gstRates" :key="r" :value="r">{{ r }}% GST</option>
+                          </select>
+                        </div>
+                      </div>
                     </div>
 
-                    <!-- Column 4: calculated line amount + remove button -->
-                    <div class="col-span-2 flex flex-col items-end justify-between h-[86px] py-1">
-                      <span class="text-sm font-semibold text-gray-800 tabular-nums pr-2">{{ inr(lineTotal(it)) }}</span>
+                    <!-- Right: amount + delete -->
+                    <div class="flex flex-col items-end gap-2 shrink-0 min-w-[72px]">
+                      <span class="text-sm font-bold text-gray-800 tabular-nums">{{ inr(lineTotal(it)) }}</span>
                       <button v-if="form.items.length > 1" type="button" @click="removeItem(i)"
-                        class="mr-1 w-7 h-7 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="Remove">
+                        class="opacity-0 group-hover:opacity-100 w-7 h-7 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="Remove">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                       </button>
                     </div>
                   </div>
                 </div>
 
-                <!-- Desktop Add item -->
-                <div class="px-5 py-3 border-t border-gray-100 bg-gray-50/50">
+                <!-- Desktop Add item — dashed badge style -->
+                <div class="px-5 py-3.5 border-t border-gray-100">
                   <button type="button" @click="addItem" @keydown.enter.prevent="addItem"
-                    class="flex items-center gap-2 text-sm text-primary-600 font-medium hover:text-primary-700 transition focus:outline-none focus:ring-2 focus:ring-primary-300 rounded-lg px-2 py-1 -mx-2 -my-1">
-                    <span class="w-5 h-5 rounded-full border-2 border-primary-300 flex items-center justify-center text-primary-500 text-xs leading-none">+</span>
+                    class="flex items-center gap-2 text-sm text-primary-600 font-medium hover:text-primary-700 transition focus:outline-none focus:ring-2 focus:ring-primary-300 rounded-lg px-1 py-1 -mx-1">
+                    <span class="w-7 h-7 rounded-lg border-2 border-dashed border-primary-300 flex items-center justify-center text-primary-400 text-base font-bold leading-none shrink-0">+</span>
                     Add item
                   </button>
                 </div>
-              </div>
+              </div><!-- /desktop -->
 
-              <!-- Mobile: Accordion items (Invozen Mockup Visual Layout Match) -->
+              <!-- Mobile: Accordion items -->
               <div class="lg:hidden divide-y divide-gray-100">
                 <div v-for="(it, i) in form.items" :key="i" class="transition-all duration-200">
-                  
-                  <!-- Collapsed details representation (Matches Item summary rows in the mockup) -->
+                  <!-- Collapsed summary -->
                   <div class="p-4 space-y-1 hover:bg-gray-50/30">
-                    <!-- Item Header: Name on left, Qty x Price on right -->
                     <div class="flex justify-between items-start">
                       <p class="font-bold text-gray-800 text-sm leading-tight pr-4 truncate">{{ it.description || 'New Item Detail' }}</p>
                       <p class="text-xs font-semibold text-gray-500 tabular-nums shrink-0">
                         {{ it.quantity }} × {{ inr(it.unit_price || 0) }}
                       </p>
                     </div>
-                    <!-- Tax & Discount sub-rows (mockup layout structure) -->
                     <div class="flex justify-between text-xs text-gray-400">
                       <span>Tax ({{ it.gst_rate }}%)</span>
                       <span class="tabular-nums">{{ inr(lineTaxAmount(it)) }}</span>
@@ -727,9 +713,8 @@ async function submit() {
                       <span>Discount ({{ it.discount_pct }}%)</span>
                       <span class="tabular-nums">-{{ inr(lineDiscountAmount(it)) }}</span>
                     </div>
-                    <!-- Total line amount + Expand action -->
                     <div class="flex justify-between items-center pt-2 text-sm font-bold text-gray-800 border-t border-gray-100/50 mt-1.5">
-                      <button type="button" @click="activeItemIndex = (activeItemIndex === i ? null : i)" 
+                      <button type="button" @click="activeItemIndex = (activeItemIndex === i ? null : i)"
                         class="text-xs text-primary-600 hover:underline flex items-center gap-1 font-bold">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                         Edit Details
@@ -738,7 +723,7 @@ async function submit() {
                     </div>
                   </div>
 
-                  <!-- Expanded input fields for edit -->
+                  <!-- Expanded edit fields with chips -->
                   <div v-show="activeItemIndex === i" class="px-4 pb-5 pt-3 space-y-3 bg-gray-50/70 border-t border-gray-100">
                     <div>
                       <label class="inv-label">Item Name / Description *</label>
@@ -770,24 +755,21 @@ async function submit() {
                         </div>
                       </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                      <div>
-                        <label class="inv-label">Unit</label>
-                        <select v-model="it.unit" class="inv-select w-full !bg-white">
+                    <!-- Mobile chips for qty/price/gst -->
+                    <div class="item-chips">
+                      <div class="chip-qty">
+                        <input v-model="it.quantity" type="number" :min="qtyStep(it.unit)" :step="qtyStep(it.unit)" class="w-12 text-center tabular-nums" />
+                        <span class="text-gray-300 select-none">×</span>
+                        <select v-model="it.unit" class="max-w-[52px]">
                           <option v-for="u in units" :key="u">{{ u }}</option>
                         </select>
                       </div>
-                      <div>
-                        <label class="inv-label">Qty</label>
-                        <input v-model="it.quantity" type="number" :min="qtyStep(it.unit)" :step="qtyStep(it.unit)" class="inv-input w-full !bg-white" />
+                      <div class="chip-price">
+                        <span class="shrink-0">₹</span>
+                        <input v-model="it.unit_price" type="number" min="0" step="0.01" class="w-20 text-right tabular-nums" placeholder="0.00" />
                       </div>
-                      <div>
-                        <label class="inv-label">Price (₹)</label>
-                        <input v-model="it.unit_price" type="number" min="0" step="0.01" class="inv-input w-full !bg-white" placeholder="0.00" />
-                      </div>
-                      <div>
-                        <label class="inv-label">GST Tax</label>
-                        <select v-model="it.gst_rate" class="inv-select w-full !bg-white">
+                      <div class="chip-tax">
+                        <select v-model="it.gst_rate">
                           <option v-for="r in gstRates" :key="r" :value="r">{{ r }}% GST</option>
                         </select>
                       </div>
@@ -798,9 +780,9 @@ async function submit() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </div><!-- /mobile accordion -->
 
-              <!-- Centered Add Item Pill Button (for Mobile) -->
+              <!-- Mobile: Add Item button -->
               <div class="lg:hidden flex justify-center py-4 border-t border-gray-100 bg-white">
                 <button type="button" @click="addItem"
                   class="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-full border-2 border-primary-600 text-primary-600 font-bold text-sm hover:bg-primary-50 transition shadow-sm">
@@ -809,7 +791,7 @@ async function submit() {
                 </button>
               </div>
 
-              <!-- Summary totals at bottom of Item card (for Mobile) -->
+              <!-- Mobile: Summary totals -->
               <div class="lg:hidden p-4 border-t border-gray-100 bg-gray-50/50 space-y-2.5 text-sm text-gray-600">
                 <div class="flex justify-between font-medium">
                   <span>Sub Total :</span>
@@ -826,7 +808,7 @@ async function submit() {
               </div>
 
             </div>
-          </div>
+          </div><!-- /line items card -->
 
           <!-- Notes / Terms -->
           <div class="inv-card p-5 space-y-3">
@@ -837,13 +819,13 @@ async function submit() {
                 <textarea v-model="form.notes" rows="3" class="inv-textarea w-full !bg-white notes-input" placeholder="Thank you for your business"></textarea>
               </div>
               <div>
-                <label class="inv-label">Terms & conditions</label>
+                <label class="inv-label">Terms &amp; conditions</label>
                 <textarea v-model="form.terms" rows="3" class="inv-textarea w-full !bg-white" placeholder="Payment due within 30 days"></textarea>
               </div>
             </div>
           </div>
 
-          <!-- Auto-repeat (collapsed section) -->
+          <!-- Auto-repeat -->
           <div class="inv-card p-5">
             <div class="flex items-center justify-between">
               <div>
@@ -877,28 +859,43 @@ async function submit() {
 
         </div><!-- /inv-main -->
 
-        <!-- ── RIGHT: Sidebar (Hidden on Mobile) ── -->
+        <!-- ── RIGHT: Sidebar (hidden on mobile) ── -->
         <aside class="inv-sidebar hidden lg:block">
 
-          <!-- Bill To — Inline autocomplete -->
+          <!-- Bill To — GPay-style client chip -->
           <div class="inv-card !overflow-visible">
             <div class="px-5 py-3.5 border-b border-gray-100">
               <h2 class="text-sm font-semibold text-gray-800">Bill To</h2>
             </div>
             <div class="p-4">
-              <!-- Selected client chip -->
-              <div v-if="form.client_id" class="flex items-center gap-3 p-3 bg-primary-50 rounded-xl border border-primary-100">
-                <div class="w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center shrink-0">
-                  <span class="text-white text-sm font-bold">{{ selectedClient?.name?.charAt(0)?.toUpperCase() }}</span>
+              <!-- Selected client: gradient avatar chip + recent row -->
+              <div v-if="form.client_id">
+                <div class="client-chip">
+                  <div class="client-av" style="background: linear-gradient(135deg, #3b7ded, #1a5fd4);">
+                    {{ selectedClient?.name?.charAt(0)?.toUpperCase() }}
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-gray-900 truncate">{{ selectedClient?.name }}</p>
+                    <p class="text-xs text-gray-500 truncate">{{ selectedClient?.mobile || selectedClient?.email || '—' }}</p>
+                  </div>
+                  <button type="button" @click="form.client_id = ''; clientSearch = ''; clientDropdownOpen = true"
+                    class="text-xs text-primary-600 font-semibold shrink-0 hover:underline">Change</button>
                 </div>
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm font-semibold text-gray-900 truncate">{{ selectedClient?.name }}</p>
-                  <p class="text-xs text-gray-500 truncate">{{ selectedClient?.mobile || selectedClient?.email || '—' }}</p>
+                <!-- Recent clients -->
+                <div v-if="clients.length > 1">
+                  <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-3 mb-1">Recent</p>
+                  <div class="recent-row flex-wrap">
+                    <div v-for="(c, ci) in clients.slice(0, 5)" :key="c.id"
+                      class="recent-av" :title="c.name"
+                      :style="`background: linear-gradient(135deg, ${['#3b7ded','#10b981','#8b5cf6','#f59e0b','#ef4444'][ci % 5]}, ${['#1a5fd4','#059669','#7c3aed','#d97706','#dc2626'][ci % 5]})`"
+                      @click="form.client_id = c.id">
+                      {{ c.name?.charAt(0)?.toUpperCase() }}
+                    </div>
+                  </div>
                 </div>
-                <button type="button" @click="form.client_id = ''; clientSearch = ''; clientDropdownOpen = true" class="text-xs text-primary-600 font-semibold shrink-0 hover:underline">Change</button>
               </div>
 
-              <!-- Autocomplete search -->
+              <!-- No client: autocomplete search -->
               <div v-else class="relative">
                 <div class="relative">
                   <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -907,10 +904,8 @@ async function submit() {
                     @focus="clientDropdownOpen = true"
                     @input="onClientSearchInput" />
                 </div>
-
                 <!-- Dropdown results -->
                 <div v-if="clientDropdownOpen" class="absolute left-0 right-0 top-full mt-1 z-50 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
-                  <!-- Matching clients -->
                   <div v-if="filteredClients.length" class="max-h-48 overflow-y-auto divide-y divide-gray-50">
                     <button v-for="c in filteredClients" :key="c.id" type="button"
                       @click="form.client_id = c.id; clientSearch = ''; clientDropdownOpen = false"
@@ -924,8 +919,7 @@ async function submit() {
                       </div>
                     </button>
                   </div>
-
-                  <!-- No match → inline create form -->
+                  <!-- No match → inline create -->
                   <div v-if="showInlineCreate" class="border-t border-gray-100 p-3 space-y-2.5 bg-gray-50/50">
                     <p class="text-xs font-semibold text-gray-500">No customer found — create new:</p>
                     <div>
@@ -944,43 +938,42 @@ async function submit() {
                     </button>
                   </div>
                 </div>
-
                 <!-- Click-outside to close -->
                 <div v-if="clientDropdownOpen" class="fixed inset-0 z-10" @click="clientDropdownOpen = false"></div>
               </div>
             </div>
           </div>
 
-          <!-- Invoice Information -->
-          <div class="inv-card p-5 space-y-4">
+          <!-- Invoice Information — floating label inputs -->
+          <div class="inv-card p-5 space-y-3">
             <h2 class="text-sm font-semibold text-gray-800">Invoice Information</h2>
 
-            <div>
-              <label class="inv-label">Bill Type</label>
-              <select v-model="form.invoice_type" class="inv-select w-full">
+            <div class="fi">
+              <select v-model="form.invoice_type">
                 <option value="tax_invoice">Tax Invoice (with GST)</option>
                 <option value="bill_of_supply">Bill of Supply</option>
                 <option value="retail">Retail Invoice</option>
-                        <option value="proforma">Proforma Invoice</option>
+                <option value="proforma">Proforma Invoice</option>
               </select>
+              <label>Bill Type</label>
             </div>
 
-            <div>
-              <label class="inv-label">Place of Supply <span class="text-red-500">*</span></label>
-              <select v-model="form.place_of_supply" class="inv-select w-full">
+            <div class="fi">
+              <select v-model="form.place_of_supply">
                 <option value="">Select state</option>
                 <option v-for="s in states" :key="s.id" :value="s.id">{{ s.name }}</option>
               </select>
+              <label>Place of Supply *</label>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="inv-label">Issued Date</label>
-                <input v-model="form.issue_date" type="date" class="inv-input w-full" />
+              <div class="fi">
+                <input v-model="form.issue_date" type="date" />
+                <label>Issued Date</label>
               </div>
-              <div>
-                <label class="inv-label">Due Date</label>
-                <input v-model="form.due_date" type="date" class="inv-input w-full" />
+              <div class="fi">
+                <input v-model="form.due_date" type="date" />
+                <label>Due Date</label>
               </div>
             </div>
           </div>
@@ -1004,7 +997,6 @@ async function submit() {
                 <span class="text-xl font-bold tabular-nums" :class="totals.total > 0 ? 'text-primary-600' : 'text-gray-400'">{{ inr(totals.total) }}</span>
               </div>
             </div>
-
             <div v-if="error" class="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{{ error }}</div>
           </div>
 
@@ -1012,7 +1004,7 @@ async function submit() {
       </form>
     </div>
 
-    <!-- Mobile sticky footer (Invozen Mockup Style) -->
+    <!-- Mobile sticky footer -->
     <div class="form-footer-mobile lg:hidden bg-white/95 backdrop-blur-md border-t border-gray-100 px-4 py-3 flex gap-3">
       <button type="submit" form="invoice-form" class="flex-1 py-3.5 px-4 rounded-xl font-bold text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center gap-1.5 transition">
         <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
@@ -1024,6 +1016,4 @@ async function submit() {
       </button>
     </div>
   </div>
-
-
 </template>

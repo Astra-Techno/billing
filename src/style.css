@@ -358,6 +358,34 @@
   .inv-label {
     @apply block text-xs font-medium text-gray-500 mb-1;
   }
+
+  /* Chip-based item row */
+  .item-row { @apply flex gap-3 px-5 py-4 items-start border-b border-gray-100 transition-colors; }
+  .item-row:hover { background: #fafbfc; }
+  .item-num { @apply w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center text-[11px] font-bold text-gray-400 shrink-0; }
+  .item-chips { @apply flex gap-1.5 mt-2 flex-wrap items-center; }
+  .chip-qty, .chip-price, .chip-tax { @apply flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold border border-transparent transition-all; }
+  .chip-qty { @apply bg-gray-100 text-gray-600; }
+  .chip-qty:focus-within { @apply border-gray-300 bg-white; }
+  .chip-price { @apply bg-blue-50 text-blue-600; }
+  .chip-price:focus-within { @apply border-blue-300 bg-white; }
+  .chip-tax { @apply bg-purple-50 text-purple-600; }
+  .chip-tax:focus-within { @apply border-purple-300 bg-white; }
+  .chip-qty input, .chip-price input, .chip-tax select { @apply border-none outline-none bg-transparent text-xs font-semibold; font-family: inherit; }
+  .chip-qty select { @apply border-none outline-none bg-transparent text-xs font-semibold appearance-none; font-family: inherit; }
+  .chip-price input { @apply text-blue-600; }
+  .chip-tax select { @apply text-purple-600 appearance-none; }
+  /* Floating label input */
+  .fi { @apply relative; }
+  .fi input, .fi select { @apply w-full pt-5 pb-1.5 px-3 border border-gray-200 rounded-lg text-sm font-semibold text-gray-800 outline-none transition appearance-none bg-white; }
+  .fi input:focus, .fi select:focus { @apply border-primary-400 ring-2 ring-primary-100; }
+  .fi label { @apply absolute left-3 top-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wide pointer-events-none; }
+  /* Client avatars */
+  .client-chip { @apply flex items-center gap-3 p-3 rounded-xl bg-blue-50 border border-blue-100; }
+  .client-av { @apply w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm text-white shrink-0; }
+  .recent-row { @apply flex gap-3 mt-3; }
+  .recent-av { @apply w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs text-white shrink-0 cursor-pointer transition-transform; }
+  .recent-av:hover { @apply scale-110; }
 }
 
 .page-fade-enter-active { transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1); }

@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CloudBill - Design Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #f8f9fb; color: #1a1a2e; }
+
+  .mockup-nav { background: #fff; border-bottom: 1px solid #e8eaf0; padding: 12px 32px; display: flex; gap: 20px; align-items: center; position: sticky; top: 0; z-index: 50; }
+  .mockup-nav button { padding: 8px 16px; border-radius: 8px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; background: #f0f1f5; color: #64748b; transition: all 0.2s; }
+  .mockup-nav button:hover { background: #e2e4ea; }
+  .mockup-nav button.active { background: #1a56db; color: white; }
+  .mockup-nav h1 { font-size: 15px; font-weight: 800; color: #1a1a2e; margin-right: auto; }
+
+  .page { max-width: 1400px; margin: 0 auto; padding: 24px 32px; display: none; }
+  .page.active { display: block; }
+
+  /* ── SECTION HEADERS ── */
+  .section-label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
+
+  /* ── CURRENT vs NEW comparison ── */
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 40px; }
+  .compare-col { }
+  .compare-col h3 { font-size: 13px; font-weight: 700; margin-bottom: 12px; padding: 6px 12px; border-radius: 8px; display: inline-block; }
+  .compare-col h3.old { background: #fee2e2; color: #dc2626; }
+  .compare-col h3.new { background: #dcfce7; color: #16a34a; }
+
+  /* ── CARD STYLES ── */
+  .card { background: white; border-radius: 16px; border: 1px solid #e8eaf0; overflow: hidden; }
+  .card-glow { box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.03); }
+
+  /* ── NEW DESIGN: FLOATING LABELS ── */
+  .float-field { position: relative; margin-bottom: 0; }
+  .float-field input, .float-field select {
+    width: 100%; padding: 20px 14px 8px; border: 1.5px solid #e2e4ea; border-radius: 12px;
+    font-size: 14px; font-weight: 500; background: #fafbfc; outline: none; transition: all 0.2s;
+    color: #1a1a2e;
+  }
+  .float-field input:focus, .float-field select:focus { border-color: #1a56db; background: white; box-shadow: 0 0 0 3px rgba(26,86,219,0.1); }
+  .float-field label {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    font-size: 14px; color: #94a3b8; pointer-events: none; transition: all 0.2s; font-weight: 500;
+  }
+  .float-field input:focus + label, .float-field input:not(:placeholder-shown) + label,
+  .float-field select:focus + label, .float-field.has-value label {
+    top: 10px; transform: translateY(0); font-size: 10px; font-weight: 700; color: #1a56db;
+    letter-spacing: 0.03em;
+  }
+
+  /* ── COMMAND BAR ── */
+  .cmd-bar {
+    background: white; border: 2px solid #e2e4ea; border-radius: 16px;
+    padding: 14px 18px; display: flex; align-items: center; gap: 12px;
+    transition: all 0.2s; cursor: text;
+  }
+  .cmd-bar:hover { border-color: #cbd5e1; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+  .cmd-bar:focus-within { border-color: #1a56db; box-shadow: 0 0 0 3px rgba(26,86,219,0.1); }
+  .cmd-bar input { border: none; outline: none; flex: 1; font-size: 15px; font-weight: 500; background: transparent; color: #1a1a2e; }
+  .cmd-bar input::placeholder { color: #94a3b8; }
+  .cmd-bar .kbd { background: #f0f1f5; border: 1px solid #e2e4ea; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 600; color: #64748b; font-family: monospace; }
+
+  /* ── INVOICE CREATE - NEW DESIGN ── */
+  .inv-new { display: grid; grid-template-columns: 1fr 360px; gap: 20px; }
+  .inv-new .main { display: flex; flex-direction: column; gap: 16px; }
+  .inv-new .side { display: flex; flex-direction: column; gap: 16px; }
+
+  /* Smart item row */
+  .item-smart { padding: 16px; display: flex; gap: 12px; align-items: flex-start; border-bottom: 1px solid #f0f1f5; transition: background 0.15s; }
+  .item-smart:hover { background: #fafbfc; }
+  .item-smart:last-child { border-bottom: none; }
+  .item-num { width: 28px; height: 28px; border-radius: 8px; background: #f0f1f5; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #94a3b8; flex-shrink: 0; margin-top: 2px; }
+  .item-fields { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .item-desc { font-size: 14px; font-weight: 600; color: #1a1a2e; border: none; outline: none; background: transparent; width: 100%; padding: 0; }
+  .item-desc::placeholder { color: #c4c9d4; font-weight: 500; }
+  .item-meta { display: flex; gap: 8px; align-items: center; }
+  .item-chip { background: #f0f1f5; border-radius: 8px; padding: 4px 10px; font-size: 12px; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .item-chip.price { color: #1a56db; background: #eff6ff; }
+  .item-chip.tax { color: #7c3aed; background: #f5f3ff; }
+  .item-amount { font-size: 15px; font-weight: 700; color: #1a1a2e; white-space: nowrap; margin-left: auto; padding-left: 16px; }
+
+  /* Client card - new */
+  .client-selected { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+  .client-avatar { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; color: white; flex-shrink: 0; }
+  .client-avatar.blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+  .client-avatar.green { background: linear-gradient(135deg, #22c55e, #16a34a); }
+  .client-info { flex: 1; }
+  .client-info .name { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+  .client-info .detail { font-size: 12px; color: #94a3b8; margin-top: 1px; }
+
+  /* Summary card */
+  .summary-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px; }
+  .summary-row .label { color: #94a3b8; font-weight: 500; }
+  .summary-row .value { color: #1a1a2e; font-weight: 600; }
+  .summary-total { display: flex; justify-content: space-between; padding: 12px 0; border-top: 2px solid #1a1a2e; margin-top: 4px; }
+  .summary-total .label { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+  .summary-total .value { font-size: 20px; font-weight: 800; color: #1a56db; }
+
+  /* Action button */
+  .btn-primary { background: linear-gradient(135deg, #1a56db, #1e40af); color: white; border: none; padding: 12px 24px; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,86,219,0.3); }
+  .btn-ghost { background: transparent; color: #64748b; border: 1.5px solid #e2e4ea; padding: 10px 20px; border-radius: 12px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-ghost:hover { background: #f8f9fb; border-color: #cbd5e1; }
+
+  /* ── DASHBOARD NEW ── */
+  .dash-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card { padding: 20px; border-radius: 16px; background: white; border: 1px solid #e8eaf0; }
+  .stat-card .stat-label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-card .stat-value { font-size: 28px; font-weight: 800; margin-top: 6px; }
+  .stat-card .stat-sub { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+  .stat-card.collected { background: linear-gradient(135deg, #f0fdf4, #dcfce7); border-color: #bbf7d0; }
+  .stat-card.collected .stat-value { color: #16a34a; }
+  .stat-card.pending .stat-value { color: #f59e0b; }
+  .stat-card.overdue .stat-value { color: #dc2626; }
+
+  /* Insight cards */
+  .insight { display: flex; align-items: flex-start; gap: 14px; padding: 16px; border-radius: 14px; background: #fefce8; border: 1px solid #fef08a; margin-bottom: 12px; }
+  .insight.info { background: #eff6ff; border-color: #bfdbfe; }
+  .insight.success { background: #f0fdf4; border-color: #bbf7d0; }
+  .insight-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .insight-icon.warn { background: #fef08a; }
+  .insight-icon.info { background: #bfdbfe; }
+  .insight-icon.success { background: #bbf7d0; }
+  .insight-body { flex: 1; }
+  .insight-body p { font-size: 13px; font-weight: 500; color: #374151; line-height: 1.5; }
+  .insight-body .action { display: inline-block; margin-top: 6px; font-size: 12px; font-weight: 700; color: #1a56db; cursor: pointer; }
+
+  /* Invoice list - new */
+  .inv-list-item { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-bottom: 1px solid #f0f1f5; cursor: pointer; transition: background 0.15s; }
+  .inv-list-item:hover { background: #fafbfc; }
+  .inv-list-item .avatar { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: white; flex-shrink: 0; }
+  .inv-list-item .info { flex: 1; }
+  .inv-list-item .info .name { font-size: 13px; font-weight: 700; color: #1a1a2e; }
+  .inv-list-item .info .meta { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+  .inv-list-item .amount { font-size: 14px; font-weight: 700; text-align: right; }
+  .inv-list-item .amount .amt { color: #1a1a2e; }
+  .inv-list-item .amount .status { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 6px; margin-top: 4px; letter-spacing: 0.03em; }
+  .status-paid { background: #dcfce7; color: #16a34a; }
+  .status-sent { background: #dbeafe; color: #2563eb; }
+  .status-overdue { background: #fee2e2; color: #dc2626; }
+  .status-draft { background: #f1f5f9; color: #64748b; }
+
+  /* Quick action pills */
+  .quick-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+  .quick-pill { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; background: white; border: 1.5px solid #e2e4ea; font-size: 12px; font-weight: 600; color: #475569; cursor: pointer; transition: all 0.15s; }
+  .quick-pill:hover { border-color: #1a56db; color: #1a56db; background: #eff6ff; }
+  .quick-pill .icon { font-size: 14px; }
+
+  /* Page title */
+  .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .page-header h2 { font-size: 22px; font-weight: 800; color: #1a1a2e; }
+
+  /* Slide panel */
+  .slide-panel { position: fixed; right: 0; top: 0; bottom: 0; width: 420px; background: white; box-shadow: -4px 0 24px rgba(0,0,0,0.08); z-index: 100; padding: 24px; overflow-y: auto; display: none; }
+  .slide-panel.open { display: block; }
+
+  /* Dark mode preview */
+  .dark-preview { background: #0f172a; color: #e2e8f0; border-radius: 16px; padding: 24px; }
+  .dark-preview .card { background: #1e293b; border-color: #334155; color: #e2e8f0; }
+  .dark-preview .stat-card { background: #1e293b; border-color: #334155; }
+  .dark-preview .stat-card .stat-label { color: #64748b; }
+  .dark-preview .stat-card .stat-value { color: #f1f5f9; }
+  .dark-preview .stat-card.collected { background: #052e16; border-color: #166534; }
+  .dark-preview .stat-card.collected .stat-value { color: #4ade80; }
+
+  .tag { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.03em; display: inline-block; }
+</style>
+</head>
+<body>
+
+<nav class="mockup-nav">
+  <h1>CloudBill Design Mockup</h1>
+  <button class="active" onclick="show('dashboard')">Dashboard</button>
+  <button onclick="show('create')">Create Invoice</button>
+  <button onclick="show('list')">Invoice List</button>
+  <button onclick="show('dark')">Dark Mode</button>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- DASHBOARD -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div id="dashboard" class="page active">
+
+  <div class="page-header">
+    <div>
+      <h2>Good morning, Mathan</h2>
+      <p style="color:#94a3b8;font-size:13px;margin-top:4px">Here's your business snapshot</p>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-ghost">Record Expense</button>
+      <button class="btn-primary" style="width:auto">+ New Invoice</button>
+    </div>
+  </div>
+
+  <!-- Command Bar -->
+  <div class="cmd-bar" style="margin-bottom:24px">
+    <svg width="20" height="20" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" placeholder="Search invoices, clients, or type a command..." />
+    <span class="kbd">Ctrl K</span>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions">
+    <div class="quick-pill"><span class="icon">+</span> New Invoice</div>
+    <div class="quick-pill"><span class="icon">&#8635;</span> Repeat Last Invoice</div>
+    <div class="quick-pill"><span class="icon">&#9993;</span> Send Reminders (3)</div>
+    <div class="quick-pill"><span class="icon">&#128176;</span> Record Payment</div>
+    <div class="quick-pill"><span class="icon">&#128203;</span> GST Summary</div>
+  </div>
+
+  <!-- Stats -->
+  <div class="dash-grid">
+    <div class="stat-card collected card-glow">
+      <div class="stat-label">Collected</div>
+      <div class="stat-value">&#8377;7,080</div>
+      <div class="stat-sub">This month</div>
+    </div>
+    <div class="stat-card pending card-glow">
+      <div class="stat-label">Pending</div>
+      <div class="stat-value">&#8377;1,60,364</div>
+      <div class="stat-sub">Outstanding invoices</div>
+    </div>
+    <div class="stat-card card-glow">
+      <div class="stat-label">Expenses</div>
+      <div class="stat-value">&#8377;23,400</div>
+      <div class="stat-sub">Recorded this month</div>
+    </div>
+    <div class="stat-card overdue card-glow">
+      <div class="stat-label">Overdue</div>
+      <div class="stat-value">&#8377;45,000</div>
+      <div class="stat-sub">3 invoices past due</div>
+    </div>
+  </div>
+
+  <!-- AI Insights -->
+  <div class="section-label">Smart Insights</div>
+  <div class="insight">
+    <div class="insight-icon warn">&#9888;</div>
+    <div class="insight-body">
+      <p><strong>3 invoices overdue</strong> totaling &#8377;45,000. Gupta & Sons owes &#8377;28,320 (15 days late).</p>
+      <span class="action">Send WhatsApp Reminders &rarr;</span>
+    </div>
+  </div>
+  <div class="insight info">
+    <div class="insight-icon info">&#128161;</div>
+    <div class="insight-body">
+      <p>Revenue is <strong>23% higher</strong> than last month. You've created 12 invoices worth &#8377;2.4L.</p>
+      <span class="action">View Revenue Report &rarr;</span>
+    </div>
+  </div>
+  <div class="insight success">
+    <div class="insight-icon success">&#10003;</div>
+    <div class="insight-body">
+      <p>Priya Nair paid &#8377;9,440 today via UPI. Invoice INV-2024-007 is now fully paid.</p>
+      <span class="action">View Payment &rarr;</span>
+    </div>
+  </div>
+
+  <!-- Recent + Top Clients side by side -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px">
+    <div class="card card-glow">
+      <div style="padding:16px 18px;border-bottom:1px solid #f0f1f5;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:13px;font-weight:700">Recent Invoices</span>
+        <span style="font-size:12px;color:#1a56db;font-weight:600;cursor:pointer">View All &rarr;</span>
+      </div>
+      <div class="inv-list-item">
+        <div class="avatar" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8)">G</div>
+        <div class="info"><div class="name">Gupta & Sons</div><div class="meta">INV/2026-27/0028 &bull; 05 Jun</div></div>
+        <div class="amount"><div class="amt">&#8377;28,320</div><div class="status status-overdue">OVERDUE</div></div>
+      </div>
+      <div class="inv-list-item">
+        <div class="avatar" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed)">P</div>
+        <div class="info"><div class="name">Priya Nair</div><div class="meta">INV/2024-007 &bull; 04 Jun</div></div>
+        <div class="amount"><div class="amt">&#8377;9,440</div><div class="status status-paid">PAID</div></div>
+      </div>
+      <div class="inv-list-item">
+        <div class="avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706)">J</div>
+        <div class="info"><div class="name">Jaipur Handicrafts</div><div class="meta">INV/2026-27/0027 &bull; 03 Jun</div></div>
+        <div class="amount"><div class="amt">&#8377;15,600</div><div class="status status-sent">SENT</div></div>
+      </div>
+    </div>
+
+    <div class="card card-glow">
+      <div style="padding:16px 18px;border-bottom:1px solid #f0f1f5;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:13px;font-weight:700">Top Clients</span>
+        <span style="font-size:12px;color:#1a56db;font-weight:600;cursor:pointer">View All &rarr;</span>
+      </div>
+      <div class="inv-list-item">
+        <div class="avatar" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8)">G</div>
+        <div class="info"><div class="name">Gupta & Sons</div><div class="meta">12 invoices &bull; &#8377;3.2L total</div></div>
+        <div class="amount"><div class="amt" style="color:#dc2626">&#8377;28,320 due</div></div>
+      </div>
+      <div class="inv-list-item">
+        <div class="avatar" style="background:linear-gradient(135deg,#22c55e,#16a34a)">R</div>
+        <div class="info"><div class="name">Ram Lakshman</div><div class="meta">8 invoices &bull; &#8377;1.8L total</div></div>
+        <div class="amount"><div class="amt" style="color:#16a34a">All paid</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- CREATE INVOICE -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div id="create" class="page">
+
+  <div class="page-header">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="btn-ghost" style="padding:8px 10px">&larr;</button>
+      <h2>New Invoice</h2>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span style="font-size:10px;color:#94a3b8;display:flex;gap:12px">
+        <span><span class="kbd" style="background:#f0f1f5;border:1px solid #e2e4ea;border-radius:4px;padding:1px 6px;font-size:10px;font-family:monospace">Alt+A</span> Add item</span>
+        <span><span class="kbd" style="background:#f0f1f5;border:1px solid #e2e4ea;border-radius:4px;padding:1px 6px;font-size:10px;font-family:monospace">Alt+C</span> Customer</span>
+        <span><span class="kbd" style="background:#f0f1f5;border:1px solid #e2e4ea;border-radius:4px;padding:1px 6px;font-size:10px;font-family:monospace">Ctrl+&crarr;</span> Save</span>
+      </span>
+      <button class="btn-ghost">Cancel</button>
+      <button class="btn-primary" style="width:auto">Save Invoice</button>
+    </div>
+  </div>
+
+  <div class="inv-new">
+    <div class="main">
+      <!-- Items Card - Clean -->
+      <div class="card card-glow">
+        <div style="padding:14px 18px;border-bottom:1px solid #f0f1f5;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:13px;font-weight:700">Items</span>
+          <span style="font-size:12px;color:#94a3b8">3 items</span>
+        </div>
+
+        <div class="item-smart">
+          <div class="item-num">1</div>
+          <div class="item-fields">
+            <input class="item-desc" value="Annual Maintenance Contract" />
+            <div class="item-meta">
+              <div class="item-chip">1 x Nos</div>
+              <div class="item-chip price">&#8377;24,000</div>
+              <div class="item-chip tax">18% GST</div>
+            </div>
+          </div>
+          <div class="item-amount">&#8377;28,320</div>
+        </div>
+
+        <div class="item-smart">
+          <div class="item-num">2</div>
+          <div class="item-fields">
+            <input class="item-desc" value="Paper Cup 90ml (1000 pcs)" />
+            <div class="item-meta">
+              <div class="item-chip">5 x Box</div>
+              <div class="item-chip price">&#8377;2,900</div>
+              <div class="item-chip tax">18% GST</div>
+            </div>
+          </div>
+          <div class="item-amount">&#8377;17,110</div>
+        </div>
+
+        <div class="item-smart">
+          <div class="item-num">3</div>
+          <div class="item-fields">
+            <input class="item-desc" placeholder="Type item name or search product..." style="color:#c4c9d4" />
+          </div>
+        </div>
+
+        <div style="padding:12px 18px;border-top:1px solid #f0f1f5;display:flex;align-items:center;gap:8px;cursor:pointer;color:#1a56db;font-size:13px;font-weight:600">
+          <span style="width:24px;height:24px;border-radius:8px;border:1.5px solid #93c5fd;display:flex;align-items:center;justify-content:center;font-size:14px">+</span>
+          Add item
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="card card-glow" style="padding:18px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:12px">Notes / Terms</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="float-field has-value">
+            <input value="Thank you for your business" placeholder=" " />
+            <label>Message to customer</label>
+          </div>
+          <div class="float-field has-value">
+            <input value="Payment due within 30 days" placeholder=" " />
+            <label>Terms & conditions</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="side">
+      <!-- Client -->
+      <div class="card card-glow">
+        <div style="padding:12px 16px;border-bottom:1px solid #f0f1f5;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em">Bill To</div>
+        <div class="client-selected">
+          <div class="client-avatar blue">G</div>
+          <div class="client-info">
+            <div class="name">Gupta & Sons</div>
+            <div class="detail">9432109876</div>
+          </div>
+          <span style="font-size:12px;color:#1a56db;font-weight:600;cursor:pointer">Change</span>
+        </div>
+      </div>
+
+      <!-- Invoice Info -->
+      <div class="card card-glow" style="padding:18px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:14px">Invoice Information</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="float-field has-value">
+            <select><option>Tax Invoice (with GST)</option></select>
+            <label>Bill Type</label>
+          </div>
+          <div class="float-field has-value">
+            <select><option>Tamil Nadu</option></select>
+            <label>Place of Supply</label>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="float-field has-value">
+              <input type="text" value="07/06/2026" placeholder=" " />
+              <label>Issue Date</label>
+            </div>
+            <div class="float-field has-value">
+              <input type="text" value="07/07/2026" placeholder=" " />
+              <label>Due Date</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="card card-glow" style="padding:18px">
+        <div class="summary-row"><span class="label">Subtotal</span><span class="value">&#8377;38,500.00</span></div>
+        <div class="summary-row"><span class="label">CGST (9%)</span><span class="value">&#8377;3,465.00</span></div>
+        <div class="summary-row"><span class="label">SGST (9%)</span><span class="value">&#8377;3,465.00</span></div>
+        <div class="summary-total"><span class="label">Total</span><span class="value">&#8377;45,430.00</span></div>
+      </div>
+
+      <!-- Save -->
+      <button class="btn-primary">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        Save and Continue
+      </button>
+      <button class="btn-ghost" style="width:100%;text-align:center">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- INVOICE LIST -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div id="list" class="page">
+  <div class="page-header">
+    <h2>Invoices</h2>
+    <button class="btn-primary" style="width:auto">+ New Invoice</button>
+  </div>
+
+  <!-- Filters -->
+  <div style="display:flex;gap:8px;margin-bottom:20px">
+    <button class="btn-ghost" style="background:#1a56db;color:white;border-color:#1a56db">All (24)</button>
+    <button class="btn-ghost">Draft (3)</button>
+    <button class="btn-ghost">Sent (8)</button>
+    <button class="btn-ghost" style="color:#dc2626;border-color:#fecaca">Overdue (3)</button>
+    <button class="btn-ghost" style="color:#16a34a;border-color:#bbf7d0">Paid (10)</button>
+    <div style="margin-left:auto">
+      <div class="cmd-bar" style="padding:8px 14px;border-width:1.5px">
+        <svg width="16" height="16" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" placeholder="Search..." style="font-size:13px" />
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-glow">
+    <div class="inv-list-item">
+      <div class="avatar" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8)">G</div>
+      <div class="info"><div class="name">Gupta & Sons</div><div class="meta">INV/2026-27/0028 &bull; 05 Jun 2026 &bull; Due: 05 Jul 2026</div></div>
+      <div class="amount"><div class="amt">&#8377;28,320.00</div><div class="status status-overdue">OVERDUE</div></div>
+    </div>
+    <div class="inv-list-item">
+      <div class="avatar" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed)">P</div>
+      <div class="info"><div class="name">Priya Nair</div><div class="meta">INV/2024-007 &bull; 04 Jun 2026 &bull; Paid: 07 Jun 2026</div></div>
+      <div class="amount"><div class="amt">&#8377;9,440.00</div><div class="status status-paid">PAID</div></div>
+    </div>
+    <div class="inv-list-item">
+      <div class="avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706)">J</div>
+      <div class="info"><div class="name">Jaipur Handicrafts</div><div class="meta">INV/2026-27/0027 &bull; 03 Jun 2026 &bull; Due: 03 Jul 2026</div></div>
+      <div class="amount"><div class="amt">&#8377;15,600.00</div><div class="status status-sent">SENT</div></div>
+    </div>
+    <div class="inv-list-item">
+      <div class="avatar" style="background:linear-gradient(135deg,#22c55e,#16a34a)">R</div>
+      <div class="info"><div class="name">Ram Lakshman</div><div class="meta">INV/2026-27/0026 &bull; 01 Jun 2026</div></div>
+      <div class="amount"><div class="amt">&#8377;5,000.00</div><div class="status status-draft">DRAFT</div></div>
+    </div>
+    <div class="inv-list-item">
+      <div class="avatar" style="background:linear-gradient(135deg,#ec4899,#db2777)">T</div>
+      <div class="info"><div class="name">Test User</div><div class="meta">INV/2026-27/0025 &bull; 30 May 2026 &bull; Paid: 02 Jun 2026</div></div>
+      <div class="amount"><div class="amt">&#8377;2,360.00</div><div class="status status-paid">PAID</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- DARK MODE -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div id="dark" class="page">
+  <div class="page-header">
+    <h2>Dark Mode Preview</h2>
+  </div>
+
+  <div class="dark-preview">
+    <div style="margin-bottom:20px">
+      <h2 style="font-size:20px;font-weight:800;color:#f1f5f9;margin-bottom:4px">Good evening, Mathan</h2>
+      <p style="font-size:13px;color:#64748b">Here's your business snapshot</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+      <div class="stat-card collected" style="background:#052e16;border-color:#166534;padding:16px;border-radius:12px">
+        <div class="stat-label" style="color:#6ee7b7">Collected</div>
+        <div style="font-size:24px;font-weight:800;color:#4ade80;margin-top:4px">&#8377;7,080</div>
+      </div>
+      <div class="stat-card" style="background:#1e293b;border-color:#334155;padding:16px;border-radius:12px">
+        <div class="stat-label" style="color:#64748b">Pending</div>
+        <div style="font-size:24px;font-weight:800;color:#fbbf24;margin-top:4px">&#8377;1,60,364</div>
+      </div>
+      <div class="stat-card" style="background:#1e293b;border-color:#334155;padding:16px;border-radius:12px">
+        <div class="stat-label" style="color:#64748b">Expenses</div>
+        <div style="font-size:24px;font-weight:800;color:#e2e8f0;margin-top:4px">&#8377;23,400</div>
+      </div>
+      <div class="stat-card" style="background:#450a0a;border-color:#991b1b;padding:16px;border-radius:12px">
+        <div class="stat-label" style="color:#fca5a5">Overdue</div>
+        <div style="font-size:24px;font-weight:800;color:#f87171;margin-top:4px">&#8377;45,000</div>
+      </div>
+    </div>
+
+    <div style="background:#1e293b;border:1px solid #334155;border-radius:12px;overflow:hidden">
+      <div style="padding:14px 18px;border-bottom:1px solid #334155;display:flex;justify-content:space-between">
+        <span style="font-size:13px;font-weight:700;color:#e2e8f0">Recent Invoices</span>
+        <span style="font-size:12px;color:#60a5fa;font-weight:600;cursor:pointer">View All</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;padding:12px 18px;border-bottom:1px solid #1e293b">
+        <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:white">G</div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:700;color:#e2e8f0">Gupta & Sons</div><div style="font-size:11px;color:#64748b;margin-top:2px">INV/2026-27/0028</div></div>
+        <div style="text-align:right"><div style="font-size:14px;font-weight:700;color:#e2e8f0">&#8377;28,320</div><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:#450a0a;color:#f87171">OVERDUE</span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;padding:12px 18px">
+        <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:white">P</div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:700;color:#e2e8f0">Priya Nair</div><div style="font-size:11px;color:#64748b;margin-top:2px">INV/2024-007</div></div>
+        <div style="text-align:right"><div style="font-size:14px;font-weight:700;color:#e2e8f0">&#8377;9,440</div><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:#052e16;color:#4ade80">PAID</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function show(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+  document.querySelectorAll('.mockup-nav button').forEach(b => b.classList.remove('active'))
+  document.getElementById(id).classList.add('active')
+  event.target.classList.add('active')
+}
+</script>
+</body>
+</html>

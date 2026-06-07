@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CloudBill - Desktop Form Design</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue: #1a73e8; --green: #34a853; --red: #ea4335; --yellow: #fbbc05;
+  --text: #202124; --text-2: #5f6368; --text-3: #80868b; --text-4: #bdc1c6;
+  --bg: #f8f9fa; --surface: #ffffff; --border: #e8eaed; --border-light: #f1f3f4;
+  --font: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  --radius: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+
+/* ── TOP BAR ── */
+.topbar { height: 56px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 24px; position: sticky; top: 0; z-index: 50; }
+.topbar .logo { font-size: 16px; font-weight: 800; color: var(--blue); margin-right: 32px; }
+.topbar .nav { display: flex; gap: 2px; }
+.topbar .nav a { padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--text-3); text-decoration: none; transition: all 0.12s; }
+.topbar .nav a:hover { background: var(--border-light); color: var(--text-2); }
+.topbar .nav a.on { background: #e8f0fe; color: var(--blue); }
+.topbar .spacer { flex: 1; }
+.topbar .search { display: flex; align-items: center; gap: 8px; background: var(--border-light); border-radius: 20px; padding: 7px 14px; margin-right: 12px; }
+.topbar .search input { border: none; outline: none; background: transparent; font-size: 13px; font-family: var(--font); color: var(--text); width: 180px; }
+.topbar .search input::placeholder { color: var(--text-4); }
+.topbar .search kbd { font-size: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; color: var(--text-4); font-family: monospace; }
+.topbar .avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--blue), #4285f4); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+
+/* ── FORM PAGE ── */
+.form-page { max-width: 1120px; margin: 0 auto; padding: 24px 32px; }
+
+/* Toolbar */
+.form-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.form-toolbar .left { display: flex; align-items: center; gap: 12px; }
+.form-toolbar .back { width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.12s; color: var(--text-2); }
+.form-toolbar .back:hover { background: var(--border-light); }
+.form-toolbar h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
+.form-toolbar .right { display: flex; align-items: center; gap: 8px; }
+.form-toolbar .shortcuts { display: flex; gap: 12px; margin-right: 16px; font-size: 11px; color: var(--text-4); }
+.form-toolbar .shortcuts span { display: flex; align-items: center; gap: 4px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; border: none; cursor: pointer; transition: all 0.12s; font-family: var(--font); }
+.btn-primary { background: var(--blue); color: white; box-shadow: 0 1px 3px rgba(26,115,232,0.25); }
+.btn-primary:hover { background: #1765cc; box-shadow: 0 2px 8px rgba(26,115,232,0.3); }
+.btn-ghost { background: none; color: var(--text-2); border: 1.5px solid var(--border); }
+.btn-ghost:hover { background: var(--border-light); }
+
+/* ── TWO COLUMN LAYOUT ── */
+.form-grid { display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
+
+/* ── CARD ── */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: visible; }
+.card + .card { margin-top: 16px; }
+.card-head { padding: 14px 20px; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; }
+.card-head h2 { font-size: 14px; font-weight: 700; }
+.card-head .count { font-size: 12px; color: var(--text-4); }
+.card-body { padding: 18px 20px; }
+
+/* ── ITEM ROWS — the core innovation ── */
+.item { display: flex; gap: 16px; padding: 16px 20px; border-bottom: 1px solid var(--border-light); align-items: flex-start; transition: background 0.1s; }
+.item:hover { background: #fafbfc; }
+.item:last-of-type { border-bottom: none; }
+
+/* Number badge */
+.item-num { width: 28px; height: 28px; border-radius: 8px; background: var(--border-light); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--text-4); flex-shrink: 0; }
+
+/* Left: description (wide) */
+.item-left { flex: 1; min-width: 0; }
+.item-left input.desc { border: none; outline: none; background: transparent; font-size: 14px; font-weight: 600; color: var(--text); width: 100%; padding: 0; font-family: var(--font); }
+.item-left input.desc::placeholder { color: var(--text-4); font-weight: 500; }
+
+/* Editable chips row */
+.item-chips { display: flex; gap: 6px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
+.chip { display: flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; border: 1px solid transparent; cursor: text; transition: all 0.12s; }
+.chip input { border: none; outline: none; background: transparent; font-size: 12px; font-weight: 600; width: 40px; text-align: center; font-family: var(--font); }
+.chip select { border: none; outline: none; background: transparent; font-size: 12px; font-weight: 600; font-family: var(--font); cursor: pointer; appearance: none; padding-right: 2px; }
+.chip.qty { background: var(--border-light); color: var(--text-2); }
+.chip.qty:focus-within { border-color: var(--text-3); background: white; }
+.chip.price { background: #e8f0fe; color: var(--blue); }
+.chip.price:focus-within { border-color: var(--blue); background: white; }
+.chip.price input { color: var(--blue); }
+.chip.tax { background: #f3e8ff; color: #7c3aed; }
+.chip.tax select { color: #7c3aed; }
+.chip.unit { background: var(--border-light); color: var(--text-2); }
+.chip.unit select { color: var(--text-2); }
+.chip .sym { font-size: 11px; opacity: 0.6; }
+
+/* Right: amount */
+.item-amt { font-size: 16px; font-weight: 800; color: var(--text); white-space: nowrap; letter-spacing: -0.02em; min-width: 90px; text-align: right; padding-top: 2px; }
+
+/* Remove button */
+.item-del { width: 28px; height: 28px; border-radius: 6px; border: none; background: none; color: var(--text-4); cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transition: all 0.12s; margin-top: 1px; }
+.item:hover .item-del { opacity: 1; }
+.item-del:hover { background: #fce8e6; color: var(--red); }
+
+/* Add item button */
+.add-item { padding: 12px 20px; display: flex; align-items: center; gap: 8px; color: var(--blue); font-size: 13px; font-weight: 600; cursor: pointer; border-top: 1px solid var(--border-light); transition: background 0.1s; }
+.add-item:hover { background: #f8f9ff; }
+.add-item .plus { width: 24px; height: 24px; border: 1.5px dashed #93c5fd; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--blue); }
+
+/* ── SIDEBAR INPUTS ── */
+.fi { position: relative; margin-bottom: 10px; }
+.fi:last-child { margin-bottom: 0; }
+.fi input, .fi select {
+  width: 100%; padding: 20px 12px 6px; border: 1.5px solid var(--border); border-radius: 8px;
+  font-size: 13px; font-weight: 600; color: var(--text); background: var(--surface);
+  outline: none; transition: border 0.12s; font-family: var(--font); appearance: none;
+}
+.fi input:focus, .fi select:focus { border-color: var(--blue); }
+.fi label { position: absolute; left: 12px; top: 6px; font-size: 10px; font-weight: 700; color: var(--text-3); letter-spacing: 0.03em; pointer-events: none; }
+
+/* Client selection */
+.client-search { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; cursor: text; transition: border 0.12s; }
+.client-search:focus-within { border-color: var(--blue); }
+.client-search input { border: none; outline: none; flex: 1; font-size: 13px; font-weight: 500; color: var(--text); font-family: var(--font); background: transparent; }
+.client-search input::placeholder { color: var(--text-4); }
+
+.client-selected { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; background: #e8f0fe; border: 1px solid #d2e0fc; }
+.client-av { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: white; flex-shrink: 0; }
+.client-info .cn { font-size: 13px; font-weight: 700; color: var(--text); }
+.client-info .cd { font-size: 11px; color: var(--text-3); }
+.client-change { font-size: 11px; font-weight: 700; color: var(--blue); cursor: pointer; margin-left: auto; }
+
+/* Recent clients row */
+.recent-clients { display: flex; gap: 10px; margin-top: 10px; }
+.rc { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
+.rc .rc-av { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: white; transition: transform 0.1s; }
+.rc .rc-av:hover { transform: scale(1.08); }
+.rc .rc-name { font-size: 10px; font-weight: 500; color: var(--text-3); max-width: 48px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Summary */
+.sum-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; }
+.sum-row .l { color: var(--text-3); }
+.sum-row .v { font-weight: 600; color: var(--text); }
+.sum-total { display: flex; justify-content: space-between; padding: 10px 0 0; margin-top: 4px; border-top: 2px solid var(--text); }
+.sum-total .l { font-size: 14px; font-weight: 800; }
+.sum-total .v { font-size: 22px; font-weight: 800; color: var(--blue); letter-spacing: -0.03em; }
+
+/* Notes */
+.notes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.notes-grid textarea { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 12px; font-family: var(--font); color: var(--text-2); resize: vertical; min-height: 60px; outline: none; transition: border 0.12s; }
+.notes-grid textarea:focus { border-color: var(--blue); }
+.notes-grid label { font-size: 10px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 4px; display: block; }
+
+/* Product dropdown (appears below description) */
+.product-dropdown { position: absolute; left: 44px; right: 120px; top: 100%; background: white; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 40; overflow: hidden; margin-top: 4px; }
+.pd-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; cursor: pointer; transition: background 0.08s; font-size: 13px; }
+.pd-item:hover { background: var(--border-light); }
+.pd-item .pd-name { font-weight: 600; color: var(--text); }
+.pd-item .pd-price { font-weight: 600; color: var(--blue); font-size: 12px; }
+.pd-create { padding: 10px 14px; border-top: 1px solid var(--border-light); background: #fafbfc; }
+.pd-create p { font-size: 11px; font-weight: 600; color: var(--text-3); margin-bottom: 6px; }
+.pd-create-row { display: flex; gap: 6px; }
+.pd-create-row input, .pd-create-row select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 600; font-family: var(--font); outline: none; flex: 1; }
+.pd-create-btn { padding: 6px 12px; background: var(--blue); color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; font-family: var(--font); }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<nav class="topbar">
+  <div class="logo">CloudBill</div>
+  <div class="nav">
+    <a href="#">Dashboard</a>
+    <a href="#" class="on">Invoices</a>
+    <a href="#">Clients</a>
+    <a href="#">Products</a>
+    <a href="#">Reports</a>
+  </div>
+  <div class="spacer"></div>
+  <div class="search">
+    <svg width="16" height="16" fill="none" stroke="#80868b" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input placeholder="Search..." />
+    <kbd>Ctrl K</kbd>
+  </div>
+  <div class="avatar">M</div>
+</nav>
+
+<!-- FORM -->
+<div class="form-page">
+
+  <!-- Toolbar -->
+  <div class="form-toolbar">
+    <div class="left">
+      <button class="back"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg></button>
+      <h1>Create Invoice</h1>
+    </div>
+    <div class="right">
+      <div class="shortcuts">
+        <span><kbd>Alt+A</kbd> Add item</span>
+        <span><kbd>Alt+C</kbd> Client</span>
+        <span><kbd>Esc</kbd> Close</span>
+      </div>
+      <button class="btn btn-ghost">Cancel</button>
+      <button class="btn btn-primary">Save Invoice <kbd style="background:rgba(255,255,255,0.2);border-color:rgba(255,255,255,0.2);color:rgba(255,255,255,0.7);margin-left:4px">Ctrl+&crarr;</kbd></button>
+    </div>
+  </div>
+
+  <!-- Two Column -->
+  <div class="form-grid">
+
+    <!-- LEFT: Items + Notes -->
+    <div>
+      <!-- Items Card -->
+      <div class="card">
+        <div class="card-head"><h2>Items</h2><span class="count">2 items</span></div>
+
+        <!-- Item 1 -->
+        <div class="item">
+          <div class="item-num">1</div>
+          <div class="item-left">
+            <input class="desc" value="Annual Maintenance Contract" />
+            <div class="item-chips">
+              <div class="chip qty"><input value="1" style="width:24px" /> <span class="sym">&times;</span> <select><option>Nos</option><option>Kg</option><option>Box</option><option>Hrs</option></select></div>
+              <div class="chip price"><span class="sym">&#8377;</span> <input value="24,000" style="width:52px" /></div>
+              <div class="chip tax"><select><option>18% GST</option><option>0% GST</option><option>5% GST</option><option>12% GST</option><option>28% GST</option></select></div>
+            </div>
+          </div>
+          <div class="item-amt">&#8377;28,320</div>
+          <button class="item-del"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </div>
+
+        <!-- Item 2 -->
+        <div class="item">
+          <div class="item-num">2</div>
+          <div class="item-left">
+            <input class="desc" value="Paper Cup 90ml (1000 pcs)" />
+            <div class="item-chips">
+              <div class="chip qty"><input value="5" style="width:20px" /> <span class="sym">&times;</span> <select><option>Box</option><option>Nos</option><option>Kg</option></select></div>
+              <div class="chip price"><span class="sym">&#8377;</span> <input value="2,900" style="width:42px" /></div>
+              <div class="chip tax"><select><option>18% GST</option><option>0% GST</option><option>5% GST</option><option>12% GST</option><option>28% GST</option></select></div>
+            </div>
+          </div>
+          <div class="item-amt">&#8377;17,110</div>
+          <button class="item-del"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </div>
+
+        <!-- New item with product dropdown visible -->
+        <div class="item" style="position:relative;border-bottom:none">
+          <div class="item-num" style="background:none;border:1.5px dashed #93c5fd;color:var(--blue)">+</div>
+          <div class="item-left">
+            <input class="desc" placeholder="Type item name or search product..." value="Web" />
+            <!-- Product autocomplete dropdown -->
+            <div class="product-dropdown">
+              <div class="pd-item"><span class="pd-name">Web Development</span><span class="pd-price">&#8377;50,000</span></div>
+              <div class="pd-item"><span class="pd-name">Website Maintenance (Monthly)</span><span class="pd-price">&#8377;5,000</span></div>
+              <div class="pd-item"><span class="pd-name">Web Hosting (Annual)</span><span class="pd-price">&#8377;3,600</span></div>
+              <div class="pd-create">
+                <p>Not found? Create new product:</p>
+                <div class="pd-create-row">
+                  <input placeholder="Price *" style="width:80px;flex:none" />
+                  <select style="width:70px;flex:none"><option>Nos</option><option>Hrs</option><option>Box</option></select>
+                  <button class="pd-create-btn">Create & Add</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add item -->
+        <div class="add-item">
+          <div class="plus">+</div>
+          Add item
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="card" style="margin-top:16px">
+        <div class="card-body">
+          <div style="font-size:14px;font-weight:700;margin-bottom:12px">Notes / Terms</div>
+          <div class="notes-grid">
+            <div><label>Message to customer</label><textarea>Thank you for your business</textarea></div>
+            <div><label>Terms & conditions</label><textarea>Payment due within 30 days</textarea></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Client + Invoice Info + Summary -->
+    <div>
+
+      <!-- Client -->
+      <div class="card">
+        <div class="card-body">
+          <div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px">Bill To</div>
+
+          <!-- Selected state -->
+          <div class="client-selected">
+            <div class="client-av" style="background:linear-gradient(135deg,#4285f4,#1a73e8)">G</div>
+            <div class="client-info"><div class="cn">Gupta & Sons</div><div class="cd">9432109876</div></div>
+            <span class="client-change">Change</span>
+          </div>
+
+          <!-- Recent clients -->
+          <div style="font-size:10px;font-weight:600;color:var(--text-4);margin-top:12px;margin-bottom:6px">RECENT</div>
+          <div class="recent-clients">
+            <div class="rc"><div class="rc-av" style="background:linear-gradient(135deg,#4285f4,#1a73e8)">G</div><div class="rc-name">Gupta</div></div>
+            <div class="rc"><div class="rc-av" style="background:linear-gradient(135deg,#9c27b0,#7b1fa2)">P</div><div class="rc-name">Priya</div></div>
+            <div class="rc"><div class="rc-av" style="background:linear-gradient(135deg,#ff9800,#f57c00)">J</div><div class="rc-name">Jaipur</div></div>
+            <div class="rc"><div class="rc-av" style="background:linear-gradient(135deg,#4caf50,#2e7d32)">R</div><div class="rc-name">Ram</div></div>
+            <div class="rc"><div class="rc-av" style="background:var(--border-light);color:var(--blue);font-size:18px;font-weight:400">+</div><div class="rc-name" style="color:var(--blue)">New</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Invoice Info -->
+      <div class="card" style="margin-top:16px">
+        <div class="card-body">
+          <div style="font-size:14px;font-weight:700;margin-bottom:14px">Invoice Details</div>
+          <div class="fi"><select><option>Tax Invoice (with GST)</option><option>Bill of Supply</option><option>Proforma Invoice</option></select><label>Bill Type</label></div>
+          <div class="fi"><select><option>Tamil Nadu</option></select><label>Place of Supply</label></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div class="fi"><input value="07/06/2026" /><label>Issue Date</label></div>
+            <div class="fi"><input value="07/07/2026" /><label>Due Date</label></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="card" style="margin-top:16px">
+        <div class="card-body">
+          <div class="sum-row"><span class="l">Subtotal</span><span class="v">&#8377;38,500.00</span></div>
+          <div class="sum-row"><span class="l">CGST (9%)</span><span class="v">&#8377;3,465.00</span></div>
+          <div class="sum-row"><span class="l">SGST (9%)</span><span class="v">&#8377;3,465.00</span></div>
+          <div class="sum-total"><span class="l">Grand Total</span><span class="v">&#8377;45,430</span></div>
+        </div>
+      </div>
+
+      <!-- Save -->
+      <button class="btn btn-primary" style="width:100%;padding:13px;margin-top:16px;border-radius:10px;font-size:14px">
+        Save and Continue
+      </button>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
