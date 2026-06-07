@@ -11,10 +11,28 @@ class Invoice extends Task
 {
     protected bool $useTransaction = true;
 
+    private static bool $clientIdMigrated = false;
+
+    private static function ensureNullableClientId(): void
+    {
+        if (self::$clientIdMigrated) return;
+        try {
+            $col = DB::selectOne("SELECT IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'invoices' AND COLUMN_NAME = 'client_id'");
+            if ($col && $col->IS_NULLABLE === 'NO') {
+                DB::statement("ALTER TABLE invoices MODIFY client_id INT UNSIGNED NULL DEFAULT NULL");
+            }
+            self::$clientIdMigrated = true;
+        } catch (\Throwable) {
+            self::$clientIdMigrated = true;
+        }
+    }
+
     // ── Create invoice ────────────────────────────────────────────────────────
 
     public function create(array $input): array
     {
+        if (empty($input['client_id'])) self::ensureNullableClientId();
+
         $this->validate([
             'client_id'    => 'nullable|integer',
             'issue_date'   => 'required|date',
@@ -28,13 +46,6 @@ class Invoice extends Task
         // Determine supply type (intra-state = CGST+SGST, inter-state = IGST)
         $clientId = !empty($input['client_id']) ? (int)$input['client_id'] : null;
         $supplyType = $this->resolveSupplyType($businessId, $clientId, $input);
-
-        // Auto-migrate: make client_id nullable if not already
-        if ($clientId === null) {
-            try {
-                DB::statement("ALTER TABLE invoices MODIFY client_id INT UNSIGNED NULL DEFAULT NULL");
-            } catch (\Throwable) {}
-        }
 
         // Generate invoice number
         $number = Sequence::generate($businessId, 'invoice');
@@ -98,6 +109,8 @@ class Invoice extends Task
 
     public function update(array $input): array
     {
+        if (empty($input['client_id'])) self::ensureNullableClientId();
+
         $this->validate([
             'id'        => 'required|integer',
             'client_id' => 'nullable|integer',
@@ -114,10 +127,6 @@ class Invoice extends Task
         $clientId = !empty($input['client_id']) ? (int)$input['client_id'] : null;
         $supplyType = $this->resolveSupplyType($businessId, $clientId, $input);
         $totals     = $this->calculateTotals($input['items'], $supplyType);
-
-        if ($clientId === null) {
-            try { DB::statement("ALTER TABLE invoices MODIFY client_id INT UNSIGNED NULL DEFAULT NULL"); } catch (\Throwable) {}
-        }
 
         $invoice->fill([
             'client_id'      => $clientId,
