@@ -617,7 +617,8 @@ async function submit() {
                       <!-- Description input + product autocomplete -->
                       <div class="relative">
                         <input v-model="it.description" type="text" class="inv-input font-medium !bg-white line-desc w-full" placeholder="Type item name or search product…" required
-                          @focus="openProductSearch(i)" @input="productSearch = it.description; newProduct.name = it.description" />
+                          @focus="openProductSearch(i)" @input="productSearch = it.description; newProduct.name = it.description"
+                          @keydown.enter.prevent="closeProductSearch()" />
                         <!-- Product autocomplete dropdown -->
                         <div v-if="productSearchIdx === i && it.description?.trim().length >= 1" class="absolute left-0 right-0 top-full mt-1 z-50 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
                           <div v-if="filteredProducts.length" class="max-h-36 overflow-y-auto divide-y divide-gray-50">
@@ -728,7 +729,8 @@ async function submit() {
                     <div>
                       <label class="inv-label">Item Name / Description *</label>
                       <input v-model="it.description" type="text" class="inv-input w-full !bg-white text-sm" required placeholder="Type item name or search product…"
-                        @focus="openProductSearch(i)" @input="productSearch = it.description; newProduct.name = it.description" />
+                        @focus="openProductSearch(i)" @input="productSearch = it.description; newProduct.name = it.description"
+                        @keydown.enter.prevent="closeProductSearch()" />
                       <!-- Mobile product autocomplete -->
                       <div v-if="productSearchIdx === i && it.description?.trim().length >= 1" class="mt-1.5 space-y-1.5">
                         <div v-if="filteredProducts.length" class="max-h-36 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-50 bg-white">
