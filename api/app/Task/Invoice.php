@@ -482,7 +482,7 @@ class Invoice extends Task
      * Inter-state → IGST
      * Uses business state vs client state.
      */
-    private function resolveSupplyType(int $businessId, int $clientId, array $input): string
+    private function resolveSupplyType(int $businessId, ?int $clientId, array $input): string
     {
         // Allow explicit override
         if (!empty($input['supply_type'])) return $input['supply_type'];
