@@ -26,7 +26,7 @@ class Invoice extends Task
         $this->validateItems($input['items'] ?? []);
 
         // Determine supply type (intra-state = CGST+SGST, inter-state = IGST)
-        $clientId = !empty($input['client_id']) ? (int)$input['client_id'] : 0;
+        $clientId = !empty($input['client_id']) ? (int)$input['client_id'] : null;
         $supplyType = $this->resolveSupplyType($businessId, $clientId, $input);
 
         // Generate invoice number
@@ -104,7 +104,7 @@ class Invoice extends Task
             $this->fail('Only draft invoices can be edited. Cancel and duplicate if needed.');
 
         $this->validateItems($input['items'] ?? []);
-        $clientId = !empty($input['client_id']) ? (int)$input['client_id'] : 0;
+        $clientId = !empty($input['client_id']) ? (int)$input['client_id'] : null;
         $supplyType = $this->resolveSupplyType($businessId, $clientId, $input);
         $totals     = $this->calculateTotals($input['items'], $supplyType);
 
