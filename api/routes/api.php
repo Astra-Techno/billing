@@ -18,7 +18,7 @@ $app->get('/run-migrate', function ($request, $response) {
     $sqls = [
         'drop_fk'            => "ALTER TABLE invoices DROP FOREIGN KEY invoices_ibfk_2",
         'nullable_client_id' => "ALTER TABLE invoices MODIFY client_id INT UNSIGNED NULL DEFAULT NULL",
-        'readd_fk'           => "ALTER TABLE invoices ADD CONSTRAINT invoices_ibfk_2 FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL",
+        'readd_fk'           => "ALTER TABLE invoices ADD CONSTRAINT invoices_client_fk FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL ON UPDATE CASCADE",
     ];
     foreach ($sqls as $name => $sql) {
         try {
