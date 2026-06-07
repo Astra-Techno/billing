@@ -397,7 +397,6 @@ const placeOfSupplyName = computed(() => {
 
 async function submit() {
   error.value = ''
-  if (!form.value.client_id) return (error.value = 'Please choose a customer.')
   if (!form.value.items.some(i => i.description)) return (error.value = 'Please add at least one item.')
   loading.value = true
   try {

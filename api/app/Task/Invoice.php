@@ -16,7 +16,7 @@ class Invoice extends Task
     public function create(array $input): array
     {
         $this->validate([
-            'client_id'    => 'required|integer',
+            'client_id'    => 'nullable|integer',
             'issue_date'   => 'required|date',
             'due_date'     => 'required|date',
             'items'        => 'required',
@@ -26,7 +26,8 @@ class Invoice extends Task
         $this->validateItems($input['items'] ?? []);
 
         // Determine supply type (intra-state = CGST+SGST, inter-state = IGST)
-        $supplyType = $this->resolveSupplyType($businessId, (int)$input['client_id'], $input);
+        $clientId = !empty($input['client_id']) ? (int)$input['client_id'] : null;
+        $supplyType = $this->resolveSupplyType($businessId, $clientId ?? 0, $input);
 
         // Generate invoice number
         $number = Sequence::generate($businessId, 'invoice');
@@ -38,7 +39,7 @@ class Invoice extends Task
         $invoice = InvoiceTable::create([
             'business_id'   => $businessId,
             'created_by'    => $this->userId(),
-            'client_id'     => (int)$input['client_id'],
+            'client_id'     => $clientId,
             'quote_id'      => !empty($input['quote_id']) ? (int)$input['quote_id'] : null,
             'number'        => $number,
             'invoice_type'  => $input['invoice_type']  ?? 'tax_invoice',
@@ -92,7 +93,7 @@ class Invoice extends Task
     {
         $this->validate([
             'id'        => 'required|integer',
-            'client_id' => 'required|integer',
+            'client_id' => 'nullable|integer',
             'items'     => 'required',
         ]);
 
@@ -103,11 +104,12 @@ class Invoice extends Task
             $this->fail('Only draft invoices can be edited. Cancel and duplicate if needed.');
 
         $this->validateItems($input['items'] ?? []);
-        $supplyType = $this->resolveSupplyType($businessId, (int)$input['client_id'], $input);
+        $clientId = !empty($input['client_id']) ? (int)$input['client_id'] : null;
+        $supplyType = $this->resolveSupplyType($businessId, $clientId ?? 0, $input);
         $totals     = $this->calculateTotals($input['items'], $supplyType);
 
         $invoice->fill([
-            'client_id'      => (int)$input['client_id'],
+            'client_id'      => $clientId,
             'invoice_type'   => $input['invoice_type']    ?? $invoice->invoice_type,
             'issue_date'     => $input['issue_date']      ?? $invoice->issue_date,
             'due_date'       => $input['due_date']        ?? $invoice->due_date,
