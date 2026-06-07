@@ -29,6 +29,13 @@ class Invoice extends Task
         $clientId = !empty($input['client_id']) ? (int)$input['client_id'] : null;
         $supplyType = $this->resolveSupplyType($businessId, $clientId, $input);
 
+        // Auto-migrate: make client_id nullable if not already
+        if ($clientId === null) {
+            try {
+                DB::statement("ALTER TABLE invoices MODIFY client_id INT UNSIGNED NULL DEFAULT NULL");
+            } catch (\Throwable) {}
+        }
+
         // Generate invoice number
         $number = Sequence::generate($businessId, 'invoice');
         $fy     = Sequence::currentFinancialYear();
@@ -107,6 +114,10 @@ class Invoice extends Task
         $clientId = !empty($input['client_id']) ? (int)$input['client_id'] : null;
         $supplyType = $this->resolveSupplyType($businessId, $clientId, $input);
         $totals     = $this->calculateTotals($input['items'], $supplyType);
+
+        if ($clientId === null) {
+            try { DB::statement("ALTER TABLE invoices MODIFY client_id INT UNSIGNED NULL DEFAULT NULL"); } catch (\Throwable) {}
+        }
 
         $invoice->fill([
             'client_id'      => $clientId,

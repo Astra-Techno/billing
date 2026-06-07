@@ -11,14 +11,14 @@ class Invoice extends Sql
     {
         return (new Query('Invoice.list'))
             ->from('invoices i')
-            ->inner('clients c ON c.id = i.client_id')
+            ->left('clients c ON c.id = i.client_id')
             ->left('indian_states s ON s.id = i.place_of_supply')
             ->select('list', '
                 i.id, i.number, i.invoice_type, i.status,
                 i.issue_date, i.due_date, i.financial_year,
                 i.total, i.amount_paid, i.amount_due,
                 i.supply_type, i.is_recurring, i.sent_at, i.paid_at, i.created_at,
-                c.id AS client_id, c.name AS client_name, c.company AS client_company,
+                i.client_id, COALESCE(c.name, "Walk-in Customer") AS client_name, c.company AS client_company,
                 c.mobile AS client_mobile, c.gstin AS client_gstin,
                 s.name AS place_of_supply_name
             ')
@@ -38,12 +38,12 @@ class Invoice extends Sql
     {
         return (new Query('Invoice.entity'))
             ->from('invoices i')
-            ->inner('clients c ON c.id = i.client_id')
+            ->left('clients c ON c.id = i.client_id')
             ->left('indian_states s ON s.id = i.place_of_supply')
             ->left('indian_states bs ON bs.id = (SELECT state_id FROM businesses WHERE id = i.business_id)')
             ->select('entity', '
                 i.*,
-                c.name AS client_name, c.company AS client_company,
+                COALESCE(c.name, "Walk-in Customer") AS client_name, c.company AS client_company,
                 c.gstin AS client_gstin, c.pan AS client_pan,
                 c.email AS client_email, c.mobile AS client_mobile,
                 c.address_line1 AS client_address1, c.address_line2 AS client_address2,
@@ -52,7 +52,7 @@ class Invoice extends Sql
             ')
             ->select('list', '
                 i.*,
-                c.name AS client_name, c.company AS client_company,
+                COALESCE(c.name, "Walk-in Customer") AS client_name, c.company AS client_company,
                 c.gstin AS client_gstin, c.mobile AS client_mobile,
                 s.name AS place_of_supply_name
             ')
@@ -96,10 +96,10 @@ class Invoice extends Sql
     {
         return (new Query('Invoice.overdue'))
             ->from('invoices i')
-            ->inner('clients c ON c.id = i.client_id')
+            ->left('clients c ON c.id = i.client_id')
             ->select('list', '
                 i.id, i.number, i.due_date, i.total, i.amount_due,
-                c.name AS client_name, c.mobile AS client_mobile,
+                COALESCE(c.name, "Walk-in Customer") AS client_name, c.mobile AS client_mobile,
                 DATEDIFF(CURDATE(), i.due_date) AS days_overdue
             ')
             ->select('total', 'COUNT(*) AS total')
@@ -113,10 +113,10 @@ class Invoice extends Sql
     {
         return (new Query('Invoice.recurring'))
             ->from('invoices i')
-            ->inner('clients c ON c.id = i.client_id')
+            ->left('clients c ON c.id = i.client_id')
             ->select('list', '
                 i.id, i.number, i.recur_every, i.recur_period, i.next_recur_date,
-                i.recur_ends_at, i.total, c.name AS client_name
+                i.recur_ends_at, i.total, COALESCE(c.name, "Walk-in Customer") AS client_name
             ')
             ->filter('i.business_id = {business_id}')
             ->filter('i.is_recurring = 1')
