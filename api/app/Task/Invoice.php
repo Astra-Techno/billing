@@ -27,7 +27,7 @@ class Invoice extends Task
 
         // Determine supply type (intra-state = CGST+SGST, inter-state = IGST)
         $clientId = !empty($input['client_id']) ? (int)$input['client_id'] : null;
-        if (!$clientId) $this->fail('Please select a customer before saving.');
+        // client_id is optional — retail/walk-in invoices
         $supplyType = $this->resolveSupplyType($businessId, $clientId, $input);
 
         // Generate invoice number
@@ -106,7 +106,7 @@ class Invoice extends Task
 
         $this->validateItems($input['items'] ?? []);
         $clientId = !empty($input['client_id']) ? (int)$input['client_id'] : null;
-        if (!$clientId) $this->fail('Please select a customer before saving.');
+        // client_id is optional — retail/walk-in invoices
         $supplyType = $this->resolveSupplyType($businessId, $clientId, $input);
         $totals     = $this->calculateTotals($input['items'], $supplyType);
 

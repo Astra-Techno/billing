@@ -12,6 +12,24 @@ use App\Middleware\AuthMiddleware;
 $app->post('/login',    [AuthController::class, 'login']);
 $app->post('/register', [AuthController::class, 'register']);
 
+// One-time migration endpoint (public, idempotent)
+$app->get('/run-migrate', function ($request, $response) {
+    $results = [];
+    $sqls = [
+        'nullable_client_id' => "ALTER TABLE invoices MODIFY client_id INT UNSIGNED NULL DEFAULT NULL",
+    ];
+    foreach ($sqls as $name => $sql) {
+        try {
+            \App\Core\DB::statement($sql);
+            $results[$name] = 'done';
+        } catch (\Throwable $e) {
+            $results[$name] = $e->getMessage();
+        }
+    }
+    $response->getBody()->write(json_encode(['success' => true, 'migrations' => $results]));
+    return $response->withHeader('Content-Type', 'application/json');
+});
+
 // ── Public digital business card ───────────────────────────────────────────────
 $app->get('/shop/{slug}', function ($request, $response, $args) {
     $slug = preg_replace('/[^a-z0-9\-]/', '', strtolower($args['slug'] ?? ''));
