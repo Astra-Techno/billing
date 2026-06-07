@@ -428,6 +428,13 @@ const placeOfSupplyName = computed(() => {
   return s ? s.name : 'Not selected'
 })
 
+// Block Enter from submitting form — only Ctrl+Enter submits
+function onFormEnter(e) {
+  if (!e.ctrlKey && !e.metaKey) {
+    e.preventDefault()
+  }
+}
+
 async function submit() {
   error.value = ''
   if (!form.value.items.some(i => i.description)) return (error.value = 'Please add at least one item.')
@@ -487,7 +494,7 @@ async function submit() {
 
     <!-- Body: two-column on desktop -->
     <div class="inv-body">
-      <form id="invoice-form" @submit.prevent="submit" class="inv-layout">
+      <form id="invoice-form" @submit.prevent="submit" @keydown.enter="onFormEnter" class="inv-layout">
 
         <!-- ── LEFT: Main content ── -->
         <div class="inv-main">
