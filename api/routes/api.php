@@ -16,7 +16,9 @@ $app->post('/register', [AuthController::class, 'register']);
 $app->get('/run-migrate', function ($request, $response) {
     $results = [];
     $sqls = [
+        'drop_fk'            => "ALTER TABLE invoices DROP FOREIGN KEY invoices_ibfk_2",
         'nullable_client_id' => "ALTER TABLE invoices MODIFY client_id INT UNSIGNED NULL DEFAULT NULL",
+        'readd_fk'           => "ALTER TABLE invoices ADD CONSTRAINT invoices_ibfk_2 FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL",
     ];
     foreach ($sqls as $name => $sql) {
         try {
