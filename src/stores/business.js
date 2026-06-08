@@ -11,6 +11,7 @@ const DEFAULT_FEATURES = {
   credit_notes: false,
   gst_returns: true,
   reports: true,
+  payroll: false,
 }
 
 export const useBusinessStore = defineStore('business', () => {

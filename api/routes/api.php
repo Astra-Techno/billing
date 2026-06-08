@@ -20,6 +20,15 @@ $app->get('/run-migrate', function ($request, $response) {
         'nullable_client_id' => "ALTER TABLE invoices MODIFY client_id INT UNSIGNED NULL DEFAULT NULL",
         'readd_fk'           => "ALTER TABLE invoices ADD CONSTRAINT invoices_client_fk FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL ON UPDATE CASCADE",
     ];
+    // Payroll tables
+    $migrationFile = dirname(__DIR__) . '/database/migrations/008_payroll.sql';
+    if (file_exists($migrationFile)) {
+        $stmts = array_filter(array_map('trim', explode(';', file_get_contents($migrationFile))));
+        foreach ($stmts as $i => $stmt) {
+            if (!$stmt) continue;
+            $sqls['payroll_' . $i] = $stmt;
+        }
+    }
     foreach ($sqls as $name => $sql) {
         try {
             \App\Core\DB::statement($sql);

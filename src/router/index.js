@@ -38,11 +38,19 @@ const routes = [
           { path: ':id',       name: 'QuoteView',    component: () => import('../views/quotes/QuoteDetail.vue') },
         ]
       },
-      { 
+      {
         path: 'expenses',         name: 'Expenses',     component: () => import('../views/expenses/ExpenseList.vue'),
         children: [
           { path: 'new',     name: 'ExpenseNew',   component: () => import('../views/expenses/ExpenseForm.vue') },
           { path: ':id/edit',name: 'ExpenseEdit',  component: () => import('../views/expenses/ExpenseForm.vue') },
+        ]
+      },
+      {
+        path: 'payroll', name: 'Payroll', component: () => import('../views/payroll/StaffList.vue'), meta: { auth: true },
+        children: [
+          { path: 'staff/new',       name: 'StaffNew',    component: () => import('../views/payroll/StaffForm.vue') },
+          { path: 'staff/:id/edit',  name: 'StaffEdit',   component: () => import('../views/payroll/StaffForm.vue') },
+          { path: 'run',             name: 'PayrollRun',  component: () => import('../views/payroll/PayrollRun.vue') },
         ]
       },
       { 

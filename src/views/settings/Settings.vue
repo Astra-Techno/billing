@@ -38,6 +38,7 @@ const featureToggles = [
   { key: 'credit_notes',     label: 'Credit / Debit Notes',desc: 'Issue refunds or additional charges against invoices' },
   { key: 'gst_returns',      label: 'GST Returns',         desc: 'View GST filing summaries (GSTR-1, HSN, etc.)' },
   { key: 'reports',          label: 'Reports & Analytics',  desc: 'Revenue, ageing, P&L, and payment collection reports' },
+  { key: 'payroll',          label: 'Payroll',              desc: 'Track staff salaries and generate monthly payslips' },
 ]
 
 async function saveFeatures() {
