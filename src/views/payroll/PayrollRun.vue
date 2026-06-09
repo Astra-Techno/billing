@@ -82,11 +82,11 @@ async function updateRow(row) {
 }
 
 function netPay(row) {
-  const salary     = parseFloat(row.salary)        || 0
+  const salary     = parseFloat(row.basic_salary)        || 0
   const bonus      = parseFloat(row.bonus)         || 0
   const deductions = parseFloat(row.deductions)    || 0
   const days       = parseFloat(row.days_worked)   || 0
-  const totalDays  = parseFloat(row.total_days)    || 30
+  const totalDays  = parseFloat(row.working_days)    || 30
   const earned     = totalDays > 0 ? (salary / totalDays) * days : salary
   return earned + bonus - deductions
 }
@@ -221,7 +221,7 @@ onMounted(load)
 
                   <!-- Salary -->
                   <td class="px-4 py-3 text-right font-semibold text-gray-700 tabular-nums">
-                    {{ inr(row.salary) }}
+                    {{ inr(row.basic_salary) }}
                   </td>
 
                   <!-- Days Worked -->
@@ -229,7 +229,7 @@ onMounted(load)
                     <input v-if="row.status === 'draft'"
                       v-model="row.days_worked"
                       @input="onFieldChange(row)"
-                      type="number" min="0" :max="row.total_days || 31" step="0.5"
+                      type="number" min="0" :max="row.working_days || 31" step="0.5"
                       class="w-16 text-center border border-gray-200 rounded-lg px-2 py-1 text-sm font-semibold focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-white" />
                     <span v-else class="font-semibold text-gray-600">{{ row.days_worked }}</span>
                   </td>
