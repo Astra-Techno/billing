@@ -18,6 +18,19 @@ export const useBusinessStore = defineStore('business', () => {
   const logo     = ref('')
   const stateId  = ref(null)
   const features = ref({ ...DEFAULT_FEATURES })
+  const darkMode = ref(localStorage.getItem('darkMode') === 'true')
+
+  function toggleDarkMode() {
+    darkMode.value = !darkMode.value
+    localStorage.setItem('darkMode', darkMode.value)
+    document.documentElement.classList.toggle('dark', darkMode.value)
+  }
+
+  function initDarkMode() {
+    if (darkMode.value) {
+      document.documentElement.classList.add('dark')
+    }
+  }
 
   function setLogo(url) {
     logo.value = url || ''
@@ -62,5 +75,5 @@ export const useBusinessStore = defineStore('business', () => {
     } catch {}
   }
 
-  return { logo, stateId, features, setLogo, setStateId, setFeatures, isEnabled, fetchBusiness, loadFeatures, saveFeatures }
+  return { logo, stateId, features, darkMode, setLogo, setStateId, setFeatures, isEnabled, fetchBusiness, loadFeatures, saveFeatures, toggleDarkMode, initDarkMode }
 })

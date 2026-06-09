@@ -309,19 +309,29 @@ const activeDateLabel = () => {
       <!-- Scrollable List -->
       <div class="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 custom-scrollbar min-h-0">
           
-          <div v-if="loading" class="space-y-1.5">
-            <div v-for="i in 6" :key="i" class="p-4 rounded-xl border border-gray-100 bg-white/40 animate-pulse flex justify-between">
-              <div class="space-y-2"><div class="h-3.5 bg-gray-200 rounded w-24"></div><div class="h-2.5 bg-gray-100 rounded w-16"></div></div>
-              <div class="h-3.5 bg-gray-200 rounded w-16"></div>
+          <div v-if="loading" class="space-y-0">
+            <div v-for="i in 5" :key="i" class="flex items-center gap-3 px-4 py-4 border-b border-google-divider/40">
+              <div class="skeleton w-10 h-10 rounded-xl"></div>
+              <div class="flex-1 space-y-2">
+                <div class="skeleton h-3.5 w-32 rounded"></div>
+                <div class="skeleton h-3 w-48 rounded"></div>
+              </div>
+              <div class="text-right space-y-2">
+                <div class="skeleton h-3.5 w-20 rounded ml-auto"></div>
+                <div class="skeleton h-5 w-14 rounded-full ml-auto"></div>
+              </div>
             </div>
           </div>
 
-          <div v-else-if="!invoices.length" class="p-8 text-center">
-            <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
-              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <div v-else-if="!invoices.length" class="flex flex-col items-center justify-center py-16 px-6 text-center">
+            <div class="w-20 h-20 rounded-3xl bg-primary-50 flex items-center justify-center mb-5">
+              <svg class="w-10 h-10 text-primary-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+              </svg>
             </div>
-            <p class="font-bold text-gray-900 text-[13px]">No invoices found</p>
-            <p class="text-[11px] text-gray-500 mt-1">Create an invoice to get started</p>
+            <h3 class="text-lg font-bold text-ink mb-1">No invoices yet</h3>
+            <p class="text-sm text-google-muted mb-5 max-w-xs">Create your first invoice to start tracking payments and growing your business.</p>
+            <RouterLink to="/invoices/new" class="btn-primary btn-sm">+ New Invoice</RouterLink>
           </div>
 
           <div v-else v-for="(inv, idx) in invoices" :key="inv.id"

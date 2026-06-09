@@ -661,6 +661,21 @@ async function saveInvoice() {
 
     <!-- Features -->
     <template v-if="!loading && activeTab === 'features'">
+
+      <!-- Dark Mode Toggle -->
+      <div class="card card-body mb-4">
+        <div class="flex items-center justify-between">
+          <div class="flex-1 min-w-0 pr-4">
+            <div class="font-semibold text-sm text-gray-800 dark:text-slate-200">Dark Mode</div>
+            <div class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Switch between light and dark appearance</div>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer shrink-0">
+            <input type="checkbox" :checked="bizStore.darkMode" @change="bizStore.toggleDarkMode()" class="sr-only peer">
+            <div class="w-10 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-600"></div>
+          </label>
+        </div>
+      </div>
+
       <div class="card card-body space-y-1">
         <h2 class="text-lg font-bold text-gray-800 mb-1">Enable Features</h2>
         <p class="text-sm text-gray-500 mb-4">Turn on only what you need. You can always enable more later.</p>
