@@ -10,20 +10,33 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 const stats          = ref({ total_due: 0, total_paid_month: 0, total_expenses_month: 0, overdue_count: 0, draft_count: 0, overdue_amount: 0 })
+const summary        = ref({ total_billed: 0, total_collected: 0, total_outstanding: 0 })
+const totalExpenses  = ref(0)
 const recent         = ref([])
 const overdue        = ref([])
 const monthlyRevenue = ref([])
 const loading        = ref(true)
 
+const balance = computed(() => {
+  const collected = parseFloat(summary.value.total_collected || 0)
+  const expenses  = parseFloat(totalExpenses.value || 0)
+  return collected - expenses
+})
+
 onMounted(async () => {
   try {
-    const [sR, rR, oR, mR] = await Promise.all([
+    const [sR, sumR, expR, rR, oR, mR] = await Promise.all([
       list('Dashboard:stats'),
+      list('Dashboard:summary'),
+      list('Dashboard:expenseSummary'),
       list('Invoice', { sort_by: 'i.created_at', sort_order: 'desc', limit: 8 }),
       list('Invoice:overdue', { limit: 10 }),
       list('Dashboard:monthlyRevenue'),
     ])
     stats.value          = sR.data?.data?.[0] || {}
+    const s              = sumR.data?.data?.[0] || {}
+    summary.value        = s
+    totalExpenses.value  = (expR.data?.data || []).reduce((sum, c) => sum + parseFloat(c.total || 0), 0)
     recent.value         = rR.data?.data  || []
     overdue.value        = oR.data?.data  || []
     monthlyRevenue.value = mR.data?.data  || []
@@ -228,6 +241,45 @@ const firstName = computed(() => {
                   <div class="mt-2 text-[11px]"
                        :class="stats.overdue_amount > 0 ? 'text-red-500 font-semibold' : 'text-gray-400'">
                       {{ stats.overdue_amount > 0 ? 'Action needed' : 'All invoices on time' }}
+                  </div>
+              </div>
+          </div>
+
+          <!-- All-time Balance strip (desktop) -->
+          <div class="hidden lg:flex items-center justify-between gap-6 mt-4 px-5 py-4 rounded-2xl bg-white/80 border border-gray-100 shadow-soft">
+              <div class="flex items-center gap-8">
+                  <div>
+                      <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Total Billed</p>
+                      <p class="text-base font-bold text-gray-900 tabular-nums mt-0.5">{{ inr(summary.total_billed || 0) }}</p>
+                  </div>
+                  <div class="h-8 w-px bg-gray-200"></div>
+                  <div>
+                      <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Total Collected</p>
+                      <p class="text-base font-bold text-emerald-600 tabular-nums mt-0.5">{{ inr(summary.total_collected || 0) }}</p>
+                  </div>
+                  <div class="h-8 w-px bg-gray-200"></div>
+                  <div>
+                      <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Total Expenses</p>
+                      <p class="text-base font-bold text-amber-600 tabular-nums mt-0.5">{{ inr(totalExpenses) }}</p>
+                  </div>
+              </div>
+              <div class="text-right">
+                  <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Balance</p>
+                  <p class="text-xl font-extrabold tabular-nums mt-0.5" :class="balance >= 0 ? 'text-emerald-600' : 'text-red-600'">{{ inr(balance) }}</p>
+              </div>
+          </div>
+
+          <!-- All-time Balance strip (mobile) -->
+          <div class="lg:hidden mx-4 mb-4 px-4 py-3 rounded-2xl bg-white border border-gray-100 shadow-soft">
+              <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-4 text-xs">
+                      <div><span class="text-gray-400">Billed</span><p class="font-bold text-gray-900 tabular-nums">{{ inrCompact(summary.total_billed || 0) }}</p></div>
+                      <div><span class="text-gray-400">Collected</span><p class="font-bold text-emerald-600 tabular-nums">{{ inrCompact(summary.total_collected || 0) }}</p></div>
+                      <div><span class="text-gray-400">Expenses</span><p class="font-bold text-amber-600 tabular-nums">{{ inrCompact(totalExpenses) }}</p></div>
+                  </div>
+                  <div class="text-right">
+                      <span class="text-[10px] text-gray-400 font-semibold uppercase">Balance</span>
+                      <p class="text-base font-extrabold tabular-nums" :class="balance >= 0 ? 'text-emerald-600' : 'text-red-600'">{{ inrCompact(balance) }}</p>
                   </div>
               </div>
           </div>
