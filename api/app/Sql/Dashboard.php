@@ -20,7 +20,11 @@ class Dashboard extends Sql
                 SUM(i.amount_due)                                                       AS total_due,
                 SUM(CASE WHEN i.status = \'overdue\' THEN 1 ELSE 0 END)                AS overdue_count,
                 SUM(CASE WHEN i.status = \'draft\'   THEN 1 ELSE 0 END)                AS draft_count,
-                COALESCE(SUM(p.amount), 0)                                              AS total_paid_month
+                COALESCE(SUM(DISTINCT p.amount), 0)                                     AS total_paid_month,
+                (SELECT COALESCE(SUM(e.total_amount), 0) FROM expenses e
+                 WHERE e.business_id = i.business_id
+                   AND MONTH(e.expense_date) = MONTH(CURDATE())
+                   AND YEAR(e.expense_date)  = YEAR(CURDATE()))                         AS total_expenses_month
             ')
             ->filter('i.business_id = {business_id}')
             ->filter('i.status != \'cancelled\'');
@@ -77,7 +81,7 @@ class Dashboard extends Sql
     {
         return (new Query('Dashboard.topOutstandingClients'))
             ->from('invoices i')
-            ->inner('clients c ON c.id = i.client_id')
+            ->inner('clients c ON c.id = i.client_id AND i.client_id IS NOT NULL')
             ->select('list', '
                 c.id, c.name, c.company, c.mobile,
                 COUNT(i.id)       AS invoice_count,
@@ -96,10 +100,10 @@ class Dashboard extends Sql
     {
         return (new Query('Dashboard.recentInvoices'))
             ->from('invoices i')
-            ->inner('clients c ON c.id = i.client_id')
+            ->left('clients c ON c.id = i.client_id')
             ->select('list', '
-                i.id, i.number, i.status, i.total, i.amount_due, i.due_date, i.created_at,
-                c.name AS client_name
+                i.id, i.number, i.status, i.total, i.amount_due, i.due_date, i.issue_date, i.created_at,
+                COALESCE(c.name, \'Walk-in Customer\') AS client_name
             ')
             ->filter('i.business_id = {business_id}')
             ->order('i.created_at', 'desc');
@@ -109,8 +113,8 @@ class Dashboard extends Sql
     {
         return (new Query('Dashboard.recentPayments'))
             ->from('payments p')
-            ->inner('clients c ON c.id = p.client_id')
-            ->inner('invoices i ON i.id = p.invoice_id')
+            ->left('clients c ON c.id = p.client_id')
+            ->left('invoices i ON i.id = p.invoice_id')
             ->select('list', '
                 p.id, p.amount, p.method, p.payment_date,
                 c.name AS client_name,
