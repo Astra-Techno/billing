@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useAuthStore } from '../../stores/auth'
 import { useBusinessStore } from '../../stores/business'
 import { useRouter } from 'vue-router'
@@ -28,14 +28,42 @@ watch(query, val => {
   timer = setTimeout(() => search(val.trim()), 300)
 })
 
+const products = ref([])
+
+// Quick actions based on typed query
+const quickActions = computed(() => {
+  const q = query.value.trim().toLowerCase()
+  if (!q) return []
+  const actions = []
+  if (q.includes('invoice') || q.includes('bill') || q.includes('new'))
+    actions.push({ label: 'Create New Invoice', icon: 'M12 4v16m8-8H4', path: '/invoices/new' })
+  if (q.includes('quote') || q.includes('estimate'))
+    actions.push({ label: 'Create New Quote', icon: 'M12 4v16m8-8H4', path: '/quotes/new' })
+  if (q.includes('expense') || q.includes('spend'))
+    actions.push({ label: 'Record Expense', icon: 'M12 4v16m8-8H4', path: '/expenses/new' })
+  if (q.includes('client') || q.includes('customer'))
+    actions.push({ label: 'Add New Client', icon: 'M12 4v16m8-8H4', path: '/clients/new' })
+  if (q.includes('product') || q.includes('service'))
+    actions.push({ label: 'Add New Product', icon: 'M12 4v16m8-8H4', path: '/products/new' })
+  if (q.includes('setting'))
+    actions.push({ label: 'Open Settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0', path: '/settings' })
+  if (q.includes('report'))
+    actions.push({ label: 'View Reports', icon: 'M9 19v-6a2 2 0 00-2-2H5', path: '/reports' })
+  if (q.includes('payroll') || q.includes('salary') || q.includes('staff'))
+    actions.push({ label: 'Open Payroll', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2', path: '/payroll' })
+  return actions.slice(0, 3)
+})
+
 async function search(q) {
   try {
-    const [bRes, cRes] = await Promise.all([
+    const [bRes, cRes, pRes] = await Promise.all([
       list('Invoice', { 'filter.search': `%${q}%`, limit: 5, sort_by: 'i.created_at', sort_order: 'desc' }),
       list('Client',  { 'filter.search': `%${q}%`, limit: 5 }),
+      list('Product', { 'filter.search': `%${q}%`, limit: 3 }),
     ])
     bills.value     = bRes.data?.data || []
     customers.value = cRes.data?.data || []
+    products.value  = pRes.data?.data || []
   } catch {}
   loading.value = false
 }
@@ -61,7 +89,7 @@ function onKeydown(e) {
   if (e.key === 'Escape') close()
 }
 
-const hasResults = () => bills.value.length > 0 || customers.value.length > 0
+const hasResults = () => bills.value.length > 0 || customers.value.length > 0 || products.value.length > 0 || quickActions.value.length > 0
 
 // ── Notifications ───────────────────────────────────────────────────────────
 const { notifications, count: notifCount, loading: notifLoading, load: loadNotifs } = useNotifications()
@@ -112,7 +140,7 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
           <svg class="w-4 h-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
           </svg>
-          <span class="truncate">Search bills, customers…</span>
+          <span class="truncate">Search bills, customers, or type a command…</span>
         </div>
 
         <!-- Active search input -->
@@ -125,7 +153,7 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
             v-model="query"
             @keydown="onKeydown"
             type="text"
-            placeholder="Search bills, customers…"
+            placeholder="Search bills, customers, or type a command…"
             class="w-full bg-white border border-primary-200 rounded-full pl-10 pr-10 py-2.5 text-sm text-google-text outline-none ring-2 ring-primary-50 placeholder:text-google-muted shadow-soft"
           />
           <button @click="close" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition">
@@ -146,9 +174,20 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
               Searching…
             </div>
 
-            <!-- Empty query -->
-            <div v-else-if="!query.trim()" class="px-4 py-4 text-sm text-gray-400 text-center">
-              Type to search bills or customers
+            <!-- Empty query — show hints -->
+            <div v-else-if="!query.trim()" class="px-4 py-4">
+              <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Try searching for</p>
+              <div class="space-y-2">
+                <div class="flex items-center gap-2 text-sm text-gray-500 cursor-pointer hover:text-primary-600" @click="query = 'new invoice'">
+                  <span class="text-gray-300">→</span> <span>"new invoice"</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-gray-500 cursor-pointer hover:text-primary-600" @click="query = 'expense'">
+                  <span class="text-gray-300">→</span> <span>"expense"</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-gray-500 cursor-pointer hover:text-primary-600" @click="query = 'settings'">
+                  <span class="text-gray-300">→</span> <span>"settings"</span>
+                </div>
+              </div>
             </div>
 
             <!-- No results -->
@@ -197,9 +236,40 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
                 </div>
               </div>
 
+              <!-- Products section -->
+              <div v-if="products.length" :class="(bills.length || customers.length) ? 'border-t border-gray-100' : ''">
+                <div class="px-4 pt-3 pb-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Products</div>
+                <div v-for="p in products" :key="'p-' + p.id"
+                  class="flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50/60 cursor-pointer transition-colors group"
+                  @click="go('/products/' + p.id + '/edit')">
+                  <div class="w-8 h-8 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-gray-800 truncate group-hover:text-primary-700">{{ p.name }}</p>
+                    <p class="text-xs text-gray-400">{{ p.type === 'service' ? 'Service' : 'Product' }}</p>
+                  </div>
+                  <span class="text-sm font-bold text-gray-700 shrink-0">{{ inrCompact(p.price) }}</span>
+                </div>
+              </div>
+
+              <!-- Quick Actions -->
+              <div v-if="quickActions.length" class="border-t border-gray-100">
+                <div class="px-4 pt-3 pb-1.5 text-[10px] font-bold text-purple-400 uppercase tracking-widest">Quick Actions</div>
+                <div v-for="a in quickActions" :key="a.path"
+                  class="flex items-center gap-3 px-4 py-2.5 hover:bg-purple-50/60 cursor-pointer transition-colors"
+                  @click="go(a.path)">
+                  <div class="w-8 h-8 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" :d="a.icon"/></svg>
+                  </div>
+                  <span class="text-sm font-semibold text-gray-700">{{ a.label }}</span>
+                  <svg class="w-3.5 h-3.5 text-gray-300 ml-auto shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </div>
+              </div>
+
               <!-- Footer -->
               <div class="border-t border-gray-100 px-4 py-2.5 flex items-center justify-between">
-                <span class="text-xs text-gray-400">{{ bills.length + customers.length }} result{{ bills.length + customers.length !== 1 ? 's' : '' }}</span>
+                <span class="text-xs text-gray-400">{{ bills.length + customers.length + products.length }} result{{ bills.length + customers.length + products.length !== 1 ? 's' : '' }}</span>
                 <span class="text-xs text-gray-400">Press <kbd class="px-1.5 py-0.5 bg-gray-100 rounded text-gray-500 font-mono text-[10px]">Esc</kbd> to close</span>
               </div>
 
