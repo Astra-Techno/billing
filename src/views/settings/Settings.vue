@@ -662,6 +662,74 @@ async function saveInvoice() {
     <!-- Features -->
     <template v-if="!loading && activeTab === 'features'">
 
+      <!-- Invoice Template -->
+      <div class="card card-body !p-5 space-y-4 mb-4">
+        <div>
+          <h3 class="text-sm font-bold text-ink dark:text-white">Invoice Template</h3>
+          <p class="text-xs text-google-muted mt-0.5">Choose how your printed invoices look</p>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <button v-for="t in [
+            { id: 'classic', name: 'Classic', desc: 'Traditional business style', color: '#1f2937' },
+            { id: 'modern', name: 'Modern', desc: 'Clean with accent colors', color: '#1a5fd4' },
+            { id: 'minimal', name: 'Minimal', desc: 'Simple & elegant', color: '#111827' },
+          ]" :key="t.id"
+            @click="bizStore.setInvoiceTemplate(t.id)"
+            class="relative p-3 rounded-xl border-2 transition-all text-left"
+            :class="bizStore.invoiceTemplate === t.id
+              ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 ring-2 ring-primary-200'
+              : 'border-gray-200 dark:border-slate-600 hover:border-gray-300'"
+          >
+            <!-- Mini preview -->
+            <div class="w-full aspect-[3/4] rounded-lg mb-2 overflow-hidden border border-gray-100 dark:border-slate-600 bg-white">
+              <!-- Classic preview -->
+              <div v-if="t.id === 'classic'" class="p-2 h-full flex flex-col">
+                <div class="h-1 w-12 rounded bg-blue-800 mb-1"></div>
+                <div class="h-0.5 w-full bg-gray-800 mb-1.5"></div>
+                <div class="flex gap-1 mb-1.5"><div class="h-1 w-6 bg-gray-200 rounded"></div><div class="h-1 w-6 bg-gray-200 rounded"></div></div>
+                <div class="flex-1 space-y-0.5">
+                  <div class="h-2 w-full bg-gray-800 rounded-sm"></div>
+                  <div class="h-1.5 w-full bg-gray-100 rounded-sm"></div>
+                  <div class="h-1.5 w-full bg-gray-100 rounded-sm"></div>
+                  <div class="h-1.5 w-3/4 bg-gray-100 rounded-sm"></div>
+                </div>
+                <div class="h-1 w-8 bg-gray-800 rounded ml-auto mt-1"></div>
+              </div>
+              <!-- Modern preview -->
+              <div v-if="t.id === 'modern'" class="h-full flex flex-col">
+                <div class="h-3 bg-blue-600"></div>
+                <div class="p-2 flex-1 flex flex-col">
+                  <div class="flex gap-1 mb-1.5"><div class="h-1 w-6 bg-blue-100 rounded"></div><div class="h-1 w-6 bg-gray-100 rounded"></div></div>
+                  <div class="flex-1 space-y-0.5">
+                    <div class="h-2 w-full bg-blue-600 rounded-sm"></div>
+                    <div class="h-1.5 w-full bg-blue-50 rounded-sm"></div>
+                    <div class="h-1.5 w-full bg-gray-50 rounded-sm"></div>
+                    <div class="h-1.5 w-3/4 bg-blue-50 rounded-sm"></div>
+                  </div>
+                  <div class="h-1 w-8 bg-blue-600 rounded ml-auto mt-1"></div>
+                </div>
+              </div>
+              <!-- Minimal preview -->
+              <div v-if="t.id === 'minimal'" class="p-2 h-full flex flex-col">
+                <div class="h-1 w-10 bg-gray-900 mb-1.5"></div>
+                <div class="flex gap-1 mb-1.5"><div class="h-0.5 w-6 bg-gray-200 rounded"></div><div class="h-0.5 w-6 bg-gray-200 rounded"></div></div>
+                <div class="border-t border-gray-200 pt-1 flex-1 space-y-0.5">
+                  <div class="h-1.5 w-full bg-gray-100 rounded-sm"></div>
+                  <div class="h-1.5 w-full bg-gray-50 rounded-sm"></div>
+                  <div class="h-1.5 w-3/4 bg-gray-100 rounded-sm"></div>
+                </div>
+                <div class="border-t border-gray-200 pt-1 mt-1"><div class="h-1 w-8 bg-gray-900 rounded ml-auto"></div></div>
+              </div>
+            </div>
+            <p class="text-xs font-bold text-ink dark:text-white">{{ t.name }}</p>
+            <p class="text-[10px] text-google-muted leading-tight">{{ t.desc }}</p>
+            <div v-if="bizStore.invoiceTemplate === t.id" class="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary-500 flex items-center justify-center">
+              <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            </div>
+          </button>
+        </div>
+      </div>
+
       <!-- Dark Mode Toggle -->
       <div class="card card-body mb-4">
         <div class="flex items-center justify-between">
