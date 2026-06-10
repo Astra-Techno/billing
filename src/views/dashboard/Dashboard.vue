@@ -5,9 +5,18 @@ import { inr, inrCompact } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
+import { useTour } from '../../composables/useTour'
 
 const router = useRouter()
 const authStore = useAuthStore()
+
+const { startTour, isTourSeen } = useTour('dashboard', [
+  { target: '[data-tour="stat-cards"]', title: 'Business Snapshot', text: 'See your collections, pending invoices, expenses and overdue amounts at a glance. These update in real-time.' },
+  { target: '[data-tour="balance-strip"]', title: 'Balance', text: 'Your overall financial health — Total Billed minus Total Expenses = Balance. Green is good!' },
+  { target: '[data-tour="revenue-chart"]', title: 'Revenue Trend', text: 'Last 6 months of collections visualized. Helps you spot patterns and growth.' },
+  { target: '[data-tour="quick-actions"]', title: 'Quick Actions', text: 'Shortcuts to common tasks — create invoice, add customer, record expense. One click away.' },
+  { target: '[data-tour="recent-invoices"]', title: 'Recent Invoices', text: 'Your latest bills with status. Click any to view full details, record payment, or share.' },
+])
 
 const stats          = ref({ total_due: 0, total_paid_month: 0, total_expenses_month: 0, overdue_count: 0, draft_count: 0, overdue_amount: 0 })
 const summary        = ref({ total_billed: 0, total_collected: 0, total_outstanding: 0 })
@@ -45,6 +54,11 @@ onMounted(async () => {
 
   } catch {}
   loading.value = false
+
+  // Auto-start tour for first-time users (after data loads)
+  setTimeout(() => {
+    if (!isTourSeen() && !loading.value) startTour()
+  }, 800)
 })
 
 // Build last-6-months chart from real revenue data
@@ -174,14 +188,18 @@ const firstName = computed(() => {
                   <h1 class="text-[22px] font-normal text-google-text mb-0.5">Good morning, {{ firstName }}</h1>
                   <p class="text-google-muted text-[13px]">Here's your business snapshot for today.</p>
               </div>
-              <div class="flex gap-2 shrink-0">
+              <div data-tour="quick-actions" class="flex gap-2 shrink-0">
+                  <button @click="startTour()" class="btn-outline btn-sm" title="Take a guided tour">
+                    <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Tour
+                  </button>
                   <button @click="router.push('/expenses/new')" class="btn-outline btn-sm">Record expense</button>
                   <button @click="router.push('/invoices/new')" class="btn-primary btn-sm">New invoice</button>
               </div>
           </div>
 
           <!-- Stat Cards (desktop) -->
-          <div class="hidden lg:grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 px-4 lg:px-0">
+          <div data-tour="stat-cards" class="hidden lg:grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 px-4 lg:px-0">
               <!-- Collected -->
               <div class="gpay-hero-balance relative overflow-hidden group cursor-pointer col-span-2 lg:col-span-1 hidden lg:block"
                 @click="router.push('/invoices?status=paid')">
@@ -246,7 +264,7 @@ const firstName = computed(() => {
           </div>
 
           <!-- All-time Balance strip (desktop) -->
-          <div class="hidden lg:flex items-center justify-between gap-6 mt-4 px-5 py-4 rounded-2xl bg-white/80 border border-gray-100 shadow-soft">
+          <div data-tour="balance-strip" class="hidden lg:flex items-center justify-between gap-6 mt-4 px-5 py-4 rounded-2xl bg-white/80 border border-gray-100 shadow-soft">
               <div class="flex items-center gap-8">
                   <div>
                       <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Total Billed</p>
@@ -336,7 +354,7 @@ const firstName = computed(() => {
           <!-- Chart & Actions Row -->
           <div class="hidden lg:grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4 px-4 lg:px-0">
               <!-- Revenue Chart -->
-              <div class="col-span-1 lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-soft p-6 h-[300px] flex-col hidden sm:flex relative">
+              <div data-tour="revenue-chart" class="col-span-1 lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-soft p-6 h-[300px] flex-col hidden sm:flex relative">
                   <div class="flex justify-between items-center mb-5">
                       <div>
                           <h2 class="font-bold text-gray-900 text-[14px]">Revenue</h2>
@@ -411,7 +429,7 @@ const firstName = computed(() => {
           <!-- Bottom Row: Recent Invoices + Top Clients -->
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
               <!-- Recent Invoices -->
-              <div class="col-span-1 lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-soft p-6 flex flex-col">
+              <div data-tour="recent-invoices" class="col-span-1 lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-soft p-6 flex flex-col">
                   <div class="flex justify-between items-center mb-4">
                       <h2 class="font-bold text-gray-900 text-[14px]">Recent Invoices</h2>
                       <RouterLink to="/invoices" class="text-[11px] font-semibold text-primary-600 hover:text-primary-700">View All →</RouterLink>

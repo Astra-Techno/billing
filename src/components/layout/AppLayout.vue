@@ -7,6 +7,7 @@ import DesktopSidebar from './DesktopSidebar.vue'
 import DesktopHeader from './DesktopHeader.vue'
 import HelpPopup from '../HelpPopup.vue'
 import Toast from '../Toast.vue'
+import TourOverlay from '../TourOverlay.vue'
 import { useBusinessStore } from '../../stores/business'
 
 const bizStore = useBusinessStore()
@@ -52,5 +53,6 @@ const showNavbar = computed(() => {
     <Sidebar />
     <HelpPopup />
     <Toast />
+    <TourOverlay />
   </div>
 </template>
