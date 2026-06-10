@@ -4,6 +4,13 @@ import { useRouter, useRoute } from 'vue-router'
 import { list, task, all } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
+import { useTour } from '../../composables/useTour'
+
+const { startTour, isTourSeen } = useTour('product-list', [
+  { target: '[data-tour="prod-search"]', title: 'Search Items', text: 'Search by product name or HSN/SAC code. Filter by type using the dropdown.' },
+  { target: '[data-tour="prod-add"]', title: 'Add Item', text: 'Create a new product or service that can be used in invoices.' },
+  { target: '[data-tour="prod-list"]', title: 'Your Items', text: 'Tap any item to edit its name, price, or tax rate.' },
+])
 
 const router      = useRouter()
 const route       = useRoute()
@@ -60,7 +67,11 @@ function taxLabel(id) {
 
 const typeColors = { product: 'bg-blue-100 text-blue-700', service: 'bg-purple-100 text-purple-700' }
 
-onMounted(load)
+onMounted(() => {
+  load().then(() => {
+    setTimeout(() => { if (!isTourSeen()) startTour() }, 800)
+  })
+})
 watch(() => route.name, name => { if (name === 'Products') load() })
 </script>
 
@@ -74,10 +85,12 @@ watch(() => route.name, name => { if (name === 'Products') load() })
       <div class="px-5 py-4 border-b border-gray-200/60 bg-white/60 backdrop-blur-md sticky top-0 z-10">
         <!-- Header & Actions -->
         <div class="flex justify-between items-center mb-4">
-            <h2 class="font-bold text-gray-900 text-sm tracking-tight flex items-center gap-2">Items <HelpIcon section="products" class="w-3.5 h-3.5" /></h2>
+            <h2 class="font-bold text-gray-900 text-sm tracking-tight flex items-center gap-2">Items <HelpIcon section="products" class="w-3.5 h-3.5" />
+              <button @click="startTour()" class="text-[10px] font-bold text-primary-500 hover:text-primary-700 ml-1" title="Take a tour">Tour</button>
+            </h2>
             <div class="flex gap-2">
                 <!-- New Product -->
-                <button @click="openAdd" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center text-gray-600 transition-all">
+                <button @click="openAdd" data-tour="prod-add" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center text-gray-600 transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                 </button>
             </div>
@@ -86,7 +99,7 @@ watch(() => route.name, name => { if (name === 'Products') load() })
         <!-- Search & Filter -->
         <div class="mb-2 space-y-2 animate-fade-in-up">
             <div class="flex gap-2">
-                <input v-model="searchQ" type="text"
+                <input v-model="searchQ" type="text" data-tour="prod-search"
                   class="flex-1 bg-white border border-gray-200 shadow-sm text-gray-900 text-xs font-semibold rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 block px-3 py-2 transition-all min-w-0"
                   placeholder="Search item or HSN..." />
                   
@@ -103,8 +116,8 @@ watch(() => route.name, name => { if (name === 'Products') load() })
       </div>
 
       <!-- Scrollable List -->
-      <div class="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 custom-scrollbar min-h-0">
-          
+      <div class="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 custom-scrollbar min-h-0" data-tour="prod-list">
+
           <div v-if="loading" class="space-y-1.5">
             <div v-for="i in 6" :key="i" class="p-4 rounded-xl border border-gray-100 bg-white/40 animate-pulse flex justify-between items-center gap-3">
               <div class="w-8 h-8 rounded-lg bg-gray-200 shrink-0"></div>

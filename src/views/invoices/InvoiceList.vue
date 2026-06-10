@@ -6,6 +6,14 @@ import { inr } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
 import { statusBadge, statusLabel } from '../../utils/invoice'
 import HelpIcon from '../../components/HelpIcon.vue'
+import { useTour } from '../../composables/useTour'
+
+const { startTour, isTourSeen } = useTour('invoice-list', [
+  { target: '[data-tour="inv-tabs"]', title: 'Filter by Status', text: 'Quickly switch between All, Draft, Awaiting Payment, and Overdue invoices.' },
+  { target: '[data-tour="inv-search"]', title: 'Search Invoices', text: 'Open the search panel to find invoices by name, number, or date range.' },
+  { target: '[data-tour="inv-new"]', title: 'Create Invoice', text: 'Tap here to create a new invoice for a customer.' },
+  { target: '[data-tour="inv-select"]', title: 'Bulk Actions', text: 'Toggle select mode to mark multiple invoices as paid or sent at once.' },
+])
 
 const route       = useRoute()
 const router      = useRouter()
@@ -200,7 +208,9 @@ onMounted(() => {
   if (route.query.status)      filter.value.status      = route.query.status
   if (route.query.client_id)   filter.value.client_id   = route.query.client_id
   if (route.query.client_name) filter.value.client_name = route.query.client_name
-  load()
+  load().then(() => {
+    setTimeout(() => { if (!isTourSeen()) startTour() }, 800)
+  })
 })
 
 watch(() => route.query.status, val => {
@@ -244,18 +254,20 @@ const activeDateLabel = () => {
         
         <!-- Header & Actions -->
         <div class="flex justify-between items-center mb-4">
-            <h2 class="font-bold text-gray-900 text-sm tracking-tight flex items-center gap-2">Invoices <HelpIcon section="bills" class="w-3.5 h-3.5" /></h2>
+            <h2 class="font-bold text-gray-900 text-sm tracking-tight flex items-center gap-2">Invoices <HelpIcon section="bills" class="w-3.5 h-3.5" />
+              <button @click="startTour()" class="text-[10px] font-bold text-primary-500 hover:text-primary-700 ml-1" title="Take a tour">Tour</button>
+            </h2>
             <div class="flex gap-2">
                 <!-- Select Mode Toggle -->
-                <button @click="toggleSelectMode" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center transition-all" :class="selectMode ? 'text-primary-600 border-primary-200 bg-primary-50' : 'text-gray-600'">
+                <button @click="toggleSelectMode" data-tour="inv-select" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center transition-all" :class="selectMode ? 'text-primary-600 border-primary-200 bg-primary-50' : 'text-gray-600'">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                 </button>
                 <!-- Search Toggle -->
-                <button @click="showFilters = !showFilters" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center transition-all" :class="showFilters ? 'text-primary-600 border-primary-200 bg-primary-50' : 'text-gray-600'">
+                <button @click="showFilters = !showFilters" data-tour="inv-search" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center transition-all" :class="showFilters ? 'text-primary-600 border-primary-200 bg-primary-50' : 'text-gray-600'">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 </button>
                 <!-- New Invoice -->
-                <button @click="router.push('/invoices/new')" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center text-gray-600 transition-all">
+                <button @click="router.push('/invoices/new')" data-tour="inv-new" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center text-gray-600 transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                 </button>
             </div>
@@ -284,7 +296,7 @@ const activeDateLabel = () => {
         </div>
 
         <!-- Tabs -->
-        <div class="flex gap-1 bg-gray-100/80 p-1 rounded-[10px] ring-1 ring-inset ring-gray-200/50 overflow-x-auto hide-scrollbar">
+        <div data-tour="inv-tabs" class="flex gap-1 bg-gray-100/80 p-1 rounded-[10px] ring-1 ring-inset ring-gray-200/50 overflow-x-auto hide-scrollbar">
             <button v-for="t in tabs.slice(0, 4)" :key="t.value"
               @click="filter.status = t.value; load()"
               class="flex-1 text-[11px] font-semibold rounded-md py-1.5 transition-all whitespace-nowrap px-2"

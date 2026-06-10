@@ -8,6 +8,15 @@ import { inr } from '../../utils/currency'
 import { today, addDays } from '../../utils/date'
 import { calcInvoice } from '../../utils/invoice'
 import { useFormKeys, handleLineItemTab } from '../../composables/useFormKeys'
+import { useTour } from '../../composables/useTour'
+
+const { startTour: startFormTour, isTourSeen: isFormTourSeen } = useTour('invoice-form', [
+  { target: '[data-tour="inv-items"]', title: 'Line Items', text: 'Add products or services here. Type to search existing products or create new ones inline.' },
+  { target: '[data-tour="inv-billto"]', title: 'Bill To', text: 'Select or create a customer. Use the search to find existing clients quickly.' },
+  { target: '[data-tour="inv-info"]', title: 'Invoice Info', text: 'Set the bill type, dates, and place of supply for GST calculations.' },
+  { target: '[data-tour="inv-summary"]', title: 'Summary', text: 'See the subtotal, tax breakdown, and grand total updated in real time.' },
+  { target: '[data-tour="inv-save"]', title: 'Save Invoice', text: 'Click to save, or use Ctrl+Enter as a keyboard shortcut.' },
+])
 
 const router        = useRouter()
 const route         = useRoute()
@@ -348,6 +357,9 @@ onMounted(async () => {
       if (el) el.focus()
     }, 150)
   })
+
+  // Auto-start tour on first visit
+  setTimeout(() => { if (!isFormTourSeen()) startFormTour() }, 1000)
 })
 
 watch(() => form.value.invoice_type, (type) => {
@@ -471,6 +483,7 @@ async function submit() {
         </button>
         <h1 class="inv-page-title max-lg:text-white max-lg:text-lg max-lg:font-semibold">
           {{ isEdit ? 'Edit Invoice' : isDuplicate ? 'Duplicate Invoice' : 'Create Invoice' }}
+          <button @click="startFormTour()" class="text-[10px] font-bold text-primary-500 hover:text-primary-700 ml-2 hidden lg:inline" title="Take a tour">Tour</button>
         </h1>
       </div>
       <div class="flex items-center gap-2">
@@ -482,7 +495,7 @@ async function submit() {
           <span><kbd class="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-[9px] font-mono">Ctrl+↵</kbd> Save</span>
         </div>
         <button type="button" @click="router.back()" class="inv-btn-secondary hidden sm:inline-flex">Cancel</button>
-        <button type="submit" form="invoice-form" class="inv-btn-primary hidden sm:inline-flex" :disabled="loading" title="Ctrl+Enter">
+        <button type="submit" form="invoice-form" class="inv-btn-primary hidden sm:inline-flex" data-tour="inv-save" :disabled="loading" title="Ctrl+Enter">
           {{ loading ? 'Saving…' : isEdit ? 'Save Changes' : 'Save and Continue' }}
         </button>
         <!-- Mobile avatar -->
@@ -639,7 +652,7 @@ async function submit() {
           <!-- Line Items card -->
           <div>
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 px-1 lg:hidden">Item Detail</p>
-            <div class="inv-card !overflow-visible">
+            <div class="inv-card !overflow-visible" data-tour="inv-items">
               <div class="px-5 py-3.5 border-b border-gray-100 items-center justify-between hidden lg:flex">
                 <h2 class="text-sm font-semibold text-gray-800">Items</h2>
                 <span class="text-xs text-gray-400">{{ form.items.length }} item{{ form.items.length > 1 ? 's' : '' }}</span>
@@ -905,7 +918,7 @@ async function submit() {
         <aside class="inv-sidebar hidden lg:block">
 
           <!-- Bill To — GPay-style client chip -->
-          <div class="inv-card !overflow-visible">
+          <div class="inv-card !overflow-visible" data-tour="inv-billto">
             <div class="px-5 py-3.5 border-b border-gray-100">
               <h2 class="text-sm font-semibold text-gray-800">Bill To</h2>
             </div>
@@ -987,7 +1000,7 @@ async function submit() {
           </div>
 
           <!-- Invoice Information — floating label inputs -->
-          <div class="inv-card p-5 space-y-3">
+          <div class="inv-card p-5 space-y-3" data-tour="inv-info">
             <h2 class="text-sm font-semibold text-gray-800">Invoice Information</h2>
 
             <div class="fi">
@@ -1021,7 +1034,7 @@ async function submit() {
           </div>
 
           <!-- Summary + Actions -->
-          <div class="inv-card p-5 space-y-3">
+          <div class="inv-card p-5 space-y-3" data-tour="inv-summary">
             <div class="space-y-2 text-sm">
               <div class="flex justify-between text-gray-500">
                 <span>Subtotal</span>

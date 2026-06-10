@@ -4,6 +4,13 @@ import { useRouter } from 'vue-router'
 import { list } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
+import { useTour } from '../../composables/useTour'
+
+const { startTour, isTourSeen } = useTour('client-list', [
+  { target: '[data-tour="client-search"]', title: 'Search Customers', text: 'Type a name or mobile number to quickly find a customer.' },
+  { target: '[data-tour="client-add"]', title: 'Add Customer', text: 'Create a new customer record to use when making invoices.' },
+  { target: '[data-tour="client-list"]', title: 'Customer List', text: 'Tap any customer to view their details, invoices, and outstanding balance.' },
+])
 
 const router  = useRouter()
 const clients = ref([])
@@ -23,7 +30,11 @@ async function load() {
 }
 
 function onSearch() { clearTimeout(timer); timer = setTimeout(load, 350) }
-onMounted(load)
+onMounted(() => {
+  load().then(() => {
+    setTimeout(() => { if (!isTourSeen()) startTour() }, 800)
+  })
+})
 
 const avatarColors = ['bg-blue-100 text-blue-700', 'bg-emerald-100 text-emerald-700', 'bg-purple-100 text-purple-700', 'bg-amber-100 text-amber-700', 'bg-pink-100 text-pink-700', 'bg-teal-100 text-teal-700']
 const avatarColor  = (name) => avatarColors[(name?.charCodeAt(0) || 0) % avatarColors.length]
@@ -38,11 +49,13 @@ const avatarColor  = (name) => avatarColors[(name?.charCodeAt(0) || 0) % avatarC
       <div class="px-4 py-3 border-b border-google-divider bg-white sticky top-0 z-10">
         <!-- Header & Actions -->
         <div class="flex justify-between items-center mb-4">
-            <h2 class="font-medium text-google-text text-base flex items-center gap-2">Customers <HelpIcon section="customers" class="w-4 h-4" /></h2>
+            <h2 class="font-medium text-google-text text-base flex items-center gap-2">Customers <HelpIcon section="customers" class="w-4 h-4" />
+              <button @click="startTour()" class="text-[10px] font-bold text-primary-500 hover:text-primary-700 ml-1" title="Take a tour">Tour</button>
+            </h2>
             <div class="flex gap-2">
                 <!-- Search Toggle (Using inline expansion for clients) -->
                 <!-- New Customer -->
-                <button @click="router.push('/clients/new')" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center text-gray-600 transition-all">
+                <button @click="router.push('/clients/new')" data-tour="client-add" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center text-gray-600 transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                 </button>
             </div>
@@ -51,14 +64,14 @@ const avatarColor  = (name) => avatarColors[(name?.charCodeAt(0) || 0) % avatarC
         <!-- Search -->
         <div class="mb-2 space-y-2 animate-fade-in-up">
             <input v-model="search" @input="onSearch" type="text"
-              class="gpay-list-search"
+              class="gpay-list-search" data-tour="client-search"
               placeholder="Search customers..." />
         </div>
       </div>
 
       <!-- Scrollable List -->
-      <div class="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 custom-scrollbar min-h-0">
-          
+      <div class="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 custom-scrollbar min-h-0" data-tour="client-list">
+
           <div v-if="loading" class="space-y-1.5">
             <div v-for="i in 6" :key="i" class="p-4 rounded-xl border border-gray-100 bg-white/40 animate-pulse flex items-center gap-3">
               <div class="w-10 h-10 rounded-full bg-gray-200 shrink-0"></div>

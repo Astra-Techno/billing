@@ -4,6 +4,12 @@ import { list } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 import { fmtDateShort, today } from '../../utils/date'
+import { useTour } from '../../composables/useTour'
+
+const { startTour, isTourSeen } = useTour('reports', [
+  { target: '[data-tour="report-tabs"]', title: 'Report Types', text: 'Switch between Outstanding, GST Summary, Profit & Loss, and Expense reports.' },
+  { target: '[data-tour="report-content"]', title: 'Report Data', text: 'The selected report data appears here. Use date filters for GST and P&L reports.' },
+])
 
 const loading  = ref(false)
 const activeTab = ref('outstanding')
@@ -170,15 +176,21 @@ function selectTab(key) {
   else if (key === 'expenses')    loadExpenses()
 }
 
-onMounted(() => loadOutstanding())
+onMounted(() => {
+  loadOutstanding().then(() => {
+    setTimeout(() => { if (!isTourSeen()) startTour() }, 800)
+  })
+})
 </script>
 
 <template>
   <div class="space-y-5">
-    <h1 class="page-title flex items-center gap-2">Reports <HelpIcon section="reports" /></h1>
+    <h1 class="page-title flex items-center gap-2">Reports <HelpIcon section="reports" />
+      <button @click="startTour()" class="text-[10px] font-bold text-primary-500 hover:text-primary-700 ml-1" title="Take a tour">Tour</button>
+    </h1>
 
     <!-- Tabs -->
-    <div class="flex gap-1.5 overflow-x-auto pb-1">
+    <div data-tour="report-tabs" class="flex gap-1.5 overflow-x-auto pb-1">
       <button v-for="t in tabs" :key="t.key" @click="selectTab(t.key)"
         class="px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-150 shrink-0"
         :class="activeTab === t.key
@@ -192,7 +204,7 @@ onMounted(() => loadOutstanding())
 
     <!-- Outstanding -->
     <template v-if="!loading && activeTab === 'outstanding'">
-      <div class="card">
+      <div class="card" data-tour="report-content">
         <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
           <h2 class="section-title mb-0">Bills to Collect</h2>
           <div class="flex items-center gap-3">

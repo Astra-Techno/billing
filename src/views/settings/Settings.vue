@@ -5,6 +5,13 @@ import HelpIcon from '../../components/HelpIcon.vue'
 import { useBusinessStore } from '../../stores/business'
 import { useAuthStore } from '../../stores/auth'
 import { useRole } from '../../composables/useRole'
+import { useTour } from '../../composables/useTour'
+
+const { startTour, isTourSeen } = useTour('settings', [
+  { target: '[data-tour="settings-tabs"]', title: 'Settings Tabs', text: 'Navigate between Business profile, Features, GST, Bank details, and more.' },
+  { target: '[data-tour="settings-business"]', title: 'Business Info', text: 'Set your business name, address, and contact details shown on invoices.' },
+  { target: '[data-tour="settings-features"]', title: 'Feature Toggles', text: 'Enable or disable modules like Expenses, Quotes, Payroll, and Reports.' },
+])
 
 const bizStore  = useBusinessStore()
 const authStore = useAuthStore()
@@ -364,6 +371,7 @@ onMounted(async () => {
     await bizStore.loadFeatures()
   } catch {}
   loading.value = false
+  setTimeout(() => { if (!isTourSeen()) startTour() }, 800)
 })
 
 watch(activeTab, (tab) => { if (tab === 'team' && can('team')) loadTeam() })
@@ -503,12 +511,14 @@ async function saveInvoice() {
     <!-- LEFT PANE: Menu -->
     <div class="shrink-0 w-full lg:w-64 flex flex-col gap-6 lg:h-full lg:min-h-0">
       <div class="px-1 shrink-0">
-        <h1 class="page-title flex items-center gap-2">Settings <HelpIcon section="settings" /></h1>
+        <h1 class="page-title flex items-center gap-2">Settings <HelpIcon section="settings" />
+          <button @click="startTour()" class="text-[10px] font-bold text-primary-500 hover:text-primary-700 ml-1" title="Take a tour">Tour</button>
+        </h1>
         <p class="text-sm text-gray-500 mt-1">Set up your business details and preferences</p>
       </div>
 
       <!-- Vertical Tabs for Desktop, Horizontal for Mobile -->
-      <div class="flex lg:flex-col gap-1 lg:gap-2 bg-gray-100 lg:bg-transparent p-1 lg:p-0 rounded-xl overflow-x-auto lg:overflow-y-auto no-scrollbar shrink-0 pb-2 lg:pb-6">
+      <div data-tour="settings-tabs" class="flex lg:flex-col gap-1 lg:gap-2 bg-gray-100 lg:bg-transparent p-1 lg:p-0 rounded-xl overflow-x-auto lg:overflow-y-auto no-scrollbar shrink-0 pb-2 lg:pb-6">
         <button v-for="t in tabs" :key="t.key" @click="activeTab = t.key"
           class="px-4 py-2.5 rounded-lg text-sm font-medium transition text-left whitespace-nowrap lg:whitespace-normal shrink-0"
           :class="activeTab === t.key ? 'bg-white text-gray-900 shadow-sm border border-gray-100/50' : 'text-gray-500 hover:text-gray-900 lg:hover:bg-gray-50'">
@@ -599,7 +609,7 @@ async function saveInvoice() {
         </div>
       </div>
 
-      <div class="card card-body space-y-4">
+      <div class="card card-body space-y-4" data-tour="settings-business">
         <h2 class="section-title">Business Profile</h2>
         <div>
           <label class="form-label">Business Name *</label>
@@ -744,7 +754,7 @@ async function saveInvoice() {
         </div>
       </div>
 
-      <div class="card card-body space-y-1">
+      <div class="card card-body space-y-1" data-tour="settings-features">
         <h2 class="text-lg font-bold text-gray-800 mb-1">Enable Features</h2>
         <p class="text-sm text-gray-500 mb-4">Turn on only what you need. You can always enable more later.</p>
 

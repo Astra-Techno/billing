@@ -4,6 +4,14 @@ import { useRouter } from 'vue-router'
 import { list, task } from '../../api'
 import { inr } from '../../utils/currency'
 import { useToast } from '../../composables/useToast'
+import { useTour } from '../../composables/useTour'
+
+const { startTour, isTourSeen } = useTour('payroll-run', [
+  { target: '[data-tour="payroll-period"]', title: 'Select Period', text: 'Choose the month and year for which you want to run payroll.' },
+  { target: '[data-tour="payroll-generate"]', title: 'Generate Payroll', text: 'Creates salary entries for all active staff members for the selected month.' },
+  { target: '[data-tour="payroll-table"]', title: 'Payroll Table', text: 'Edit days worked, bonus, and deductions. Changes are auto-saved.' },
+  { target: '[data-tour="payroll-pay"]', title: 'Process Payment', text: 'Mark all draft salaries as paid in one click with the chosen payment method.' },
+])
 
 const router = useRouter()
 const toast  = useToast()
@@ -121,7 +129,11 @@ async function payAll() {
 const hasDraft = computed(() => payroll.value.some(r => r.status === 'draft'))
 const allPaid  = computed(() => payroll.value.length > 0 && payroll.value.every(r => r.status === 'paid'))
 
-onMounted(load)
+onMounted(() => {
+  load().then(() => {
+    setTimeout(() => { if (!isTourSeen()) startTour() }, 800)
+  })
+})
 </script>
 
 <template>
@@ -134,7 +146,9 @@ onMounted(load)
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
           </svg>
         </button>
-        <h1 class="inv-page-title">Run Payroll</h1>
+        <h1 class="inv-page-title">Run Payroll
+          <button @click="startTour()" class="text-[10px] font-bold text-primary-500 hover:text-primary-700 ml-2" title="Take a tour">Tour</button>
+        </h1>
       </div>
     </div>
 
@@ -148,7 +162,7 @@ onMounted(load)
         </div>
 
         <!-- Month/Year Selector + Generate -->
-        <div class="inv-card p-5">
+        <div class="inv-card p-5" data-tour="payroll-period">
           <div class="flex flex-wrap items-center gap-3">
             <select v-model="month" @change="load"
               class="inv-select w-40 !bg-white">
@@ -159,7 +173,7 @@ onMounted(load)
               <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
             </select>
             <button @click="generate" :disabled="generating"
-              class="inv-btn-primary">
+              class="inv-btn-primary" data-tour="payroll-generate">
               {{ generating ? 'Generating…' : 'Generate Payroll' }}
             </button>
             <button @click="load" :disabled="loading"
@@ -170,7 +184,7 @@ onMounted(load)
         </div>
 
         <!-- Payroll Table -->
-        <div class="inv-card overflow-hidden">
+        <div class="inv-card overflow-hidden" data-tour="payroll-table">
           <div class="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
             <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider">
               {{ months.find(m => m.value === month)?.label }} {{ year }}
@@ -291,7 +305,7 @@ onMounted(load)
         </div>
 
         <!-- Pay All Actions -->
-        <div v-if="hasDraft && payroll.length" class="inv-card p-5">
+        <div v-if="hasDraft && payroll.length" class="inv-card p-5" data-tour="payroll-pay">
           <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider mb-4">Process Payment</h2>
           <div class="flex flex-wrap gap-3 items-end">
             <div>

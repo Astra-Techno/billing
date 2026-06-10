@@ -5,6 +5,13 @@ import { list, task, all } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
+import { useTour } from '../../composables/useTour'
+
+const { startTour, isTourSeen } = useTour('expense-list', [
+  { target: '[data-tour="exp-categories"]', title: 'Category Tabs', text: 'Filter expenses by category. All your expense categories appear here.' },
+  { target: '[data-tour="exp-list"]', title: 'Expense List', text: 'Your recorded expenses are listed here with amount, category, and payment method.' },
+  { target: '[data-tour="exp-add"]', title: 'Add Expense', text: 'Record a new business expense with vendor, category, and GST details.' },
+])
 
 const router       = useRouter()
 const route        = useRoute()
@@ -96,7 +103,11 @@ const methodColors = {
 }
 const methodLabel = m => ({ cash: 'Cash', upi: 'UPI', neft: 'NEFT', cheque: 'Cheque', card: 'Card', other: 'Other' }[m] || m)
 
-onMounted(load)
+onMounted(() => {
+  load().then(() => {
+    setTimeout(() => { if (!isTourSeen()) startTour() }, 800)
+  })
+})
 watch(() => route.name, name => { if (name === 'Expenses') load() })
 </script>
 
@@ -110,14 +121,16 @@ watch(() => route.name, name => { if (name === 'Expenses') load() })
       <div class="px-5 py-4 border-b border-gray-200/60 bg-white/60 backdrop-blur-md sticky top-0 z-10">
         <!-- Header & Actions -->
         <div class="flex justify-between items-center mb-4">
-            <h2 class="font-bold text-gray-900 text-sm tracking-tight flex items-center gap-2">Expenses <HelpIcon section="expenses" class="w-3.5 h-3.5" /></h2>
+            <h2 class="font-bold text-gray-900 text-sm tracking-tight flex items-center gap-2">Expenses <HelpIcon section="expenses" class="w-3.5 h-3.5" />
+              <button @click="startTour()" class="text-[10px] font-bold text-primary-500 hover:text-primary-700 ml-1" title="Take a tour">Tour</button>
+            </h2>
             <div class="flex gap-2">
                 <!-- Search Toggle -->
                 <button @click="showFilters = !showFilters" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center transition-all" :class="showFilters ? 'text-primary-600 border-primary-200 bg-primary-50' : 'text-gray-600'">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 </button>
                 <!-- New Expense -->
-                <button @click="openAdd" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center text-gray-600 transition-all">
+                <button @click="openAdd" data-tour="exp-add" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center text-gray-600 transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                 </button>
             </div>
@@ -137,7 +150,7 @@ watch(() => route.name, name => { if (name === 'Expenses') load() })
         </div>
 
         <!-- Category Tabs -->
-        <div v-if="categories.length" class="flex gap-1 bg-gray-100/80 p-1 rounded-[10px] ring-1 ring-inset ring-gray-200/50 overflow-x-auto hide-scrollbar">
+        <div v-if="categories.length" data-tour="exp-categories" class="flex gap-1 bg-gray-100/80 p-1 rounded-[10px] ring-1 ring-inset ring-gray-200/50 overflow-x-auto hide-scrollbar">
             <button @click="catFilter = ''"
               class="flex-1 text-[11px] font-semibold rounded-md py-1.5 transition-all whitespace-nowrap px-3"
               :class="catFilter === '' ? 'bg-white shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-700'">
@@ -153,8 +166,8 @@ watch(() => route.name, name => { if (name === 'Expenses') load() })
       </div>
 
       <!-- Scrollable List -->
-      <div class="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 custom-scrollbar min-h-0">
-          
+      <div class="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 custom-scrollbar min-h-0" data-tour="exp-list">
+
           <div v-if="loading" class="space-y-1.5">
             <div v-for="i in 6" :key="i" class="p-4 rounded-xl border border-gray-100 bg-white/40 animate-pulse flex justify-between">
               <div class="space-y-2"><div class="h-3.5 bg-gray-200 rounded w-24"></div><div class="h-2.5 bg-gray-100 rounded w-16"></div></div>
