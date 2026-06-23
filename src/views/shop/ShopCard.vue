@@ -292,7 +292,7 @@ const fullAddress = computed(() => {
 
       <!-- Footer -->
       <div class="text-center py-4 opacity-60">
-        <p class="text-xs text-gray-500">Powered by <strong class="text-gray-700">CloudBill</strong></p>
+        <p class="text-xs text-gray-500">Powered by <strong class="text-gray-700">AI Billing</strong></p>
       </div>
 
     </div>

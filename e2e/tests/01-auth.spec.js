@@ -16,8 +16,8 @@ test.describe('Login Page', () => {
     const login = new LoginPage(page)
     await login.goto()
 
-    await expect(page.getByText('BillBook India')).toBeVisible()
-    await expect(page.getByText('Sign in to your account')).toBeVisible()
+    await expect(page.getByText('AI Billing')).toBeVisible()
+    await expect(page.getByText('Sign in to your AI Billing account')).toBeVisible()
     await expect(login.emailInput).toBeVisible()
     await expect(login.passwordInput).toBeVisible()
     await expect(login.submitBtn).toBeVisible()

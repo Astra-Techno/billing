@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useBusinessStore } from '../../stores/business'
 import { useAuthStore } from '../../stores/auth'
-import HelpIcon from '../HelpIcon.vue'
+import { APP_NAME } from '../../config/brand'
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNotifications } from '../../composables/useNotifications'
@@ -84,7 +84,7 @@ const userInitials = computed(() => {
               <div class="w-8 h-8 rounded-full bg-primary-600 shadow-gpay flex items-center justify-center text-white text-xs font-medium">
                 {{ businessStore.business?.name?.charAt(0)?.toUpperCase() || 'B' }}
               </div>
-              <span class="text-[14px] font-semibold text-gray-800">{{ businessStore.business?.name || 'CloudBill' }}</span>
+              <span class="text-[14px] font-semibold text-gray-800">{{ businessStore.business?.name || APP_NAME }}</span>
           </div>
           <div class="h-4 w-px bg-gray-200"></div>
           <div class="flex items-center text-[13px] text-gray-500 gap-1.5 font-medium">

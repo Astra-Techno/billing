@@ -81,7 +81,7 @@ class Staff extends Task
         $business = DB::selectOne("SELECT name FROM businesses WHERE id = ? LIMIT 1", [$businessId]);
 
         $inviteUrl  = (isset($_ENV['FRONTEND_URL']) ? rtrim($_ENV['FRONTEND_URL'], '/') : '') . '/accept-invite/' . $token;
-        $waMessage  = urlencode("Hi! You've been invited to join {$business->name} on CloudBill as {$role}. Accept here: {$inviteUrl}");
+        $waMessage  = urlencode("Hi! You've been invited to join {$business->name} on AI Billing as {$role}. Accept here: {$inviteUrl}");
         $waShareUrl = "https://wa.me/?text={$waMessage}";
 
         return $this->success([

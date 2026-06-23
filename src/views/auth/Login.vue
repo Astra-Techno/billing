@@ -2,6 +2,8 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
+import AppLogo from '../../components/AppLogo.vue'
+import { APP_NAME, APP_TAGLINE } from '../../config/brand'
 
 const router = useRouter()
 const auth   = useAuthStore()
@@ -32,12 +34,11 @@ async function submit() {
     <div class="md:w-5/12 relative overflow-hidden flex flex-col items-center justify-center px-10 py-16 md:min-h-screen bg-hero-premium">
       <div class="absolute -right-16 -top-16 w-48 h-48 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
       <div class="absolute -left-12 bottom-0 w-40 h-40 bg-accent-teal/30 rounded-full blur-3xl pointer-events-none"></div>
-      <div class="relative w-20 h-20 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center mb-6 shadow-premium ring-1 ring-white/25">
-        <span class="text-white font-bold text-3xl">B</span>
+      <div class="relative mb-6 rounded-2xl bg-white/95 p-4 shadow-premium ring-1 ring-white/25">
+        <AppLogo size="lg" />
       </div>
-      <h1 class="relative text-3xl font-bold text-white text-center tracking-tight">CloudBill</h1>
       <p class="text-white/80 text-sm mt-2 text-center leading-relaxed max-w-xs">
-        Simple GST billing, invoicing &amp; expense tracking for Indian businesses
+        {{ APP_TAGLINE }}
       </p>
 
       <div class="mt-10 space-y-4 w-full max-w-xs hidden md:block">
@@ -61,7 +62,7 @@ async function submit() {
       <div class="w-full max-w-sm card-premium p-8">
 
         <h2 class="page-title mb-1">Welcome back</h2>
-        <p class="page-subtitle mb-8">Sign in to your CloudBill account</p>
+        <p class="page-subtitle mb-8">Sign in to your {{ APP_NAME }} account</p>
 
         <form @submit.prevent="submit" class="space-y-5">
 

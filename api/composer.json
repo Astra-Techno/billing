@@ -1,6 +1,6 @@
 {
     "name": "billing/backend",
-    "description": "Cloud Billing API — Slim 4 + DataForge",
+    "description": "AI Billing API — Slim 4 + DataForge",
     "type": "project",
     "require": {
         "php": "^8.1",

@@ -1,0 +1,1 @@
+var e=`AI Billing`,t=`Simple GST billing, invoicing & expense tracking for Indian businesses`,n=`/logo.png`;export{t as n,n as r,e as t};

@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { all } from '../../api'
+import AppLogo from '../../components/AppLogo.vue'
 
 const router = useRouter()
 const auth   = useAuthStore()
@@ -67,10 +68,9 @@ async function submit() {
 
     <!-- Left: Brand panel -->
     <div class="md:w-5/12 bg-primary-600 via-primary-700 to-blue-800 flex flex-col items-center justify-center px-10 py-8 md:h-full overflow-y-auto">
-      <div class="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center mb-5 shadow-xl">
-        <span class="text-white font-black text-3xl">B</span>
+      <div class="rounded-2xl bg-white/95 p-4 mb-5 shadow-xl">
+        <AppLogo size="lg" />
       </div>
-      <h1 class="text-3xl font-black text-white tracking-tight text-center">CloudBill</h1>
       <p class="text-primary-200 text-sm mt-2 text-center leading-relaxed max-w-xs">
         Free for 30 days · No credit card needed
       </p>
