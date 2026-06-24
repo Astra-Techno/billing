@@ -25,7 +25,7 @@ class Admin extends Task
     public function stats(array $input): array
     {
         $this->requireSuperAdmin();
-        $data = $this->sql('Admin.stats')->one();
+        $data = $this->sql('Admin.stats')->object();
         return $this->success($data);
     }
 
@@ -34,7 +34,7 @@ class Admin extends Task
     public function businesses(array $input): array
     {
         $this->requireSuperAdmin();
-        $rows = $this->sql('Admin.businesses', $input)->all();
+        $rows = $this->sql('Admin.businesses', $input)->objectList();
         return $this->success($rows);
     }
 
@@ -43,7 +43,7 @@ class Admin extends Task
     public function users(array $input): array
     {
         $this->requireSuperAdmin();
-        $rows = $this->sql('Admin.users', $input)->all();
+        $rows = $this->sql('Admin.users', $input)->objectList();
         return $this->success($rows);
     }
 
