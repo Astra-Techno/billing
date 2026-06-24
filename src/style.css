@@ -456,3 +456,7 @@
 .dark .inv-body { background: #0f172a; }
 .dark .split-pane-right { @apply bg-slate-900/30; }
 .dark .split-pane-left { @apply bg-slate-900/80 border-slate-700; }
+
+/* Hide tour buttons globally */
+button[title="Take a tour"],
+button[title="Take a guided tour"] { display: none !important; }
