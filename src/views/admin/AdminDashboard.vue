@@ -1,9 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { task } from '../../api'
 
-const router = useRouter()
 const stats  = ref(null)
 const loading = ref(true)
 
@@ -12,7 +10,7 @@ onMounted(async () => {
     const res = await task('Admin', 'stats')
     stats.value = res.data.data
   } catch {
-    router.push('/')
+    // stay on page — don't redirect
   } finally {
     loading.value = false
   }

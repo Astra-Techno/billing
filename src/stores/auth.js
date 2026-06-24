@@ -5,7 +5,7 @@ import api from '../api'
 export const useAuthStore = defineStore('auth', () => {
   const token      = ref(localStorage.getItem('token') || null)
   const user       = ref(JSON.parse(localStorage.getItem('user') || 'null'))
-  const businessId = ref(localStorage.getItem('business_id') || null)
+  const businessId = ref(localStorage.getItem('business_id') || null)   // never stores 'null' string — see setSession
   const businesses = ref(JSON.parse(localStorage.getItem('businesses') || '[]'))
 
   const isSuperAdmin  = computed(() => !!(user.value?.is_super_admin))
@@ -25,7 +25,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     localStorage.setItem('token',       data.token)
     localStorage.setItem('user',        JSON.stringify(data.user))
-    localStorage.setItem('business_id', data.business_id)
+    localStorage.setItem('business_id', data.business_id ?? '')   // never write literal 'null'
     localStorage.setItem('businesses',  JSON.stringify(data.businesses || []))
   }
 
