@@ -460,3 +460,6 @@
 /* Hide tour buttons globally */
 button[title="Take a tour"],
 button[title="Take a guided tour"] { display: none !important; }
+
+/* Force LTR for all inputs — prevents Android WebView RTL locale override */
+input, textarea, select { direction: ltr; text-align: left; unicode-bidi: embed; }
