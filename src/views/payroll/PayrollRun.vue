@@ -104,7 +104,7 @@ const totalNet = computed(() =>
 )
 
 const totalSalary = computed(() =>
-  payroll.value.reduce((sum, r) => sum + (parseFloat(r.salary) || 0), 0)
+  payroll.value.reduce((sum, r) => sum + (parseFloat(r.basic_salary) || 0), 0)
 )
 
 async function payAll() {
