@@ -1,4 +1,4 @@
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, onUnmounted, nextTick } from 'vue'
 
 /**
  * Lightweight guided tour system.
@@ -13,6 +13,7 @@ const activeTour = ref(null)  // shared across components
 const currentStep = ref(0)
 const tooltipStyle = ref({})
 const arrowStyle = ref({})
+let highlightTimer = null     // track pending 300ms timer
 
 function positionTooltip(el) {
   if (!el) return
@@ -56,14 +57,21 @@ export function useTour(tourId, steps = []) {
     nextTick(() => highlightStep(0))
   }
 
-  function highlightStep(idx) {
-    // Remove previous highlights
+  function clearHighlights() {
     document.querySelectorAll('.tour-highlight').forEach(el => {
       el.classList.remove('tour-highlight')
       el.style.removeProperty('position')
       el.style.removeProperty('z-index')
       el.style.removeProperty('box-shadow')
+      el.style.removeProperty('border-radius')
     })
+  }
+
+  function highlightStep(idx) {
+    // Cancel any pending highlight (race condition fix)
+    if (highlightTimer) { clearTimeout(highlightTimer); highlightTimer = null }
+
+    clearHighlights()
 
     if (idx >= steps.length) {
       endTour()
@@ -86,7 +94,9 @@ export function useTour(tourId, steps = []) {
     // Scroll into view
     el.scrollIntoView({ behavior: 'smooth', block: 'center' })
 
-    setTimeout(() => {
+    highlightTimer = setTimeout(() => {
+      highlightTimer = null
+      if (!activeTour.value) return  // tour ended while waiting — don't apply styles
       // Highlight the element
       el.classList.add('tour-highlight')
       el.style.position = 'relative'
@@ -115,16 +125,16 @@ export function useTour(tourId, steps = []) {
   }
 
   function endTour() {
-    document.querySelectorAll('.tour-highlight').forEach(el => {
-      el.classList.remove('tour-highlight')
-      el.style.removeProperty('position')
-      el.style.removeProperty('z-index')
-      el.style.removeProperty('box-shadow')
-    })
+    // Cancel pending highlight timer before cleanup
+    if (highlightTimer) { clearTimeout(highlightTimer); highlightTimer = null }
+    clearHighlights()
+    // Save the ACTIVE tour's ID as seen (not the overlay's '_global' ID)
+    const seenId = activeTour.value?.id || tourId
     activeTour.value = null
     currentStep.value = 0
-    // Mark tour as seen
-    localStorage.setItem(`tour_${tourId}_seen`, '1')
+    tooltipStyle.value = {}
+    arrowStyle.value = {}
+    localStorage.setItem(`tour_${seenId}_seen`, '1')
   }
 
   function isTourSeen() {
