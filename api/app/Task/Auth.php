@@ -53,11 +53,12 @@ class Auth extends Task
         return $this->success([
             'token'       => $token,
             'user'        => [
-                'id'     => $row->id,
-                'name'   => $row->name,
-                'email'  => $row->email,
-                'mobile' => $row->mobile,
-                'avatar' => $row->avatar,
+                'id'             => $row->id,
+                'name'           => $row->name,
+                'email'          => $row->email,
+                'mobile'         => $row->mobile,
+                'avatar'         => $row->avatar,
+                'is_super_admin' => (int)($row->is_super_admin ?? 0),
             ],
             'businesses'  => $businesses,
             'business_id' => $businessId,

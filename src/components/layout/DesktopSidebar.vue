@@ -61,6 +61,29 @@ const menus = computed(() => allMenus.filter(m => !m.feature || biz.isEnabled(m.
     </RouterLink>
 
     <div class="mt-auto pt-2 w-full">
+      <!-- Admin section (super admin only) -->
+      <template v-if="auth.isSuperAdmin">
+        <div class="mx-3 border-t border-gray-100 mb-1"></div>
+        <RouterLink to="/admin" title="Admin Panel" class="relative w-full flex flex-col items-center py-2 px-1 group">
+          <div v-if="route.path.startsWith('/admin')"
+            class="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-red-500 rounded-r-full"></div>
+          <div class="flex flex-col items-center gap-1 w-full">
+            <div class="w-9 h-9 rounded-[10px] flex items-center justify-center transition-all duration-150"
+              :class="route.path.startsWith('/admin')
+                ? 'bg-red-50 text-red-600 ring-1 ring-red-100'
+                : 'text-gray-400 group-hover:bg-red-50 group-hover:text-red-500'">
+              <svg class="w-[17px] h-[17px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+              </svg>
+            </div>
+            <span class="text-[11px] font-semibold tracking-wide leading-none transition-colors"
+              :class="route.path.startsWith('/admin') ? 'text-red-600' : 'text-gray-400 group-hover:text-red-500'">
+              Admin
+            </span>
+          </div>
+        </RouterLink>
+      </template>
+
       <!-- Divider -->
       <div class="mx-3 border-t border-gray-100 mb-2"></div>
       <!-- Settings -->

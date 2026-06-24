@@ -88,6 +88,11 @@ const routes = [
       { path: 'settings',         name: 'Settings',     component: () => import('../views/settings/Settings.vue') },
       { path: 'help',             name: 'Help',         component: () => import('../views/help/Help.vue') },
       { path: 'more',             name: 'More',         component: () => import('../views/more/More.vue') },
+
+      // Super admin routes (restricted)
+      { path: 'admin',           name: 'AdminDashboard',  component: () => import('../views/admin/AdminDashboard.vue'),  meta: { superAdmin: true } },
+      { path: 'admin/businesses',name: 'AdminBusinesses', component: () => import('../views/admin/AdminBusinesses.vue'), meta: { superAdmin: true } },
+      { path: 'admin/users',     name: 'AdminUsers',      component: () => import('../views/admin/AdminUsers.vue'),      meta: { superAdmin: true } },
     ],
   },
 
@@ -112,8 +117,9 @@ const router = createRouter({
 // Guards
 router.beforeEach((to) => {
   const auth = useAuthStore()
-  if (to.meta.auth  && !auth.isLoggedIn) return { name: 'Login' }
-  if (to.meta.guest && auth.isLoggedIn)  return { name: 'Dashboard' }
+  if (to.meta.auth  && !auth.isLoggedIn)          return { name: 'Login' }
+  if (to.meta.guest && auth.isLoggedIn)            return { name: 'Dashboard' }
+  if (to.meta.superAdmin && !auth.isSuperAdmin)    return { name: 'Dashboard' }
 })
 
 export default router
