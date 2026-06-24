@@ -10,7 +10,7 @@ const loading = ref(true)
 onMounted(async () => {
   try {
     const res = await task('Admin', 'stats')
-    stats.value = res.data
+    stats.value = res.data.data
   } catch {
     router.push('/')
   } finally {

@@ -12,7 +12,7 @@ async function load() {
   loading.value = true
   try {
     const res = await task('Admin', 'businesses')
-    businesses.value = res.data || []
+    businesses.value = res.data.data || []
   } finally {
     loading.value = false
   }

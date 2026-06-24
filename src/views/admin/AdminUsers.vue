@@ -14,7 +14,7 @@ async function load() {
   loading.value = true
   try {
     const res = await task('Admin', 'users')
-    users.value = res.data || []
+    users.value = res.data.data || []
   } finally {
     loading.value = false
   }
