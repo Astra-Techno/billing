@@ -32,7 +32,10 @@ const allMenus = [
   { path: '/reports', icon: 'M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z', title: 'Reports', label: 'Reports', feature: 'reports' }
 ]
 
-const menus = computed(() => allMenus.filter(m => !m.feature || biz.isEnabled(m.feature)))
+const menus = computed(() => {
+  if (auth.isSuperAdmin && !auth.businessId) return []
+  return allMenus.filter(m => !m.feature || biz.isEnabled(m.feature))
+})
 </script>
 
 <template>
@@ -86,8 +89,8 @@ const menus = computed(() => allMenus.filter(m => !m.feature || biz.isEnabled(m.
 
       <!-- Divider -->
       <div class="mx-3 border-t border-gray-100 mb-2"></div>
-      <!-- Settings -->
-      <RouterLink to="/settings" title="Settings" class="relative w-full flex flex-col items-center py-2 px-1 group">
+      <!-- Settings (hidden for super admin with no business) -->
+      <RouterLink v-if="!auth.isSuperAdmin || auth.businessId" to="/settings" title="Settings" class="relative w-full flex flex-col items-center py-2 px-1 group">
         <div v-if="isActive('/settings')"
           class="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-primary-600 rounded-r-full"></div>
         <div class="flex flex-col items-center gap-1 w-full">
