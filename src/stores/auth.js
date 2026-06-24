@@ -8,8 +8,8 @@ export const useAuthStore = defineStore('auth', () => {
   const businessId = ref(localStorage.getItem('business_id') || null)
   const businesses = ref(JSON.parse(localStorage.getItem('businesses') || '[]'))
 
-  const isLoggedIn    = computed(() => !!token.value && !!businessId.value)
   const isSuperAdmin  = computed(() => !!(user.value?.is_super_admin))
+  const isLoggedIn    = computed(() => !!token.value && (!!businessId.value || isSuperAdmin.value))
 
   // Role of current user in the active business
   const role = computed(() => {

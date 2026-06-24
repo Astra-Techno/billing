@@ -117,9 +117,11 @@ const router = createRouter({
 // Guards
 router.beforeEach((to) => {
   const auth = useAuthStore()
-  if (to.meta.auth  && !auth.isLoggedIn)          return { name: 'Login' }
-  if (to.meta.guest && auth.isLoggedIn)            return { name: 'Dashboard' }
-  if (to.meta.superAdmin && !auth.isSuperAdmin)    return { name: 'Dashboard' }
+  if (to.meta.auth  && !auth.isLoggedIn)                           return { name: 'Login' }
+  if (to.meta.guest && auth.isLoggedIn)                            return auth.isSuperAdmin && !auth.businessId ? { name: 'AdminDashboard' } : { name: 'Dashboard' }
+  if (to.meta.superAdmin && !auth.isSuperAdmin)                    return { name: 'Dashboard' }
+  // Super admin with no business trying to access regular pages → send to admin
+  if (auth.isSuperAdmin && !auth.businessId && !to.meta.superAdmin) return { name: 'AdminDashboard' }
 })
 
 export default router

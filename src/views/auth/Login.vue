@@ -18,7 +18,7 @@ async function submit() {
   loading.value = true
   try {
     await auth.login(form.value.email, form.value.password)
-    router.push('/')
+    router.push(auth.isSuperAdmin && !auth.businessId ? '/admin' : '/')
   } catch (e) {
     error.value = e.response?.data?.message || 'Login failed. Please try again.'
   } finally {
