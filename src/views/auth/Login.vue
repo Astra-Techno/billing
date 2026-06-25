@@ -30,8 +30,8 @@ async function submit() {
 <template>
   <div class="min-h-screen flex flex-col md:flex-row">
 
-    <!-- Left: Brand panel -->
-    <div class="md:w-5/12 relative overflow-hidden flex flex-col items-center justify-center px-10 py-16 md:min-h-screen bg-hero-premium">
+    <!-- Left: Brand panel — hidden on mobile, shown on md+ -->
+    <div class="hidden md:flex md:w-5/12 relative overflow-hidden flex-col items-center justify-center px-10 py-16 md:min-h-screen bg-hero-premium">
       <div class="absolute -right-16 -top-16 w-48 h-48 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
       <div class="absolute -left-12 bottom-0 w-40 h-40 bg-accent-teal/30 rounded-full blur-3xl pointer-events-none"></div>
       <div class="relative mb-6 rounded-2xl bg-white/95 p-4 shadow-premium ring-1 ring-white/25">
@@ -40,8 +40,7 @@ async function submit() {
       <p class="text-white/80 text-sm mt-2 text-center leading-relaxed max-w-xs">
         {{ APP_TAGLINE }}
       </p>
-
-      <div class="mt-10 space-y-4 w-full max-w-xs hidden md:block">
+      <div class="mt-10 space-y-4 w-full max-w-xs">
         <div v-for="f in [
           { icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', text: 'GST-ready bills in seconds' },
           { icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z', text: 'Manage customers & quotations' },
@@ -58,13 +57,18 @@ async function submit() {
     </div>
 
     <!-- Right: Form panel -->
-    <div class="flex-1 bg-surface-dim flex items-center justify-center px-6 py-12">
-      <div class="w-full max-w-sm card-premium p-8">
+    <div class="flex-1 bg-surface-dim flex items-center justify-center px-4 py-6 md:px-6 md:py-12">
+      <div class="w-full max-w-sm card-premium px-5 py-6 md:p-8">
 
-        <h2 class="page-title mb-1">Welcome back</h2>
-        <p class="page-subtitle mb-8">Sign in to your {{ APP_NAME }} account</p>
+        <!-- Mobile-only compact logo -->
+        <div class="flex items-center gap-2 mb-4 md:hidden">
+          <AppLogo size="sm" />
+        </div>
 
-        <form @submit.prevent="submit" class="space-y-5">
+        <h2 class="page-title mb-0.5">Welcome back</h2>
+        <p class="page-subtitle mb-4 md:mb-6">Sign in to your {{ APP_NAME }} account</p>
+
+        <form @submit.prevent="submit" class="space-y-3 md:space-y-5">
 
           <div>
             <label class="form-label">Email address</label>
@@ -94,13 +98,13 @@ async function submit() {
             </div>
           </div>
 
-          <div v-if="error" class="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+          <div v-if="error" class="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2.5">
             <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             {{ error }}
           </div>
 
           <button type="submit"
-            class="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-primary-600 hover:bg-primary-700 active:scale-[.98] text-white font-semibold text-sm shadow-md shadow-primary-200 transition-all duration-150"
+            class="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-primary-600 hover:bg-primary-700 active:scale-[.98] text-white font-semibold text-sm shadow-md shadow-primary-200 transition-all duration-150"
             :disabled="loading">
             <svg v-if="loading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
@@ -111,7 +115,7 @@ async function submit() {
 
         </form>
 
-        <p class="text-sm text-center text-gray-400 mt-8">
+        <p class="text-sm text-center text-gray-400 mt-4 md:mt-8">
           New business?
           <RouterLink to="/register" class="text-primary-600 font-semibold hover:underline">Create free account</RouterLink>
         </p>
