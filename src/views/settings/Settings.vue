@@ -25,15 +25,15 @@ const activeTab = ref('business')
 const states   = ref([])
 
 const tabs = [
-  { key: 'business',  label: 'My Business' },
-  { key: 'features',  label: 'Features' },
-  { key: 'gst',       label: 'GST Details' },
-  { key: 'bank',      label: 'Payment Info' },
-  { key: 'invoice',   label: 'Bill Settings' },
-  { key: 'tax_rates', label: 'Tax Rates' },
-  ...(can('team') ? [{ key: 'team', label: 'Team' }] : []),
-  { key: 'profile',   label: 'My Profile' },
-  { key: 'password',  label: 'Password' },
+  { key: 'business',  label: 'My Business',  icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
+  { key: 'features',  label: 'Features',     icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z' },
+  { key: 'gst',       label: 'GST Details',  icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+  { key: 'bank',      label: 'Payment Info', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
+  { key: 'invoice',   label: 'Bill Settings',icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
+  { key: 'tax_rates', label: 'Tax Rates',    icon: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z' },
+  ...(can('team') ? [{ key: 'team', label: 'Team', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' }] : []),
+  { key: 'profile',   label: 'My Profile',   icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
+  { key: 'password',  label: 'Password',     icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
 ]
 
 // Features toggles
@@ -506,31 +506,42 @@ async function saveInvoice() {
 </script>
 
 <template>
-  <div class="flex flex-col lg:flex-row gap-6 w-full lg:h-full lg:min-h-0">
-    
+  <div class="flex flex-col lg:flex-row gap-5 w-full lg:h-full lg:min-h-0">
+
     <!-- LEFT PANE: Menu -->
-    <div class="shrink-0 w-full lg:w-64 flex flex-col gap-6 lg:h-full lg:min-h-0">
-      <div class="px-1 shrink-0">
-        <h1 class="page-title flex items-center gap-2">Settings <HelpIcon section="settings" />
-          <button @click="startTour()" class="text-[10px] font-bold text-primary-500 hover:text-primary-700 ml-1" title="Take a tour">Tour</button>
+    <div class="shrink-0 w-full lg:w-56 flex flex-col gap-4 lg:h-full lg:min-h-0">
+      <div class="shrink-0 hidden lg:block">
+        <h1 class="text-base font-bold text-gray-900 flex items-center gap-2">Settings <HelpIcon section="settings" />
+          <button @click="startTour()" class="text-[10px] font-bold text-primary-500 hover:text-primary-700 ml-1" title="Tour">Tour</button>
         </h1>
-        <p class="text-sm text-gray-500 mt-1">Set up your business details and preferences</p>
+        <p class="text-xs text-gray-400 mt-0.5">Business details &amp; preferences</p>
       </div>
 
       <!-- Vertical Tabs for Desktop, Horizontal for Mobile -->
-      <div data-tour="settings-tabs" class="flex lg:flex-col gap-1 lg:gap-2 bg-gray-100 lg:bg-transparent p-1 lg:p-0 rounded-xl overflow-x-auto lg:overflow-y-auto no-scrollbar shrink-0 pb-2 lg:pb-6">
+      <div data-tour="settings-tabs" class="flex lg:flex-col gap-0.5 bg-gray-100 lg:bg-transparent p-1 lg:p-0 rounded-xl overflow-x-auto lg:overflow-y-auto no-scrollbar shrink-0 pb-2 lg:pb-6">
         <button v-for="t in tabs" :key="t.key" @click="activeTab = t.key"
-          class="px-4 py-2.5 rounded-lg text-sm font-medium transition text-left whitespace-nowrap lg:whitespace-normal shrink-0"
-          :class="activeTab === t.key ? 'bg-white text-gray-900 shadow-sm border border-gray-100/50' : 'text-gray-500 hover:text-gray-900 lg:hover:bg-gray-50'">
+          class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition text-left whitespace-nowrap lg:whitespace-normal shrink-0 w-full"
+          :class="activeTab === t.key
+            ? 'bg-white text-primary-700 shadow-soft border border-gray-200/80'
+            : 'text-gray-500 hover:text-gray-800 hover:bg-white/60 lg:hover:bg-gray-50'">
+          <svg class="w-4 h-4 shrink-0 hidden lg:block" :class="activeTab === t.key ? 'text-primary-600' : 'text-gray-400'" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" :d="t.icon" />
+          </svg>
           {{ t.label }}
         </button>
       </div>
     </div>
 
     <!-- RIGHT PANE: Content -->
-    <div class="flex-1 w-full flex flex-col lg:h-full lg:min-h-0 lg:overflow-y-auto hide-scrollbar pb-20 lg:pb-6 lg:pt-2">
-      
-      <div v-if="loading" class="bg-white rounded-[2rem] shadow-soft border border-gray-50 p-10 text-center text-gray-400 text-sm w-full max-w-3xl">Loading…</div>
+    <div class="flex-1 w-full flex flex-col lg:h-full lg:min-h-0 lg:overflow-y-auto hide-scrollbar pb-20 lg:pb-6">
+
+      <!-- Mobile title -->
+      <div class="lg:hidden mb-4 shrink-0">
+        <h1 class="page-title flex items-center gap-2">Settings <HelpIcon section="settings" /></h1>
+        <p class="text-sm text-gray-400 mt-0.5">Business details &amp; preferences</p>
+      </div>
+
+      <div v-if="loading" class="bg-white rounded-xl shadow-soft border border-gray-200 p-10 text-center text-gray-400 text-sm w-full max-w-3xl">Loading…</div>
 
       <!-- Success / Error banners -->
       <div class="w-full max-w-3xl shrink-0">
@@ -545,40 +556,39 @@ async function saveInvoice() {
     <template v-if="!loading && activeTab === 'business'">
 
       <!-- Digital Business Card Banner -->
-      <div v-if="bizSlug" class="rounded-[1.5rem] bg-gradient-to-br from-gray-900 via-slate-800 to-gray-900 p-5 shadow-xl mb-1 relative overflow-hidden">
-        <div class="absolute top-0 right-0 w-32 h-32 bg-primary-500/20 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
-        <div class="flex items-center gap-4">
-          <div class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center shrink-0">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+      <div v-if="bizSlug" class="bg-white border border-gray-200 rounded-xl p-4 shadow-soft mb-5">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background: linear-gradient(135deg, #6366f1, #4f46e5);">
+            <svg class="w-4.5 h-4.5 text-white" style="width:18px;height:18px" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/>
             </svg>
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-white font-bold text-sm">Your Digital Business Card</p>
-            <p class="text-slate-400 text-xs mt-0.5 truncate">/shop/{{ bizSlug }}</p>
+            <p class="text-sm font-semibold text-gray-900">Digital Business Card</p>
+            <p class="text-xs text-gray-400 truncate">/shop/{{ bizSlug }}</p>
           </div>
           <a :href="`/shop/${bizSlug}`" target="_blank"
-            class="shrink-0 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-xl border border-white/10 transition-all">
+            class="shrink-0 px-3 py-1.5 bg-primary-50 hover:bg-primary-100 text-primary-700 text-xs font-semibold rounded-lg border border-primary-200 transition-all">
             Preview
           </a>
         </div>
-        <div class="flex gap-2 mt-4">
+        <div class="flex gap-2 mt-3">
           <button @click="shareCardWhatsApp"
-            class="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#25D366] hover:bg-[#1db954] active:scale-95 text-white font-bold rounded-xl text-xs transition-all">
+            class="flex-1 flex items-center justify-center gap-2 py-2 bg-[#25D366] hover:bg-[#1db954] active:scale-95 text-white font-semibold rounded-lg text-xs transition-all">
             <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
             Share on WhatsApp
           </button>
           <button @click="copyCardLink"
-            class="flex items-center gap-1.5 px-4 py-2.5 bg-white/10 hover:bg-white/20 active:scale-95 text-white font-bold rounded-xl text-xs border border-white/10 transition-all">
-            <svg v-if="!cardCopied" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-            <svg v-else class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            class="flex items-center gap-1.5 px-4 py-2 bg-gray-50 hover:bg-gray-100 active:scale-95 text-gray-700 font-semibold rounded-lg text-xs border border-gray-200 transition-all">
+            <svg v-if="!cardCopied" class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            <svg v-else class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
             {{ cardCopied ? 'Copied!' : 'Copy Link' }}
           </button>
         </div>
       </div>
 
       <!-- Company Logo -->
-      <div class="card card-body">
+      <div class="card card-body mb-4">
         <h2 class="section-title mb-4">Company Logo</h2>
         <div class="flex items-center gap-5">
           <!-- Logo preview -->
