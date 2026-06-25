@@ -506,25 +506,26 @@ async function saveInvoice() {
 </script>
 
 <template>
-  <div class="flex flex-col lg:flex-row gap-5 w-full lg:h-full lg:min-h-0">
+  <!-- Mobile: stack, Desktop: unified panel card -->
+  <div class="flex flex-col lg:flex-row w-full lg:h-full lg:min-h-0 lg:bg-white lg:rounded-xl lg:border lg:border-gray-200 lg:shadow-soft lg:overflow-hidden">
 
-    <!-- LEFT PANE: Menu -->
-    <div class="shrink-0 w-full lg:w-56 flex flex-col gap-4 lg:h-full lg:min-h-0">
-      <div class="shrink-0 hidden lg:block">
-        <h1 class="text-base font-bold text-gray-900 flex items-center gap-2">Settings <HelpIcon section="settings" />
-          <button @click="startTour()" class="text-[10px] font-bold text-primary-500 hover:text-primary-700 ml-1" title="Tour">Tour</button>
-        </h1>
-        <p class="text-xs text-gray-400 mt-0.5">Business details &amp; preferences</p>
+    <!-- LEFT PANE: Tab nav -->
+    <div class="shrink-0 w-full lg:w-52 lg:border-r lg:border-gray-200 lg:bg-gray-50 lg:flex lg:flex-col lg:h-full lg:min-h-0">
+
+      <!-- Desktop heading -->
+      <div class="hidden lg:block px-4 pt-5 pb-3 border-b border-gray-200">
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Settings</p>
       </div>
 
-      <!-- Vertical Tabs for Desktop, Horizontal for Mobile -->
-      <div data-tour="settings-tabs" class="flex lg:flex-col gap-0.5 bg-gray-100 lg:bg-transparent p-1 lg:p-0 rounded-xl overflow-x-auto lg:overflow-y-auto no-scrollbar shrink-0 pb-2 lg:pb-6">
+      <!-- Mobile: horizontal scroll tabs -->
+      <!-- Desktop: vertical tab list -->
+      <div data-tour="settings-tabs" class="flex lg:flex-col gap-0.5 bg-gray-100 lg:bg-transparent p-1.5 lg:p-2 rounded-xl lg:rounded-none overflow-x-auto lg:overflow-y-auto no-scrollbar pb-2 lg:pb-6 lg:flex-1">
         <button v-for="t in tabs" :key="t.key" @click="activeTab = t.key"
-          class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition text-left whitespace-nowrap lg:whitespace-normal shrink-0 w-full"
+          class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all text-left whitespace-nowrap lg:whitespace-normal shrink-0 lg:w-full"
           :class="activeTab === t.key
-            ? 'bg-white text-primary-700 shadow-soft border border-gray-200/80'
-            : 'text-gray-500 hover:text-gray-800 hover:bg-white/60 lg:hover:bg-gray-50'">
-          <svg class="w-4 h-4 shrink-0 hidden lg:block" :class="activeTab === t.key ? 'text-primary-600' : 'text-gray-400'" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+            ? 'bg-white lg:bg-white text-primary-700 shadow-soft border border-gray-200'
+            : 'text-gray-500 hover:text-gray-800 hover:bg-white/70 lg:hover:bg-white'">
+          <svg class="w-[15px] h-[15px] shrink-0 hidden lg:block" :class="activeTab === t.key ? 'text-primary-600' : 'text-gray-400'" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" :d="t.icon" />
           </svg>
           {{ t.label }}
@@ -533,24 +534,23 @@ async function saveInvoice() {
     </div>
 
     <!-- RIGHT PANE: Content -->
-    <div class="flex-1 w-full flex flex-col lg:h-full lg:min-h-0 lg:overflow-y-auto hide-scrollbar pb-20 lg:pb-6">
+    <div class="flex-1 w-full flex flex-col lg:h-full lg:min-h-0 lg:overflow-y-auto hide-scrollbar pb-20 lg:pb-0">
 
       <!-- Mobile title -->
       <div class="lg:hidden mb-4 shrink-0">
         <h1 class="page-title flex items-center gap-2">Settings <HelpIcon section="settings" /></h1>
-        <p class="text-sm text-gray-400 mt-0.5">Business details &amp; preferences</p>
       </div>
 
-      <div v-if="loading" class="bg-white rounded-xl shadow-soft border border-gray-200 p-10 text-center text-gray-400 text-sm w-full max-w-3xl">Loading…</div>
+      <div v-if="loading" class="p-10 text-center text-gray-400 text-sm">Loading…</div>
 
       <!-- Success / Error banners -->
-      <div class="w-full max-w-3xl shrink-0">
-        <div v-if="success" class="text-sm text-success-700 bg-success-50 rounded-xl px-4 py-3 border border-success-200 mb-5 shadow-sm">{{ success }}</div>
-        <div v-if="error"   class="text-sm text-danger-600 bg-danger-50 rounded-xl px-4 py-3 border border-danger-200 mb-5 shadow-sm">{{ error }}</div>
+      <div class="lg:px-6 lg:pt-5 shrink-0">
+        <div v-if="success" class="text-sm text-success-700 bg-success-50 rounded-xl px-4 py-3 border border-success-200 mb-4 shadow-sm">{{ success }}</div>
+        <div v-if="error"   class="text-sm text-danger-600 bg-danger-50 rounded-xl px-4 py-3 border border-danger-200 mb-4 shadow-sm">{{ error }}</div>
       </div>
 
       <!-- Active Tab Content Wrapper -->
-      <div class="w-full max-w-3xl pb-10">
+      <div class="w-full max-w-3xl lg:px-6 lg:pt-2 lg:pb-8 pb-10">
         
         <!-- Business Profile -->
     <template v-if="!loading && activeTab === 'business'">
@@ -587,28 +587,25 @@ async function saveInvoice() {
         </div>
       </div>
 
-      <!-- Company Logo -->
-      <div class="card card-body mb-4">
-        <h2 class="section-title mb-4">Company Logo</h2>
-        <div class="flex items-center gap-5">
-          <!-- Logo preview -->
-          <div class="w-24 h-24 rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
+      <!-- Company Logo + Business Profile merged into one card -->
+      <div class="card card-body space-y-4" data-tour="settings-business">
+
+        <!-- Logo row -->
+        <div class="flex items-center gap-4 pb-5 border-b border-gray-100">
+          <div class="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
             <img v-if="currentLogo || logoPreview" :src="logoPreview || currentLogo"
               class="w-full h-full object-contain p-1" alt="Company logo" />
-            <svg v-else class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg v-else class="w-7 h-7 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
             </svg>
           </div>
-          <!-- Upload controls -->
-          <div class="space-y-2">
-            <p class="text-sm font-semibold text-gray-700">{{ currentLogo ? 'Change Logo' : 'Upload Logo' }}</p>
-            <p class="text-xs text-gray-400">PNG, JPG or SVG · Max 2 MB · Shown on printed bills</p>
-            <div class="flex gap-2">
-              <button type="button" @click="pickLogo" :disabled="logoUploading"
-                class="btn-primary btn-sm">
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-gray-800">Company Logo</p>
+            <p class="text-xs text-gray-400 mt-0.5">PNG, JPG or SVG · Max 2 MB</p>
+            <div class="flex gap-2 mt-2">
+              <button type="button" @click="pickLogo" :disabled="logoUploading" class="btn-primary btn-sm">
                 <svg v-if="logoUploading" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                {{ logoUploading ? 'Uploading…' : 'Upload' }}
+                {{ logoUploading ? 'Uploading…' : (currentLogo ? 'Change' : 'Upload') }}
               </button>
               <button v-if="currentLogo" type="button" @click="removeLogo" :disabled="logoUploading"
                 class="btn-outline btn-sm text-red-500 border-red-200 hover:bg-red-50">Remove</button>
@@ -617,10 +614,8 @@ async function saveInvoice() {
           <input ref="logoFileInput" type="file" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml"
             class="hidden" @change="onLogoFile" />
         </div>
-      </div>
 
-      <div class="card card-body space-y-4" data-tour="settings-business">
-        <h2 class="section-title">Business Profile</h2>
+        <h2 class="text-sm font-bold text-gray-700">Business Profile</h2>
         <div>
           <label class="form-label">Business Name *</label>
           <input v-model="businessForm.name" type="text" class="form-input" placeholder="Your Business Name" />
