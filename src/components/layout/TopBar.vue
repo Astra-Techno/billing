@@ -118,16 +118,13 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
 </script>
 
 <template>
-  <header class="glass border-b border-white/50 sticky top-0 z-30 w-full shadow-soft">
+  <header class="bg-white border-b border-gray-200 sticky top-0 z-30 w-full">
     <div class="w-full px-4 py-3 flex items-center gap-3">
 
-      <RouterLink to="/settings" class="shrink-0" title="Profile">
-        <div class="w-11 h-11 rounded-2xl overflow-hidden bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center ring-2 ring-white shadow-gpay p-0.5">
-          <div class="w-full h-full rounded-[14px] overflow-hidden bg-white flex items-center justify-center">
-            <img v-if="bizStore.logo" :src="bizStore.logo" class="w-full h-full object-cover" alt="" />
-            <span v-else-if="auth.user?.name" class="text-primary-700 text-sm font-bold">{{ auth.user.name.charAt(0).toUpperCase() }}</span>
-            <span v-else class="text-primary-700 text-sm font-bold">B</span>
-          </div>
+      <RouterLink to="/more" class="shrink-0" title="Account">
+        <div class="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center shrink-0" style="background: linear-gradient(135deg, #6366f1, #4f46e5);">
+          <img v-if="bizStore.logo" :src="bizStore.logo" class="w-full h-full object-cover" alt="" />
+          <span v-else class="text-white text-sm font-bold">{{ (auth.user?.name || 'U').charAt(0).toUpperCase() }}</span>
         </div>
       </RouterLink>
 
@@ -135,7 +132,7 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
 
         <!-- Trigger (closed state) -->
         <div v-if="!open"
-          class="flex items-center gap-2.5 text-sm text-google-muted bg-white/70 rounded-full px-4 py-3 cursor-text border border-white/80 shadow-soft hover:shadow-gpay transition-all select-none w-full"
+          class="flex items-center gap-2.5 text-sm text-google-muted bg-gray-50 rounded-full px-4 py-2.5 cursor-text border border-gray-200 hover:border-gray-300 transition-all select-none w-full"
           @click="openSearch">
           <svg class="w-4 h-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -201,7 +198,7 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
               <div v-if="bills.length">
                 <div class="px-4 pt-3 pb-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Bills</div>
                 <div v-for="inv in bills" :key="'inv-' + inv.id"
-                  class="flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50/60 cursor-pointer transition-colors group"
+                  class="flex items-center gap-3 px-4 py-2.5 hover:bg-primary-50/60 cursor-pointer transition-colors group"
                   @click="go('/invoices/' + inv.id)">
                   <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 font-bold text-xs" :class="avatarColor(inv.client_name)">
                     {{ inv.client_name?.charAt(0)?.toUpperCase() }}
@@ -221,7 +218,7 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
               <div v-if="customers.length" :class="bills.length ? 'border-t border-gray-100' : ''">
                 <div class="px-4 pt-3 pb-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Customers</div>
                 <div v-for="c in customers" :key="'c-' + c.id"
-                  class="flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50/60 cursor-pointer transition-colors group"
+                  class="flex items-center gap-3 px-4 py-2.5 hover:bg-primary-50/60 cursor-pointer transition-colors group"
                   @click="go('/clients/' + c.id)">
                   <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 font-bold text-xs" :class="avatarColor(c.name)">
                     {{ c.name?.charAt(0)?.toUpperCase() }}
@@ -240,7 +237,7 @@ const avatarColor = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColo
               <div v-if="products.length" :class="(bills.length || customers.length) ? 'border-t border-gray-100' : ''">
                 <div class="px-4 pt-3 pb-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Products</div>
                 <div v-for="p in products" :key="'p-' + p.id"
-                  class="flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50/60 cursor-pointer transition-colors group"
+                  class="flex items-center gap-3 px-4 py-2.5 hover:bg-primary-50/60 cursor-pointer transition-colors group"
                   @click="go('/products/' + p.id + '/edit')">
                   <div class="w-8 h-8 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>

@@ -64,7 +64,7 @@
   }
   .form-select { @apply form-input cursor-pointer; }
   .form-textarea { @apply form-input resize-none min-h-[88px]; }
-  .form-error { @apply mt-1.5 text-xs text-danger-600 font-semibold; }
+  .form-error { @apply mt-1.5 text-xs text-red-600 font-semibold; }
 
   /* ── Badges ── */
   .badge { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold tracking-wide; }

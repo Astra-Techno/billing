@@ -94,7 +94,7 @@ async function logout() {
           <svg class="w-5 h-5 text-google-muted/60 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </RouterLink>
 
-        <button type="button" @click="logout" class="gpay-activity-row w-full text-left text-danger-600 hover:bg-danger-50/50">
+        <button type="button" @click="logout" class="gpay-activity-row w-full text-left text-red-600 hover:bg-red-50/50">
           <div class="gpay-action-tile-icon !w-11 !h-11 !rounded-xl !bg-gradient-to-br from-red-500 to-rose-600 shrink-0">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
