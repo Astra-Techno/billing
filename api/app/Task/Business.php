@@ -242,6 +242,23 @@ class Business extends Task
         return $this->success(null, 'Payment details updated.');
     }
 
+    // ── E-way Bill GSP credentials ────────────────────────────────────────────
+
+    public function updateEwb(array $input): array
+    {
+        $businessId = $this->requireBusiness();
+        $this->requireRole(['owner', 'admin']);
+
+        $business = BusinessTable::findOrFail($businessId);
+        $business->fill([
+            'ewb_username' => !empty($input['ewb_username']) ? trim($input['ewb_username']) : null,
+            'ewb_password' => !empty($input['ewb_password']) ? $input['ewb_password'] : null,
+        ]);
+        $business->save();
+
+        return $this->success(null, 'E-way Bill credentials saved.');
+    }
+
     // ── Upload UPI QR code image ───────────────────────────────────────────────
 
     public function uploadUpiQr(array $input): array

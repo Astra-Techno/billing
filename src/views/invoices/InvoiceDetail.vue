@@ -27,6 +27,13 @@ const paying   = ref(false)
 const acting   = ref(false)
 const upiQrDataUrl = ref('')
 
+// E-way Bill
+const showEwbModal  = ref(false)
+const ewb           = ref(null)   // existing EWB for this invoice
+const ewbGenerating = ref(false)
+const ewbError      = ref('')
+const ewbForm       = ref({ mode: 'road', distance: '', transporter: '', vehicle_no: '', vehicle_type: 'Regular' })
+
 function setQuickAmount(pct) {
   const due = parseFloat(invoice.value?.amount_due || 0)
   payForm.value.amount = pct === 1 ? due.toFixed(2) : (Math.round(due * pct * 100) / 100).toFixed(2)
@@ -36,16 +43,18 @@ async function load() {
   loading.value = true
   const id = props.panelId || route.params.id
   try {
-    const [invRes, itmRes, payRes, bizRes] = await Promise.all([
+    const [invRes, itmRes, payRes, bizRes, ewbRes] = await Promise.all([
       item('Invoice', { id }),
       list('Invoice:items', { invoice_id: id }),
       list('Invoice:payments', { invoice_id: id }),
       item('Business'),
+      list('EwayBill', { 'filter.invoice_id': id, sort_by: 'created_at', sort_order: 'desc' }).catch(() => null),
     ])
     invoice.value  = invRes.data?.data
     items.value    = itmRes.data?.data  || []
     payments.value = payRes.data?.data  || []
     business.value = bizRes.data?.data  || null
+    ewb.value      = ewbRes?.data?.data?.[0] || null
     if (invoice.value) payForm.value.amount = invoice.value.amount_due
 
     // Generate UPI QR for collect payment card
@@ -199,6 +208,58 @@ function amountInWords(amount) {
   return w + ' Only'
 }
 
+// EWB validity: NIC rules — distance → days
+function ewbValidityDays(km) {
+  const d = parseFloat(km) || 0
+  if (d <= 0)    return null
+  if (d <= 100)  return 1
+  if (d <= 300)  return 3
+  if (d <= 500)  return 5
+  if (d <= 1000) return 7
+  return 15
+}
+function ewbValidUntil(km) {
+  const days = ewbValidityDays(km)
+  if (!days) return null
+  const d = new Date()
+  d.setDate(d.getDate() + days)
+  d.setHours(23, 59, 0, 0)
+  return fmtDateShort(d.toISOString().split('T')[0]) + ', 11:59 PM'
+}
+
+async function generateEwb() {
+  ewbError.value = ''
+  if (!ewbForm.value.distance) return (ewbError.value = 'Please enter the distance in km.')
+  if (!ewbForm.value.vehicle_no.trim()) return (ewbError.value = 'Vehicle number is required.')
+  ewbGenerating.value = true
+  try {
+    const res = await task('EwayBill', 'create', {
+      invoice_id:   invoice.value.id,
+      mode:         ewbForm.value.mode,
+      distance:     parseFloat(ewbForm.value.distance),
+      transporter:  ewbForm.value.transporter,
+      vehicle_no:   ewbForm.value.vehicle_no.toUpperCase(),
+      vehicle_type: ewbForm.value.vehicle_type,
+    })
+    ewb.value = res.data?.data
+    showEwbModal.value = false
+    ewbForm.value = { mode: 'road', distance: '', transporter: '', vehicle_no: '', vehicle_type: 'Regular' }
+  } catch (e) {
+    ewbError.value = e.response?.data?.message || 'Failed to generate E-way Bill. Please try again.'
+  }
+  ewbGenerating.value = false
+}
+
+async function cancelEwb() {
+  if (!confirm('Cancel this E-way Bill? This cannot be undone.')) return
+  try {
+    await task('EwayBill', 'cancel', { id: ewb.value.id })
+    ewb.value = { ...ewb.value, status: 'cancelled' }
+  } catch (e) {
+    alert(e.response?.data?.message || 'Failed to cancel E-way Bill.')
+  }
+}
+
 watch(() => props.panelId, v => { if (v) load() })
 onMounted(load)
 </script>
@@ -324,6 +385,14 @@ onMounted(load)
             <svg v-if="downloading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
             <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
             PDF
+          </button>
+
+          <!-- E-way Bill -->
+          <button @click="showEwbModal = true"
+            class="flex items-center gap-2 px-4 py-3 sm:py-3.5 rounded-xl font-semibold text-xs transition-colors shrink-0 shadow-sm border"
+            :class="ewb && ewb.status === 'active' ? 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100' : 'bg-white border-gray-200 text-gray-700 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-700'">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+            {{ ewb ? 'View EWB' : 'E-way Bill' }}
           </button>
 
           <RouterLink :to="`/invoices/${invoice.id}/edit`" class="flex items-center gap-2 px-4 py-3 sm:py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 font-semibold text-xs transition-colors shrink-0 shadow-sm">
@@ -555,6 +624,52 @@ onMounted(load)
         </div>
       </div>
 
+      <!-- E-way Bill status card (shown if EWB exists) -->
+      <div v-if="ewb" class="mt-4 animate-fade-in-up">
+        <div class="bg-white rounded-[2rem] shadow-soft border overflow-hidden"
+          :class="ewb.status === 'active' ? 'border-indigo-100' : ewb.status === 'cancelled' ? 'border-gray-200 opacity-70' : 'border-amber-100'">
+          <div class="px-5 py-4 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                :class="ewb.status === 'active' ? 'bg-indigo-50' : ewb.status === 'cancelled' ? 'bg-gray-100' : 'bg-amber-50'">
+                <svg class="w-5 h-5" :class="ewb.status === 'active' ? 'text-indigo-600' : ewb.status === 'cancelled' ? 'text-gray-400' : 'text-amber-600'" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+              </div>
+              <div>
+                <p class="text-[10px] font-bold uppercase tracking-widest mb-0.5"
+                  :class="ewb.status === 'active' ? 'text-indigo-500' : ewb.status === 'cancelled' ? 'text-gray-400' : 'text-amber-600'">E-way Bill</p>
+                <p class="font-bold text-gray-900 font-mono text-sm tracking-wider">{{ ewb.ewb_number || '—' }}</p>
+              </div>
+            </div>
+            <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full border"
+              :class="ewb.status === 'active' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : ewb.status === 'cancelled' ? 'bg-gray-100 text-gray-500 border-gray-200' : 'bg-amber-50 text-amber-700 border-amber-100'">
+              {{ ewb.status?.toUpperCase() }}
+            </span>
+          </div>
+          <div class="px-5 pb-4 grid grid-cols-3 gap-3 text-xs border-t border-gray-50 pt-3">
+            <div>
+              <p class="text-gray-400 font-medium mb-0.5">Valid Until</p>
+              <p class="font-semibold text-gray-700">{{ ewb.valid_until ? fmtDateShort(ewb.valid_until) : '—' }}</p>
+            </div>
+            <div>
+              <p class="text-gray-400 font-medium mb-0.5">Vehicle</p>
+              <p class="font-semibold text-gray-700 font-mono">{{ ewb.vehicle_no || '—' }}</p>
+            </div>
+            <div>
+              <p class="text-gray-400 font-medium mb-0.5">Distance</p>
+              <p class="font-semibold text-gray-700">{{ ewb.distance ? ewb.distance + ' km' : '—' }}</p>
+            </div>
+          </div>
+          <div v-if="ewb.status === 'active'" class="px-5 pb-4 flex gap-2">
+            <button @click="showEwbModal = true" class="flex-1 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors border border-indigo-100">
+              View Details
+            </button>
+            <button @click="cancelEwb" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors border border-gray-200">
+              Cancel EWB
+            </button>
+          </div>
+        </div>
+      </div>
+
     </template>
 
     <!-- Mobile Floating Circular Action Buttons (Invozen Preview Mockup Style) -->
@@ -571,6 +686,11 @@ onMounted(load)
       <!-- WhatsApp Share -->
       <button @click="shareWhatsApp" class="w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center hover:bg-white/20 transition active:scale-95" title="Share via WhatsApp">
         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.137.565 4.147 1.554 5.887L0 24l6.305-1.524A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.375l-.359-.214-3.735.902.948-3.632-.234-.373A9.818 9.818 0 1112 21.818z"/></svg>
+      </button>
+      <!-- E-way Bill -->
+      <button @click="showEwbModal = true" class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/20 transition active:scale-95"
+        :class="ewb && ewb.status === 'active' ? 'bg-indigo-400/30 text-indigo-200' : 'bg-white/15 text-white'" title="E-way Bill">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
       </button>
       <!-- Edit Link -->
       <RouterLink :to="`/invoices/${invoice.id}/edit`" class="w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center hover:bg-white/20 transition active:scale-95" title="Edit Invoice">
@@ -631,6 +751,174 @@ onMounted(load)
           <button @click="recordPayment" :disabled="paying" class="btn-primary flex-1">
             {{ paying ? 'Recording…' : 'Record Payment' }}
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- E-way Bill Modal -->
+    <div v-if="showEwbModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40" @click.self="showEwbModal = false">
+      <div class="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
+
+        <!-- Header -->
+        <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
+              <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+            </div>
+            <div>
+              <h3 class="font-semibold text-gray-900 text-sm">{{ ewb ? 'E-way Bill Details' : 'Generate E-way Bill' }}</h3>
+              <p class="text-[11px] text-gray-400">{{ invoice?.number }}</p>
+            </div>
+          </div>
+          <button @click="showEwbModal = false" class="w-7 h-7 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition flex items-center justify-center text-lg leading-none">✕</button>
+        </div>
+
+        <div class="overflow-y-auto flex-1">
+
+          <!-- If EWB already exists: show read-only details -->
+          <div v-if="ewb" class="p-5 space-y-4">
+            <div class="bg-indigo-50 rounded-xl p-4 text-center border border-indigo-100">
+              <p class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1">EWB Number</p>
+              <p class="text-2xl font-black text-indigo-700 font-mono tracking-widest">{{ ewb.ewb_number || '—' }}</p>
+              <span class="mt-2 inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full"
+                :class="ewb.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'">
+                {{ ewb.status?.toUpperCase() }}
+              </span>
+            </div>
+            <div class="grid grid-cols-2 gap-3 text-sm">
+              <div class="bg-gray-50 rounded-xl p-3">
+                <p class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">Valid Until</p>
+                <p class="font-semibold text-gray-800">{{ ewb.valid_until ? fmtDateShort(ewb.valid_until) : '—' }}</p>
+              </div>
+              <div class="bg-gray-50 rounded-xl p-3">
+                <p class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">Distance</p>
+                <p class="font-semibold text-gray-800">{{ ewb.distance ? ewb.distance + ' km' : '—' }}</p>
+              </div>
+              <div class="bg-gray-50 rounded-xl p-3">
+                <p class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">Vehicle No.</p>
+                <p class="font-bold text-gray-800 font-mono">{{ ewb.vehicle_no || '—' }}</p>
+              </div>
+              <div class="bg-gray-50 rounded-xl p-3">
+                <p class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">Mode</p>
+                <p class="font-semibold text-gray-800 capitalize">{{ ewb.mode || '—' }}</p>
+              </div>
+            </div>
+            <div v-if="ewb.transporter" class="bg-gray-50 rounded-xl p-3 text-sm">
+              <p class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">Transporter</p>
+              <p class="font-semibold text-gray-800">{{ ewb.transporter }}</p>
+            </div>
+          </div>
+
+          <!-- Generate form -->
+          <div v-else class="p-5 space-y-5">
+
+            <!-- Part A — auto-filled from invoice -->
+            <div>
+              <div class="flex items-center gap-2 mb-3">
+                <span class="text-[10px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full">Part A — Transaction & Goods</span>
+                <span class="text-[10px] text-gray-400 font-medium">Auto-filled from invoice</span>
+              </div>
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="form-label">Document No.</label>
+                  <input type="text" :value="invoice?.number" readonly class="form-input bg-green-50 border-green-200 text-gray-600 cursor-default text-xs" />
+                </div>
+                <div>
+                  <label class="form-label">Document Date</label>
+                  <input type="text" :value="fmtDateShort(invoice?.issue_date)" readonly class="form-input bg-green-50 border-green-200 text-gray-600 cursor-default text-xs" />
+                </div>
+                <div>
+                  <label class="form-label">From GSTIN</label>
+                  <input type="text" :value="business?.gstin || invoice?.business_gstin || '—'" readonly class="form-input bg-green-50 border-green-200 text-gray-600 cursor-default font-mono text-xs" />
+                </div>
+                <div>
+                  <label class="form-label">To GSTIN</label>
+                  <input type="text" :value="invoice?.client_gstin || '—'" readonly class="form-input bg-green-50 border-green-200 text-gray-600 cursor-default font-mono text-xs" />
+                </div>
+                <div>
+                  <label class="form-label">Taxable Value (₹)</label>
+                  <input type="text" :value="invoice?.subtotal ? invoice.subtotal.toLocaleString('en-IN') : '—'" readonly class="form-input bg-green-50 border-green-200 text-gray-600 cursor-default text-xs" />
+                </div>
+                <div>
+                  <label class="form-label">Invoice Value (₹)</label>
+                  <input type="text" :value="invoice?.total ? invoice.total.toLocaleString('en-IN') : '—'" readonly class="form-input bg-green-50 border-green-200 text-gray-600 cursor-default text-xs" />
+                </div>
+              </div>
+            </div>
+
+            <div class="border-t border-gray-100"></div>
+
+            <!-- Part B — Transport Details -->
+            <div>
+              <span class="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full mb-3 inline-block">Part B — Transport Details</span>
+
+              <!-- Mode of Transport -->
+              <div class="mb-3">
+                <label class="form-label">Mode of Transport</label>
+                <div class="grid grid-cols-4 gap-2">
+                  <button v-for="m in [{ val:'road', icon:'🚛', label:'Road' }, { val:'rail', icon:'🚂', label:'Rail' }, { val:'air', icon:'✈️', label:'Air' }, { val:'ship', icon:'🚢', label:'Ship' }]"
+                    :key="m.val" type="button"
+                    @click="ewbForm.mode = m.val"
+                    class="py-2.5 rounded-xl text-xs font-semibold border transition-all"
+                    :class="ewbForm.mode === m.val ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'">
+                    <div class="text-base mb-0.5">{{ m.icon }}</div>
+                    {{ m.label }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Distance -->
+              <div class="mb-3">
+                <label class="form-label">Approximate Distance (km) *</label>
+                <input v-model="ewbForm.distance" type="number" min="1" max="4000" class="form-input" placeholder="e.g. 320" />
+                <!-- AI Validity Hint -->
+                <div v-if="ewbForm.distance && ewbValidityDays(ewbForm.distance)" class="mt-2 flex items-start gap-2 bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2.5">
+                  <svg class="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  <p class="text-xs text-indigo-700">
+                    At <strong>{{ ewbForm.distance }} km</strong>, this EWB will be valid for
+                    <strong>{{ ewbValidityDays(ewbForm.distance) }} day{{ ewbValidityDays(ewbForm.distance) > 1 ? 's' : '' }}</strong>
+                    — until <strong>{{ ewbValidUntil(ewbForm.distance) }}</strong>.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Vehicle -->
+              <div class="grid grid-cols-2 gap-2.5 mb-3">
+                <div>
+                  <label class="form-label">Vehicle Number *</label>
+                  <input v-model="ewbForm.vehicle_no" type="text" class="form-input uppercase tracking-wider" placeholder="DL01AB1234" style="text-transform:uppercase;" />
+                </div>
+                <div>
+                  <label class="form-label">Vehicle Type</label>
+                  <select v-model="ewbForm.vehicle_type" class="form-input">
+                    <option>Regular</option>
+                    <option>Over Dimensional Cargo</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Transporter -->
+              <div>
+                <label class="form-label">Transporter Name <span class="text-gray-400 font-normal">(optional)</span></label>
+                <input v-model="ewbForm.transporter" type="text" class="form-input" placeholder="e.g. Fast Logistics Pvt Ltd" />
+              </div>
+            </div>
+
+            <div v-if="ewbError" class="text-sm text-danger-600 bg-danger-50 border border-danger-100 rounded-xl px-4 py-3">{{ ewbError }}</div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="px-5 pb-5 pt-3 border-t border-gray-100 flex gap-3 shrink-0">
+          <button @click="showEwbModal = false" class="btn-outline flex-1">{{ ewb ? 'Close' : 'Cancel' }}</button>
+          <button v-if="!ewb" @click="generateEwb" :disabled="ewbGenerating" class="btn-primary flex-2 flex-1">
+            <span v-if="ewbGenerating" class="flex items-center gap-2 justify-center">
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+              Generating…
+            </span>
+            <span v-else>Generate E-way Bill</span>
+          </button>
+          <button v-if="ewb && ewb.status === 'active'" @click="cancelEwb(); showEwbModal = false" class="btn-danger flex-1">Cancel EWB</button>
         </div>
       </div>
     </div>

@@ -156,6 +156,26 @@ const gstForm = ref({
   gstin: '', pan: '', cin: '',
 })
 
+// EWB credentials
+const ewbForm           = ref({ ewb_username: '', ewb_password: '' })
+const ewbSaving         = ref(false)
+const ewbSuccess        = ref('')
+const ewbError          = ref('')
+const ewbPasswordVisible = ref(false)
+
+async function saveEwb() {
+  ewbError.value   = ''
+  ewbSuccess.value = ''
+  ewbSaving.value  = true
+  try {
+    await task('Business', 'updateEwb', ewbForm.value)
+    ewbSuccess.value = 'E-way Bill credentials saved.'
+    setTimeout(() => { ewbSuccess.value = '' }, 3000)
+  } catch (e) {
+    ewbError.value = e.response?.data?.message || 'Failed to save.'
+  } finally { ewbSaving.value = false }
+}
+
 const bankForm = ref({
   bank_name: '', bank_account_no: '', bank_ifsc: '', bank_account_name: '', upi_id: '',
 })
@@ -364,6 +384,9 @@ onMounted(async () => {
     invoiceForm.value.quote_prefix   = biz.quote_prefix   || 'QTE'
     invoiceForm.value.invoice_notes  = biz.invoice_notes  || ''
     invoiceForm.value.invoice_terms  = biz.invoice_terms  || ''
+
+    ewbForm.value.ewb_username = biz.ewb_username || ''
+    ewbForm.value.ewb_password = biz.ewb_password ? '••••••••' : ''
 
     currentLogo.value = biz.logo || ''
     bizSlug.value     = biz.slug || ''
@@ -812,6 +835,64 @@ async function saveInvoice() {
         </div>
       </div>
     </template>
+
+    <!-- E-way Bill credentials (inside GST tab) -->
+    <div v-if="!loading && activeTab === 'gst'" class="card card-body space-y-4 mt-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+          </div>
+          <h2 class="section-title mb-0">E-way Bill Portal Login</h2>
+        </div>
+        <p class="text-xs text-gray-400 mt-1.5">
+          Your login credentials for <span class="font-medium text-gray-600">ewaybillgst.gov.in</span> — the government EWB portal. Same username and password you use to log in there.
+        </p>
+      </div>
+
+      <!-- Info banner -->
+      <div class="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
+        <svg class="w-4 h-4 text-blue-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <p class="text-xs text-blue-700 leading-relaxed">
+          No new registration needed. If you're GST registered, you already have an EWB portal login. If not, register free at <span class="font-semibold">ewaybillgst.gov.in</span> using your GSTIN.
+        </p>
+      </div>
+
+      <div>
+        <label class="form-label">EWB Portal Username</label>
+        <input v-model="ewbForm.ewb_username" type="text" class="form-input" placeholder="Your username on ewaybillgst.gov.in" autocomplete="off" />
+      </div>
+      <div>
+        <label class="form-label">EWB Portal Password</label>
+        <div class="relative">
+          <input v-model="ewbForm.ewb_password" :type="ewbPasswordVisible ? 'text' : 'password'"
+            class="form-input pr-10" placeholder="Your password" autocomplete="new-password" />
+          <button type="button" @click="ewbPasswordVisible = !ewbPasswordVisible"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <svg v-if="!ewbPasswordVisible" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+            <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+            </svg>
+          </button>
+        </div>
+        <p class="text-xs text-gray-400 mt-1">Stored securely. Used only to generate E-way Bills on your behalf.</p>
+      </div>
+
+      <div v-if="ewbSuccess" class="text-sm text-success-700 bg-success-50 rounded-lg px-4 py-3 border border-success-200">{{ ewbSuccess }}</div>
+      <div v-if="ewbError"   class="text-sm text-danger-600 bg-danger-50 rounded-lg px-4 py-3">{{ ewbError }}</div>
+
+      <div class="pt-1">
+        <button @click="saveEwb" :disabled="ewbSaving" class="btn-primary w-full sm:w-auto">
+          {{ ewbSaving ? 'Saving…' : 'Save EWB Credentials' }}
+        </button>
+      </div>
+    </div>
 
     <!-- Bank & UPI -->
     <template v-if="!loading && activeTab === 'bank'">

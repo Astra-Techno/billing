@@ -14,6 +14,7 @@ class Business extends Table
         'email', 'mobile', 'phone', 'website',
         'address_line1', 'address_line2', 'city', 'state_id', 'pincode',
         'bank_name', 'bank_account_no', 'bank_ifsc', 'bank_account_name', 'upi_id',
+        'ewb_username', 'ewb_password',
         'logo', 'currency', 'timezone', 'date_format', 'financial_year_start',
         'invoice_prefix', 'quote_prefix', 'invoice_terms', 'invoice_notes', 'signature',
         'active',
