@@ -79,6 +79,7 @@ async function submit() {
                 </svg>
               </span>
               <input v-model="form.email" type="email" class="form-input pl-10" placeholder="you@example.com" required autofocus />
+              <input type="text" value="hi" />
             </div>
           </div>
 
