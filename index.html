@@ -16,6 +16,16 @@
         if (wv) document.documentElement.classList.add('wv-android');
         document.documentElement.setAttribute('dir', 'ltr');
         document.documentElement.setAttribute('lang', 'en');
+        // WebView often resolves 100dvh to 0 — set a real pixel height early
+        function setWvVh() {
+          var h = window.innerHeight || window.screen.availHeight || window.screen.height || 812;
+          document.documentElement.style.setProperty('--wv-vh', h + 'px');
+        }
+        setWvVh();
+        window.addEventListener('resize', setWvVh);
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', setWvVh);
+        }
       })();
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />

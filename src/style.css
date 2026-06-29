@@ -25,8 +25,10 @@
 
   /* ── App shell ── */
   .app-shell {
-    @apply h-[100dvh] w-full max-w-[100vw] flex flex-col overflow-hidden relative;
+    @apply w-full max-w-[100vw] flex flex-col overflow-hidden relative;
     background: #f9fafb;
+    height: 100vh;
+    height: 100dvh;
   }
 
   /* ── Buttons ── */
@@ -431,14 +433,23 @@ input, textarea, select, [contenteditable] {
   writing-mode: horizontal-tb !important;
 }
 
+/* Android WebView: broken dvh collapses layout to a white screen */
+html.wv-android,
+html.wv-android body,
+html.wv-android #app {
+  min-height: var(--wv-vh, 100vh) !important;
+}
+html.wv-android .app-shell {
+  height: var(--wv-vh, 100vh) !important;
+  min-height: var(--wv-vh, 100vh) !important;
+}
+
 /* Android WebView: auth screens — mobile only */
 @media (max-width: 767px) {
   html.wv-android .auth-page {
-    min-height: 100vh !important;
-    min-height: 100dvh !important;
-    height: 100vh !important;
-    height: 100dvh !important;
-    max-height: 100dvh !important;
+    min-height: var(--wv-vh, 100vh) !important;
+    height: var(--wv-vh, 100vh) !important;
+    max-height: var(--wv-vh, 100vh) !important;
     overflow: hidden !important;
   }
   html.wv-android .auth-form-panel {
