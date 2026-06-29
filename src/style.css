@@ -315,6 +315,15 @@
   }
   .inv-label { @apply block text-xs font-medium text-gray-500 mb-1; }
 
+  .form-footer-mobile {
+    @apply fixed bottom-0 left-0 right-0 z-30;
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+  .inv-body { padding-bottom: 5.5rem; }
+  @media (min-width: 1024px) {
+    .inv-body { padding-bottom: 0; }
+  }
+
   /* Chip-based item row */
   .item-row { @apply flex gap-3 px-5 py-4 items-start border-b border-google-divider transition-colors; }
   .item-row:hover { @apply bg-surface-dim; }
