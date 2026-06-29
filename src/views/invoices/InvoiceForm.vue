@@ -669,9 +669,7 @@ async function submit() {
               <!-- Desktop: chip-based item rows -->
               <div class="hidden lg:block">
                 <div>
-                  <div v-for="(it, i) in form.items" :key="i"
-                    v-memo="[it.description, it.quantity, it.unit_price, it.discount_pct, it.gst_rate, it.unit, productSearchIdx === i, productSearchIdx === i ? productHighlight : -1, form.items.length]"
-                    class="item-row group relative">
+                  <div v-for="(it, i) in form.items" :key="i" class="item-row group relative">
                     <!-- Item number badge -->
                     <div class="item-num mt-1">{{ i + 1 }}</div>
 
@@ -760,9 +758,7 @@ async function submit() {
 
               <!-- Mobile: Accordion items -->
               <div class="lg:hidden divide-y divide-gray-100">
-                <div v-for="(it, i) in form.items" :key="i"
-                  v-memo="[it.description, it.quantity, it.unit_price, it.discount_pct, it.gst_rate, it.unit, activeItemIndex === i, productSearchIdx === i, form.items.length]"
-                  class="transition-all duration-200">
+                <div v-for="(it, i) in form.items" :key="i" class="transition-all duration-200">
                   <!-- Collapsed summary -->
                   <div class="p-4 space-y-1 hover:bg-gray-50/30">
                     <div class="flex justify-between items-start">
