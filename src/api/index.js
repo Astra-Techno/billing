@@ -21,8 +21,13 @@ api.interceptors.response.use(
   err => {
     if (err.response?.status === 401) {
       const auth = useAuthStore()
+      const hadToken = !!auth.token
       auth.logout()
-      window.location.href = '/login'
+      if (hadToken) {
+        import('../router').then(({ default: router }) => {
+          if (router.currentRoute.value?.name !== 'Login') router.replace('/login')
+        })
+      }
     }
     // Log all API errors to console for debugging
     console.error(

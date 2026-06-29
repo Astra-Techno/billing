@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Automation — FinanceAI</title>
+<link rel="stylesheet" href="_base.css">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<style>
+.timing-card{
+  min-width:260px;max-width:280px;flex-shrink:0;
+  background:var(--surface);border-radius:var(--r-xl);
+  border:1px solid rgba(199,196,215,.25);
+  box-shadow:0 2px 12px rgba(30,41,59,.07);
+  padding:var(--sp-md);
+}
+.timing-time{
+  font-size:12px;font-weight:600;color:var(--on-surface-3);
+}
+.timing-tag{
+  display:inline-block;font-size:10px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;
+  padding:3px 10px;border-radius:var(--r-full);
+}
+.timing-tag.optimal{ background:#fff0cc;color:#92580a; }
+.timing-tag.regular{ background:var(--surface-highest);color:var(--on-surface-3); }
+.timing-tag.priority{ background:var(--primary-bg);color:var(--primary); }
+.timing-name{ font-size:15px;font-weight:700;color:var(--on-surface);margin:8px 0 3px; }
+.timing-desc{ font-size:12px;color:var(--on-surface-3);line-height:1.5;margin-bottom:14px; }
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <span class="material-symbols-outlined icon-fill" style="color:var(--primary);font-size:28px;">receipt_long</span>
+    <span class="sidebar-logo">FinanceAI</span>
+  </div>
+  <div class="sidebar-nav">
+    <div class="sidebar-section-label">Menu</div>
+    <a class="sidebar-item" href="01-dashboard.html"><span class="material-symbols-outlined">analytics</span>Insights</a>
+    <a class="sidebar-item active" href="02-invoice-list.html"><span class="material-symbols-outlined">auto_awesome</span>Automation</a>
+    <a class="sidebar-item" href="05-client-list.html"><span class="material-symbols-outlined">group</span>Clients</a>
+    <a class="sidebar-item" href="07-quote-list.html"><span class="material-symbols-outlined">request_quote</span>Quotes</a>
+    <a class="sidebar-item" href="08-expense-list.html"><span class="material-symbols-outlined">account_balance_wallet</span>Expenses</a>
+    <a class="sidebar-item" href="11-eway-bill-list.html"><span class="material-symbols-outlined">local_shipping</span>E-way Bills</a>
+    <a class="sidebar-item" href="09-reports.html"><span class="material-symbols-outlined">bar_chart</span>Reports</a>
+    <div class="sidebar-section-label" style="margin-top:8px;">Account</div>
+    <a class="sidebar-item" href="10-settings.html"><span class="material-symbols-outlined">settings</span>Configuration</a>
+  </div>
+  <div style="padding:16px;border-top:1px solid rgba(199,196,215,.3);">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="avatar-sm">RK</div>
+      <div><div style="font-size:13px;font-weight:600;">Ramesh Kumar</div><div style="font-size:11px;color:var(--on-surface-3);">Premium Plan</div></div>
+    </div>
+  </div>
+</nav>
+
+<div class="app-bar">
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button class="icon-btn"><span class="material-symbols-outlined">menu</span></button>
+    <span class="app-bar-brand">FinanceAI</span>
+  </div>
+  <div class="avatar-sm">RK</div>
+</div>
+
+<div class="main">
+  <div class="content-section">
+
+    <!-- AI Suggestion Banner -->
+    <div class="ai-banner">
+      <span class="material-symbols-outlined icon-fill ai-banner-icon">auto_awesome</span>
+      <div>
+        <div class="ai-banner-tag">AI Suggestion</div>
+        <div class="ai-banner-text">3 regular clients haven't been billed this week. Automation could save you <strong>12 minutes</strong> today.</div>
+      </div>
+    </div>
+
+    <!-- Suggested Timing -->
+    <div>
+      <div class="section-head" style="margin-bottom:12px;">
+        <span class="section-title">Suggested Timing</span>
+        <span class="section-link">View Strategy</span>
+      </div>
+      <div class="h-scroll" style="margin:0 -16px;padding:0 16px 4px;">
+        <div class="timing-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span class="timing-tag optimal">Optimal</span>
+            <span class="timing-time">Tue 09:00 AM</span>
+          </div>
+          <div class="timing-name">Sharma Textiles</div>
+          <div class="timing-desc">High open rate at this window historically.</div>
+          <button class="btn btn-primary" style="padding:10px 18px;font-size:13px;width:100%;">Schedule Now</button>
+        </div>
+        <div class="timing-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span class="timing-tag regular">Regular</span>
+            <span class="timing-time">Mon 10:30 AM</span>
+          </div>
+          <div class="timing-name">Patel Exports</div>
+          <div class="timing-desc">Matches recurring billing cycle.</div>
+          <button class="btn btn-tonal" style="padding:10px 18px;font-size:13px;">Apply AI Timing</button>
+        </div>
+        <div class="timing-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span class="timing-tag priority">Priority</span>
+            <span class="timing-time">Wed 11:00 AM</span>
+          </div>
+          <div class="timing-name">Gupta Electronics</div>
+          <div class="timing-desc">Payment overdue — priority send.</div>
+          <button class="btn btn-primary" style="padding:10px 18px;font-size:13px;width:100%;">Send Now</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Automation Rules -->
+    <div>
+      <div class="section-head" style="margin-bottom:12px;">
+        <span class="section-title">Automation Rules</span>
+        <span class="material-symbols-outlined icon-fill" style="color:var(--primary);font-size:22px;cursor:pointer;">auto_awesome</span>
+      </div>
+      <div class="section-card">
+        <div class="rule-item">
+          <div class="rule-icon" style="background:var(--primary-bg);">
+            <span class="material-symbols-outlined icon-fill" style="color:var(--primary);">schedule_send</span>
+          </div>
+          <div class="rule-body">
+            <div class="rule-title">Auto-send Recurring</div>
+            <div class="rule-sub">On the 1st of every month</div>
+          </div>
+          <label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div></label>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon" style="background:#fff3e0;">
+            <span class="material-symbols-outlined icon-fill" style="color:#e65100;">notifications_active</span>
+          </div>
+          <div class="rule-body">
+            <div class="rule-title">Late Payment Reminders</div>
+            <div class="rule-sub">Send after 3 days overdue</div>
+          </div>
+          <label class="toggle"><input type="checkbox"><div class="toggle-track"></div></label>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon" style="background:var(--green-bg);">
+            <span class="material-symbols-outlined icon-fill" style="color:var(--green);">sync_alt</span>
+          </div>
+          <div class="rule-body">
+            <div class="rule-title">Auto-Reconciliation</div>
+            <div class="rule-sub">Match payments daily at 6 AM</div>
+          </div>
+          <label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div></label>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon" style="background:var(--primary-bg);">
+            <span class="material-symbols-outlined icon-fill" style="color:var(--primary);">auto_fix_high</span>
+          </div>
+          <div class="rule-body">
+            <div class="rule-title">Smart Invoice Drafts</div>
+            <div class="rule-sub">AI pre-fills from order history</div>
+          </div>
+          <label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Invoices -->
+    <div>
+      <div class="section-head" style="margin-bottom:12px;">
+        <span class="section-title">Recent Invoices</span>
+        <button class="icon-btn" style="width:32px;height:32px;">
+          <span class="material-symbols-outlined" style="font-size:20px;">filter_list</span>
+        </button>
+      </div>
+      <div class="section-card">
+        <div class="list-item">
+          <div class="list-item-icon"><span class="material-symbols-outlined" style="color:var(--primary);">description</span></div>
+          <div class="list-item-body">
+            <div class="list-item-title">#INV/2025-26/089</div>
+            <div class="list-item-sub">Sharma Textiles</div>
+          </div>
+          <div class="list-item-right">
+            <div class="list-item-amount">&#8377;1,24,000</div>
+            <span class="badge badge-paid">Paid</span>
+          </div>
+        </div>
+        <div class="list-item">
+          <div class="list-item-icon"><span class="material-symbols-outlined" style="color:var(--primary);">description</span></div>
+          <div class="list-item-body">
+            <div class="list-item-title">#INV/2025-26/088</div>
+            <div class="list-item-sub">Patel Exports</div>
+          </div>
+          <div class="list-item-right">
+            <div class="list-item-amount">&#8377;48,500</div>
+            <span class="badge badge-overdue">Overdue</span>
+          </div>
+        </div>
+        <div class="list-item">
+          <div class="list-item-icon"><span class="material-symbols-outlined" style="color:var(--primary);">description</span></div>
+          <div class="list-item-body">
+            <div class="list-item-title">#INV/2025-26/087</div>
+            <div class="list-item-sub">Gupta Electronics</div>
+          </div>
+          <div class="list-item-right">
+            <div class="list-item-amount">&#8377;89,000</div>
+            <span class="badge badge-sent">Sent</span>
+          </div>
+        </div>
+        <div class="list-item">
+          <div class="list-item-icon"><span class="material-symbols-outlined" style="color:var(--primary);">description</span></div>
+          <div class="list-item-body">
+            <div class="list-item-title">#INV/2025-26/086</div>
+            <div class="list-item-sub">Singh &amp; Associates</div>
+          </div>
+          <div class="list-item-right">
+            <div class="list-item-amount">&#8377;32,400</div>
+            <span class="badge badge-pending">Pending</span>
+          </div>
+        </div>
+      </div>
+
+      <button style="width:100%;margin-top:12px;padding:13px;font-size:14px;font-weight:600;color:var(--primary);background:transparent;border:1.5px solid rgba(70,72,212,.25);border-radius:var(--r-full);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-family:'Work Sans',sans-serif;">
+        <span class="material-symbols-outlined" style="font-size:18px;">expand_more</span>
+        Load All Invoices
+      </button>
+    </div>
+  </div>
+</div>
+
+<button class="fab" title="New Invoice">
+  <span class="material-symbols-outlined" style="font-size:28px;">add</span>
+</button>
+
+<nav class="bottom-nav">
+  <a class="nav-tab" href="01-dashboard.html">
+    <div class="nav-pill"><span class="material-symbols-outlined">analytics</span><span class="nav-label">Insights</span></div>
+  </a>
+  <a class="nav-tab active" href="02-invoice-list.html">
+    <div class="nav-pill"><span class="material-symbols-outlined">auto_awesome</span><span class="nav-label">Automation</span></div>
+  </a>
+  <a class="nav-tab" href="05-client-list.html">
+    <div class="nav-pill"><span class="material-symbols-outlined">group</span><span class="nav-label">Clients</span></div>
+  </a>
+  <a class="nav-tab" href="10-settings.html">
+    <div class="nav-pill"><span class="material-symbols-outlined">settings</span><span class="nav-label">Config</span></div>
+  </a>
+</nav>
+</body>
+</html>

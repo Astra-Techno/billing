@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reports — FinanceAI</title>
+<link rel="stylesheet" href="_base.css">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <span class="material-symbols-outlined icon-fill" style="color:var(--primary);font-size:28px;">receipt_long</span>
+    <span class="sidebar-logo">FinanceAI</span>
+  </div>
+  <div class="sidebar-nav">
+    <div class="sidebar-section-label">Menu</div>
+    <a class="sidebar-item" href="01-dashboard.html"><span class="material-symbols-outlined">analytics</span>Insights</a>
+    <a class="sidebar-item" href="02-invoice-list.html"><span class="material-symbols-outlined">auto_awesome</span>Automation</a>
+    <a class="sidebar-item" href="05-client-list.html"><span class="material-symbols-outlined">group</span>Clients</a>
+    <a class="sidebar-item" href="07-quote-list.html"><span class="material-symbols-outlined">request_quote</span>Quotes</a>
+    <a class="sidebar-item" href="08-expense-list.html"><span class="material-symbols-outlined">account_balance_wallet</span>Expenses</a>
+    <a class="sidebar-item" href="11-eway-bill-list.html"><span class="material-symbols-outlined">local_shipping</span>E-way Bills</a>
+    <a class="sidebar-item active" href="09-reports.html"><span class="material-symbols-outlined">bar_chart</span>Reports</a>
+    <div class="sidebar-section-label" style="margin-top:8px;">Account</div>
+    <a class="sidebar-item" href="10-settings.html"><span class="material-symbols-outlined">settings</span>Configuration</a>
+  </div>
+  <div style="padding:16px;border-top:1px solid rgba(199,196,215,.3);">
+    <div style="display:flex;align-items:center;gap:10px;"><div class="avatar-sm">RK</div><div><div style="font-size:13px;font-weight:600;">Ramesh Kumar</div><div style="font-size:11px;color:var(--on-surface-3);">Premium Plan</div></div></div>
+  </div>
+</nav>
+
+<div class="app-bar">
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button class="icon-btn"><span class="material-symbols-outlined">menu</span></button>
+    <span class="app-bar-brand">FinanceAI</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button class="icon-btn"><span class="material-symbols-outlined">download</span></button>
+    <div class="avatar-sm">RK</div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="content-section">
+
+    <div class="ai-banner">
+      <span class="material-symbols-outlined icon-fill ai-banner-icon">auto_awesome</span>
+      <div>
+        <div class="ai-banner-tag">AI Forecast</div>
+        <div class="ai-banner-text">Q2 FY2025-26 revenue projected at <strong>&#8377;38.4L</strong> — 17% growth vs Q1. Collection efficiency at 94%.</div>
+      </div>
+    </div>
+
+    <!-- Period Selector -->
+    <div class="filter-row" style="padding:0;">
+      <div class="filter-chip active">This Month</div>
+      <div class="filter-chip">This Quarter</div>
+      <div class="filter-chip">This Year</div>
+      <div class="filter-chip">Custom</div>
+    </div>
+
+    <!-- Revenue KPI + Chart -->
+    <div class="kpi-card">
+      <div class="kpi-label">
+        Total Revenue — Jun 2025
+        <span class="material-symbols-outlined" style="font-size:20px;color:var(--primary);">trending_up</span>
+      </div>
+      <div class="kpi-value">&#8377;12.4L</div>
+      <div class="kpi-delta">+14.2% vs May 2025</div>
+
+      <div class="chart-area" style="margin-top:16px;">
+        <svg viewBox="0 0 340 100" width="100%" height="100" preserveAspectRatio="none">
+          <line x1="0" y1="80" x2="340" y2="80" stroke="rgba(199,196,215,.5)" stroke-width="0.5" stroke-dasharray="4,3"/>
+          <line x1="0" y1="55" x2="340" y2="55" stroke="rgba(199,196,215,.5)" stroke-width="0.5" stroke-dasharray="4,3"/>
+          <line x1="0" y1="30" x2="340" y2="30" stroke="rgba(199,196,215,.5)" stroke-width="0.5" stroke-dasharray="4,3"/>
+          <path d="M0,85 L48,75 L96,78 L144,60 L192,55 L240,42 L288,35 L340,15" fill="none" stroke="#4648d4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M0,85 L48,75 L96,78 L144,60 L192,55 L240,42 L288,35 L340,15 L340,90 L0,90 Z" fill="url(#rg)" opacity="0.12"/>
+          <circle cx="340" cy="15" r="5" fill="#4648d4" stroke="#fff" stroke-width="2"/>
+          <defs>
+            <linearGradient id="rg" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" style="stop-color:#4648d4;stop-opacity:1"/>
+              <stop offset="100%" style="stop-color:#4648d4;stop-opacity:0"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="chart-labels">
+          <span class="chart-label">W1</span>
+          <span class="chart-label">W2</span>
+          <span class="chart-label">W3</span>
+          <span class="chart-label">W4</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3-col stats -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+      <div class="kpi-card" style="padding:14px;text-align:center;">
+        <div style="font-size:10px;color:var(--on-surface-3);font-weight:600;text-transform:uppercase;">Invoiced</div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:800;color:var(--on-surface);margin-top:4px;">&#8377;14.2L</div>
+      </div>
+      <div class="kpi-card" style="padding:14px;text-align:center;">
+        <div style="font-size:10px;color:var(--on-surface-3);font-weight:600;text-transform:uppercase;">Collected</div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:800;color:var(--green);margin-top:4px;">&#8377;12.4L</div>
+      </div>
+      <div class="kpi-card" style="padding:14px;text-align:center;">
+        <div style="font-size:10px;color:var(--on-surface-3);font-weight:600;text-transform:uppercase;">Pending</div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:800;color:var(--amber);margin-top:4px;">&#8377;1.8L</div>
+      </div>
+    </div>
+
+    <!-- GST Summary -->
+    <div class="card-p">
+      <div class="section-head" style="margin-bottom:12px;">
+        <span class="section-title">GST Summary — Jun 2025</span>
+        <span class="section-link">GSTR-1</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+        <div style="background:var(--surface-low);border-radius:var(--r-md);padding:12px;text-align:center;">
+          <div style="font-size:11px;color:var(--on-surface-3);margin-bottom:4px;">CGST</div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:700;color:var(--on-surface);">&#8377;74,400</div>
+        </div>
+        <div style="background:var(--surface-low);border-radius:var(--r-md);padding:12px;text-align:center;">
+          <div style="font-size:11px;color:var(--on-surface-3);margin-bottom:4px;">SGST</div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:700;color:var(--on-surface);">&#8377;74,400</div>
+        </div>
+        <div style="background:var(--surface-low);border-radius:var(--r-md);padding:12px;text-align:center;">
+          <div style="font-size:11px;color:var(--on-surface-3);margin-bottom:4px;">IGST</div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:700;color:var(--on-surface);">&#8377;31,600</div>
+        </div>
+        <div style="background:var(--primary-bg);border-radius:var(--r-md);padding:12px;text-align:center;">
+          <div style="font-size:11px;color:var(--primary);font-weight:600;margin-bottom:4px;">Total GST</div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:700;color:var(--primary);">&#8377;1.8L</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;background:var(--green-bg);border-radius:var(--r-md);padding:10px 12px;">
+        <span class="material-symbols-outlined icon-fill" style="color:var(--green);font-size:18px;">verified</span>
+        <span style="font-size:12px;color:var(--green-text);font-weight:600;">GSTR-1 auto-filed &middot; ITC &#8377;48,200 available</span>
+      </div>
+    </div>
+
+    <!-- Top Clients -->
+    <div>
+      <div class="section-head" style="margin-bottom:12px;">
+        <span class="section-title">Top Clients</span>
+        <span class="section-link">View All</span>
+      </div>
+      <div class="section-card">
+        <div class="list-item">
+          <div class="avatar" style="width:40px;height:40px;background:linear-gradient(135deg,#4648d4,#2f2ebe);font-size:15px;">S</div>
+          <div class="list-item-body">
+            <div class="list-item-title">Sharma Textiles</div>
+            <div style="margin-top:4px;">
+              <div style="height:5px;background:var(--surface-highest);border-radius:3px;overflow:hidden;width:140px;">
+                <div style="height:100%;background:var(--primary);border-radius:3px;width:85%;"></div>
+              </div>
+            </div>
+          </div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;color:var(--on-surface);">&#8377;3.2L</div>
+        </div>
+        <div class="list-item">
+          <div class="avatar" style="width:40px;height:40px;background:linear-gradient(135deg,#7c3aed,#5b21b6);font-size:15px;">S</div>
+          <div class="list-item-body">
+            <div class="list-item-title">Singh &amp; Associates</div>
+            <div style="margin-top:4px;">
+              <div style="height:5px;background:var(--surface-highest);border-radius:3px;overflow:hidden;width:140px;">
+                <div style="height:100%;background:#7c3aed;border-radius:3px;width:68%;"></div>
+              </div>
+            </div>
+          </div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;color:var(--on-surface);">&#8377;2.6L</div>
+        </div>
+        <div class="list-item">
+          <div class="avatar" style="width:40px;height:40px;background:linear-gradient(135deg,#e37400,#b05e00);font-size:15px;">G</div>
+          <div class="list-item-body">
+            <div class="list-item-title">Gupta Electronics</div>
+            <div style="margin-top:4px;">
+              <div style="height:5px;background:var(--surface-highest);border-radius:3px;overflow:hidden;width:140px;">
+                <div style="height:100%;background:var(--amber);border-radius:3px;width:44%;"></div>
+              </div>
+            </div>
+          </div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;color:var(--on-surface);">&#8377;1.7L</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Export -->
+    <button class="btn btn-outline" style="width:100%;">
+      <span class="material-symbols-outlined" style="font-size:18px;">file_download</span>
+      Export Report (PDF / Excel)
+    </button>
+
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <a class="nav-tab" href="01-dashboard.html"><div class="nav-pill"><span class="material-symbols-outlined">analytics</span><span class="nav-label">Insights</span></div></a>
+  <a class="nav-tab" href="02-invoice-list.html"><div class="nav-pill"><span class="material-symbols-outlined">auto_awesome</span><span class="nav-label">Automation</span></div></a>
+  <a class="nav-tab" href="05-client-list.html"><div class="nav-pill"><span class="material-symbols-outlined">group</span><span class="nav-label">Clients</span></div></a>
+  <a class="nav-tab" href="10-settings.html"><div class="nav-pill"><span class="material-symbols-outlined">settings</span><span class="nav-label">Config</span></div></a>
+</nav>
+</body>
+</html>

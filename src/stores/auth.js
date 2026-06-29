@@ -9,7 +9,13 @@ export const useAuthStore = defineStore('auth', () => {
   const businesses = ref(JSON.parse(localStorage.getItem('businesses') || '[]'))
 
   const isSuperAdmin  = computed(() => !!(user.value?.is_super_admin))
-  const isLoggedIn    = computed(() => !!token.value && (!!businessId.value || isSuperAdmin.value))
+  const isLoggedIn = computed(() => {
+    if (!token.value) return false
+    if (isSuperAdmin.value) return true
+    if (businessId.value) return true
+    // Logged in with token but business not scoped yet (multi-business edge case)
+    return (businesses.value?.length ?? 0) > 0
+  })
 
   // Role of current user in the active business
   const role = computed(() => {
@@ -39,7 +45,20 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function login(email, password) {
     const { data } = await api.post('login', { email, password })
-    setSession(data.data)
+    const session = data.data
+
+    // API leaves business_id null when user has multiple businesses — pick first & scope token
+    if (!session.business_id && session.businesses?.length > 0) {
+      setSession({ ...session, business_id: session.businesses[0].id })
+      try {
+        await switchBusiness(session.businesses[0].id)
+      } catch {
+        // Token may already work; keep first business selected in storage
+      }
+      return data
+    }
+
+    setSession(session)
     return data
   }
 

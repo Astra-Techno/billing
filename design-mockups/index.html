@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinanceAI — Design Mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Work Sans',sans-serif;
+  background:linear-gradient(160deg,#0d0e2e 0%,#111133 50%,#1a1040 100%);
+  min-height:100vh;
+  padding:48px 24px 72px;
+  -webkit-font-smoothing:antialiased;
+  color:white;
+}
+
+.page-header{
+  text-align:center;
+  margin-bottom:52px;
+}
+
+.logo-row{
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  margin-bottom:20px;
+}
+.logo-mark{
+  width:52px;height:52px;border-radius:16px;
+  background:rgba(70,72,212,.25);
+  border:1.5px solid rgba(70,72,212,.50);
+  display:flex;align-items:center;justify-content:center;
+}
+
+.version-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(70,72,212,.20);
+  border:1px solid rgba(70,72,212,.40);
+  border-radius:20px;padding:5px 14px;
+  font-size:12px;font-weight:700;color:#c0c1ff;
+  margin-bottom:16px;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+
+.page-title{
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:42px;font-weight:800;
+  background:linear-gradient(135deg,#c0c1ff,#a5b4fc,#67e8f9);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  letter-spacing:-.02em;
+  margin-bottom:12px;
+  line-height:1.15;
+}
+
+.page-sub{
+  font-size:15px;color:rgba(255,255,255,.55);
+  line-height:1.65;max-width:520px;margin:0 auto;
+}
+
+.tokens-row{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  flex-wrap:wrap;margin:28px 0 52px;
+}
+.token{
+  display:flex;align-items:center;gap:7px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:10px;padding:7px 12px;
+  font-size:12px;color:rgba(255,255,255,.65);
+}
+.token-dot{width:12px;height:12px;border-radius:4px;flex-shrink:0;}
+
+/* Gallery grid */
+.gallery{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));
+  gap:28px;
+  max-width:1400px;
+  margin:0 auto;
+}
+
+.page-card{
+  display:flex;flex-direction:column;
+  text-decoration:none;
+  cursor:pointer;
+}
+
+.phone-preview{
+  width:100%;
+  aspect-ratio:390/700;
+  border-radius:28px;
+  overflow:hidden;
+  background:#111133;
+  box-shadow:
+    0 0 0 1px rgba(70,72,212,.15),
+    0 0 0 8px rgba(0,0,0,.20),
+    0 24px 56px rgba(0,0,0,.55),
+    0 48px 72px rgba(0,0,0,.20);
+  position:relative;
+  transition:transform .22s ease, box-shadow .22s ease;
+  margin-bottom:14px;
+}
+
+.page-card:hover .phone-preview{
+  transform:translateY(-8px) scale(1.02);
+  box-shadow:
+    0 0 0 1px rgba(70,72,212,.30),
+    0 0 0 8px rgba(0,0,0,.24),
+    0 40px 72px rgba(0,0,0,.60),
+    0 0 60px rgba(70,72,212,.18);
+}
+
+.phone-preview iframe{
+  width:390px;
+  height:844px;
+  border:none;
+  transform-origin:top left;
+  pointer-events:none;
+}
+
+.card-label{
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:14px;font-weight:700;color:white;
+  margin-bottom:3px;
+  display:flex;align-items:center;gap:8px;
+}
+.card-sub{font-size:12px;color:rgba(255,255,255,.42)}
+
+.card-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:22px;height:22px;border-radius:7px;flex-shrink:0;
+  background:rgba(70,72,212,.35);
+  border:1px solid rgba(70,72,212,.55);
+  font-size:11px;font-weight:800;color:#c0c1ff;
+}
+
+.gallery-footer{
+  text-align:center;
+  margin-top:56px;
+  font-size:13px;color:rgba(255,255,255,.30);
+  line-height:1.8;
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="version-badge">
+    <span class="material-symbols-outlined" style="font-size:13px;font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 20;">auto_awesome</span>
+    FinanceAI &middot; Responsive Design System
+  </div>
+  <div class="logo-row">
+    <div class="logo-mark">
+      <span class="material-symbols-outlined" style="font-size:26px;color:#c0c1ff;font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24;">receipt_long</span>
+    </div>
+    <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:28px;font-weight:800;color:white;letter-spacing:-.01em;">FinanceAI</div>
+  </div>
+  <div class="page-title">Smart Billing for<br>Indian Businesses</div>
+  <div class="page-sub">AI-powered invoicing with GST compliance, indigo design system, and full responsive layout — mobile, tablet &amp; desktop.</div>
+
+  <div class="tokens-row">
+    <div class="token"><div class="token-dot" style="background:#4648d4"></div>Primary Indigo</div>
+    <div class="token"><div class="token-dot" style="background:#d5e0f8"></div>Sec. Container</div>
+    <div class="token"><div class="token-dot" style="background:#2da44e"></div>Success Green</div>
+    <div class="token"><div class="token-dot" style="background:#d97706"></div>Amber</div>
+    <div class="token"><div class="token-dot" style="background:#dc2626"></div>Error Red</div>
+    <div class="token"><div class="token-dot" style="background:#fcf8ff"></div>Surface</div>
+    <div class="token">
+      <span class="material-symbols-outlined" style="font-size:12px;">font_download</span>
+      Plus Jakarta + Work Sans
+    </div>
+    <div class="token">
+      <span class="material-symbols-outlined" style="font-size:12px;">shield</span>
+      GST Compliant
+    </div>
+  </div>
+</div>
+
+<div class="gallery">
+
+  <a class="page-card" href="00-login.html" target="_blank">
+    <div class="phone-preview"><iframe src="00-login.html"></iframe></div>
+    <div class="card-label"><span class="card-num">00</span>Login / Onboarding</div>
+    <div class="card-sub">Biometric login · GSTIN · Trust signals</div>
+  </a>
+
+  <a class="page-card" href="01-dashboard.html" target="_blank">
+    <div class="phone-preview"><iframe src="01-dashboard.html"></iframe></div>
+    <div class="card-label"><span class="card-num">01</span>Dashboard — Insights</div>
+    <div class="card-sub">Revenue KPI · AI banner · Line chart · Activity</div>
+  </a>
+
+  <a class="page-card" href="02-invoice-list.html" target="_blank">
+    <div class="phone-preview"><iframe src="02-invoice-list.html"></iframe></div>
+    <div class="card-label"><span class="card-num">02</span>Automation Hub</div>
+    <div class="card-sub">Smart rules · Filter chips · Status badges</div>
+  </a>
+
+  <a class="page-card" href="03-invoice-detail.html" target="_blank">
+    <div class="phone-preview"><iframe src="03-invoice-detail.html"></iframe></div>
+    <div class="card-label"><span class="card-num">03</span>Invoice Detail</div>
+    <div class="card-sub">Amount hero · GST breakdown · IRN · Timeline</div>
+  </a>
+
+  <a class="page-card" href="04-invoice-form.html" target="_blank">
+    <div class="phone-preview"><iframe src="04-invoice-form.html"></iframe></div>
+    <div class="card-label"><span class="card-num">04</span>New Invoice Form</div>
+    <div class="card-sub">Line items · HSN/SAC · GSTIN verify · AI tips</div>
+  </a>
+
+  <a class="page-card" href="05-client-list.html" target="_blank">
+    <div class="phone-preview"><iframe src="05-client-list.html"></iframe></div>
+    <div class="card-label"><span class="card-num">05</span>Client List</div>
+    <div class="card-sub">Risk bars · LTV · AI portfolio insight</div>
+  </a>
+
+  <a class="page-card" href="06-client-detail.html" target="_blank">
+    <div class="phone-preview"><iframe src="06-client-detail.html"></iframe></div>
+    <div class="card-label"><span class="card-num">06</span>Client Profile</div>
+    <div class="card-sub">Hero banner · AI risk score · Recent invoices</div>
+  </a>
+
+  <a class="page-card" href="07-quote-list.html" target="_blank">
+    <div class="phone-preview"><iframe src="07-quote-list.html"></iframe></div>
+    <div class="card-label"><span class="card-num">07</span>Quotations</div>
+    <div class="card-sub">Stat counts · Filter chips · Expiry warnings</div>
+  </a>
+
+  <a class="page-card" href="08-expense-list.html" target="_blank">
+    <div class="phone-preview"><iframe src="08-expense-list.html"></iframe></div>
+    <div class="card-label"><span class="card-num">08</span>Expenses</div>
+    <div class="card-sub">Bar chart · Category breakdown · ITC badges</div>
+  </a>
+
+  <a class="page-card" href="09-reports.html" target="_blank">
+    <div class="phone-preview"><iframe src="09-reports.html"></iframe></div>
+    <div class="card-label"><span class="card-num">09</span>Reports &amp; Analytics</div>
+    <div class="card-sub">Revenue chart · GST summary · Top clients</div>
+  </a>
+
+  <a class="page-card" href="10-settings.html" target="_blank">
+    <div class="phone-preview"><iframe src="10-settings.html"></iframe></div>
+    <div class="card-label"><span class="card-num">10</span>Configuration</div>
+    <div class="card-sub">AI settings · Integrations · GST config</div>
+  </a>
+
+  <a class="page-card" href="11-eway-bill-list.html" target="_blank">
+    <div class="phone-preview"><iframe src="11-eway-bill-list.html"></iframe></div>
+    <div class="card-label"><span class="card-num">11</span>E-way Bill List</div>
+    <div class="card-sub">Active · Expiring · Expired · AI expiry alert</div>
+  </a>
+
+  <a class="page-card" href="12-eway-bill-form.html" target="_blank">
+    <div class="phone-preview"><iframe src="12-eway-bill-form.html"></iframe></div>
+    <div class="card-label"><span class="card-num">12</span>Generate E-way Bill</div>
+    <div class="card-sub">Auto-filled from invoice · Part A + B · AI validity hint</div>
+  </a>
+
+  <a class="page-card" href="13-eway-bill-detail.html" target="_blank">
+    <div class="phone-preview"><iframe src="13-eway-bill-detail.html"></iframe></div>
+    <div class="card-label"><span class="card-num">13</span>E-way Bill Detail</div>
+    <div class="card-sub">Validity ring · QR · Route · Extend · Print · Cancel</div>
+  </a>
+
+</div>
+
+<div class="gallery-footer">
+  <div style="margin-bottom:5px;">FinanceAI — Responsive Design System v6</div>
+  <div>Deep Indigo Palette &middot; Plus Jakarta Sans + Work Sans &middot; GST Ready &middot; Indian Fintech</div>
+  <div style="margin-top:8px;font-size:11px;color:rgba(255,255,255,.18);">14 screens &middot; Mobile + Tablet + Desktop &middot; Material Symbols &middot; AI-powered billing &middot; E-way Bill</div>
+</div>
+
+<script>
+document.querySelectorAll('.phone-preview').forEach(wrap => {
+  const iframe = wrap.querySelector('iframe');
+  if (!iframe) return;
+  function scaleFrame() {
+    const w = wrap.clientWidth;
+    const scale = w / 390;
+    iframe.style.transform = `scale(${scale})`;
+    iframe.style.width = '390px';
+    iframe.style.height = '844px';
+    iframe.style.transformOrigin = 'top left';
+  }
+  scaleFrame();
+  window.addEventListener('resize', scaleFrame);
+});
+</script>
+</body>
+</html>

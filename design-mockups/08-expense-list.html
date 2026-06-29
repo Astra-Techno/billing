@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expenses — FinanceAI</title>
+<link rel="stylesheet" href="_base.css">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <span class="material-symbols-outlined icon-fill" style="color:var(--primary);font-size:28px;">receipt_long</span>
+    <span class="sidebar-logo">FinanceAI</span>
+  </div>
+  <div class="sidebar-nav">
+    <div class="sidebar-section-label">Menu</div>
+    <a class="sidebar-item" href="01-dashboard.html"><span class="material-symbols-outlined">analytics</span>Insights</a>
+    <a class="sidebar-item" href="02-invoice-list.html"><span class="material-symbols-outlined">auto_awesome</span>Automation</a>
+    <a class="sidebar-item" href="05-client-list.html"><span class="material-symbols-outlined">group</span>Clients</a>
+    <a class="sidebar-item" href="07-quote-list.html"><span class="material-symbols-outlined">request_quote</span>Quotes</a>
+    <a class="sidebar-item active" href="08-expense-list.html"><span class="material-symbols-outlined">account_balance_wallet</span>Expenses</a>
+    <a class="sidebar-item" href="11-eway-bill-list.html"><span class="material-symbols-outlined">local_shipping</span>E-way Bills</a>
+    <a class="sidebar-item" href="09-reports.html"><span class="material-symbols-outlined">bar_chart</span>Reports</a>
+    <div class="sidebar-section-label" style="margin-top:8px;">Account</div>
+    <a class="sidebar-item" href="10-settings.html"><span class="material-symbols-outlined">settings</span>Configuration</a>
+  </div>
+  <div style="padding:16px;border-top:1px solid rgba(199,196,215,.3);">
+    <div style="display:flex;align-items:center;gap:10px;"><div class="avatar-sm">RK</div><div><div style="font-size:13px;font-weight:600;">Ramesh Kumar</div><div style="font-size:11px;color:var(--on-surface-3);">Premium Plan</div></div></div>
+  </div>
+</nav>
+
+<div class="app-bar">
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button class="icon-btn"><span class="material-symbols-outlined">menu</span></button>
+    <span class="app-bar-brand">FinanceAI</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button class="icon-btn"><span class="material-symbols-outlined">download</span></button>
+    <div class="avatar-sm">RK</div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="content-section">
+
+    <div class="ai-banner">
+      <span class="material-symbols-outlined icon-fill ai-banner-icon">auto_awesome</span>
+      <div>
+        <div class="ai-banner-tag">AI Insight</div>
+        <div class="ai-banner-text">Office supplies spending is <strong>23% above</strong> last month. AI has auto-categorized 94% of expenses.</div>
+      </div>
+    </div>
+
+    <!-- Monthly Spend KPI -->
+    <div class="kpi-card">
+      <div class="kpi-label">
+        June 2025 Expenses
+        <span style="font-size:12px;color:var(--on-surface-3);text-transform:none;font-weight:400;">vs &#8377;1.8L last month</span>
+      </div>
+      <div class="kpi-value">&#8377;2.2L</div>
+      <div class="kpi-delta neg">+22.2% vs last month</div>
+
+      <div class="bar-chart" style="margin-top:16px;height:60px;">
+        <div class="bar" style="height:40%;"></div>
+        <div class="bar" style="height:55%;"></div>
+        <div class="bar" style="height:48%;"></div>
+        <div class="bar" style="height:65%;"></div>
+        <div class="bar" style="height:50%;"></div>
+        <div class="bar active" style="height:82%;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-around;margin-top:4px;">
+        <span style="font-size:10px;color:var(--on-surface-3);">Jan</span>
+        <span style="font-size:10px;color:var(--on-surface-3);">Feb</span>
+        <span style="font-size:10px;color:var(--on-surface-3);">Mar</span>
+        <span style="font-size:10px;color:var(--on-surface-3);">Apr</span>
+        <span style="font-size:10px;color:var(--on-surface-3);">May</span>
+        <span style="font-size:10px;color:var(--primary);font-weight:700;">Jun</span>
+      </div>
+    </div>
+
+    <!-- Category Breakdown -->
+    <div>
+      <div class="section-head" style="margin-bottom:10px;">
+        <span class="section-title">By Category</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div class="kpi-card" style="padding:14px;border-left:3px solid var(--primary);">
+          <div style="font-size:11px;color:var(--on-surface-3);margin-bottom:4px;">Purchases</div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:700;color:var(--on-surface);">&#8377;1.4L</div>
+          <div style="font-size:11px;color:var(--on-surface-3);">63%</div>
+        </div>
+        <div class="kpi-card" style="padding:14px;border-left:3px solid var(--amber);">
+          <div style="font-size:11px;color:var(--on-surface-3);margin-bottom:4px;">Office &amp; Admin</div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:700;color:var(--on-surface);">&#8377;42,000</div>
+          <div style="font-size:11px;color:var(--on-surface-3);">19%</div>
+        </div>
+        <div class="kpi-card" style="padding:14px;border-left:3px solid var(--green);">
+          <div style="font-size:11px;color:var(--on-surface-3);margin-bottom:4px;">Travel</div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:700;color:var(--on-surface);">&#8377;28,000</div>
+          <div style="font-size:11px;color:var(--on-surface-3);">13%</div>
+        </div>
+        <div class="kpi-card" style="padding:14px;border-left:3px solid var(--error);">
+          <div style="font-size:11px;color:var(--on-surface-3);margin-bottom:4px;">Other</div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:700;color:var(--on-surface);">&#8377;12,000</div>
+          <div style="font-size:11px;color:var(--on-surface-3);">5%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="filter-row" style="padding:0;">
+      <div class="filter-chip active">All</div>
+      <div class="filter-chip">Purchases</div>
+      <div class="filter-chip">Travel</div>
+      <div class="filter-chip">Office</div>
+      <div class="filter-chip">Other</div>
+    </div>
+
+    <!-- Expense List -->
+    <div class="section-card">
+      <div class="list-item">
+        <div class="list-item-icon" style="background:var(--primary-bg);"><span class="material-symbols-outlined" style="color:var(--primary);">inventory_2</span></div>
+        <div class="list-item-body"><div class="list-item-title">Raw Material Purchase</div><div class="list-item-sub">26 Jun &middot; GST Input Credit</div></div>
+        <div class="list-item-right"><div class="list-item-amount" style="color:var(--error);">-&#8377;82,000</div><span class="badge badge-paid" style="font-size:10px;">ITC Eligible</span></div>
+      </div>
+      <div class="list-item">
+        <div class="list-item-icon" style="background:var(--amber-bg);"><span class="material-symbols-outlined" style="color:var(--amber);">laptop</span></div>
+        <div class="list-item-body"><div class="list-item-title">Office Supplies</div><div class="list-item-sub">24 Jun &middot; Admin</div></div>
+        <div class="list-item-right"><div class="list-item-amount" style="color:var(--error);">-&#8377;18,500</div><span class="badge badge-draft" style="font-size:10px;">No ITC</span></div>
+      </div>
+      <div class="list-item">
+        <div class="list-item-icon" style="background:var(--green-bg);"><span class="material-symbols-outlined" style="color:var(--green);">local_taxi</span></div>
+        <div class="list-item-body"><div class="list-item-title">Client Visit — Mumbai</div><div class="list-item-sub">22 Jun &middot; Travel</div></div>
+        <div class="list-item-right"><div class="list-item-amount" style="color:var(--error);">-&#8377;12,400</div></div>
+      </div>
+      <div class="list-item">
+        <div class="list-item-icon" style="background:var(--surface-highest);"><span class="material-symbols-outlined" style="color:var(--on-surface-2);">power</span></div>
+        <div class="list-item-body"><div class="list-item-title">Electricity Bill</div><div class="list-item-sub">20 Jun &middot; Utilities</div></div>
+        <div class="list-item-right"><div class="list-item-amount" style="color:var(--error);">-&#8377;8,200</div><span class="badge badge-paid" style="font-size:10px;">ITC Eligible</span></div>
+      </div>
+      <div class="list-item">
+        <div class="list-item-icon" style="background:var(--primary-bg);"><span class="material-symbols-outlined" style="color:var(--primary);">precision_manufacturing</span></div>
+        <div class="list-item-body"><div class="list-item-title">Machine Maintenance</div><div class="list-item-sub">18 Jun &middot; Operations</div></div>
+        <div class="list-item-right"><div class="list-item-amount" style="color:var(--error);">-&#8377;15,000</div><span class="badge badge-paid" style="font-size:10px;">ITC Eligible</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<button class="fab" title="Add Expense"><span class="material-symbols-outlined" style="font-size:28px;">add</span></button>
+
+<nav class="bottom-nav">
+  <a class="nav-tab" href="01-dashboard.html"><div class="nav-pill"><span class="material-symbols-outlined">analytics</span><span class="nav-label">Insights</span></div></a>
+  <a class="nav-tab" href="02-invoice-list.html"><div class="nav-pill"><span class="material-symbols-outlined">auto_awesome</span><span class="nav-label">Automation</span></div></a>
+  <a class="nav-tab" href="05-client-list.html"><div class="nav-pill"><span class="material-symbols-outlined">group</span><span class="nav-label">Clients</span></div></a>
+  <a class="nav-tab" href="10-settings.html"><div class="nav-pill"><span class="material-symbols-outlined">settings</span><span class="nav-label">Config</span></div></a>
+</nav>
+</body>
+</html>

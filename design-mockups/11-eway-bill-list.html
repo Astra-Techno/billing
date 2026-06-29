@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-way Bills — FinanceAI</title>
+<link rel="stylesheet" href="_base.css">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <span class="material-symbols-outlined icon-fill" style="color:var(--primary);font-size:28px;">receipt_long</span>
+    <span class="sidebar-logo">FinanceAI</span>
+  </div>
+  <div class="sidebar-nav">
+    <div class="sidebar-section-label">Menu</div>
+    <a class="sidebar-item" href="01-dashboard.html"><span class="material-symbols-outlined">analytics</span>Insights</a>
+    <a class="sidebar-item" href="02-invoice-list.html"><span class="material-symbols-outlined">auto_awesome</span>Automation</a>
+    <a class="sidebar-item" href="05-client-list.html"><span class="material-symbols-outlined">group</span>Clients</a>
+    <a class="sidebar-item" href="07-quote-list.html"><span class="material-symbols-outlined">request_quote</span>Quotes</a>
+    <a class="sidebar-item" href="08-expense-list.html"><span class="material-symbols-outlined">account_balance_wallet</span>Expenses</a>
+    <a class="sidebar-item active" href="11-eway-bill-list.html"><span class="material-symbols-outlined">local_shipping</span>E-way Bills</a>
+    <a class="sidebar-item" href="09-reports.html"><span class="material-symbols-outlined">bar_chart</span>Reports</a>
+    <div class="sidebar-section-label" style="margin-top:8px;">Account</div>
+    <a class="sidebar-item" href="10-settings.html"><span class="material-symbols-outlined">settings</span>Configuration</a>
+  </div>
+  <div style="padding:16px;border-top:1px solid rgba(199,196,215,.3);">
+    <div style="display:flex;align-items:center;gap:10px;"><div class="avatar-sm">RK</div><div><div style="font-size:13px;font-weight:600;">Ramesh Kumar</div><div style="font-size:11px;color:var(--on-surface-3);">Premium Plan</div></div></div>
+  </div>
+</nav>
+
+<div class="app-bar">
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button class="icon-btn"><span class="material-symbols-outlined">menu</span></button>
+    <span class="app-bar-brand">FinanceAI</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button class="icon-btn"><span class="material-symbols-outlined">search</span></button>
+    <div class="avatar-sm">RK</div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="content-section">
+
+    <div class="ai-banner">
+      <span class="material-symbols-outlined icon-fill ai-banner-icon">auto_awesome</span>
+      <div>
+        <div class="ai-banner-tag">AI Alert</div>
+        <div class="ai-banner-text"><strong>3 e-way bills</strong> expire within 12 hours. Extend before goods reach destination to avoid penalty.</div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+      <div style="text-align:center;padding:14px 6px;background:var(--surface);border-radius:var(--r-md);box-shadow:var(--shadow-card);border:1px solid rgba(199,196,215,.2);">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;color:var(--on-surface);">24</div>
+        <div style="font-size:10px;color:var(--on-surface-3);margin-top:2px;">Total</div>
+      </div>
+      <div style="text-align:center;padding:14px 6px;background:var(--surface);border-radius:var(--r-md);box-shadow:var(--shadow-card);border:1px solid rgba(199,196,215,.2);">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;color:var(--green);">14</div>
+        <div style="font-size:10px;color:var(--on-surface-3);margin-top:2px;">Active</div>
+      </div>
+      <div style="text-align:center;padding:14px 6px;background:var(--surface);border-radius:var(--r-md);box-shadow:var(--shadow-card);border:1px solid rgba(199,196,215,.2);">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;color:var(--amber);">3</div>
+        <div style="font-size:10px;color:var(--on-surface-3);margin-top:2px;">Expiring</div>
+      </div>
+      <div style="text-align:center;padding:14px 6px;background:var(--surface);border-radius:var(--r-md);box-shadow:var(--shadow-card);border:1px solid rgba(199,196,215,.2);">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;color:var(--error);">7</div>
+        <div style="font-size:10px;color:var(--on-surface-3);margin-top:2px;">Expired</div>
+      </div>
+    </div>
+
+    <!-- Filter chips -->
+    <div class="filter-row" style="padding:0;">
+      <div class="filter-chip active">All</div>
+      <div class="filter-chip">Active</div>
+      <div class="filter-chip">Expiring Soon</div>
+      <div class="filter-chip">Expired</div>
+      <div class="filter-chip">Cancelled</div>
+    </div>
+
+    <!-- E-way Bill List -->
+    <div class="section-card">
+
+      <!-- Active, expiring soon -->
+      <div class="list-item" style="border-left:3px solid var(--amber);">
+        <div class="list-item-icon" style="background:var(--amber-bg);">
+          <span class="material-symbols-outlined icon-fill" style="color:var(--amber);">local_shipping</span>
+        </div>
+        <div class="list-item-body">
+          <div class="list-item-title">EWB-4302918765</div>
+          <div class="list-item-sub">INV/2025-26/089 &middot; Sharma Textiles</div>
+          <div style="font-size:11px;color:var(--amber-text);font-weight:600;margin-top:3px;">
+            <span class="material-symbols-outlined" style="font-size:12px;vertical-align:middle;">schedule</span>
+            Expires in 8 hrs &middot; Delhi → Mumbai
+          </div>
+        </div>
+        <div class="list-item-right">
+          <div class="list-item-amount" style="font-size:13px;">320 km</div>
+          <span class="badge badge-pending" style="font-size:10px;">Expiring</span>
+        </div>
+      </div>
+
+      <!-- Active -->
+      <div class="list-item">
+        <div class="list-item-icon" style="background:var(--green-bg);">
+          <span class="material-symbols-outlined icon-fill" style="color:var(--green);">local_shipping</span>
+        </div>
+        <div class="list-item-body">
+          <div class="list-item-title">EWB-4302918742</div>
+          <div class="list-item-sub">INV/2025-26/087 &middot; Patel Exports</div>
+          <div style="font-size:11px;color:var(--on-surface-3);margin-top:3px;">
+            Valid till 28 Jun 2025 &middot; Delhi → Surat
+          </div>
+        </div>
+        <div class="list-item-right">
+          <div class="list-item-amount" style="font-size:13px;">1,120 km</div>
+          <span class="badge badge-paid" style="font-size:10px;">Active</span>
+        </div>
+      </div>
+
+      <!-- Active -->
+      <div class="list-item">
+        <div class="list-item-icon" style="background:var(--green-bg);">
+          <span class="material-symbols-outlined icon-fill" style="color:var(--green);">local_shipping</span>
+        </div>
+        <div class="list-item-body">
+          <div class="list-item-title">EWB-4302918710</div>
+          <div class="list-item-sub">INV/2025-26/085 &middot; Singh &amp; Associates</div>
+          <div style="font-size:11px;color:var(--on-surface-3);margin-top:3px;">
+            Valid till 30 Jun 2025 &middot; Delhi → Jaipur
+          </div>
+        </div>
+        <div class="list-item-right">
+          <div class="list-item-amount" style="font-size:13px;">280 km</div>
+          <span class="badge badge-paid" style="font-size:10px;">Active</span>
+        </div>
+      </div>
+
+      <!-- Expired -->
+      <div class="list-item" style="opacity:.7;">
+        <div class="list-item-icon" style="background:var(--surface-highest);">
+          <span class="material-symbols-outlined" style="color:var(--on-surface-3);">local_shipping</span>
+        </div>
+        <div class="list-item-body">
+          <div class="list-item-title">EWB-4302918698</div>
+          <div class="list-item-sub">INV/2025-26/081 &middot; Gupta Electronics</div>
+          <div style="font-size:11px;color:var(--on-surface-3);margin-top:3px;">
+            Expired 22 Jun 2025 &middot; Delhi → Pune
+          </div>
+        </div>
+        <div class="list-item-right">
+          <div class="list-item-amount" style="font-size:13px;">1,430 km</div>
+          <span class="badge badge-expired" style="font-size:10px;">Expired</span>
+        </div>
+      </div>
+
+      <!-- Active, expiring soon -->
+      <div class="list-item" style="border-left:3px solid var(--amber);">
+        <div class="list-item-icon" style="background:var(--amber-bg);">
+          <span class="material-symbols-outlined icon-fill" style="color:var(--amber);">local_shipping</span>
+        </div>
+        <div class="list-item-body">
+          <div class="list-item-title">EWB-4302918654</div>
+          <div class="list-item-sub">INV/2025-26/079 &middot; Kumar Agro Foods</div>
+          <div style="font-size:11px;color:var(--amber-text);font-weight:600;margin-top:3px;">
+            <span class="material-symbols-outlined" style="font-size:12px;vertical-align:middle;">schedule</span>
+            Expires in 4 hrs &middot; Delhi → Ludhiana
+          </div>
+        </div>
+        <div class="list-item-right">
+          <div class="list-item-amount" style="font-size:13px;">310 km</div>
+          <span class="badge badge-pending" style="font-size:10px;">Expiring</span>
+        </div>
+      </div>
+
+      <!-- Cancelled -->
+      <div class="list-item" style="opacity:.65;">
+        <div class="list-item-icon" style="background:var(--error-bg);">
+          <span class="material-symbols-outlined" style="color:var(--error);">local_shipping</span>
+        </div>
+        <div class="list-item-body">
+          <div class="list-item-title">EWB-4302918621</div>
+          <div class="list-item-sub">INV/2025-26/076 &middot; Mehra Construction</div>
+          <div style="font-size:11px;color:var(--on-surface-3);margin-top:3px;">
+            Cancelled 18 Jun 2025
+          </div>
+        </div>
+        <div class="list-item-right">
+          <div class="list-item-amount" style="font-size:13px;">540 km</div>
+          <span class="badge badge-overdue" style="font-size:10px;">Cancelled</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Extend All Expiring -->
+    <button class="btn btn-outline" style="width:100%;">
+      <span class="material-symbols-outlined" style="font-size:18px;">update</span>
+      Extend All Expiring E-way Bills
+    </button>
+
+  </div>
+</div>
+
+<button class="fab" title="Generate E-way Bill" onclick="location.href='12-eway-bill-form.html'">
+  <span class="material-symbols-outlined" style="font-size:26px;">add</span>
+</button>
+
+<nav class="bottom-nav">
+  <a class="nav-tab" href="01-dashboard.html"><div class="nav-pill"><span class="material-symbols-outlined">analytics</span><span class="nav-label">Insights</span></div></a>
+  <a class="nav-tab" href="02-invoice-list.html"><div class="nav-pill"><span class="material-symbols-outlined">auto_awesome</span><span class="nav-label">Automation</span></div></a>
+  <a class="nav-tab" href="05-client-list.html"><div class="nav-pill"><span class="material-symbols-outlined">group</span><span class="nav-label">Clients</span></div></a>
+  <a class="nav-tab" href="10-settings.html"><div class="nav-pill"><span class="material-symbols-outlined">settings</span><span class="nav-label">Config</span></div></a>
+</nav>
+</body>
+</html>

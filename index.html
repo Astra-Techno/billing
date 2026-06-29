@@ -9,6 +9,15 @@
     <meta name="theme-color" content="#1a5fd4" />
     <link rel="icon" type="image/png" href="/logo.png" />
     <title>AI Billing</title>
+    <script>
+      (function () {
+        var ua = navigator.userAgent || '';
+        var wv = /\bwv\b/i.test(ua) || typeof window.SaaS !== 'undefined';
+        if (wv) document.documentElement.classList.add('wv-android');
+        document.documentElement.setAttribute('dir', 'ltr');
+        document.documentElement.setAttribute('lang', 'en');
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Roboto:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Client Profile — FinanceAI</title>
+<link rel="stylesheet" href="_base.css">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+</head>
+<body style="padding-bottom:80px;">
+
+<div class="page-header" style="background:var(--primary);">
+  <button class="icon-btn" style="color:#fff;"><span class="material-symbols-outlined">arrow_back</span></button>
+  <span class="page-header-title" style="color:#fff;">Client Profile</span>
+  <button class="icon-btn" style="color:#fff;"><span class="material-symbols-outlined">edit</span></button>
+  <button class="icon-btn" style="color:#fff;"><span class="material-symbols-outlined">more_vert</span></button>
+</div>
+
+<div class="main" style="max-width:640px;margin:0 auto;">
+  <!-- Client Hero -->
+  <div style="background:linear-gradient(135deg,var(--primary),var(--primary-dark));padding:24px var(--sp-md) 32px;text-align:center;color:#fff;">
+    <div style="width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.2);border:3px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:28px;font-weight:800;color:#fff;margin:0 auto 12px;">S</div>
+    <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:20px;font-weight:700;margin-bottom:4px;">Sharma Textiles Pvt Ltd</div>
+    <div style="font-size:13px;opacity:.8;letter-spacing:.04em;font-family:'Plus Jakarta Sans',sans-serif;">GSTIN: 07AAACS0472C1Z1</div>
+    <div style="margin-top:6px;font-size:12px;opacity:.7;">Delhi (07) &middot; Client since Jan 2023</div>
+    <div style="display:flex;gap:24px;justify-content:center;margin-top:20px;">
+      <div style="text-align:center;"><div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:20px;font-weight:800;">&#8377;18.4L</div><div style="font-size:11px;opacity:.75;margin-top:2px;">Lifetime Value</div></div>
+      <div style="width:1px;background:rgba(255,255,255,.25);"></div>
+      <div style="text-align:center;"><div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:20px;font-weight:800;">12</div><div style="font-size:11px;opacity:.75;margin-top:2px;">Invoices</div></div>
+      <div style="width:1px;background:rgba(255,255,255,.25);"></div>
+      <div style="text-align:center;"><div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:20px;font-weight:800;">100%</div><div style="font-size:11px;opacity:.75;margin-top:2px;">On-time</div></div>
+    </div>
+  </div>
+
+  <div class="content-section">
+    <!-- AI Risk Score -->
+    <div class="kpi-card">
+      <div class="kpi-label">
+        AI Risk Score
+        <span class="material-symbols-outlined icon-fill" style="font-size:18px;color:var(--green);">shield</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;margin-top:8px;">
+        <div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:32px;font-weight:800;color:var(--green);">12</div>
+          <div style="font-size:12px;color:var(--green-text);font-weight:600;">Low Risk</div>
+        </div>
+        <div style="flex:1;">
+          <div class="risk-bar" style="height:8px;"><div class="risk-fill risk-low" style="width:12%;height:100%;"></div></div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;">
+            <span style="font-size:10px;color:var(--green-text);">Low</span>
+            <span style="font-size:10px;color:var(--on-surface-3);">Medium</span>
+            <span style="font-size:10px;color:var(--error-text);">High</span>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:var(--on-surface-3);line-height:1.5;">All 12 invoices paid on time. No disputes. Excellent credit profile.</div>
+    </div>
+
+    <!-- AI Recommendation -->
+    <div class="ai-banner" style="margin:0;">
+      <span class="material-symbols-outlined icon-fill ai-banner-icon">auto_awesome</span>
+      <div>
+        <div class="ai-banner-tag">AI Recommendation</div>
+        <div class="ai-banner-text">Offer <strong>2% early payment discount</strong> — projected to increase invoice frequency by 30%.</div>
+      </div>
+    </div>
+
+    <!-- Contact -->
+    <div class="card-p">
+      <div class="section-head" style="margin-bottom:12px;"><span class="section-title">Contact Details</span></div>
+      <div class="info-row"><span class="info-lbl">Contact Person</span><span class="info-val">Rajesh Sharma</span></div>
+      <div class="info-row"><span class="info-lbl">Phone</span><span class="info-val" style="color:var(--primary);">+91 98765 43210</span></div>
+      <div class="info-row"><span class="info-lbl">Email</span><span class="info-val">billing@sharmatex.com</span></div>
+      <div class="info-row"><span class="info-lbl">Address</span><span class="info-val" style="font-size:12px;">Plot 14, Textiles Hub,<br>Lajpat Nagar, New Delhi</span></div>
+      <div class="info-row"><span class="info-lbl">UPI ID</span><span class="info-val">sharmatex@sbi</span></div>
+    </div>
+
+    <!-- Recent Invoices -->
+    <div>
+      <div class="section-head" style="margin-bottom:12px;"><span class="section-title">Recent Invoices</span><span class="section-link">See All</span></div>
+      <div class="section-card">
+        <div class="list-item">
+          <div class="list-item-icon"><span class="material-symbols-outlined" style="color:var(--primary);">description</span></div>
+          <div class="list-item-body"><div class="list-item-title">#INV/2025-26/089</div><div class="list-item-sub">28 Jun 2025</div></div>
+          <div class="list-item-right"><div class="list-item-amount">&#8377;1,24,000</div><span class="badge badge-paid">Paid</span></div>
+        </div>
+        <div class="list-item">
+          <div class="list-item-icon"><span class="material-symbols-outlined" style="color:var(--primary);">description</span></div>
+          <div class="list-item-body"><div class="list-item-title">#INV/2025-26/062</div><div class="list-item-sub">31 May 2025</div></div>
+          <div class="list-item-right"><div class="list-item-amount">&#8377;98,000</div><span class="badge badge-paid">Paid</span></div>
+        </div>
+        <div class="list-item">
+          <div class="list-item-icon"><span class="material-symbols-outlined" style="color:var(--primary);">description</span></div>
+          <div class="list-item-body"><div class="list-item-title">#INV/2025-26/044</div><div class="list-item-sub">30 Apr 2025</div></div>
+          <div class="list-item-right"><div class="list-item-amount">&#8377;1,10,000</div><span class="badge badge-paid">Paid</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="action-bar" style="max-width:640px;margin:0 auto;">
+  <button class="btn btn-tonal" style="flex:1;padding:12px;"><span class="material-symbols-outlined" style="font-size:18px;">call</span>Call</button>
+  <button class="btn btn-outline" style="flex:1;padding:12px;"><span class="material-symbols-outlined" style="font-size:18px;">chat</span>WhatsApp</button>
+  <button class="btn btn-primary" style="flex:2;padding:12px;"><span class="material-symbols-outlined" style="font-size:18px;">add</span>New Invoice</button>
+</div>
+</body>
+</html>

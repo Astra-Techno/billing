@@ -63,8 +63,9 @@
   .form-input {
     @apply block w-full rounded-xl border border-google-border px-3.5 py-2.5 text-sm text-google-text placeholder-google-muted bg-white shadow-soft focus:border-primary-400 focus:outline-none focus:ring-[3px] focus:ring-primary-100 transition-all duration-150;
     direction: ltr;
-    unicode-bidi: embed;
+    unicode-bidi: plaintext;
     text-align: left;
+    writing-mode: horizontal-tb;
   }
   .form-select { @apply form-input cursor-pointer; }
   .form-textarea { @apply form-input resize-none min-h-[88px]; }
@@ -426,5 +427,34 @@ html, body { direction: ltr !important; }
 input, textarea, select, [contenteditable] {
   direction: ltr !important;
   text-align: left !important;
-  unicode-bidi: isolate !important;
+  unicode-bidi: plaintext !important;
+  writing-mode: horizontal-tb !important;
+}
+
+/* Android WebView: auth screens — sticky footer, scrollable body */
+html.wv-android .auth-page {
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+}
+html.wv-android .auth-form-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+html.wv-android .auth-sticky-footer {
+  position: relative;
+  z-index: 20;
+  background: #f9fafb;
+}
+html.wv-android input,
+html.wv-android textarea,
+html.wv-android select {
+  direction: ltr !important;
+  unicode-bidi: plaintext !important;
+  text-align: left !important;
 }

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configuration — FinanceAI</title>
+<link rel="stylesheet" href="_base.css">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<style>
+.settings-section{
+  background:var(--surface);border-radius:var(--r-xl);
+  box-shadow:var(--shadow-card);border:1px solid rgba(199,196,215,.25);
+  overflow:hidden;margin-bottom:0;
+}
+.settings-section-header{
+  padding:14px var(--sp-md) 8px;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:12px;font-weight:700;
+  color:var(--primary);letter-spacing:.06em;text-transform:uppercase;
+  display:flex;align-items:center;gap:6px;
+}
+.settings-row{
+  display:flex;align-items:center;gap:var(--sp-md);
+  padding:14px var(--sp-md);
+  border-bottom:1px solid rgba(199,196,215,.15);
+  cursor:pointer;transition:background .12s;
+}
+.settings-row:last-child{border-bottom:none;}
+.settings-row:active{background:var(--surface-low);}
+.settings-icon{
+  width:40px;height:40px;border-radius:var(--r-md);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.settings-body{flex:1;min-width:0;}
+.settings-title{font-size:14px;font-weight:600;color:var(--on-surface);margin-bottom:1px;}
+.settings-sub{font-size:12px;color:var(--on-surface-3);}
+.settings-val{font-size:13px;font-weight:600;color:var(--on-surface-2);flex-shrink:0;}
+.slider-track{
+  -webkit-appearance:none;appearance:none;
+  width:100%;height:4px;border-radius:2px;
+  background:linear-gradient(to right, var(--primary) 72%, var(--surface-highest) 72%);
+  outline:none;cursor:pointer;margin-top:4px;
+}
+.slider-track::-webkit-slider-thumb{
+  -webkit-appearance:none;width:20px;height:20px;border-radius:50%;
+  background:var(--primary);box-shadow:0 2px 6px rgba(70,72,212,.35);cursor:pointer;
+}
+.integration-logo{
+  width:40px;height:40px;border-radius:var(--r-md);
+  background:var(--surface-low);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:12px;color:var(--on-surface-2);
+  font-family:'Plus Jakarta Sans',sans-serif;flex-shrink:0;
+}
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <span class="material-symbols-outlined icon-fill" style="color:var(--primary);font-size:28px;">receipt_long</span>
+    <span class="sidebar-logo">FinanceAI</span>
+  </div>
+  <div class="sidebar-nav">
+    <div class="sidebar-section-label">Menu</div>
+    <a class="sidebar-item" href="01-dashboard.html"><span class="material-symbols-outlined">analytics</span>Insights</a>
+    <a class="sidebar-item" href="02-invoice-list.html"><span class="material-symbols-outlined">auto_awesome</span>Automation</a>
+    <a class="sidebar-item" href="05-client-list.html"><span class="material-symbols-outlined">group</span>Clients</a>
+    <a class="sidebar-item" href="07-quote-list.html"><span class="material-symbols-outlined">request_quote</span>Quotes</a>
+    <a class="sidebar-item" href="08-expense-list.html"><span class="material-symbols-outlined">account_balance_wallet</span>Expenses</a>
+    <a class="sidebar-item" href="11-eway-bill-list.html"><span class="material-symbols-outlined">local_shipping</span>E-way Bills</a>
+    <a class="sidebar-item" href="09-reports.html"><span class="material-symbols-outlined">bar_chart</span>Reports</a>
+    <div class="sidebar-section-label" style="margin-top:8px;">Account</div>
+    <a class="sidebar-item active" href="10-settings.html"><span class="material-symbols-outlined">settings</span>Configuration</a>
+  </div>
+  <div style="padding:16px;border-top:1px solid rgba(199,196,215,.3);">
+    <div style="display:flex;align-items:center;gap:10px;"><div class="avatar-sm">RK</div><div><div style="font-size:13px;font-weight:600;">Ramesh Kumar</div><div style="font-size:11px;color:var(--on-surface-3);">Premium Plan</div></div></div>
+  </div>
+</nav>
+
+<div class="app-bar">
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button class="icon-btn"><span class="material-symbols-outlined">menu</span></button>
+    <span class="app-bar-brand">FinanceAI</span>
+  </div>
+  <div class="avatar-sm">RK</div>
+</div>
+
+<div class="main" style="max-width:640px;">
+
+  <!-- Profile Banner -->
+  <div style="background:linear-gradient(135deg,var(--primary),var(--primary-dark));padding:20px var(--sp-md) 24px;display:flex;align-items:center;gap:16px;">
+    <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;color:#fff;flex-shrink:0;">R</div>
+    <div style="color:#fff;">
+      <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:17px;font-weight:700;">Ramesh Kumar Verma</div>
+      <div style="font-size:12px;opacity:.8;margin-top:2px;">GSTIN: 07AABFV9988P1Z6</div>
+      <div style="margin-top:6px;display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.15);border-radius:12px;padding:3px 10px;">
+        <span class="material-symbols-outlined icon-fill" style="font-size:13px;">verified</span>
+        <span style="font-size:11px;font-weight:600;">Premium Plan &middot; Active</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-section">
+
+    <!-- General Billing -->
+    <div class="settings-section">
+      <div class="settings-section-header">
+        <span class="material-symbols-outlined" style="font-size:16px;">business</span>
+        General Billing
+      </div>
+      <div class="settings-row">
+        <div class="settings-icon" style="background:var(--primary-bg);">
+          <span class="material-symbols-outlined" style="color:var(--primary);">storefront</span>
+        </div>
+        <div class="settings-body">
+          <div class="settings-title">Business Name</div>
+          <div class="settings-sub">RK Textiles &amp; Co.</div>
+        </div>
+        <span class="material-symbols-outlined" style="font-size:20px;color:var(--on-surface-3);">chevron_right</span>
+      </div>
+      <div class="settings-row">
+        <div class="settings-icon" style="background:var(--primary-bg);">
+          <span class="material-symbols-outlined" style="color:var(--primary);">receipt</span>
+        </div>
+        <div class="settings-body">
+          <div class="settings-title">Invoice Prefix</div>
+          <div class="settings-sub">INV/2025-26/</div>
+        </div>
+        <span class="material-symbols-outlined" style="font-size:20px;color:var(--on-surface-3);">chevron_right</span>
+      </div>
+      <div class="settings-row">
+        <div class="settings-icon" style="background:var(--green-bg);">
+          <span class="material-symbols-outlined" style="color:var(--green);">account_balance</span>
+        </div>
+        <div class="settings-body">
+          <div class="settings-title">UPI Payment ID</div>
+          <div class="settings-sub">rktextiles@sbi</div>
+        </div>
+        <span class="material-symbols-outlined" style="font-size:20px;color:var(--on-surface-3);">chevron_right</span>
+      </div>
+      <div class="settings-row">
+        <div class="settings-icon" style="background:var(--amber-bg);">
+          <span class="material-symbols-outlined" style="color:var(--amber);">percent</span>
+        </div>
+        <div class="settings-body">
+          <div class="settings-title">Default GST Rate</div>
+          <div class="settings-sub">5% / 12% / 18% / 28%</div>
+        </div>
+        <span class="material-symbols-outlined" style="font-size:20px;color:var(--on-surface-3);">chevron_right</span>
+      </div>
+      <div class="settings-row">
+        <div class="settings-icon" style="background:var(--surface-highest);">
+          <span class="material-symbols-outlined" style="color:var(--on-surface-2);">translate</span>
+        </div>
+        <div class="settings-body">
+          <div class="settings-title">Language</div>
+          <div class="settings-sub">English (India)</div>
+        </div>
+        <span class="settings-val">EN</span>
+      </div>
+    </div>
+
+    <!-- AI Configuration -->
+    <div class="settings-section">
+      <div class="settings-section-header">
+        <span class="material-symbols-outlined icon-fill" style="font-size:16px;">auto_awesome</span>
+        AI Configuration
+      </div>
+
+      <div class="settings-row" style="cursor:default;">
+        <div class="settings-icon" style="background:var(--ai-bg);">
+          <span class="material-symbols-outlined icon-fill" style="color:var(--primary);">psychology</span>
+        </div>
+        <div class="settings-body">
+          <div class="settings-title">Enable AI Features</div>
+          <div class="settings-sub">Insights, suggestions &amp; automation</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" checked>
+          <div class="toggle-track"></div>
+        </label>
+      </div>
+
+      <div class="settings-row" style="flex-direction:column;align-items:flex-start;cursor:default;padding-bottom:0;">
+        <div style="display:flex;align-items:center;gap:var(--sp-md);width:100%;margin-bottom:10px;">
+          <div class="settings-icon" style="background:var(--primary-bg);">
+            <span class="material-symbols-outlined" style="color:var(--primary);">tune</span>
+          </div>
+          <div class="settings-body">
+            <div class="settings-title">AI Confidence Threshold</div>
+            <div class="settings-sub">Actions taken above this confidence</div>
+          </div>
+          <span class="settings-val" style="color:var(--primary);font-weight:700;">72%</span>
+        </div>
+        <div style="width:100%;padding:0 0 14px;">
+          <input type="range" class="slider-track" min="50" max="99" value="72">
+          <div style="display:flex;justify-content:space-between;margin-top:6px;">
+            <span style="font-size:10px;color:var(--on-surface-3);">50% (Aggressive)</span>
+            <span style="font-size:10px;color:var(--on-surface-3);">99% (Conservative)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-row" style="cursor:default;">
+        <div class="settings-icon" style="background:var(--green-bg);">
+          <span class="material-symbols-outlined" style="color:var(--green);">autorenew</span>
+        </div>
+        <div class="settings-body">
+          <div class="settings-title">Autonomous Reconciliation</div>
+          <div class="settings-sub">Auto-match payments daily</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" checked>
+          <div class="toggle-track"></div>
+        </label>
+      </div>
+
+      <div class="settings-row" style="cursor:default;">
+        <div class="settings-icon" style="background:var(--amber-bg);">
+          <span class="material-symbols-outlined" style="color:var(--amber);">notification_important</span>
+        </div>
+        <div class="settings-body">
+          <div class="settings-title">Smart Payment Reminders</div>
+          <div class="settings-sub">AI-timed follow-up messages</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" checked>
+          <div class="toggle-track"></div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Integrations -->
+    <div class="settings-section">
+      <div class="settings-section-header">
+        <span class="material-symbols-outlined" style="font-size:16px;">integration_instructions</span>
+        Integrations
+      </div>
+      <div class="settings-row">
+        <div class="integration-logo" style="background:#eef2ff;color:var(--primary);">T</div>
+        <div class="settings-body">
+          <div class="settings-title">Tally ERP</div>
+          <div class="settings-sub">Connected &middot; Auto-sync enabled</div>
+        </div>
+        <span class="badge badge-paid">Active</span>
+      </div>
+      <div class="settings-row">
+        <div class="integration-logo" style="background:#fff8e1;color:#f57c00;">R</div>
+        <div class="settings-body">
+          <div class="settings-title">Razorpay</div>
+          <div class="settings-sub">UPI &amp; card payments</div>
+        </div>
+        <span class="badge badge-paid">Active</span>
+      </div>
+      <div class="settings-row">
+        <div class="integration-logo" style="background:#e8f5e9;color:#2e7d32;">W</div>
+        <div class="settings-body">
+          <div class="settings-title">WhatsApp Business</div>
+          <div class="settings-sub">Send invoices via WhatsApp</div>
+        </div>
+        <span class="badge badge-pending">Setup</span>
+      </div>
+      <div class="settings-row">
+        <div class="integration-logo">GST</div>
+        <div class="settings-body">
+          <div class="settings-title">GSTN / GSP Portal</div>
+          <div class="settings-sub">Auto GSTR-1 filing</div>
+        </div>
+        <span class="badge badge-paid">Active</span>
+      </div>
+    </div>
+
+    <!-- Account / Danger Zone -->
+    <div class="settings-section">
+      <div class="settings-section-header" style="color:var(--error);">
+        <span class="material-symbols-outlined" style="font-size:16px;">warning</span>
+        Account
+      </div>
+      <div class="settings-row">
+        <div class="settings-icon" style="background:var(--error-bg);">
+          <span class="material-symbols-outlined" style="color:var(--error);">logout</span>
+        </div>
+        <div class="settings-body">
+          <div class="settings-title" style="color:var(--error);">Sign Out</div>
+          <div class="settings-sub">Sign out of this device</div>
+        </div>
+        <span class="material-symbols-outlined" style="font-size:20px;color:var(--on-surface-3);">chevron_right</span>
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:8px 0 4px;">
+      <div style="font-size:12px;color:var(--on-surface-3);">FinanceAI v4.2.1 &middot; Build 2025.06.26</div>
+    </div>
+
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <a class="nav-tab" href="01-dashboard.html"><div class="nav-pill"><span class="material-symbols-outlined">analytics</span><span class="nav-label">Insights</span></div></a>
+  <a class="nav-tab" href="02-invoice-list.html"><div class="nav-pill"><span class="material-symbols-outlined">auto_awesome</span><span class="nav-label">Automation</span></div></a>
+  <a class="nav-tab" href="05-client-list.html"><div class="nav-pill"><span class="material-symbols-outlined">group</span><span class="nav-label">Clients</span></div></a>
+  <a class="nav-tab active" href="10-settings.html"><div class="nav-pill"><span class="material-symbols-outlined">settings</span><span class="nav-label">Config</span></div></a>
+</nav>
+</body>
+</html>

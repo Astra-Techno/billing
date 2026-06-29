@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quotes — FinanceAI</title>
+<link rel="stylesheet" href="_base.css">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <span class="material-symbols-outlined icon-fill" style="color:var(--primary);font-size:28px;">receipt_long</span>
+    <span class="sidebar-logo">FinanceAI</span>
+  </div>
+  <div class="sidebar-nav">
+    <div class="sidebar-section-label">Menu</div>
+    <a class="sidebar-item" href="01-dashboard.html"><span class="material-symbols-outlined">analytics</span>Insights</a>
+    <a class="sidebar-item" href="02-invoice-list.html"><span class="material-symbols-outlined">auto_awesome</span>Automation</a>
+    <a class="sidebar-item" href="05-client-list.html"><span class="material-symbols-outlined">group</span>Clients</a>
+    <a class="sidebar-item active" href="07-quote-list.html"><span class="material-symbols-outlined">request_quote</span>Quotes</a>
+    <a class="sidebar-item" href="08-expense-list.html"><span class="material-symbols-outlined">account_balance_wallet</span>Expenses</a>
+    <a class="sidebar-item" href="11-eway-bill-list.html"><span class="material-symbols-outlined">local_shipping</span>E-way Bills</a>
+    <a class="sidebar-item" href="09-reports.html"><span class="material-symbols-outlined">bar_chart</span>Reports</a>
+    <div class="sidebar-section-label" style="margin-top:8px;">Account</div>
+    <a class="sidebar-item" href="10-settings.html"><span class="material-symbols-outlined">settings</span>Configuration</a>
+  </div>
+  <div style="padding:16px;border-top:1px solid rgba(199,196,215,.3);">
+    <div style="display:flex;align-items:center;gap:10px;"><div class="avatar-sm">RK</div><div><div style="font-size:13px;font-weight:600;">Ramesh Kumar</div><div style="font-size:11px;color:var(--on-surface-3);">Premium Plan</div></div></div>
+  </div>
+</nav>
+
+<div class="page-header">
+  <button class="icon-btn"><span class="material-symbols-outlined">arrow_back</span></button>
+  <span class="page-header-title">Quotations</span>
+  <button class="icon-btn"><span class="material-symbols-outlined">search</span></button>
+  <button class="icon-btn"><span class="material-symbols-outlined">filter_list</span></button>
+</div>
+
+<div class="main">
+  <div class="content-section">
+
+    <div class="ai-banner">
+      <span class="material-symbols-outlined icon-fill ai-banner-icon">auto_awesome</span>
+      <div>
+        <div class="ai-banner-tag">AI Suggestion</div>
+        <div class="ai-banner-text">2 quotes expiring in 3 days. <strong>Tuesday 10 AM</strong> is the optimal follow-up window for your client segment.</div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+      <div style="text-align:center;padding:12px 6px;background:var(--surface);border-radius:var(--r-md);box-shadow:var(--shadow-card);border:1px solid rgba(199,196,215,.2);">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:20px;font-weight:800;color:var(--on-surface);">28</div>
+        <div style="font-size:10px;color:var(--on-surface-3);margin-top:2px;">All</div>
+      </div>
+      <div style="text-align:center;padding:12px 6px;background:var(--surface);border-radius:var(--r-md);box-shadow:var(--shadow-card);border:1px solid rgba(199,196,215,.2);">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:20px;font-weight:800;color:var(--amber);">8</div>
+        <div style="font-size:10px;color:var(--on-surface-3);margin-top:2px;">Draft</div>
+      </div>
+      <div style="text-align:center;padding:12px 6px;background:var(--surface);border-radius:var(--r-md);box-shadow:var(--shadow-card);border:1px solid rgba(199,196,215,.2);">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:20px;font-weight:800;color:var(--green);">11</div>
+        <div style="font-size:10px;color:var(--on-surface-3);margin-top:2px;">Accepted</div>
+      </div>
+      <div style="text-align:center;padding:12px 6px;background:var(--surface);border-radius:var(--r-md);box-shadow:var(--shadow-card);border:1px solid rgba(199,196,215,.2);">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:20px;font-weight:800;color:var(--error);">5</div>
+        <div style="font-size:10px;color:var(--on-surface-3);margin-top:2px;">Expired</div>
+      </div>
+    </div>
+
+    <div class="filter-row" style="padding:0;">
+      <div class="filter-chip active">All</div>
+      <div class="filter-chip">Draft</div>
+      <div class="filter-chip">Sent</div>
+      <div class="filter-chip">Accepted</div>
+      <div class="filter-chip">Expired</div>
+    </div>
+
+    <div class="section-card">
+      <div class="list-item">
+        <div class="list-item-icon" style="background:#ede9fe;"><span class="material-symbols-outlined" style="color:#5b21b6;">request_quote</span></div>
+        <div class="list-item-body"><div class="list-item-title">#QT-2025-012</div><div class="list-item-sub">Sharma Textiles &middot; Expires Jul 5</div></div>
+        <div class="list-item-right"><div class="list-item-amount">&#8377;2,40,000</div><span class="badge badge-sent">Sent</span></div>
+      </div>
+      <div class="list-item">
+        <div class="list-item-icon" style="background:var(--green-bg);"><span class="material-symbols-outlined" style="color:var(--green);">request_quote</span></div>
+        <div class="list-item-body"><div class="list-item-title">#QT-2025-011</div><div class="list-item-sub">Patel Exports &middot; Jun 20</div></div>
+        <div class="list-item-right"><div class="list-item-amount">&#8377;85,000</div><span class="badge badge-accepted">Accepted</span></div>
+      </div>
+      <div class="list-item">
+        <div class="list-item-icon" style="background:var(--amber-bg);"><span class="material-symbols-outlined" style="color:var(--amber);">request_quote</span></div>
+        <div class="list-item-body"><div class="list-item-title">#QT-2025-010</div><div class="list-item-sub">Gupta Electronics &middot; Jun 15</div></div>
+        <div class="list-item-right"><div class="list-item-amount">&#8377;1,20,000</div><span class="badge badge-draft">Draft</span></div>
+      </div>
+      <div class="list-item">
+        <div class="list-item-icon" style="background:var(--surface-highest);"><span class="material-symbols-outlined" style="color:var(--on-surface-3);">request_quote</span></div>
+        <div class="list-item-body"><div class="list-item-title">#QT-2025-009</div><div class="list-item-sub">Singh &amp; Associates &middot; May 30</div></div>
+        <div class="list-item-right"><div class="list-item-amount">&#8377;56,000</div><span class="badge badge-expired">Expired</span></div>
+      </div>
+      <div class="list-item">
+        <div class="list-item-icon" style="background:var(--green-bg);"><span class="material-symbols-outlined" style="color:var(--green);">request_quote</span></div>
+        <div class="list-item-body"><div class="list-item-title">#QT-2025-008</div><div class="list-item-sub">Kumar Agro Foods &middot; Jun 10</div></div>
+        <div class="list-item-right"><div class="list-item-amount">&#8377;34,000</div><span class="badge badge-accepted">Accepted</span></div>
+      </div>
+      <div class="list-item">
+        <div class="list-item-icon" style="background:var(--primary-bg);"><span class="material-symbols-outlined" style="color:var(--primary);">request_quote</span></div>
+        <div class="list-item-body"><div class="list-item-title">#QT-2025-007</div><div class="list-item-sub">Mehra Construction &middot; Jun 28</div></div>
+        <div class="list-item-right"><div class="list-item-amount">&#8377;3,80,000</div><span class="badge badge-sent">Sent</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button class="fab" title="New Quote"><span class="material-symbols-outlined" style="font-size:28px;">add</span></button>
+
+<nav class="bottom-nav">
+  <a class="nav-tab" href="01-dashboard.html"><div class="nav-pill"><span class="material-symbols-outlined">analytics</span><span class="nav-label">Insights</span></div></a>
+  <a class="nav-tab" href="02-invoice-list.html"><div class="nav-pill"><span class="material-symbols-outlined">auto_awesome</span><span class="nav-label">Automation</span></div></a>
+  <a class="nav-tab" href="05-client-list.html"><div class="nav-pill"><span class="material-symbols-outlined">group</span><span class="nav-label">Clients</span></div></a>
+  <a class="nav-tab" href="10-settings.html"><div class="nav-pill"><span class="material-symbols-outlined">settings</span><span class="nav-label">Config</span></div></a>
+</nav>
+</body>
+</html>

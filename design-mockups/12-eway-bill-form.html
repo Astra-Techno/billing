@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generate E-way Bill — FinanceAI</title>
+<link rel="stylesheet" href="_base.css">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<style>
+.section-gap-sm{ height:8px;background:var(--bg);margin:0 calc(-1 * var(--sp-md)); }
+.auto-filled{
+  position:relative;
+}
+.auto-filled::after{
+  content:'Auto-filled';
+  position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  font-size:10px;font-weight:700;color:var(--green);letter-spacing:.04em;
+  pointer-events:none;
+}
+.auto-filled .form-input,.auto-filled .form-select{
+  background:var(--green-bg);border-color:rgba(30,142,62,.25);
+  color:var(--on-surface-2);padding-right:84px;
+}
+.mode-btn{
+  flex:1;padding:10px 8px;border:1.5px solid var(--outline-variant);
+  border-radius:var(--r-md);background:var(--surface);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  font-size:11px;font-weight:600;color:var(--on-surface-3);
+  font-family:'Work Sans',sans-serif;transition:all .15s;
+}
+.mode-btn.active{
+  border-color:var(--primary);background:var(--primary-bg);color:var(--primary);
+}
+.mode-btn .material-symbols-outlined{ font-size:22px; }
+.part-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--primary-bg);color:var(--primary);
+  border-radius:var(--r-full);padding:4px 12px;
+  font-size:11px;font-weight:700;letter-spacing:.04em;
+}
+</style>
+</head>
+<body style="padding-bottom:80px;">
+
+<div class="page-header">
+  <button class="icon-btn"><span class="material-symbols-outlined">arrow_back</span></button>
+  <span class="page-header-title">Generate E-way Bill</span>
+  <button class="icon-btn"><span class="material-symbols-outlined">help_outline</span></button>
+</div>
+
+<div class="main" style="max-width:640px;">
+
+  <!-- Linked Invoice Banner -->
+  <div style="background:var(--primary-bg);padding:10px var(--sp-md);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(199,196,215,.2);">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span class="material-symbols-outlined icon-fill" style="color:var(--primary);font-size:20px;">description</span>
+      <div>
+        <div style="font-size:11px;color:var(--on-surface-2);font-weight:600;letter-spacing:.04em;text-transform:uppercase;">Linked Invoice</div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;color:var(--primary);">#INV/2025-26/089</div>
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:13px;font-weight:700;color:var(--on-surface);">&#8377;1,24,000</div>
+      <div style="font-size:11px;color:var(--on-surface-3);">Sharma Textiles</div>
+    </div>
+  </div>
+
+  <!-- PART A -->
+  <div class="form-section">
+    <div style="margin-bottom:var(--sp-md);">
+      <span class="part-badge">
+        <span class="material-symbols-outlined icon-fill" style="font-size:14px;">looks_one</span>
+        Part A — Transaction &amp; Goods
+      </span>
+    </div>
+
+    <!-- Transaction Type -->
+    <div class="form-group">
+      <label class="form-label">Transaction Type</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <button class="mode-btn active" style="flex-direction:row;justify-content:center;padding:11px;">
+          <span class="material-symbols-outlined" style="font-size:18px;">arrow_upward</span>
+          Outward (Sales)
+        </button>
+        <button class="mode-btn" style="flex-direction:row;justify-content:center;padding:11px;">
+          <span class="material-symbols-outlined" style="font-size:18px;">arrow_downward</span>
+          Inward (Purchase)
+        </button>
+      </div>
+    </div>
+
+    <!-- Sub Type + Doc Type -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group">
+        <label class="form-label">Sub-type</label>
+        <select class="form-select">
+          <option selected>Supply</option>
+          <option>Export</option>
+          <option>Job Work</option>
+          <option>SKD/CKD</option>
+          <option>Recipient Not Known</option>
+          <option>For Own Use</option>
+          <option>Exhibition</option>
+          <option>Others</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Document Type</label>
+        <select class="form-select">
+          <option selected>Tax Invoice</option>
+          <option>Bill of Supply</option>
+          <option>Delivery Challan</option>
+          <option>Credit Note</option>
+          <option>Bill of Entry</option>
+          <option>Others</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Doc No + Date (auto-filled) -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group auto-filled">
+        <label class="form-label">Document No.</label>
+        <input type="text" class="form-input" value="INV/2025-26/089" readonly>
+      </div>
+      <div class="form-group auto-filled">
+        <label class="form-label">Document Date</label>
+        <input type="text" class="form-input" value="26/06/2025" readonly>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="divider" style="margin:4px 0 var(--sp-md);"></div>
+
+    <!-- From (Supplier) -->
+    <div style="font-size:12px;font-weight:700;color:var(--on-surface-2);letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+      <span class="material-symbols-outlined icon-fill" style="font-size:16px;color:var(--primary);">store</span>
+      From — Supplier
+    </div>
+    <div class="form-group auto-filled">
+      <label class="form-label">Supplier GSTIN</label>
+      <input type="text" class="form-input" value="07AABFV9988P1Z6" readonly>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group auto-filled">
+        <label class="form-label">From State</label>
+        <input type="text" class="form-input" value="Delhi (07)" readonly>
+      </div>
+      <div class="form-group">
+        <label class="form-label">From PIN</label>
+        <input type="number" class="form-input" placeholder="110024" value="110024">
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="divider" style="margin:4px 0 var(--sp-md);"></div>
+
+    <!-- To (Recipient) -->
+    <div style="font-size:12px;font-weight:700;color:var(--on-surface-2);letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+      <span class="material-symbols-outlined icon-fill" style="font-size:16px;color:var(--green);">location_on</span>
+      To — Recipient
+    </div>
+    <div class="form-group auto-filled">
+      <label class="form-label">Recipient GSTIN</label>
+      <input type="text" class="form-input" value="07AAACS0472C1Z1" readonly>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group auto-filled">
+        <label class="form-label">To State</label>
+        <input type="text" class="form-input" value="Maharashtra (27)" readonly>
+      </div>
+      <div class="form-group">
+        <label class="form-label">To PIN</label>
+        <input type="number" class="form-input" placeholder="400001" value="400001">
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="divider" style="margin:4px 0 var(--sp-md);"></div>
+
+    <!-- Goods Details -->
+    <div style="font-size:12px;font-weight:700;color:var(--on-surface-2);letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+      <span class="material-symbols-outlined icon-fill" style="font-size:16px;color:var(--amber);">inventory_2</span>
+      Goods Details
+    </div>
+
+    <div class="form-group auto-filled">
+      <label class="form-label">HSN Code</label>
+      <input type="text" class="form-input" value="5208" readonly>
+    </div>
+    <div class="form-group auto-filled">
+      <label class="form-label">Product / Goods Description</label>
+      <input type="text" class="form-input" value="Cotton Fabric (Grade A)" readonly>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+      <div class="form-group auto-filled">
+        <label class="form-label">Quantity</label>
+        <input type="text" class="form-input" value="50" readonly>
+      </div>
+      <div class="form-group auto-filled">
+        <label class="form-label">Unit</label>
+        <input type="text" class="form-input" value="MTR" readonly>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tax Rate</label>
+        <select class="form-select" style="padding:13px 10px;">
+          <option>12%</option>
+          <option>5%</option>
+          <option>18%</option>
+          <option>28%</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group auto-filled">
+        <label class="form-label">Taxable Value (&#8377;)</label>
+        <input type="text" class="form-input" value="1,10,774" readonly>
+      </div>
+      <div class="form-group auto-filled">
+        <label class="form-label">Total Invoice Value (&#8377;)</label>
+        <input type="text" class="form-input" value="1,24,000" readonly>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Reason for Transportation</label>
+      <select class="form-select">
+        <option selected>Supply</option>
+        <option>Export / Import</option>
+        <option>Job Work</option>
+        <option>SKD or CKD</option>
+        <option>Recipient Not Known</option>
+        <option>Line Sales</option>
+        <option>Sales Return</option>
+        <option>Exhibition or Fairs</option>
+        <option>For Own Use</option>
+        <option>Others</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="section-gap-sm"></div>
+
+  <!-- PART B -->
+  <div class="form-section">
+    <div style="margin-bottom:var(--sp-md);">
+      <span class="part-badge" style="background:var(--green-bg);color:var(--green-text);">
+        <span class="material-symbols-outlined icon-fill" style="font-size:14px;">looks_two</span>
+        Part B — Transport Details
+      </span>
+    </div>
+
+    <!-- Transport Mode -->
+    <div class="form-group">
+      <label class="form-label">Mode of Transport</label>
+      <div style="display:flex;gap:8px;">
+        <button class="mode-btn active">
+          <span class="material-symbols-outlined">local_shipping</span>
+          Road
+        </button>
+        <button class="mode-btn">
+          <span class="material-symbols-outlined">train</span>
+          Rail
+        </button>
+        <button class="mode-btn">
+          <span class="material-symbols-outlined">flight</span>
+          Air
+        </button>
+        <button class="mode-btn">
+          <span class="material-symbols-outlined">directions_boat</span>
+          Ship
+        </button>
+      </div>
+    </div>
+
+    <!-- Distance -->
+    <div class="form-group">
+      <label class="form-label">Approximate Distance (km)</label>
+      <input type="number" class="form-input" placeholder="e.g. 320" value="320">
+    </div>
+
+    <!-- AI Validity Hint -->
+    <div style="display:flex;align-items:center;gap:8px;background:var(--ai-bg);border:1px solid var(--ai-border);border-radius:var(--r-md);padding:10px 14px;margin-bottom:var(--sp-md);box-shadow:var(--ai-glow);">
+      <span class="material-symbols-outlined icon-fill" style="color:var(--primary);font-size:20px;flex-shrink:0;">auto_awesome</span>
+      <div style="font-size:13px;color:var(--on-surface-2);line-height:1.5;">
+        At <strong style="color:var(--primary);">320 km</strong>, this EWB will be valid for
+        <strong style="color:var(--primary);">3 days</strong> — until <strong>29 Jun 2025, 11:59 PM</strong>.
+      </div>
+    </div>
+
+    <!-- Transporter -->
+    <div class="form-group">
+      <label class="form-label">Transporter Name</label>
+      <input type="text" class="form-input" placeholder="e.g. Fast Logistics Pvt Ltd">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Transporter GSTIN (optional)</label>
+      <input type="text" class="form-input" placeholder="22AAAAA0000A1Z5" style="letter-spacing:.05em;">
+    </div>
+
+    <!-- Vehicle -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group">
+        <label class="form-label">Vehicle Number</label>
+        <input type="text" class="form-input" placeholder="DL01AB1234" style="text-transform:uppercase;letter-spacing:.06em;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Vehicle Type</label>
+        <select class="form-select">
+          <option selected>Regular</option>
+          <option>Over Dimensional Cargo</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- GST Compliance -->
+    <div style="display:flex;align-items:center;gap:8px;background:var(--green-bg);border-radius:var(--r-md);padding:12px 14px;margin-top:4px;">
+      <span class="material-symbols-outlined icon-fill" style="color:var(--green);font-size:20px;">verified</span>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--green-text);">GST Compliant</div>
+        <div style="font-size:11px;color:var(--on-surface-3);">Both GSTINs verified &middot; Invoice value &gt; &#8377;50,000 &middot; EWB required</div>
+      </div>
+    </div>
+
+    <div style="height:8px;"></div>
+  </div>
+</div>
+
+<!-- Action Bar -->
+<div class="action-bar" style="max-width:640px;margin:0 auto;">
+  <button class="btn btn-outline" style="flex:1;padding:13px;">
+    <span class="material-symbols-outlined" style="font-size:18px;">save</span>
+    Save Draft
+  </button>
+  <button class="btn btn-primary" style="flex:2;padding:13px;" onclick="location.href='13-eway-bill-detail.html'">
+    <span class="material-symbols-outlined" style="font-size:18px;">local_shipping</span>
+    Generate E-way Bill
+  </button>
+</div>
+</body>
+</html>

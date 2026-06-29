@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Insights — FinanceAI</title>
+<link rel="stylesheet" href="_base.css">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+</head>
+<body>
+
+<!-- Sidebar (desktop) -->
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <span class="material-symbols-outlined icon-fill" style="color:var(--primary);font-size:28px;">receipt_long</span>
+    <span class="sidebar-logo">FinanceAI</span>
+  </div>
+  <div class="sidebar-nav">
+    <div class="sidebar-section-label">Menu</div>
+    <a class="sidebar-item active" href="01-dashboard.html">
+      <span class="material-symbols-outlined">analytics</span>Insights
+    </a>
+    <a class="sidebar-item" href="02-invoice-list.html">
+      <span class="material-symbols-outlined">auto_awesome</span>Automation
+    </a>
+    <a class="sidebar-item" href="05-client-list.html">
+      <span class="material-symbols-outlined">group</span>Clients
+    </a>
+    <a class="sidebar-item" href="07-quote-list.html">
+      <span class="material-symbols-outlined">request_quote</span>Quotes
+    </a>
+    <a class="sidebar-item" href="08-expense-list.html">
+      <span class="material-symbols-outlined">account_balance_wallet</span>Expenses
+    </a>
+    <a class="sidebar-item" href="11-eway-bill-list.html">
+      <span class="material-symbols-outlined">local_shipping</span>E-way Bills
+    </a>
+    <a class="sidebar-item" href="09-reports.html">
+      <span class="material-symbols-outlined">bar_chart</span>Reports
+    </a>
+    <div class="sidebar-section-label" style="margin-top:8px;">Account</div>
+    <a class="sidebar-item" href="10-settings.html">
+      <span class="material-symbols-outlined">settings</span>Configuration
+    </a>
+  </div>
+  <div style="padding:16px;border-top:1px solid rgba(199,196,215,.3);">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="avatar-sm">RK</div>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--on-surface);">Ramesh Kumar</div>
+        <div style="font-size:11px;color:var(--on-surface-3);">Premium Plan</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Top App Bar -->
+<div class="app-bar">
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button class="icon-btn" style="display:flex;" id="menu-btn">
+      <span class="material-symbols-outlined">menu</span>
+    </button>
+    <span class="app-bar-brand">FinanceAI</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;">
+    <button class="icon-btn">
+      <span class="material-symbols-outlined">notifications</span>
+    </button>
+    <div class="avatar-sm">RK</div>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="main">
+  <div class="content-section">
+
+    <!-- AI Insight Banner -->
+    <div class="ai-banner">
+      <span class="material-symbols-outlined icon-fill ai-banner-icon">auto_awesome</span>
+      <div>
+        <div class="ai-banner-tag">AI Insight</div>
+        <div class="ai-banner-text">Projected revenue trending <strong>12% higher</strong> than last quarter due to automated collection improvements.</div>
+      </div>
+    </div>
+
+    <!-- KPI Grid: responsive 2-col on desktop -->
+    <div class="desktop-grid-2">
+      <!-- Projected Revenue -->
+      <div class="kpi-card desktop-span-2">
+        <div class="kpi-label">
+          Projected Revenue
+          <span class="material-symbols-outlined" style="font-size:20px;color:var(--primary);">trending_up</span>
+        </div>
+        <div class="kpi-value">&#8377;12.4L</div>
+        <div class="kpi-delta">+14.2% vs last quarter</div>
+        <div class="sparkline">
+          <div class="sparkline-bar" style="height:35%"></div>
+          <div class="sparkline-bar" style="height:52%"></div>
+          <div class="sparkline-bar" style="height:45%"></div>
+          <div class="sparkline-bar" style="height:68%"></div>
+          <div class="sparkline-bar" style="height:60%"></div>
+          <div class="sparkline-bar" style="height:82%"></div>
+          <div class="sparkline-bar" style="height:100%"></div>
+        </div>
+      </div>
+
+      <!-- Active Clients -->
+      <div class="kpi-card">
+        <div class="kpi-label" style="font-size:11px;">
+          Active Clients
+          <span class="material-symbols-outlined" style="font-size:18px;color:var(--on-surface-3);">group</span>
+        </div>
+        <div class="kpi-value" style="font-size:24px;margin-top:4px;">342</div>
+        <div class="kpi-delta" style="color:var(--on-surface-3);">
+          <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;">remove</span>
+          Stable this month
+        </div>
+      </div>
+
+      <!-- AI Anomalies -->
+      <div class="kpi-card" style="position:relative;overflow:hidden;">
+        <div style="position:absolute;top:0;right:0;width:48px;height:48px;background:rgba(186,26,26,.06);border-radius:0 var(--r-xl) 0 var(--r-xl);display:flex;align-items:center;justify-content:center;">
+          <span class="material-symbols-outlined icon-fill" style="font-size:18px;color:var(--error);">error</span>
+        </div>
+        <div class="kpi-label" style="font-size:11px;">AI Anomalies</div>
+        <div class="kpi-value" style="font-size:24px;margin-top:4px;color:var(--error);">2</div>
+        <div style="font-size:11px;color:var(--on-surface-3);margin-top:2px;">Critical cases</div>
+        <div style="margin-top:10px;font-size:12px;font-weight:600;color:var(--primary);display:flex;align-items:center;gap:3px;cursor:pointer;">
+          Review Now
+          <span class="material-symbols-outlined" style="font-size:14px;">arrow_forward</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Revenue Forecast Chart -->
+    <div class="card-p" style="padding:20px;">
+      <div class="section-head" style="margin-bottom:16px;">
+        <span class="section-title">Revenue Forecast</span>
+        <button class="icon-btn" style="width:32px;height:32px;">
+          <span class="material-symbols-outlined" style="font-size:20px;">more_vert</span>
+        </button>
+      </div>
+      <div class="chart-area">
+        <svg viewBox="0 0 340 120" width="100%" height="120" preserveAspectRatio="none">
+          <line x1="0" y1="100" x2="340" y2="100" stroke="#c7c4d7" stroke-width="0.5" stroke-dasharray="4,3"/>
+          <line x1="0" y1="70"  x2="340" y2="70"  stroke="#c7c4d7" stroke-width="0.5" stroke-dasharray="4,3"/>
+          <line x1="0" y1="40"  x2="340" y2="40"  stroke="#c7c4d7" stroke-width="0.5" stroke-dasharray="4,3"/>
+          <path d="M0,95 Q60,88 120,72 T240,38 T340,12 L340,110 L0,110 Z" fill="url(#fg1)" opacity="0.12"/>
+          <path d="M0,95 Q60,88 120,72 T240,38 T340,12" fill="none" stroke="#4648d4" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="120" cy="72" r="4" fill="#4648d4"/>
+          <circle cx="240" cy="38" r="4" fill="#4648d4"/>
+          <circle cx="340" cy="12" r="5" fill="#4648d4" stroke="#fff" stroke-width="2"/>
+          <defs>
+            <linearGradient id="fg1" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" style="stop-color:#4648d4;stop-opacity:1"/>
+              <stop offset="100%" style="stop-color:#4648d4;stop-opacity:0"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="chart-labels">
+          <span class="chart-label">JAN</span>
+          <span class="chart-label">MAR</span>
+          <span class="chart-label">MAY</span>
+          <span class="chart-label">JUL</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div>
+      <div class="section-head" style="margin-bottom:12px;">
+        <span class="section-title">Recent Activity</span>
+        <span class="section-link">View All</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div class="activity-item">
+          <div class="activity-icon" style="background:var(--green-bg);">
+            <span class="material-symbols-outlined icon-fill" style="font-size:20px;color:var(--green);">description</span>
+          </div>
+          <div class="activity-body">
+            <div class="activity-title">Invoice #INV-2025-089 Paid</div>
+            <div class="activity-sub">2 hours ago &middot; Sharma Textiles</div>
+          </div>
+          <span class="rupee" style="font-size:14px;color:var(--green);">+&#8377;42,000</span>
+        </div>
+        <div class="activity-item">
+          <div class="activity-icon" style="background:var(--primary-bg);">
+            <span class="material-symbols-outlined icon-fill" style="font-size:20px;color:var(--primary);">auto_awesome</span>
+          </div>
+          <div class="activity-body">
+            <div class="activity-title">AI Auto-Reconciliation</div>
+            <div class="activity-sub">5 hours ago &middot; 12 entries matched</div>
+          </div>
+          <span class="material-symbols-outlined icon-fill" style="color:var(--primary);">check_circle</span>
+        </div>
+        <div class="activity-item">
+          <div class="activity-icon" style="background:var(--tertiary-bg);">
+            <span class="material-symbols-outlined" style="font-size:20px;color:var(--tertiary);">person_add</span>
+          </div>
+          <div class="activity-body">
+            <div class="activity-title">New Client Onboarded</div>
+            <div class="activity-sub">Yesterday &middot; Patel Exports Pvt Ltd</div>
+          </div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-icon" style="background:var(--error-bg);">
+            <span class="material-symbols-outlined" style="font-size:20px;color:var(--error);">schedule</span>
+          </div>
+          <div class="activity-body">
+            <div class="activity-title">Invoice Overdue Alert</div>
+            <div class="activity-sub">2 days ago &middot; Gupta Electronics</div>
+          </div>
+          <span class="rupee" style="font-size:14px;color:var(--error);">&#8377;68,500</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAB -->
+<button class="fab" title="New Invoice">
+  <span class="material-symbols-outlined" style="font-size:28px;">add</span>
+</button>
+
+<!-- Bottom Navigation (mobile/tablet) -->
+<nav class="bottom-nav">
+  <a class="nav-tab active" href="01-dashboard.html">
+    <div class="nav-pill">
+      <span class="material-symbols-outlined">analytics</span>
+      <span class="nav-label">Insights</span>
+    </div>
+  </a>
+  <a class="nav-tab" href="02-invoice-list.html">
+    <div class="nav-pill">
+      <span class="material-symbols-outlined">auto_awesome</span>
+      <span class="nav-label">Automation</span>
+    </div>
+  </a>
+  <a class="nav-tab" href="05-client-list.html">
+    <div class="nav-pill">
+      <span class="material-symbols-outlined">group</span>
+      <span class="nav-label">Clients</span>
+    </div>
+  </a>
+  <a class="nav-tab" href="10-settings.html">
+    <div class="nav-pill">
+      <span class="material-symbols-outlined">settings</span>
+      <span class="nav-label">Config</span>
+    </div>
+  </a>
+</nav>
+</body>
+</html>
