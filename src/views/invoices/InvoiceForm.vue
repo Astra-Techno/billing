@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, shallowRef, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { task, item, list, all } from '../../api'
 import { useToast } from '../../composables/useToast'
@@ -61,10 +61,11 @@ function onFormShortcut(e) {
 onMounted(() => document.addEventListener('keydown', onFormShortcut))
 onUnmounted(() => document.removeEventListener('keydown', onFormShortcut))
 
-const clients      = ref([])
-const products     = ref([])
-const taxRates     = ref([])
-const states       = ref([])
+// shallowRef: large display-only arrays — no need for deep reactivity on each item's properties
+const clients      = shallowRef([])
+const products     = shallowRef([])
+const taxRates     = shallowRef([])
+const states       = shallowRef([])
 const loading      = ref(false)
 const clientSearch = ref('')
 
@@ -101,8 +102,7 @@ async function saveNewClient() {
   try {
     const res = await task('Client', 'create', { ...newClient.value, type: 'individual' })
     const created = res.data?.data
-    clients.value.push(created)
-    clients.value.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+    clients.value = [...clients.value, created].sort((a, b) => (a.name || '').localeCompare(b.name || ''))
     form.value.client_id = created.id
     showAddClient.value = false
     clientSearch.value = ''
@@ -130,32 +130,25 @@ function onClientSearchInput() {
 }
 
 // Inline product autocomplete
-const addingProduct    = ref(false)
-const addProductError  = ref('')
-const productSearchIdx = ref(null)  // which line item has product dropdown open
-const productSearch    = ref('')
+const addingProduct      = ref(false)
+const addProductError    = ref('')
+const productSearchIdx   = ref(null)  // which line item has product dropdown open
+// Decoupled from form.value.items so typing in description doesn't make filteredProducts re-run
+const productSearchQuery = ref('')
 const newProduct = ref({ type: 'service', name: '', price: '', unit: 'Nos', gst_rate: 18 })
 
 const filteredProducts = computed(() => {
-  // Use the active item's description as search query
-  const idx = productSearchIdx.value
-  const q = idx !== null && form.value.items[idx]
-    ? form.value.items[idx].description?.trim().toLowerCase() || ''
-    : productSearch.value.trim().toLowerCase()
+  const q = productSearchQuery.value.trim().toLowerCase()
   if (!q) return products.value.slice(0, 8)
   return products.value.filter(p => p.name?.toLowerCase().includes(q))
 })
-const showProductInlineCreate = computed(() => {
-  const idx = productSearchIdx.value
-  const q = idx !== null && form.value.items[idx]
-    ? form.value.items[idx].description?.trim() || ''
-    : productSearch.value.trim()
-  return q.length >= 2 && filteredProducts.value.length === 0
-})
+const showProductInlineCreate = computed(() =>
+  productSearchQuery.value.trim().length >= 2 && filteredProducts.value.length === 0
+)
 
 function openProductSearch(i) {
   productSearchIdx.value = i
-  productSearch.value = form.value.items[i]?.description || ''
+  productSearchQuery.value = form.value.items[i]?.description || ''
   productHighlight.value = -1
   addProductError.value = ''
   newProduct.value = { type: 'service', name: form.value.items[i]?.description || '', price: '', unit: 'Nos', gst_rate: 18 }
@@ -165,7 +158,7 @@ const productHighlight = ref(-1)
 
 function closeProductSearch() {
   productSearchIdx.value = null
-  productSearch.value = ''
+  productSearchQuery.value = ''
   productHighlight.value = -1
 }
 
@@ -222,8 +215,7 @@ async function saveNewProduct() {
       gst_rate: newProduct.value.gst_rate,
     })
     const created = res.data?.data
-    products.value.push(created)
-    products.value.sort((a, b) => a.name.localeCompare(b.name))
+    products.value = [...products.value, created].sort((a, b) => a.name.localeCompare(b.name))
     if (productSearchIdx.value !== null) {
       selectProduct(productSearchIdx.value, created)
     }
@@ -262,7 +254,16 @@ function qtyStep(unit) {
 }
 const gstRates     = [0, 5, 12, 18, 28]
 const recurPeriods = ['day', 'week', 'month', 'year']
-const totals       = computed(() => calcInvoice(form.value.items))
+// Only track the 4 numeric fields that affect the total — typing in description,
+// hsn_sac, unit etc. no longer causes totals to re-calculate or the summary to re-render.
+const totals = computed(() => calcInvoice(
+  form.value.items.map(it => ({
+    quantity:     it.quantity,
+    unit_price:   it.unit_price,
+    discount_pct: it.discount_pct,
+    gst_rate:     it.gst_rate,
+  }))
+))
 
 const selectedClient = computed(() => clients.value.find(c => c.id == form.value.client_id))
 
@@ -668,7 +669,9 @@ async function submit() {
               <!-- Desktop: chip-based item rows -->
               <div class="hidden lg:block">
                 <div>
-                  <div v-for="(it, i) in form.items" :key="i" class="item-row group relative">
+                  <div v-for="(it, i) in form.items" :key="i"
+                    v-memo="[it.description, it.quantity, it.unit_price, it.discount_pct, it.gst_rate, it.unit, productSearchIdx === i, productSearchIdx === i ? productHighlight : -1, form.items.length]"
+                    class="item-row group relative">
                     <!-- Item number badge -->
                     <div class="item-num mt-1">{{ i + 1 }}</div>
 
@@ -677,7 +680,7 @@ async function submit() {
                       <!-- Description input + product autocomplete -->
                       <div class="relative">
                         <input v-model="it.description" type="text" class="inv-input font-medium !bg-white line-desc w-full" placeholder="Type item name or search product…"
-                          @focus="openProductSearch(i)" @input="productSearch = it.description; newProduct.name = it.description; productHighlight = -1"
+                          @focus="openProductSearch(i)" @input="productSearchQuery = it.description; newProduct.name = it.description; productHighlight = -1"
                           @keydown="onProductKeydown(i, $event)" />
                         <!-- Product autocomplete dropdown -->
                         <div v-if="productSearchIdx === i && it.description?.trim().length >= 1" class="absolute left-0 right-0 top-full mt-1 z-50 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
@@ -757,7 +760,9 @@ async function submit() {
 
               <!-- Mobile: Accordion items -->
               <div class="lg:hidden divide-y divide-gray-100">
-                <div v-for="(it, i) in form.items" :key="i" class="transition-all duration-200">
+                <div v-for="(it, i) in form.items" :key="i"
+                  v-memo="[it.description, it.quantity, it.unit_price, it.discount_pct, it.gst_rate, it.unit, activeItemIndex === i, productSearchIdx === i, form.items.length]"
+                  class="transition-all duration-200">
                   <!-- Collapsed summary -->
                   <div class="p-4 space-y-1 hover:bg-gray-50/30">
                     <div class="flex justify-between items-start">
@@ -789,7 +794,7 @@ async function submit() {
                     <div>
                       <label class="inv-label">Item Name / Description *</label>
                       <input v-model="it.description" type="text" class="inv-input w-full !bg-white text-sm" placeholder="Type item name or search product…"
-                        @focus="openProductSearch(i)" @input="productSearch = it.description; newProduct.name = it.description; productHighlight = -1"
+                        @focus="openProductSearch(i)" @input="productSearchQuery = it.description; newProduct.name = it.description; productHighlight = -1"
                         @keydown="onProductKeydown(i, $event)" />
                       <!-- Mobile product autocomplete -->
                       <div v-if="productSearchIdx === i && it.description?.trim().length >= 1" class="mt-1.5 space-y-1.5">
