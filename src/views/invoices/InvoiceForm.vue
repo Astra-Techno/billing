@@ -7,7 +7,7 @@ import { useBusinessStore } from '../../stores/business'
 import { inr } from '../../utils/currency'
 import { today, addDays } from '../../utils/date'
 import { calcInvoice } from '../../utils/invoice'
-import { useFormKeys, handleLineItemTab } from '../../composables/useFormKeys'
+import { handleLineItemTab } from '../../composables/useFormKeys'
 
 const router        = useRouter()
 const route         = useRoute()
@@ -15,45 +15,91 @@ const emit          = defineEmits(['refresh'])
 const toast         = useToast()
 const businessStore = useBusinessStore()
 
-useFormKeys({ formId: 'invoice-form', autoFocus: false })
+// Keyboard shortcuts — capture phase so browser doesn't steal Alt/Ctrl combos (Windows)
+function focusClientSearch() {
+  form.value.client_id = ''
+  clientDropdownOpen.value = true
+  clientHighlight.value = -1
+  editingClient.value = true
+  nextTick(() => document.querySelector('.client-search-input')?.focus())
+}
 
-// Keyboard shortcuts — full bill creation without mouse on desktop
 function onFormShortcut(e) {
-  if (e.target.closest('[class*="fixed inset-0"]')) return
+  if (dataLoading.value) return
 
-  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+  const formEl = document.getElementById('invoice-form')
+  if (!formEl) return
+
+  // Save
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && (e.key === 's' || e.key === 'S')) {
     e.preventDefault()
-    document.getElementById('invoice-form')?.requestSubmit()
+    e.stopPropagation()
+    formEl.requestSubmit()
     return
   }
-  if (e.altKey && e.key === 'a') {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
     e.preventDefault()
-    addItem()
+    e.stopPropagation()
+    formEl.requestSubmit()
+    return
   }
-  if (e.altKey && e.key === 'c') {
+
+  const inTextarea = e.target.tagName === 'TEXTAREA'
+
+  // Client — F2, Ctrl+Shift+C, or Alt+C (e.code avoids Windows Alt menu issues)
+  if (!inTextarea && (
+    e.key === 'F2' ||
+    ((e.ctrlKey || e.metaKey) && e.shiftKey && e.code === 'KeyC') ||
+    (e.altKey && !e.ctrlKey && !e.metaKey && e.code === 'KeyC')
+  )) {
     e.preventDefault()
-    form.value.client_id = ''
-    clientDropdownOpen.value = true
-    clientHighlight.value = -1
-    nextTick(() => document.querySelector('.client-search-input')?.focus())
+    e.stopPropagation()
+    focusClientSearch()
+    return
   }
-  if (e.altKey && e.key === 'i') {
+
+  // Items — F3, Ctrl+Shift+L (line items), or Alt+I
+  if (!inTextarea && (
+    e.key === 'F3' ||
+    ((e.ctrlKey || e.metaKey) && e.shiftKey && e.code === 'KeyL') ||
+    (e.altKey && !e.ctrlKey && !e.metaKey && e.code === 'KeyI')
+  )) {
     e.preventDefault()
+    e.stopPropagation()
     focusItemDescription(form.value.items.length - 1)
+    return
   }
-  if (e.altKey && e.key === 'n') {
+
+  // Add row — Ctrl+Shift+A or Alt+A
+  if (!inTextarea && (
+    ((e.ctrlKey || e.metaKey) && e.shiftKey && e.code === 'KeyA') ||
+    (e.altKey && !e.ctrlKey && !e.metaKey && e.code === 'KeyA')
+  )) {
     e.preventDefault()
-    document.querySelector('.notes-input')?.focus()
+    e.stopPropagation()
+    addItem()
+    return
   }
+
+  // Notes — Ctrl+Shift+N or Alt+N
+  if (((e.ctrlKey || e.metaKey) && e.shiftKey && e.code === 'KeyN') ||
+      (e.altKey && !e.ctrlKey && !e.metaKey && e.code === 'KeyN')) {
+    e.preventDefault()
+    e.stopPropagation()
+    document.querySelector('.notes-input')?.focus()
+    return
+  }
+
   if (e.key === 'Escape') {
     closeProductSearch()
     clientDropdownOpen.value = false
     editingClient.value = false
   }
 }
-onMounted(() => document.addEventListener('keydown', onFormShortcut))
+
+onMounted(() => document.addEventListener('keydown', onFormShortcut, true))
 onUnmounted(() => {
-  document.removeEventListener('keydown', onFormShortcut)
+  document.removeEventListener('keydown', onFormShortcut, true)
   clearTimeout(productDebounceTimer)
 })
 
@@ -614,13 +660,13 @@ async function submit() {
       <div class="flex items-center gap-2">
         <!-- Shortcut hints — desktop only, inline in toolbar right -->
         <div class="hidden lg:flex items-center gap-3 mr-2 text-[10px] text-gray-400 font-medium">
-          <span><kbd class="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-[9px] font-mono">Alt+C</kbd> Client</span>
-          <span><kbd class="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-[9px] font-mono">Alt+I</kbd> Items</span>
-          <span><kbd class="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-[9px] font-mono">↑↓↵</kbd> Pick</span>
+          <span><kbd class="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-[9px] font-mono">F2</kbd> Client</span>
+          <span><kbd class="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-[9px] font-mono">F3</kbd> Items</span>
+          <span><kbd class="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-[9px] font-mono">↑↓ Enter</kbd> Pick</span>
           <span><kbd class="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-[9px] font-mono">Ctrl+S</kbd> Save</span>
         </div>
         <button type="button" @click="router.back()" class="inv-btn-secondary hidden sm:inline-flex">Cancel</button>
-        <button type="submit" form="invoice-form" class="inv-btn-primary hidden sm:inline-flex" data-tour="inv-save" :disabled="loading" title="Ctrl+Enter">
+        <button type="submit" form="invoice-form" class="inv-btn-primary hidden sm:inline-flex" data-tour="inv-save" :disabled="loading" title="Ctrl+S or Ctrl+Enter to save">
           {{ loading ? 'Saving…' : isEdit ? 'Save Changes' : 'Save and Continue' }}
         </button>
         <!-- Mobile avatar -->
