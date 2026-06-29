@@ -173,6 +173,10 @@ function selectProduct(i, p) {
   pickProduct(i, p.id)
   form.value.items[i].product_id = p.id
   closeProductSearch()
+  // Auto-add a new empty row if this was the last item
+  if (i === form.value.items.length - 1) {
+    addItem()
+  }
 }
 
 function onProductKeydown(i, e) {
@@ -449,16 +453,19 @@ function onFormEnter(e) {
 
 async function submit() {
   error.value = ''
-  if (!form.value.items.some(i => i.description)) return (error.value = 'Please add at least one item.')
+  // Strip empty rows (auto-added trailing blank) before saving
+  const filledItems = form.value.items.filter(i => i.description?.trim())
+  if (!filledItems.length) return (error.value = 'Please add at least one item.')
   loading.value = true
   try {
+    const payload = { ...form.value, items: filledItems }
     if (isEdit.value) {
-      await task('Invoice', 'update', { ...form.value, id: route.params.id })
+      await task('Invoice', 'update', { ...payload, id: route.params.id })
       emit('refresh')
       toast.success('Invoice updated.')
       router.push(`/invoices/${route.params.id}`)
     } else {
-      const { data } = await task('Invoice', 'create', form.value)
+      const { data } = await task('Invoice', 'create', payload)
       emit('refresh')
       toast.success('Invoice created.')
       router.push(`/invoices/${data.data.invoice_id}?newly_created=true`)
@@ -669,7 +676,7 @@ async function submit() {
                     <div class="flex-1 min-w-0">
                       <!-- Description input + product autocomplete -->
                       <div class="relative">
-                        <input v-model="it.description" type="text" class="inv-input font-medium !bg-white line-desc w-full" placeholder="Type item name or search product…" required
+                        <input v-model="it.description" type="text" class="inv-input font-medium !bg-white line-desc w-full" placeholder="Type item name or search product…"
                           @focus="openProductSearch(i)" @input="productSearch = it.description; newProduct.name = it.description; productHighlight = -1"
                           @keydown="onProductKeydown(i, $event)" />
                         <!-- Product autocomplete dropdown -->
@@ -781,7 +788,7 @@ async function submit() {
                   <div v-show="activeItemIndex === i" class="px-4 pb-5 pt-3 space-y-3 bg-gray-50/70 border-t border-gray-100">
                     <div>
                       <label class="inv-label">Item Name / Description *</label>
-                      <input v-model="it.description" type="text" class="inv-input w-full !bg-white text-sm" required placeholder="Type item name or search product…"
+                      <input v-model="it.description" type="text" class="inv-input w-full !bg-white text-sm" placeholder="Type item name or search product…"
                         @focus="openProductSearch(i)" @input="productSearch = it.description; newProduct.name = it.description; productHighlight = -1"
                         @keydown="onProductKeydown(i, $event)" />
                       <!-- Mobile product autocomplete -->
