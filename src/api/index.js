@@ -24,9 +24,7 @@ api.interceptors.response.use(
       const hadToken = !!auth.token
       auth.logout()
       if (hadToken) {
-        import('../router').then(({ default: router }) => {
-          if (router.currentRoute.value?.name !== 'Login') router.replace('/login')
-        })
+        window.location.href = '/login'
       }
     }
     // Log all API errors to console for debugging
