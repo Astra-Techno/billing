@@ -23,7 +23,9 @@ onMounted(() => {
 })
 
 const showNavbar = computed(() => {
-  return ['Dashboard', 'Invoices', 'Quotes', 'Expenses', 'Products', 'CreditNotes', 'PurchaseOrders', 'DeliveryChallans', 'GstReturns', 'Reports', 'Settings', 'Help', 'More', 'Clients', 'Payroll', 'StaffNew', 'StaffEdit', 'PayrollRun', 'AdminDashboard', 'AdminBusinesses', 'AdminUsers'].includes(route.name)
+  const regular = ['Dashboard', 'Invoices', 'Quotes', 'Expenses', 'Products', 'CreditNotes', 'PurchaseOrders', 'DeliveryChallans', 'GstReturns', 'Reports', 'Settings', 'Help', 'More', 'Clients', 'Payroll', 'StaffNew', 'StaffEdit', 'PayrollRun'].includes(route.name)
+  const admin = route.meta.superAdmin && ['AdminDashboard', 'AdminBusinesses', 'AdminUsers'].includes(route.name)
+  return regular || admin
 })
 </script>
 

@@ -1,8 +1,11 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useAuthStore } from '../../stores/auth'
+import AdminMobileNav from './AdminMobileNav.vue'
 
 const route = useRoute()
+const auth  = useAuthStore()
 const isActive = (to) => to === '/' ? route.path === '/' : route.path.startsWith(to)
 
 const items = [
@@ -16,10 +19,16 @@ const items = [
 const showNavbar = computed(() => {
   return ['Dashboard', 'Invoices', 'Quotes', 'Expenses', 'Products', 'CreditNotes', 'PurchaseOrders', 'DeliveryChallans', 'GstReturns', 'Reports', 'Settings', 'Help', 'More', 'Clients', 'Payroll', 'StaffNew', 'StaffEdit', 'PayrollRun'].includes(route.name)
 })
+
+const showAdminNav = computed(() =>
+  auth.isSuperAdmin && !auth.businessId &&
+  ['AdminDashboard', 'AdminBusinesses', 'AdminUsers'].includes(route.name)
+)
 </script>
 
 <template>
-  <nav v-if="showNavbar" class="fixed z-50 bottom-0 inset-x-0 lg:hidden safe-area-pb">
+  <AdminMobileNav v-if="showAdminNav" />
+  <nav v-else-if="showNavbar" class="fixed z-50 bottom-0 inset-x-0 lg:hidden safe-area-pb">
     <div class="mx-3 mb-2 bg-white rounded-2xl border border-gray-200 shadow-gpay-lg overflow-hidden">
       <div class="flex items-stretch justify-around h-[3.75rem] px-1">
         <RouterLink

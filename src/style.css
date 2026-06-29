@@ -431,30 +431,35 @@ input, textarea, select, [contenteditable] {
   writing-mode: horizontal-tb !important;
 }
 
-/* Android WebView: auth screens — sticky footer, scrollable body */
-html.wv-android .auth-page {
-  min-height: 100vh !important;
-  min-height: 100dvh !important;
-  height: 100vh !important;
-  height: 100dvh !important;
-  max-height: 100dvh !important;
-  overflow: hidden !important;
+/* Android WebView: auth screens — mobile only */
+@media (max-width: 767px) {
+  html.wv-android .auth-page {
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+  }
+  html.wv-android .auth-form-panel {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+  html.wv-android .auth-sticky-footer {
+    position: relative;
+    z-index: 20;
+    background: #f9fafb;
+  }
 }
-html.wv-android .auth-form-panel {
-  display: flex !important;
-  flex-direction: column !important;
-  min-height: 0 !important;
-  overflow: hidden !important;
-}
-html.wv-android .auth-sticky-footer {
-  position: relative;
-  z-index: 20;
-  background: #f9fafb;
-}
-html.wv-android input,
-html.wv-android textarea,
-html.wv-android select {
-  direction: ltr !important;
-  unicode-bidi: plaintext !important;
-  text-align: left !important;
+
+/* Desktop login card */
+@media (min-width: 768px) {
+  .auth-login-card {
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+  .auth-form-panel {
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  }
 }
