@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { isChunkLoadError, reloadForStaleChunk } from '../utils/chunkReload'
 
 const routes = [
   // Auth
@@ -122,6 +123,10 @@ router.beforeEach((to) => {
   if (to.meta.superAdmin && !auth.isSuperAdmin)                    return { name: 'Dashboard' }
   // Super admin with no business trying to access regular pages → send to admin
   if (auth.isSuperAdmin && !auth.businessId && !to.meta.superAdmin) return { name: 'AdminDashboard' }
+})
+
+router.onError((error) => {
+  if (isChunkLoadError(error)) reloadForStaleChunk()
 })
 
 export default router

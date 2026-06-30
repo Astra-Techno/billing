@@ -28,6 +28,26 @@
         }
       })();
     </script>
+    <script>
+      (function () {
+        var KEY = 'app_chunk_reload';
+        var RE = /Failed to fetch dynamically imported module|Importing a module script failed|Loading chunk [\d]+ failed|error loading dynamically imported module|Unable to preload CSS/i;
+        function reload() {
+          var n = parseInt(sessionStorage.getItem(KEY) || '0', 10);
+          if (n >= 2) return;
+          sessionStorage.setItem(KEY, String(n + 1));
+          var u = new URL(location.href);
+          u.searchParams.set('_v', String(Date.now()));
+          location.replace(u.toString());
+        }
+        window.addEventListener('vite:preloadError', function (e) { e.preventDefault(); reload(); });
+        window.addEventListener('unhandledrejection', function (e) {
+          var m = (e.reason && (e.reason.message || String(e.reason))) || '';
+          if (RE.test(m)) { e.preventDefault(); reload(); }
+        });
+        window.addEventListener('load', function () { sessionStorage.removeItem(KEY); });
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Roboto:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
