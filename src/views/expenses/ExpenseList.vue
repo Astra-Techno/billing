@@ -1,11 +1,12 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { list, task, all } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
 import { useTour } from '../../composables/useTour'
+import { useListRefresh } from '../../composables/useListRefresh'
 
 const { startTour, isTourSeen } = useTour('expense-list', [
   { target: '[data-tour="exp-categories"]', title: 'Category Tabs', text: 'Filter expenses by category. All your expense categories appear here.' },
@@ -103,12 +104,11 @@ const methodColors = {
 }
 const methodLabel = m => ({ cash: 'Cash', upi: 'UPI', neft: 'NEFT', cheque: 'Cheque', card: 'Card', other: 'Other' }[m] || m)
 
-onMounted(() => {
+useListRefresh(() => {
   load().then(() => {
     setTimeout(() => { if (!isTourSeen()) startTour() }, 800)
   })
-})
-watch(() => route.name, name => { if (name === 'Expenses') load() })
+}, { listRouteName: 'Expenses' })
 </script>
 
 <template>

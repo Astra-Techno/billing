@@ -1,10 +1,11 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { list } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 import { useTour } from '../../composables/useTour'
+import { useListRefresh } from '../../composables/useListRefresh'
 
 const { startTour, isTourSeen } = useTour('client-list', [
   { target: '[data-tour="client-search"]', title: 'Search Customers', text: 'Type a name or mobile number to quickly find a customer.' },
@@ -30,11 +31,12 @@ async function load() {
 }
 
 function onSearch() { clearTimeout(timer); timer = setTimeout(load, 350) }
-onMounted(() => {
+
+useListRefresh(() => {
   load().then(() => {
     setTimeout(() => { if (!isTourSeen()) startTour() }, 800)
   })
-})
+}, { listRouteName: 'Clients' })
 
 const avatarColors = ['bg-blue-100 text-blue-700', 'bg-emerald-100 text-emerald-700', 'bg-purple-100 text-purple-700', 'bg-amber-100 text-amber-700', 'bg-pink-100 text-pink-700', 'bg-teal-100 text-teal-700']
 const avatarColor  = (name) => avatarColors[(name?.charCodeAt(0) || 0) % avatarColors.length]

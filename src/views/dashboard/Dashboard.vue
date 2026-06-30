@@ -1,11 +1,12 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { list } from '../../api'
 import { inr, inrCompact } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useTour } from '../../composables/useTour'
+import { useListRefresh } from '../../composables/useListRefresh'
 
 const router    = useRouter()
 const authStore = useAuthStore()
@@ -31,7 +32,8 @@ const balance = computed(() => {
   return collected - expenses
 })
 
-onMounted(async () => {
+async function load() {
+  loading.value = true
   try {
     const [sR, sumR, expR, rR, oR, mR] = await Promise.all([
       list('Dashboard:stats'),
@@ -51,7 +53,9 @@ onMounted(async () => {
   } catch {}
   loading.value = false
   setTimeout(() => { if (!isTourSeen() && !loading.value) startTour() }, 800)
-})
+}
+
+useListRefresh(load)
 
 const chartMonths = computed(() => {
   const months = []

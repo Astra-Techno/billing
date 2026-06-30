@@ -1,8 +1,9 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { list, task } from '../../api'
 import { inr } from '../../utils/currency'
+import { useListRefresh } from '../../composables/useListRefresh'
 
 const route  = useRoute()
 const router = useRouter()
@@ -40,7 +41,7 @@ const filtered = () => {
   )
 }
 
-onMounted(load)
+useListRefresh(load, { listRouteName: 'Payroll' })
 </script>
 
 <template>

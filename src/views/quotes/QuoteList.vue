@@ -5,6 +5,7 @@ import { list } from '../../api'
 import { inr } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
 import HelpIcon from '../../components/HelpIcon.vue'
+import { useListRefresh } from '../../composables/useListRefresh'
 
 const route       = useRoute()
 const router      = useRouter()
@@ -93,8 +94,9 @@ function onQuoteClick(q) {
 onMounted(() => {
   if (route.query.client_id)   filter.value.client_id   = route.query.client_id
   if (route.query.client_name) filter.value.client_name = route.query.client_name
-  load()
 })
+
+useListRefresh(load, { listRouteName: 'Quotes' })
 
 const tabs = [
   { label: 'All',       value: '' },

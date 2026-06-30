@@ -1,5 +1,6 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
+import { useListRefresh } from '../../composables/useListRefresh'
 import { useRouter } from 'vue-router'
 import { list, task } from '../../api'
 import { inr } from '../../utils/currency'
@@ -129,7 +130,7 @@ async function payAll() {
 const hasDraft = computed(() => payroll.value.some(r => r.status === 'draft'))
 const allPaid  = computed(() => payroll.value.length > 0 && payroll.value.every(r => r.status === 'paid'))
 
-onMounted(() => {
+useListRefresh(() => {
   load().then(() => {
     setTimeout(() => { if (!isTourSeen()) startTour() }, 800)
   })

@@ -7,6 +7,7 @@ import { fmtDateShort } from '../../utils/date'
 import { statusBadge, statusLabel } from '../../utils/invoice'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { useTour } from '../../composables/useTour'
+import { useListRefresh } from '../../composables/useListRefresh'
 
 const { startTour, isTourSeen } = useTour('invoice-list', [
   { target: '[data-tour="inv-tabs"]', title: 'Filter by Status', text: 'Quickly switch between All, Draft, Awaiting Payment, and Overdue invoices.' },
@@ -208,10 +209,13 @@ onMounted(() => {
   if (route.query.status)      filter.value.status      = route.query.status
   if (route.query.client_id)   filter.value.client_id   = route.query.client_id
   if (route.query.client_name) filter.value.client_name = route.query.client_name
+})
+
+useListRefresh(() => {
   load().then(() => {
     setTimeout(() => { if (!isTourSeen()) startTour() }, 800)
   })
-})
+}, { listRouteName: 'Invoices' })
 
 watch(() => route.query.status, val => {
   filter.value.status = val || ''

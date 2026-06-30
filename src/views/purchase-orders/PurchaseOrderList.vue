@@ -1,10 +1,11 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { list } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
+import { useListRefresh } from '../../composables/useListRefresh'
 
 const router      = useRouter()
 const route       = useRoute()
@@ -40,8 +41,7 @@ async function load() {
 }
 
 function onSearch() { clearTimeout(timer); timer = setTimeout(load, 350) }
-onMounted(load)
-watch(() => route.name, name => { if (name === 'PurchaseOrders') load() })
+useListRefresh(load, { listRouteName: 'PurchaseOrders' })
 </script>
 
 <template>

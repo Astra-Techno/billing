@@ -1,10 +1,11 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { list, task, all } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 import { useTour } from '../../composables/useTour'
+import { useListRefresh } from '../../composables/useListRefresh'
 
 const { startTour, isTourSeen } = useTour('product-list', [
   { target: '[data-tour="prod-search"]', title: 'Search Items', text: 'Search by product name or HSN/SAC code. Filter by type using the dropdown.' },
@@ -67,12 +68,11 @@ function taxLabel(id) {
 
 const typeColors = { product: 'bg-blue-100 text-blue-700', service: 'bg-purple-100 text-purple-700' }
 
-onMounted(() => {
+useListRefresh(() => {
   load().then(() => {
     setTimeout(() => { if (!isTourSeen()) startTour() }, 800)
   })
-})
-watch(() => route.name, name => { if (name === 'Products') load() })
+}, { listRouteName: 'Products' })
 </script>
 
 <template>

@@ -1,5 +1,6 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
+import { useListRefresh } from '../../composables/useListRefresh'
 import { all, item, list } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
@@ -396,7 +397,7 @@ function generatePdf() {
 
 function startOver() { step.value=1; invoices.value=[]; selectedIds.value=new Set(); cashSales.value=[]; fetchError.value=''; gstr1Json.value=null; resultData.value=null }
 
-onMounted(async()=>{
+async function load() {
   loading.value=true
   try {
     const [stRes,bizRes]=await Promise.all([all('IndianState'),item('Business')])
@@ -404,7 +405,9 @@ onMounted(async()=>{
     business.value=bizRes.data?.data||null
   } catch{}
   loading.value=false
-})
+}
+
+useListRefresh(load)
 </script>
 
 <template>

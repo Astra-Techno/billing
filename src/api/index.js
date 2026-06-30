@@ -72,7 +72,7 @@ export const task = async (name, method, data = {}) => {
 }
 
 export const list = (name, params = {}, opts = {}) =>
-  cachedGet('list', name, params, () => api.get(`list/${name}`, { params }), opts)
+  cachedGet('list', name, params, () => api.get(`list/${name}`, { params }), { ttl: 0, ...opts })
 
 export const item = (name, params = {}, opts = {}) =>
   cachedGet('item', name, params, () => api.get(`item/${name}`, { params }), opts)

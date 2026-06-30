@@ -1,0 +1,1 @@
+import{K as e}from"./runtime-core.esm-bundler-KjP4tdk6.js";var t=e(null);function n(){return{helpSection:t,openHelp:e=>{t.value=e},closeHelp:()=>{t.value=null}}}export{n as t};

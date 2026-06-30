@@ -1,10 +1,11 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { list } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 import { fmtDateShort, today } from '../../utils/date'
 import { useTour } from '../../composables/useTour'
+import { useListRefresh } from '../../composables/useListRefresh'
 
 const { startTour, isTourSeen } = useTour('reports', [
   { target: '[data-tour="report-tabs"]', title: 'Report Types', text: 'Switch between Outstanding, GST Summary, Profit & Loss, and Expense reports.' },
@@ -176,8 +177,15 @@ function selectTab(key) {
   else if (key === 'expenses')    loadExpenses()
 }
 
-onMounted(() => {
-  loadOutstanding().then(() => {
+function reloadActiveTab() {
+  if      (activeTab.value === 'outstanding') return loadOutstanding()
+  else if (activeTab.value === 'gst')         return loadGst()
+  else if (activeTab.value === 'pnl')         return loadPnl()
+  else if (activeTab.value === 'expenses')    return loadExpenses()
+}
+
+useListRefresh(() => {
+  reloadActiveTab().then(() => {
     setTimeout(() => { if (!isTourSeen()) startTour() }, 800)
   })
 })

@@ -1,0 +1,1 @@
+import{I as e,w as t}from"./runtime-core.esm-bundler-KjP4tdk6.js";import{r as n}from"./index-XOvuZC3_.js";function r(r,{listRouteName:i}={}){let a=i?n():null;t(()=>r()),i&&a&&e(()=>a.name,e=>{e===i&&r()})}export{r as t};
