@@ -9,10 +9,10 @@ app.use(createPinia())
 app.use(router)
 app.mount('#app')
 
-// ── Android WebView LTR fix ──────────────────────────────────────────────────
-// WebView IME uses device locale unless direction is forced at focus time.
+// Android WebView LTR fix — only run in WebView (CSS handles desktop)
 ;(function enforceLtrInputs() {
   const isWebView = document.documentElement.classList.contains('wv-android')
+  if (!isWebView) return
 
   function applyLtr(el, force) {
     if (!el || !el.tagName) return
@@ -30,21 +30,14 @@ app.mount('#app')
       }
     }
     el.style.setProperty('direction', 'ltr', 'important')
-  // plaintext ignores locale bidi — fixes reversed typing in Android WebView
     el.style.setProperty('unicode-bidi', 'plaintext', 'important')
     el.style.setProperty('text-align', 'left', 'important')
     el.style.setProperty('writing-mode', 'horizontal-tb', 'important')
   }
 
-  function applyLtrAll(root) {
-    ;(root.querySelectorAll ? root : document)
-      .querySelectorAll('input,textarea,select')
-      .forEach(el => applyLtr(el, false))
-  }
+  document.documentElement.setAttribute('dir', 'ltr')
+  document.documentElement.setAttribute('lang', 'en')
 
-  applyLtrAll(document)
-
-  // Always re-apply on focus — Android creates InputConnection at this moment
   document.addEventListener('focusin', e => applyLtr(e.target, true), true)
   document.addEventListener('touchstart', e => {
     const el = e.target
@@ -52,18 +45,4 @@ app.mount('#app')
       applyLtr(el, true)
     }
   }, { capture: true, passive: true })
-
-  new MutationObserver(muts => {
-    muts.forEach(m => m.addedNodes.forEach(n => {
-      if (n.nodeType !== 1) return
-      const tag = n.nodeName
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') applyLtr(n, true)
-      else if (n.querySelectorAll) applyLtrAll(n)
-    }))
-  }).observe(document.body, { childList: true, subtree: true })
-
-  if (isWebView) {
-    document.documentElement.setAttribute('dir', 'ltr')
-    document.documentElement.setAttribute('lang', 'en')
-  }
 })()

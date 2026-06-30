@@ -27,20 +27,6 @@ class AuthMiddleware
             return $this->unauthorized('Invalid or expired token');
         }
 
-        // Load user
-        $user = DB::selectOne(
-            "SELECT u.*, bu.role AS business_role, bu.business_id AS token_business_id
-             FROM users u
-             LEFT JOIN business_users bu ON bu.user_id = u.id AND bu.active = 1
-             WHERE u.id = ? AND u.active = 1
-             LIMIT 1",
-            [$tokenRow->tokenable_id]
-        );
-
-        if (!$user) {
-            return $this->unauthorized('User not found or inactive');
-        }
-
         // Resolve business_id: from token, then X-Business-ID header, then first available
         $businessId = (int)($tokenRow->business_id ?? 0) ?: null;
 
@@ -49,46 +35,40 @@ class AuthMiddleware
             $businessId = $header ? (int)$header : null;
         }
 
-        // If business_id present, verify user belongs to it
+        // Single query when business is known (typical app requests)
         if ($businessId) {
-            $member = DB::selectOne(
-                "SELECT id, role FROM business_users
-                 WHERE business_id = ? AND user_id = ? AND active = 1 LIMIT 1",
-                [$businessId, $user->id]
+            $user = DB::selectOne(
+                "SELECT u.*, bu.role AS business_role, bu.business_id AS token_business_id
+                 FROM users u
+                 INNER JOIN business_users bu ON bu.user_id = u.id AND bu.business_id = ? AND bu.active = 1
+                 WHERE u.id = ? AND u.active = 1
+                 LIMIT 1",
+                [$businessId, $tokenRow->tokenable_id]
             );
-            if (!$member) {
-                return $this->unauthorized('Access denied to this business');
-            }
-            $user->business_role = $member->role;
+        } else {
+            $user = DB::selectOne(
+                "SELECT u.*, bu.role AS business_role, bu.business_id AS token_business_id
+                 FROM users u
+                 LEFT JOIN business_users bu ON bu.user_id = u.id AND bu.active = 1
+                 WHERE u.id = ? AND u.active = 1
+                 LIMIT 1",
+                [$tokenRow->tokenable_id]
+            );
+        }
+
+        if (!$user) {
+            return $this->unauthorized('User not found or inactive');
+        }
+
+        if ($businessId) {
+            $user->business_role = $user->business_role ?? null;
         }
 
         Auth::setUser($user);
         Auth::setBusinessId($businessId);
 
-        // Update last_used_at async (fire and forget style)
-        Auth::updateTokenLastUsed($token);
-
-        // Lazy: sync overdue invoice statuses once per calendar day per business
-        if ($businessId) {
-            $today  = date('Y-m-d');
-            $synced = DB::selectOne(
-                "SELECT value FROM settings WHERE business_id = ? AND `key` = 'overdue_synced_date' LIMIT 1",
-                [$businessId]
-            );
-            if (!$synced || $synced->value !== $today) {
-                DB::statement(
-                    "UPDATE invoices SET status = 'overdue'
-                     WHERE business_id = ? AND status IN ('sent','partial') AND due_date < CURDATE()",
-                    [$businessId]
-                );
-                DB::statement(
-                    "INSERT INTO settings (business_id, `key`, value)
-                     VALUES (?, 'overdue_synced_date', ?)
-                     ON DUPLICATE KEY UPDATE value = VALUES(value)",
-                    [$businessId, $today]
-                );
-            }
-        }
+        // Throttle token write — skip if used within last 5 minutes
+        Auth::updateTokenLastUsed($token, $tokenRow->last_used_at ?? null);
 
         return $handler->handle($request);
     }

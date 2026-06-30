@@ -69,8 +69,15 @@ class Auth
         return $plain;
     }
 
-    public static function updateTokenLastUsed(string $plainToken): void
+    public static function updateTokenLastUsed(string $plainToken, ?string $lastUsedAt = null): void
     {
+        if ($lastUsedAt) {
+            $ts = strtotime($lastUsedAt);
+            if ($ts && $ts > time() - 300) {
+                return;
+            }
+        }
+
         $hash = hash('sha256', $plainToken);
         DB::statement(
             "UPDATE personal_access_tokens SET last_used_at = NOW() WHERE token = ?",

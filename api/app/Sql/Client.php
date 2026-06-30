@@ -22,11 +22,17 @@ class Client extends Sql
         return (new Query('Client.list'))
             ->from('clients c')
             ->left('indian_states s ON s.id = c.state_id')
+            ->left('(
+                SELECT client_id, COALESCE(SUM(amount_due), 0) AS outstanding_balance
+                FROM invoices
+                WHERE status IN (\'sent\', \'partial\', \'overdue\')
+                GROUP BY client_id
+            ) ob ON ob.client_id = c.id')
             ->select('list', '
                 c.id, c.type, c.name, c.company, c.gstin, c.email, c.mobile,
                 c.city, c.credit_days, c.currency, c.active, c.created_at,
                 s.name AS state_name,
-                (SELECT COALESCE(SUM(i.amount_due),0) FROM invoices i WHERE i.client_id = c.id AND i.status IN (\'sent\',\'partial\',\'overdue\')) AS outstanding_balance
+                COALESCE(ob.outstanding_balance, 0) AS outstanding_balance
             ')
             ->select('total', 'COUNT(*) AS total')
             ->filter('c.business_id = {business_id}')

@@ -2,21 +2,22 @@ import { ref, computed } from 'vue'
 import { list } from '../api'
 import { inrCompact } from '../utils/currency'
 
-// Module-level state — shared across components
 const items   = ref([])
 const loading = ref(false)
 const loaded  = ref(false)
+let loadedAt  = 0
+const TTL     = 5 * 60_000
 
 function daysSince(dateStr) {
   return Math.floor((Date.now() - new Date(dateStr)) / 86_400_000)
 }
 
 export function useNotifications() {
-  async function load() {
+  async function load(force = false) {
     if (loading.value) return
+    if (!force && loaded.value && Date.now() - loadedAt < TTL) return
     loading.value = true
     try {
-      // Drafts older than 3 days (created_at ≤ 3 days ago)
       const cutoff = new Date()
       cutoff.setDate(cutoff.getDate() - 3)
       const cutoffStr = cutoff.toISOString().split('T')[0]
@@ -60,13 +61,13 @@ export function useNotifications() {
 
       items.value  = notifs
       loaded.value = true
+      loadedAt     = Date.now()
     } catch {}
     loading.value = false
   }
 
   function refresh() {
-    loaded.value = false
-    load()
+    return load(true)
   }
 
   const count = computed(() => items.value.length)

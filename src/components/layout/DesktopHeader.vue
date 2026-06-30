@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useBusinessStore } from '../../stores/business'
 import { useAuthStore } from '../../stores/auth'
@@ -27,8 +27,6 @@ async function logout() {
   router.push('/login')
 }
 function goNotif(link) { closeNotif(); router.push(link) }
-
-onMounted(() => loadNotifs())
 
 const pageTitle = computed(() => {
   const name = route.name || ''

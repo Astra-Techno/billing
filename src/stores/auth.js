@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import api from '../api'
+import api, { invalidateApiCache } from '../api'
 
 export const useAuthStore = defineStore('auth', () => {
   const token      = ref(localStorage.getItem('token') || null)
@@ -41,6 +41,7 @@ export const useAuthStore = defineStore('auth', () => {
     businessId.value = null
     businesses.value = []
     localStorage.clear()
+    invalidateApiCache()
   }
 
   async function login(email, password) {

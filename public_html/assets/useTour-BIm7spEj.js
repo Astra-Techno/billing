@@ -1,1 +1,0 @@
-import{U as e}from"./runtime-core.esm-bundler-C_JmZCwE.js";var t=e(null);function n(){return{activeTour:t,currentStep:e(0),tooltipStyle:e({}),arrowStyle:e({}),startTour:()=>{},nextStep:()=>{},prevStep:()=>{},endTour:()=>{},isTourSeen:()=>!0,resetTour:()=>{}}}export{n as t};

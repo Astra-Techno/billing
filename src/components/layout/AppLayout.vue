@@ -1,22 +1,21 @@
 <script setup>
-import { onMounted, computed } from 'vue'
+import { onMounted, computed, defineAsyncComponent } from 'vue'
 import { useRoute } from 'vue-router'
 import Sidebar from './Sidebar.vue'
 import TopBar from './TopBar.vue'
 import DesktopSidebar from './DesktopSidebar.vue'
 import DesktopHeader from './DesktopHeader.vue'
-import HelpPopup from '../HelpPopup.vue'
 import Toast from '../Toast.vue'
 import { useBusinessStore } from '../../stores/business'
+
+const HelpPopup = defineAsyncComponent(() => import('../HelpPopup.vue'))
 
 const bizStore = useBusinessStore()
 const route = useRoute()
 
 onMounted(() => {
-  bizStore.fetchBusiness()
-  bizStore.loadFeatures()
+  bizStore.ensureLoaded()
 
-  // Apply dark mode on load
   if (localStorage.getItem('darkMode') === 'true') {
     document.documentElement.classList.add('dark')
   }
@@ -41,12 +40,14 @@ const showNavbar = computed(() => {
         class="flex-1 lg:overflow-hidden overflow-y-auto overflow-x-hidden w-full lg:max-w-none pt-0 lg:pb-0 flex flex-col min-h-0 app-main-scroll"
         :class="showNavbar ? 'pb-[calc(4.75rem+env(safe-area-inset-bottom))]' : 'pb-0'"
       >
-        <RouterView v-slot="{ Component, route }">
-          <Transition name="page-fade" mode="out-in">
-            <div :key="route.path.split('/')[1]" class="flex-1 flex flex-col min-h-0 h-full">
-              <component :is="Component" />
-            </div>
-          </Transition>
+        <RouterView v-slot="{ Component, route: childRoute }">
+          <KeepAlive :max="12">
+            <component
+              :is="Component"
+              :key="childRoute.path.split('/')[1] || 'home'"
+              class="flex-1 flex flex-col min-h-0 h-full"
+            />
+          </KeepAlive>
         </RouterView>
       </main>
     </div>

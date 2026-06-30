@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useAuthStore } from '../../stores/auth'
 import { useBusinessStore } from '../../stores/business'
 import { useRouter } from 'vue-router'
@@ -106,8 +106,6 @@ function goNotif(link) {
   closeNotif()
   router.push(link)
 }
-
-onMounted(() => loadNotifs())
 
 const avatarColors = [
   'bg-blue-100 text-blue-700', 'bg-emerald-100 text-emerald-700',

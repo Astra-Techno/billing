@@ -185,7 +185,7 @@ async function load() {
   loading.value  = true
   selected.value = new Set()
   try {
-    const p = { sort_by: 'i.created_at', sort_order: 'desc' }
+    const p = { sort_by: 'i.created_at', sort_order: 'desc', limit: 200 }
     if (filter.value.status)    p['filter.status']    = filter.value.status
     if (filter.value.search)    p['filter.search']    = `%${filter.value.search}%`
     if (filter.value.from_date) p['filter.from_date'] = filter.value.from_date

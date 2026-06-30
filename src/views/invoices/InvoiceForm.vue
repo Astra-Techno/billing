@@ -101,6 +101,7 @@ onMounted(() => document.addEventListener('keydown', onFormShortcut, true))
 onUnmounted(() => {
   document.removeEventListener('keydown', onFormShortcut, true)
   clearTimeout(productDebounceTimer)
+  clearTimeout(productBlurTimer)
 })
 
 // shallowRef: large display-only arrays — no need for deep reactivity on each item's properties
@@ -211,6 +212,7 @@ const productSearchIdx   = ref(null)
 const productSearchQuery = ref('')
 const productSearchDebounced = ref('')
 let productDebounceTimer = null
+let productBlurTimer = null
 const newProduct = ref({ type: 'service', name: '', price: '', unit: 'Nos', gst_rate: 18 })
 
 const filteredProducts = computed(() => {
@@ -258,9 +260,7 @@ function selectProduct(i, p) {
   closeProductSearch()
   ensureTrailingEmptyRow({ focus: false })
   if (window.innerWidth < 1024) {
-    // Mobile: expand the new empty row so the user can immediately type the next product
-    activeItemIndex.value = form.value.items.length - 1
-    nextTick(() => focusItemDescription(form.value.items.length - 1))
+    activeItemIndex.value = i
   } else {
     focusItemField(i, 'qty')
   }
@@ -523,14 +523,15 @@ function focusItemDescription(index) {
   focusItemField(index, 'desc')
 }
 
-/** Blur handler — defer so dropdown product clicks register before we add a row. */
+/** Blur handler — defer so dropdown product taps register before we add a row. */
 function onItemDescriptionBlur(i) {
-  setTimeout(() => {
+  clearTimeout(productBlurTimer)
+  productBlurTimer = setTimeout(() => {
     if (productSearchIdx.value === i) return
     if (i !== form.value.items.length - 1) return
     if (!form.value.items[i].description?.trim()) return
     ensureTrailingEmptyRow()
-  }, 120)
+  }, 200)
 }
 
 function onItemPriceBlur(i) {
@@ -717,7 +718,7 @@ async function submit() {
                         <div v-if="productSearchIdx === i && it.description?.trim().length >= 1" class="absolute left-0 right-0 top-full mt-1 z-50 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
                           <div v-if="filteredProducts.length" class="max-h-36 overflow-y-auto divide-y divide-gray-50">
                             <button v-for="(p, pi) in filteredProducts" :key="p.id" type="button"
-                              @click="selectProduct(i, p)" @mouseenter="productHighlight = pi"
+                              @pointerdown.prevent="selectProduct(i, p)" @mouseenter="productHighlight = pi"
                               :class="['w-full flex items-center justify-between px-3 py-2 transition text-left text-xs', pi === productHighlight ? 'bg-blue-50 pd-active' : 'hover:bg-gray-50']">
                               <span class="font-medium text-gray-800 truncate">{{ p.name }}</span>
                               <span class="text-gray-400 tabular-nums shrink-0 ml-2">{{ inr(p.price) }}</span>
@@ -809,11 +810,11 @@ async function submit() {
                         @blur="onItemDescriptionBlur(i)"
                         @keydown="onProductKeydown(i, $event)" />
                       <!-- Mobile product autocomplete -->
-                      <div v-if="productSearchIdx === i && it.description?.trim().length >= 1" class="mt-1.5 space-y-1.5">
-                        <div v-if="filteredProducts.length" class="max-h-36 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-50 bg-white">
+                      <div v-if="productSearchIdx === i && it.description?.trim().length >= 1" class="relative z-50 mt-1.5 space-y-1.5">
+                        <div v-if="filteredProducts.length" class="max-h-36 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-50 bg-white shadow-lg">
                           <button v-for="p in filteredProducts" :key="p.id" type="button"
-                            @click="selectProduct(i, p)"
-                            class="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 text-left text-sm">
+                            @pointerdown.prevent="selectProduct(i, p)"
+                            class="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 active:bg-primary-50 text-left text-sm touch-manipulation">
                             <span class="font-medium text-gray-800 truncate">{{ p.name }}</span>
                             <span class="text-gray-400 text-xs tabular-nums shrink-0 ml-2">{{ inr(p.price) }}</span>
                           </button>
@@ -1110,8 +1111,8 @@ async function submit() {
       </form>
     </div>
 
-    <!-- Shared overlay for product dropdown (one layer, not per row) -->
-    <div v-if="productSearchIdx !== null" class="fixed inset-0 z-40" @click="closeProductSearch"></div>
+    <!-- Desktop only: dismiss overlay (mobile dropdown is inline, must not block taps) -->
+    <div v-if="productSearchIdx !== null" class="hidden lg:block fixed inset-0 z-40" @click="closeProductSearch"></div>
 
     <!-- Mobile sticky footer — thumb zone -->
     <div v-if="!dataLoading" class="form-footer-mobile lg:hidden bg-white/95 backdrop-blur-md border-t border-gray-100 px-4 py-3 flex items-center gap-3 safe-area-pb">

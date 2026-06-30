@@ -13,6 +13,12 @@ class SqlController
     {
         $name  = $this->withMethod($args['name'], 'list');
         $input = array_merge(RequestHolder::all(), ['select_type' => 'list']);
+        $limit = (int)($input['limit'] ?? 0);
+        if ($limit <= 0) {
+            $input['limit'] = 200;
+        } elseif ($limit > 1000) {
+            $input['limit'] = 1000;
+        }
         $sql   = (new Sql())->load($name, $input);
         return $this->json($response, ['success' => true, 'data' => $sql->assocList()]);
     }

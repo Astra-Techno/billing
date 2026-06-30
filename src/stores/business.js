@@ -54,15 +54,18 @@ export const useBusinessStore = defineStore('business', () => {
     return features.value[key] !== false
   }
 
-  async function fetchBusiness() {
+  let _loaded = false
+  let _loading = null
+
+  async function fetchBusiness(force = false) {
     try {
-      const res = await item('Business')
+      const res = await item('Business', {}, { bust: force, ttl: 300_000 })
       logo.value = res.data?.data?.logo || ''
       if (res.data?.data?.state_id) stateId.value = parseInt(res.data.data.state_id)
     } catch {}
   }
 
-  async function loadFeatures() {
+  async function loadFeatures(force = false) {
     try {
       const res = await task('Settings', 'get', {})
       const settings = res.data?.data || {}
@@ -75,11 +78,21 @@ export const useBusinessStore = defineStore('business', () => {
     } catch {}
   }
 
+  async function ensureLoaded(force = false) {
+    if (_loaded && !force) return
+    if (_loading && !force) return _loading
+    _loading = Promise.all([fetchBusiness(force), loadFeatures(force)]).finally(() => {
+      _loaded = true
+      _loading = null
+    })
+    return _loading
+  }
+
   async function saveFeatures() {
     try {
       await task('Settings', 'save', { settings: { features: JSON.stringify(features.value) } })
     } catch {}
   }
 
-  return { logo, stateId, features, darkMode, invoiceTemplate, setLogo, setStateId, setFeatures, isEnabled, fetchBusiness, loadFeatures, saveFeatures, toggleDarkMode, initDarkMode, setInvoiceTemplate }
+  return { logo, stateId, features, darkMode, invoiceTemplate, setLogo, setStateId, setFeatures, isEnabled, fetchBusiness, loadFeatures, ensureLoaded, saveFeatures, toggleDarkMode, initDarkMode, setInvoiceTemplate }
 })
