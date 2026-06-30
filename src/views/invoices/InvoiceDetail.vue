@@ -308,7 +308,8 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
       </div>
 
       <!-- Summary + actions (desktop) -->
-      <div class="inv-detail-shell bg-white rounded-xl border border-gray-200 shadow-sm animate-fade-in-up">
+      <div class="inv-detail-shell bg-white rounded-xl border border-gray-200 shadow-sm animate-fade-in-up"
+        :class="{ 'inv-detail-shell--menu-open': moreMenuOpen }">
         <div class="px-5 sm:px-6 py-5 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
           <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-center gap-2 mb-2">
@@ -379,7 +380,7 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
               Delete
             </button>
 
-            <div v-if="invoice.status !== 'draft'" class="relative">
+            <div v-if="invoice.status !== 'draft'" class="inv-detail-more relative" :class="{ 'inv-detail-more--open': moreMenuOpen }">
               <button type="button" class="inv-detail-btn inv-detail-btn--ghost inv-detail-btn--icon"
                 :class="{ 'inv-detail-btn--active': moreMenuOpen }"
                 aria-label="More actions" @click="toggleMoreMenu">
@@ -938,6 +939,21 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
 </template>
 
 <style scoped>
+.inv-detail-shell {
+  position: relative;
+  overflow: visible;
+  z-index: 2;
+}
+.inv-detail-shell--menu-open {
+  z-index: 40;
+}
+.inv-detail-document {
+  position: relative;
+  z-index: 1;
+}
+.inv-detail-more--open {
+  z-index: 50;
+}
 .inv-detail-toolbar {
   align-items: center;
   justify-content: space-between;
@@ -949,6 +965,7 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
   position: relative;
   z-index: 20;
   min-height: 3.25rem;
+  overflow: visible;
 }
 .inv-detail-toolbar__left,
 .inv-detail-toolbar__right {
@@ -1028,7 +1045,7 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
   position: absolute;
   top: calc(100% + 0.375rem);
   left: 0;
-  z-index: 50;
+  z-index: 100;
   min-width: 11.5rem;
   padding: 0.25rem;
   background: #fff;
@@ -1076,6 +1093,15 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
 </style>
 
 <style>
+/* Hide main scrollbar on invoice detail while keeping scroll */
+.app-main-scroll:has(.inv-detail-page) {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.app-main-scroll:has(.inv-detail-page)::-webkit-scrollbar {
+  display: none;
+}
+
 @media print {
   header, nav, footer,
   .btn-primary, .btn-outline, button,
