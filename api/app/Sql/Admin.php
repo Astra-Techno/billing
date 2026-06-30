@@ -13,7 +13,7 @@ class Admin extends Sql
     {
         return (new Query('Admin.stats'))
             ->from('businesses b')
-            ->select('entity', '
+            ->select('list', '
                 (SELECT COUNT(*) FROM businesses WHERE active = 1)                AS total_businesses,
                 (SELECT COUNT(*) FROM users WHERE active = 1)                      AS total_users,
                 (SELECT COUNT(*) FROM invoices WHERE deleted_at IS NULL)                                    AS total_invoices,

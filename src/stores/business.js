@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { item, task } from '../api/index'
+import { useAuthStore } from './auth'
 
 // Default features — core items always on, advanced off
 const DEFAULT_FEATURES = {
@@ -79,6 +80,7 @@ export const useBusinessStore = defineStore('business', () => {
   }
 
   async function ensureLoaded(force = false) {
+    if (!useAuthStore().businessId) return
     if (_loaded && !force) return
     if (_loading && !force) return _loading
     _loading = Promise.all([fetchBusiness(force), loadFeatures(force)]).finally(() => {
