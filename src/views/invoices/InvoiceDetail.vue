@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api, { item, list, task } from '../../api'
 import { inr } from '../../utils/currency'
@@ -125,6 +125,31 @@ const invoiceTitle = computed(() => {
 const isGst = computed(() => invoice.value?.invoice_type !== 'bill_of_supply')
 
 const downloading = ref(false)
+const exportMenuOpen = ref(false)
+const moreMenuOpen   = ref(false)
+
+function closeActionMenus() {
+  exportMenuOpen.value = false
+  moreMenuOpen.value   = false
+}
+
+function toggleExportMenu(e) {
+  e?.stopPropagation()
+  moreMenuOpen.value   = false
+  exportMenuOpen.value = !exportMenuOpen.value
+}
+
+function toggleMoreMenu(e) {
+  e?.stopPropagation()
+  exportMenuOpen.value = false
+  moreMenuOpen.value   = !moreMenuOpen.value
+}
+
+function runExport(action) {
+  closeActionMenus()
+  action()
+}
+
 async function downloadPdf(mode = '') {
   downloading.value = true
   try {
@@ -261,7 +286,11 @@ async function cancelEwb() {
 }
 
 watch(() => props.panelId, v => { if (v) load() })
-onMounted(load)
+onMounted(() => {
+  load()
+  document.addEventListener('click', closeActionMenus)
+})
+onUnmounted(() => document.removeEventListener('click', closeActionMenus))
 </script>
 
 <template>
@@ -304,7 +333,7 @@ onMounted(load)
       </div>
 
       <!-- Summary + actions (desktop) -->
-      <div class="inv-detail-shell bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden animate-fade-in-up">
+      <div class="inv-detail-shell bg-white rounded-xl border border-gray-200 shadow-sm animate-fade-in-up">
         <div class="px-5 sm:px-6 py-5 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
           <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-center gap-2 mb-2">
@@ -334,59 +363,77 @@ onMounted(load)
         </div>
 
         <!-- Desktop action toolbar -->
-        <div v-if="invoice.status !== 'cancelled'" class="hidden lg:flex flex-wrap items-center gap-2 px-5 sm:px-6 py-3 bg-gray-50/80 border-t border-gray-100">
-          <button v-if="invoice.status === 'draft'" @click="markSent" :disabled="acting"
-            class="inv-detail-btn inv-detail-btn--primary">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
-            {{ acting ? 'Sending…' : 'Mark as sent' }}
-          </button>
-
-          <button v-if="['sent','partial','overdue'].includes(invoice.status)" @click="showPayModal = true"
-            class="inv-detail-btn inv-detail-btn--success">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            Record payment
-          </button>
-
-          <span class="inv-detail-divider" />
-
-          <button @click="shareWhatsApp" class="inv-detail-btn inv-detail-btn--ghost" title="Share on WhatsApp">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.137.565 4.147 1.554 5.887L0 24l6.305-1.524A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.375l-.359-.214-3.735.902.948-3.632-.234-.373A9.818 9.818 0 1112 21.818z"/></svg>
-            Share
-          </button>
-
-          <button @click="shareEmail" class="inv-detail-btn inv-detail-btn--ghost">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-            Email
-          </button>
-
-          <span class="inv-detail-divider" />
-
-          <button @click="printInvoice" class="inv-detail-btn inv-detail-btn--ghost">Print</button>
-          <button @click="downloadPdf()" :disabled="downloading" class="inv-detail-btn inv-detail-btn--ghost">
-            {{ downloading ? 'PDF…' : 'PDF' }}
-          </button>
-          <button @click="printDeliveryChallan" class="inv-detail-btn inv-detail-btn--ghost" title="Delivery challan (no prices)">DC print</button>
-          <button @click="downloadPdf('dc')" :disabled="downloading" class="inv-detail-btn inv-detail-btn--ghost">DC PDF</button>
-
-          <span class="inv-detail-divider" />
-
-          <button @click="showEwbModal = true" class="inv-detail-btn inv-detail-btn--ghost">
-            {{ ewb ? 'View EWB' : 'E-way bill' }}
-          </button>
-
-          <RouterLink :to="`/invoices/${invoice.id}/edit`" class="inv-detail-btn inv-detail-btn--ghost">
-            Edit
-          </RouterLink>
-
-          <div class="relative ml-auto group">
-            <button type="button" class="inv-detail-btn inv-detail-btn--ghost inv-detail-btn--icon" aria-label="More actions">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
+        <div v-if="invoice.status !== 'cancelled'" class="inv-detail-toolbar hidden lg:flex">
+          <div class="inv-detail-toolbar__left">
+            <button v-if="invoice.status === 'draft'" @click="markSent" :disabled="acting"
+              class="inv-detail-btn inv-detail-btn--primary">
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+              {{ acting ? 'Sending…' : 'Mark as sent' }}
             </button>
-            <div class="absolute right-0 top-full mt-1 w-44 bg-white rounded-lg shadow-lg border border-gray-200 py-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-30">
-              <RouterLink v-if="invoice.status === 'paid' || invoice.status === 'partial'" :to="`/credit-notes/new?from_invoice=${invoice.id}`"
-                class="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Issue credit note</RouterLink>
-              <button v-if="invoice.status !== 'paid'" type="button" @click="showCancelModal = true"
-                class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50">Cancel invoice</button>
+
+            <button v-if="['sent','partial','overdue'].includes(invoice.status)" @click="showPayModal = true"
+              class="inv-detail-btn inv-detail-btn--success">
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Record payment
+            </button>
+          </div>
+
+          <div class="inv-detail-toolbar__right">
+            <button type="button" @click="shareWhatsApp" class="inv-detail-btn inv-detail-btn--icon" title="Share on WhatsApp">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.137.565 4.147 1.554 5.887L0 24l6.305-1.524A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.375l-.359-.214-3.735.902.948-3.632-.234-.373A9.818 9.818 0 1112 21.818z"/></svg>
+            </button>
+
+            <button type="button" @click="shareEmail" class="inv-detail-btn inv-detail-btn--icon" title="Send email">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            </button>
+
+            <span class="inv-detail-divider" />
+
+            <div class="relative">
+              <button type="button" class="inv-detail-btn inv-detail-btn--ghost"
+                :class="{ 'inv-detail-btn--active': exportMenuOpen }"
+                @click="toggleExportMenu">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Export
+                <svg class="w-3.5 h-3.5 shrink-0 opacity-60" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+              </button>
+              <div v-show="exportMenuOpen" class="inv-detail-menu" @click.stop>
+                <button type="button" class="inv-detail-menu__item" @click="runExport(printInvoice)">Print invoice</button>
+                <button type="button" class="inv-detail-menu__item" :disabled="downloading" @click="runExport(() => downloadPdf())">
+                  {{ downloading ? 'Downloading…' : 'Download PDF' }}
+                </button>
+                <button type="button" class="inv-detail-menu__item" @click="runExport(printDeliveryChallan)">Print delivery challan</button>
+                <button type="button" class="inv-detail-menu__item" :disabled="downloading" @click="runExport(() => downloadPdf('dc'))">Download DC PDF</button>
+                <button type="button" class="inv-detail-menu__item" @click="runExport(printProforma)">Print proforma</button>
+              </div>
+            </div>
+
+            <RouterLink :to="`/invoices/${invoice.id}/edit`" class="inv-detail-btn inv-detail-btn--ghost" @click="closeActionMenus">
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+              Edit
+            </RouterLink>
+
+            <div class="relative">
+              <button type="button" class="inv-detail-btn inv-detail-btn--ghost inv-detail-btn--icon"
+                :class="{ 'inv-detail-btn--active': moreMenuOpen }"
+                aria-label="More actions" @click="toggleMoreMenu">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
+              </button>
+              <div v-show="moreMenuOpen" class="inv-detail-menu inv-detail-menu--right" @click.stop>
+                <button type="button" class="inv-detail-menu__item" @click="runExport(() => showEwbModal = true)">
+                  {{ ewb ? 'View e-way bill' : 'Generate e-way bill' }}
+                </button>
+                <RouterLink v-if="invoice.status === 'paid' || invoice.status === 'partial'"
+                  :to="`/credit-notes/new?from_invoice=${invoice.id}`"
+                  class="inv-detail-menu__item" @click="closeActionMenus">
+                  Issue credit note
+                </RouterLink>
+                <button v-if="invoice.status !== 'paid'" type="button"
+                  class="inv-detail-menu__item inv-detail-menu__item--danger"
+                  @click="runExport(() => showCancelModal = true)">
+                  Cancel invoice
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -920,16 +967,47 @@ onMounted(load)
 </template>
 
 <style scoped>
+.inv-detail-toolbar {
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  background: #f9fafb;
+  border-top: 1px solid #f3f4f6;
+  border-radius: 0 0 0.75rem 0.75rem;
+  position: relative;
+  z-index: 20;
+  min-height: 3.25rem;
+}
+.inv-detail-toolbar__left,
+.inv-detail-toolbar__right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.25rem;
+}
+.inv-detail-toolbar__left {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.inv-detail-toolbar__right {
+  flex: 0 0 auto;
+  flex-shrink: 0;
+}
 .inv-detail-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.375rem;
-  padding: 0.5rem 0.75rem;
+  height: 2.25rem;
+  padding: 0 0.75rem;
   font-size: 0.8125rem;
   font-weight: 500;
+  line-height: 1;
   border-radius: 0.5rem;
-  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s;
   white-space: nowrap;
+  border: 1px solid transparent;
 }
 .inv-detail-btn--primary {
   background: #4f46e5;
@@ -945,19 +1023,58 @@ onMounted(load)
 .inv-detail-btn--ghost {
   background: #fff;
   color: #374151;
-  border: 1px solid #e5e7eb;
+  border-color: #e5e7eb;
 }
 .inv-detail-btn--ghost:hover {
   background: #f9fafb;
   border-color: #d1d5db;
 }
-.inv-detail-btn--icon { padding: 0.5rem; }
+.inv-detail-btn--icon {
+  width: 2.25rem;
+  padding: 0;
+}
+.inv-detail-btn--active {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #4338ca;
+}
 .inv-detail-divider {
   width: 1px;
   height: 1.25rem;
   background: #e5e7eb;
-  margin: 0 0.125rem;
+  flex-shrink: 0;
 }
+.inv-detail-menu {
+  position: absolute;
+  top: calc(100% + 0.375rem);
+  left: 0;
+  z-index: 50;
+  min-width: 11.5rem;
+  padding: 0.25rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.625rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
+}
+.inv-detail-menu--right {
+  left: auto;
+  right: 0;
+}
+.inv-detail-menu__item {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #374151;
+  text-align: left;
+  border-radius: 0.375rem;
+  transition: background-color 0.12s;
+}
+.inv-detail-menu__item:hover:not(:disabled) { background: #f3f4f6; }
+.inv-detail-menu__item:disabled { opacity: 0.5; cursor: not-allowed; }
+.inv-detail-menu__item--danger { color: #dc2626; }
+.inv-detail-menu__item--danger:hover { background: #fef2f2; }
 .inv-detail-table thead tr {
   background: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
