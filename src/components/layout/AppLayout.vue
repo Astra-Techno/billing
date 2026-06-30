@@ -48,8 +48,9 @@ const showNavbar = computed(() => {
         <RouterView v-slot="{ Component, route: childRoute }">
           <KeepAlive :max="12">
             <component
+              v-if="Component"
               :is="Component"
-              :key="childRoute.path.split('/')[1] || 'home'"
+              :key="childRoute.matched[1]?.name || 'home'"
               class="flex-1 flex flex-col min-h-0 h-full"
             />
           </KeepAlive>
