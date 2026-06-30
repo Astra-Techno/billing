@@ -265,7 +265,7 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="gpay-screen px-4 py-4 max-w-3xl lg:mx-auto space-y-5 pt-2 sm:pt-4 pb-24">
+  <div class="inv-detail-page gpay-screen px-4 py-4 lg:px-6 lg:py-6 max-w-4xl lg:mx-auto space-y-4 pt-2 sm:pt-4 pb-24">
 
     <!-- Sticky Header: Invozen mockup style on mobile -->
     <div v-if="invoice" class="lg:hidden sticky top-0 z-30 bg-[#1a56db] text-white flex items-center justify-between gap-3 px-4 py-3 shrink-0 shadow-sm -mx-4 -mt-4 mb-4">
@@ -303,127 +303,115 @@ onMounted(load)
         </div>
       </div>
 
-      <!-- Premium Header Card -->
-      <div class="bg-white lg:bg-gradient-to-br lg:from-white lg:to-gray-50/80 rounded-[2rem] p-6 sm:p-8 shadow-sm lg:shadow-md lg:shadow-gray-200/50 border border-gray-100 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative overflow-hidden animate-fade-in-up mt-2 mb-6">
-        <!-- decorative background blur -->
-        <div class="hidden lg:block absolute -top-10 -right-10 w-40 h-40 bg-primary-100 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
-
-        <div class="relative z-10 w-full lg:w-auto flex flex-col gap-3">
-          <div class="flex items-center justify-between w-full lg:justify-start lg:gap-3">
-             <span class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Invoice {{ invoice.number }}</span>
-             <span :class="statusBadge(invoice.status)" class="px-2.5 py-0.5 text-[11px] font-bold rounded-full border border-black/5">{{ statusLabel(invoice.status) }}</span>
+      <!-- Summary + actions (desktop) -->
+      <div class="inv-detail-shell bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden animate-fade-in-up">
+        <div class="px-5 sm:px-6 py-5 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2 mb-2">
+              <span class="text-xs font-medium text-gray-500 tracking-wide">{{ invoice.number }}</span>
+              <span :class="statusBadge(invoice.status)" class="px-2 py-0.5 text-[11px] font-semibold rounded-md">{{ statusLabel(invoice.status) }}</span>
+            </div>
+            <RouterLink v-if="invoice.client_id" :to="`/clients/${invoice.client_id}`"
+              class="text-xl sm:text-2xl font-semibold text-gray-900 hover:text-primary-600 transition-colors leading-snug block">
+              {{ invoice.client_name }}
+            </RouterLink>
+            <h1 v-else class="text-xl sm:text-2xl font-semibold text-gray-900 leading-snug">{{ invoice.client_name }}</h1>
+            <p class="text-sm text-gray-500 mt-1.5">
+              Issued {{ fmtDateShort(invoice.issue_date) }}
+              <span class="text-gray-300 mx-1">·</span>
+              Due {{ fmtDateShort(invoice.due_date) }}
+            </p>
           </div>
-          <div>
-            <RouterLink v-if="invoice.client_id" :to="`/clients/${invoice.client_id}`" class="text-2xl lg:text-4xl font-black text-gray-900 tracking-tight hover:text-primary-600 transition-colors leading-tight">{{ invoice.client_name }}</RouterLink>
-            <h1 v-else class="text-2xl lg:text-4xl font-black text-gray-900 tracking-tight leading-tight">{{ invoice.client_name }}</h1>
-            <p class="text-xs font-semibold text-gray-400 mt-2 flex items-center gap-1.5">
-              <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-              Issued {{ fmtDateShort(invoice.issue_date) }} <span class="text-gray-300 font-normal">•</span> Due {{ fmtDateShort(invoice.due_date) }}
+
+          <div class="lg:text-right shrink-0 lg:pl-6 lg:border-l lg:border-gray-100">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Total amount</p>
+            <p class="text-2xl sm:text-3xl font-bold text-gray-900 tabular-nums tracking-tight mt-0.5">{{ inr(invoice.total) }}</p>
+            <p v-if="invoice.status === 'paid'" class="mt-2 text-xs font-semibold text-emerald-700">Paid in full</p>
+            <p v-else-if="invoice.amount_due > 0" class="mt-2 text-sm font-semibold text-red-600 tabular-nums">
+              Balance due {{ inr(invoice.amount_due) }}
             </p>
           </div>
         </div>
 
-        <div class="relative z-10 flex flex-col items-start lg:items-end w-full lg:w-auto mt-2 lg:mt-0 pt-4 lg:pt-0 border-t border-gray-100/60 lg:border-t-0">
-          <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Amount</p>
-          <p class="text-3xl lg:text-4xl font-black text-gray-900 tracking-tight">{{ inr(invoice.total) }}</p>
-          <div v-if="invoice.status === 'paid'" class="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold shadow-sm border border-emerald-100/50">
-            <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-            Fully Paid
-          </div>
-          <div v-else-if="invoice.amount_due > 0" class="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-danger-50 text-danger-700 text-xs font-bold shadow-sm border border-danger-100/50">
-            <span class="w-2 h-2 rounded-full bg-danger-500 animate-pulse"></span>
-            Balance Due: {{ inr(invoice.amount_due) }}
+        <!-- Desktop action toolbar -->
+        <div v-if="invoice.status !== 'cancelled'" class="hidden lg:flex flex-wrap items-center gap-2 px-5 sm:px-6 py-3 bg-gray-50/80 border-t border-gray-100">
+          <button v-if="invoice.status === 'draft'" @click="markSent" :disabled="acting"
+            class="inv-detail-btn inv-detail-btn--primary">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+            {{ acting ? 'Sending…' : 'Mark as sent' }}
+          </button>
+
+          <button v-if="['sent','partial','overdue'].includes(invoice.status)" @click="showPayModal = true"
+            class="inv-detail-btn inv-detail-btn--success">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Record payment
+          </button>
+
+          <span class="inv-detail-divider" />
+
+          <button @click="shareWhatsApp" class="inv-detail-btn inv-detail-btn--ghost" title="Share on WhatsApp">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.137.565 4.147 1.554 5.887L0 24l6.305-1.524A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.375l-.359-.214-3.735.902.948-3.632-.234-.373A9.818 9.818 0 1112 21.818z"/></svg>
+            Share
+          </button>
+
+          <button @click="shareEmail" class="inv-detail-btn inv-detail-btn--ghost">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            Email
+          </button>
+
+          <span class="inv-detail-divider" />
+
+          <button @click="printInvoice" class="inv-detail-btn inv-detail-btn--ghost">Print</button>
+          <button @click="downloadPdf()" :disabled="downloading" class="inv-detail-btn inv-detail-btn--ghost">
+            {{ downloading ? 'PDF…' : 'PDF' }}
+          </button>
+          <button @click="printDeliveryChallan" class="inv-detail-btn inv-detail-btn--ghost" title="Delivery challan (no prices)">DC print</button>
+          <button @click="downloadPdf('dc')" :disabled="downloading" class="inv-detail-btn inv-detail-btn--ghost">DC PDF</button>
+
+          <span class="inv-detail-divider" />
+
+          <button @click="showEwbModal = true" class="inv-detail-btn inv-detail-btn--ghost">
+            {{ ewb ? 'View EWB' : 'E-way bill' }}
+          </button>
+
+          <RouterLink :to="`/invoices/${invoice.id}/edit`" class="inv-detail-btn inv-detail-btn--ghost">
+            Edit
+          </RouterLink>
+
+          <div class="relative ml-auto group">
+            <button type="button" class="inv-detail-btn inv-detail-btn--ghost inv-detail-btn--icon" aria-label="More actions">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
+            </button>
+            <div class="absolute right-0 top-full mt-1 w-44 bg-white rounded-lg shadow-lg border border-gray-200 py-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-30">
+              <RouterLink v-if="invoice.status === 'paid' || invoice.status === 'partial'" :to="`/credit-notes/new?from_invoice=${invoice.id}`"
+                class="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Issue credit note</RouterLink>
+              <button v-if="invoice.status !== 'paid'" type="button" @click="showCancelModal = true"
+                class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50">Cancel invoice</button>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Unified Action Bar (Desktop / Tablet view) -->
-      <div v-if="invoice.status !== 'cancelled'" class="hidden lg:flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 mb-8 animate-fade-in-up delay-75 z-20 relative">
-        <!-- Primary Action -->
-        <button v-if="invoice.status === 'draft'" @click="markSent" :disabled="acting"
-          class="flex items-center justify-center gap-2 px-6 py-3.5 bg-primary-600 text-white font-bold text-sm rounded-xl shadow-gpay hover:bg-primary-700 hover:shadow-lg transition-all active:scale-95 shrink-0">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
-          {{ acting ? 'Sending…' : 'Mark as Sent' }}
-        </button>
-
-        <button v-if="['sent','partial','overdue'].includes(invoice.status)" @click="showPayModal = true"
-          class="flex items-center justify-center gap-2 px-6 py-3.5 bg-emerald-600 text-white font-bold text-sm rounded-xl shadow-soft hover:bg-emerald-700 hover:shadow-lg transition-all active:scale-95 shrink-0">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          Record Payment
-        </button>
-
-        <div class="w-[1px] h-8 bg-gray-200 hidden sm:block mx-1"></div>
-
-        <!-- Secondary Actions Row -->
-        <div class="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
-          <button @click="shareWhatsApp" class="flex items-center gap-2 px-4 py-3 sm:py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-green-50 hover:border-green-200 hover:text-green-700 font-semibold text-xs transition-colors shrink-0 shadow-sm">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.137.565 4.147 1.554 5.887L0 24l6.305-1.524A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.375l-.359-.214-3.735.902.948-3.632-.234-.373A9.818 9.818 0 1112 21.818z"/></svg>
-            Share
-          </button>
-          
-          <button @click="shareEmail" class="flex items-center gap-2 px-4 py-3 sm:py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-sky-50 hover:border-sky-200 hover:text-sky-700 font-semibold text-xs transition-colors shrink-0 shadow-sm">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-            Email
-          </button>
-
-          <button @click="printInvoice" class="flex items-center gap-2 px-4 py-3 sm:py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 font-semibold text-xs transition-colors shrink-0 shadow-sm">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-            Print
-          </button>
-
-          <button @click="printDeliveryChallan" class="flex items-center gap-2 px-4 py-3 sm:py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-amber-50 hover:border-amber-200 hover:text-amber-700 font-semibold text-xs transition-colors shrink-0 shadow-sm" title="Print Delivery Challan (no prices)">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/></svg>
-            DC Print
-          </button>
-
-          <button @click="downloadPdf('dc')" :disabled="downloading" class="flex items-center gap-2 px-4 py-3 sm:py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-amber-50 hover:border-amber-200 hover:text-amber-700 font-semibold text-xs transition-colors shrink-0 shadow-sm" title="Download DC as PDF">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-            DC PDF
-          </button>
-
-          <button @click="downloadPdf()" :disabled="downloading" class="flex items-center gap-2 px-4 py-3 sm:py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-red-50 hover:border-red-200 hover:text-red-700 font-semibold text-xs transition-colors shrink-0 shadow-sm">
-            <svg v-if="downloading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
-            <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-            PDF
-          </button>
-
-          <!-- E-way Bill -->
-          <button @click="showEwbModal = true"
-            class="flex items-center gap-2 px-4 py-3 sm:py-3.5 rounded-xl font-semibold text-xs transition-colors shrink-0 shadow-sm border"
-            :class="ewb && ewb.status === 'active' ? 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100' : 'bg-white border-gray-200 text-gray-700 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-700'">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
-            {{ ewb ? 'View EWB' : 'E-way Bill' }}
-          </button>
-
-          <RouterLink :to="`/invoices/${invoice.id}/edit`" class="flex items-center gap-2 px-4 py-3 sm:py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 font-semibold text-xs transition-colors shrink-0 shadow-sm">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-            Edit
-          </RouterLink>
-
-          <!-- More Options Menu -->
-          <div class="relative ml-auto sm:ml-0 group shrink-0">
-            <button class="p-3 sm:p-3.5 rounded-xl bg-white border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors shadow-sm">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
-            </button>
-            <!-- Dropdown -->
-            <div class="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all origin-top-right">
-               <RouterLink v-if="invoice.status === 'paid' || invoice.status === 'partial'" :to="`/credit-notes/new?from_invoice=${invoice.id}`"
-                 class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 font-medium">
-                 Issue Credit Note
-               </RouterLink>
-               <button v-if="invoice.status !== 'paid'" @click="showCancelModal = true" class="w-full text-left px-4 py-2.5 text-sm text-danger-600 hover:bg-danger-50 font-bold">
-                 Cancel Invoice
-               </button>
+      <!-- Mobile summary (unchanged layout, toned down) -->
+      <div class="lg:hidden bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-xs text-gray-500">{{ invoice.number }}</span>
+              <span :class="statusBadge(invoice.status)" class="px-2 py-0.5 text-[11px] font-semibold rounded-md">{{ statusLabel(invoice.status) }}</span>
             </div>
+            <p class="font-semibold text-gray-900 truncate">{{ invoice.client_name }}</p>
+            <p class="text-xs text-gray-500 mt-1">Due {{ fmtDateShort(invoice.due_date) }}</p>
           </div>
+          <p class="text-lg font-bold text-gray-900 tabular-nums shrink-0">{{ inr(invoice.total) }}</p>
         </div>
       </div>
 
       <!-- UPI Collect Payment card — shown when balance due and business has UPI -->
       <div v-if="invoice.status !== 'cancelled' && invoice.amount_due > 0 && (business?.upi_qr_image || business?.upi_id)"
         class="w-full max-w-lg mx-auto mb-5 animate-fade-in-up delay-100">
-        <div class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-[1.75rem] p-5">
-          <p class="text-xs font-bold text-emerald-700 uppercase tracking-widest mb-3">Collect Payment</p>
+        <div class="bg-white rounded-xl border border-emerald-100 p-5">
+          <p class="text-xs font-semibold text-emerald-700 uppercase tracking-wide mb-3">Collect payment</p>
           <div class="flex items-center gap-5">
             <!-- QR code -->
             <div class="shrink-0 text-center">
@@ -449,136 +437,126 @@ onMounted(load)
         </div>
       </div>
 
-      <!-- Invoice body — proper Indian GST Tax Invoice (Acts as scaled-down A4 document preview) -->
-      <div class="bg-white rounded-[2rem] shadow-xl shadow-gray-200/40 border border-gray-100 ring-1 ring-black/5 overflow-hidden animate-fade-in-up delay-150">
+      <!-- Invoice document preview -->
+      <div class="inv-detail-document bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden animate-fade-in-up">
 
-        <!-- Top: TAX INVOICE title row + Business info row -->
-        <div class="px-5 pt-5 pb-4 border-b border-gray-200 space-y-4">
-          <!-- Title row -->
-          <div class="flex items-center justify-between gap-2">
-            <p class="text-xl sm:text-2xl font-black text-primary-700 uppercase tracking-widest leading-none">{{ invoiceTitle }}</p>
-            <p class="text-sm font-bold text-gray-700 shrink-0">{{ invoice.number }}</p>
+        <!-- Header -->
+        <div class="px-6 pt-6 pb-5 border-b border-gray-200 bg-white">
+          <div class="flex items-start justify-between gap-4 mb-5">
+            <div>
+              <p class="text-lg font-bold text-gray-900 tracking-tight">{{ invoiceTitle }}</p>
+              <p class="text-sm text-gray-500 mt-0.5">{{ invoice.number }}</p>
+            </div>
+            <img v-if="business?.logo" :src="business.logo" class="w-14 h-14 object-contain rounded-lg border border-gray-100 shrink-0" alt="logo" />
           </div>
-          <!-- Business info row -->
-          <div class="flex items-start gap-3">
-            <img v-if="business?.logo" :src="business.logo" class="w-12 h-12 object-contain rounded-xl border border-gray-100 shrink-0" alt="logo" />
-            <div class="min-w-0">
-              <p class="text-base font-bold text-gray-900 leading-tight">{{ business?.name || invoice.business_name }}</p>
-              <p v-if="business?.address_line1" class="text-xs text-gray-500 mt-0.5">{{ business.address_line1 }}<span v-if="business.address_line2">, {{ business.address_line2 }}</span></p>
-              <p v-if="business?.city || business?.state_name" class="text-xs text-gray-500">
+          <div class="grid sm:grid-cols-2 gap-4 text-sm">
+            <div>
+              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">From</p>
+              <p class="font-semibold text-gray-900">{{ business?.name || invoice.business_name }}</p>
+              <p v-if="business?.address_line1" class="text-gray-600 mt-0.5 text-xs leading-relaxed">{{ business.address_line1 }}<span v-if="business.address_line2">, {{ business.address_line2 }}</span></p>
+              <p v-if="business?.city || business?.state_name" class="text-gray-600 text-xs">
                 {{ [business?.city, business?.state_name, business?.pincode].filter(Boolean).join(', ') }}
               </p>
-              <p v-if="business?.mobile || business?.email" class="text-xs text-gray-500 mt-0.5 truncate">
-                {{ [business?.mobile, business?.email].filter(Boolean).join(' · ') }}
-              </p>
-              <div class="flex flex-wrap gap-x-3 mt-1">
-                <p v-if="business?.gstin || invoice.business_gstin" class="text-[11px] text-gray-500 font-mono">GSTIN: {{ business?.gstin || invoice.business_gstin }}</p>
-                <p v-if="business?.pan" class="text-[11px] text-gray-500 font-mono">PAN: {{ business.pan }}</p>
-              </div>
+              <p v-if="business?.gstin || invoice.business_gstin" class="text-xs text-gray-500 font-mono mt-1.5">GSTIN {{ business?.gstin || invoice.business_gstin }}</p>
+              <p v-if="business?.email || business?.mobile" class="text-xs text-gray-500 mt-0.5">{{ [business?.email, business?.mobile].filter(Boolean).join(' · ') }}</p>
             </div>
           </div>
         </div>
 
-        <!-- Bill To (left) + Invoice Details (right) -->
-        <div class="grid grid-cols-2 border-b border-gray-200">
-          <!-- Bill To -->
-          <div class="px-5 py-4 border-r border-gray-200">
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Bill To</p>
-            <p class="font-bold text-gray-900 text-sm">{{ invoice.client_name }}</p>
-            <p v-if="invoice.client_company" class="text-xs text-gray-600">{{ invoice.client_company }}</p>
-            <p v-if="invoice.client_address1" class="text-xs text-gray-600 mt-0.5">{{ invoice.client_address1 }}<span v-if="invoice.client_address2">, {{ invoice.client_address2 }}</span></p>
-            <p v-if="invoice.client_city || invoice.client_pincode" class="text-xs text-gray-600">
+        <!-- Bill To + Invoice Details -->
+        <div class="grid sm:grid-cols-2 border-b border-gray-200 text-sm">
+          <div class="px-6 py-4 sm:border-r border-gray-200">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Bill to</p>
+            <p class="font-semibold text-gray-900">{{ invoice.client_name }}</p>
+            <p v-if="invoice.client_company" class="text-gray-600 text-xs mt-0.5">{{ invoice.client_company }}</p>
+            <p v-if="invoice.client_address1" class="text-gray-600 text-xs mt-1 leading-relaxed">{{ invoice.client_address1 }}<span v-if="invoice.client_address2">, {{ invoice.client_address2 }}</span></p>
+            <p v-if="invoice.client_city || invoice.client_pincode" class="text-gray-600 text-xs">
               {{ [invoice.client_city, invoice.client_pincode].filter(Boolean).join(' – ') }}
             </p>
-            <div class="mt-1.5 space-y-0.5">
-              <p v-if="invoice.client_gstin" class="text-[11px] text-gray-500 font-mono">GSTIN: {{ invoice.client_gstin }}</p>
-              <p v-if="invoice.client_mobile" class="text-[11px] text-gray-500">Mob: {{ invoice.client_mobile }}</p>
-              <p v-if="invoice.client_email" class="text-[11px] text-gray-500">{{ invoice.client_email }}</p>
+            <div class="mt-2 space-y-0.5 text-xs text-gray-500">
+              <p v-if="invoice.client_gstin">GSTIN {{ invoice.client_gstin }}</p>
+              <p v-if="invoice.client_mobile">{{ invoice.client_mobile }}</p>
+              <p v-if="invoice.client_email">{{ invoice.client_email }}</p>
             </div>
           </div>
-          <!-- Invoice Details -->
-          <div class="px-5 py-4">
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Invoice Details</p>
-            <table class="text-xs w-full">
-              <tr><td class="text-gray-400 pb-1 pr-3">Invoice No</td><td class="font-semibold text-gray-800 pb-1">{{ invoice.number }}</td></tr>
-              <tr><td class="text-gray-400 pb-1 pr-3">Invoice Date</td><td class="font-medium text-gray-700 pb-1">{{ fmtDateShort(invoice.issue_date) }}</td></tr>
-              <tr><td class="text-gray-400 pb-1 pr-3">Due Date</td><td class="font-medium text-gray-700 pb-1">{{ fmtDateShort(invoice.due_date) }}</td></tr>
-              <tr><td class="text-gray-400 pr-3">Place of Supply</td><td class="font-medium text-gray-700">{{ invoice.place_of_supply_name || invoice.supply_type }}</td></tr>
-            </table>
+          <div class="px-6 py-4 bg-gray-50/50">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Invoice details</p>
+            <dl class="space-y-1.5 text-xs">
+              <div class="flex justify-between gap-4"><dt class="text-gray-500">Invoice date</dt><dd class="font-medium text-gray-800 text-right">{{ fmtDateShort(invoice.issue_date) }}</dd></div>
+              <div class="flex justify-between gap-4"><dt class="text-gray-500">Due date</dt><dd class="font-medium text-gray-800 text-right">{{ fmtDateShort(invoice.due_date) }}</dd></div>
+              <div class="flex justify-between gap-4"><dt class="text-gray-500">Place of supply</dt><dd class="font-medium text-gray-800 text-right">{{ invoice.place_of_supply_name || invoice.supply_type }}</dd></div>
+            </dl>
           </div>
         </div>
 
         <!-- Items table -->
         <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead class="bg-gray-800 text-white">
+          <table class="inv-detail-table w-full text-sm">
+            <thead>
               <tr>
-                <th class="px-3 py-2.5 text-left text-xs font-semibold w-7">#</th>
-                <th class="px-3 py-2.5 text-left text-xs font-semibold">Description</th>
-                <th class="hidden sm:table-cell px-3 py-2.5 text-center text-xs font-semibold">HSN/SAC</th>
-                <th class="px-3 py-2.5 text-right text-xs font-semibold">Qty</th>
-                <th class="hidden sm:table-cell px-3 py-2.5 text-right text-xs font-semibold">Rate</th>
-                <th class="hidden sm:table-cell px-3 py-2.5 text-right text-xs font-semibold">Taxable</th>
-                <th v-if="isGst" class="hidden sm:table-cell px-3 py-2.5 text-right text-xs font-semibold">Tax</th>
-                <th class="px-3 py-2.5 text-right text-xs font-semibold">Amount</th>
+                <th class="w-8 text-left">#</th>
+                <th class="text-left">Description</th>
+                <th class="hidden sm:table-cell text-center w-20">HSN/SAC</th>
+                <th class="text-right w-16">Qty</th>
+                <th class="hidden sm:table-cell text-right w-24">Rate</th>
+                <th class="hidden sm:table-cell text-right w-24">Taxable</th>
+                <th v-if="isGst" class="hidden sm:table-cell text-right w-28">Tax</th>
+                <th class="text-right w-28">Amount</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
+            <tbody>
               <tr v-for="(it, idx) in items" :key="it.id">
-                <td class="px-3 py-3 text-gray-400 text-xs">{{ idx + 1 }}</td>
-                <td class="px-3 py-3">
+                <td class="text-gray-400 text-xs">{{ idx + 1 }}</td>
+                <td>
                   <p class="font-medium text-gray-800">{{ it.description }}</p>
                   <p v-if="it.unit" class="text-xs text-gray-400">{{ it.unit }}</p>
-                  <!-- Mobile-only: rate info inline -->
-                  <p class="sm:hidden text-xs text-gray-400 mt-0.5">{{ it.quantity }} × {{ inr(it.unit_price) }}</p>
+                  <p class="sm:hidden text-xs text-gray-500 mt-0.5 tabular-nums">{{ it.quantity }} × {{ inr(it.unit_price) }}</p>
                 </td>
-                <td class="hidden sm:table-cell px-3 py-3 text-center font-mono text-xs text-gray-500">{{ it.hsn_sac || '—' }}</td>
-                <td class="px-3 py-3 text-right text-gray-700">{{ it.quantity }}</td>
-                <td class="hidden sm:table-cell px-3 py-3 text-right text-gray-700">{{ inr(it.unit_price) }}</td>
-                <td class="hidden sm:table-cell px-3 py-3 text-right text-gray-700">{{ inr(it.taxable_amt) }}</td>
-                <td v-if="isGst" class="hidden sm:table-cell px-3 py-3 text-right text-xs">
-                  <div v-if="it.cgst_amt > 0" class="space-y-0.5">
-                    <div class="text-gray-600">CGST {{ it.cgst_rate }}%: {{ inr(it.cgst_amt) }}</div>
-                    <div class="text-gray-600">SGST {{ it.sgst_rate }}%: {{ inr(it.sgst_amt) }}</div>
+                <td class="hidden sm:table-cell text-center font-mono text-xs text-gray-500">{{ it.hsn_sac || '—' }}</td>
+                <td class="text-right text-gray-700 tabular-nums">{{ it.quantity }}</td>
+                <td class="hidden sm:table-cell text-right text-gray-700 tabular-nums">{{ inr(it.unit_price) }}</td>
+                <td class="hidden sm:table-cell text-right text-gray-700 tabular-nums">{{ inr(it.taxable_amt) }}</td>
+                <td v-if="isGst" class="hidden sm:table-cell text-right text-xs text-gray-600">
+                  <div v-if="it.cgst_amt > 0" class="space-y-0.5 tabular-nums">
+                    <div>CGST {{ it.cgst_rate }}% · {{ inr(it.cgst_amt) }}</div>
+                    <div>SGST {{ it.sgst_rate }}% · {{ inr(it.sgst_amt) }}</div>
                   </div>
-                  <div v-else-if="it.igst_amt > 0" class="text-gray-600">IGST {{ it.igst_rate }}%: {{ inr(it.igst_amt) }}</div>
-                  <div v-else class="text-gray-400">Nil</div>
+                  <div v-else-if="it.igst_amt > 0">IGST {{ it.igst_rate }}% · {{ inr(it.igst_amt) }}</div>
+                  <div v-else class="text-gray-400">—</div>
                 </td>
-                <td class="px-3 py-3 text-right font-semibold text-gray-900">{{ inr(it.total) }}</td>
+                <td class="text-right font-semibold text-gray-900 tabular-nums">{{ inr(it.total) }}</td>
               </tr>
             </tbody>
           </table>
         </div>
 
         <!-- Totals + Amount in words -->
-        <div class="p-5 border-t border-gray-200 flex flex-col sm:flex-row gap-6">
-          <!-- Amount in words -->
-          <div class="flex-1">
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 pt-1">Amount in Words</p>
-            <p class="text-sm font-medium text-gray-700 italic">{{ amountInWords(invoice.total) }}</p>
+        <div class="px-6 py-5 border-t border-gray-200 flex flex-col sm:flex-row gap-6 bg-gray-50/30">
+          <div class="flex-1 min-w-0">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Amount in words</p>
+            <p class="text-sm text-gray-700 leading-relaxed">{{ amountInWords(invoice.total) }}</p>
           </div>
-          <!-- Totals -->
-          <div class="sm:w-64 space-y-1.5 text-sm">
-            <div class="flex justify-between text-gray-600"><span>Subtotal</span><span>{{ inr(invoice.subtotal) }}</span></div>
-            <div v-if="invoice.cgst_total > 0" class="flex justify-between text-gray-600"><span>CGST</span><span>{{ inr(invoice.cgst_total) }}</span></div>
-            <div v-if="invoice.sgst_total > 0" class="flex justify-between text-gray-600"><span>SGST</span><span>{{ inr(invoice.sgst_total) }}</span></div>
-            <div v-if="invoice.igst_total > 0" class="flex justify-between text-gray-600"><span>IGST</span><span>{{ inr(invoice.igst_total) }}</span></div>
-            <div v-if="invoice.discount > 0" class="flex justify-between text-danger-500"><span>Discount</span><span>-{{ inr(invoice.discount) }}</span></div>
-            <div v-if="invoice.round_off != 0" class="flex justify-between text-gray-400"><span>Round Off</span><span>{{ inr(invoice.round_off) }}</span></div>
-            <div class="flex justify-between font-bold text-base text-gray-900 border-t border-gray-200 pt-2">
-              <span>Total</span><span>{{ inr(invoice.total) }}</span>
+          <div class="sm:w-72 shrink-0 space-y-2 text-sm border border-gray-200 rounded-lg bg-white p-4">
+            <div class="flex justify-between text-gray-600"><span>Subtotal</span><span class="tabular-nums">{{ inr(invoice.subtotal) }}</span></div>
+            <div v-if="invoice.cgst_total > 0" class="flex justify-between text-gray-600"><span>CGST</span><span class="tabular-nums">{{ inr(invoice.cgst_total) }}</span></div>
+            <div v-if="invoice.sgst_total > 0" class="flex justify-between text-gray-600"><span>SGST</span><span class="tabular-nums">{{ inr(invoice.sgst_total) }}</span></div>
+            <div v-if="invoice.igst_total > 0" class="flex justify-between text-gray-600"><span>IGST</span><span class="tabular-nums">{{ inr(invoice.igst_total) }}</span></div>
+            <div v-if="invoice.discount > 0" class="flex justify-between text-red-600"><span>Discount</span><span class="tabular-nums">-{{ inr(invoice.discount) }}</span></div>
+            <div v-if="invoice.round_off != 0" class="flex justify-between text-gray-500"><span>Round off</span><span class="tabular-nums">{{ inr(invoice.round_off) }}</span></div>
+            <div class="flex justify-between font-bold text-gray-900 border-t border-gray-200 pt-2 text-base">
+              <span>Total</span><span class="tabular-nums">{{ inr(invoice.total) }}</span>
             </div>
-            <div v-if="invoice.amount_paid > 0" class="flex justify-between text-success-700"><span>Amount Paid</span><span>{{ inr(invoice.amount_paid) }}</span></div>
-            <div v-if="invoice.amount_due > 0" class="flex justify-between font-bold text-danger-600 border-t border-gray-200 pt-2">
-              <span>Balance Due</span><span>{{ inr(invoice.amount_due) }}</span>
+            <div v-if="invoice.amount_paid > 0" class="flex justify-between text-emerald-700"><span>Paid</span><span class="tabular-nums">{{ inr(invoice.amount_paid) }}</span></div>
+            <div v-if="invoice.amount_due > 0" class="flex justify-between font-semibold text-red-600 border-t border-gray-100 pt-2">
+              <span>Balance due</span><span class="tabular-nums">{{ inr(invoice.amount_due) }}</span>
             </div>
           </div>
         </div>
 
         <!-- Bank details + Notes/Terms -->
-        <div class="px-5 pb-5 border-t border-gray-100 pt-4 grid sm:grid-cols-2 gap-6">
+        <div class="px-6 py-5 border-t border-gray-200 grid sm:grid-cols-2 gap-6 text-sm">
           <div v-if="business?.bank_name || business?.upi_id">
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Payment Details</p>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Payment details</p>
             <div class="space-y-1 text-sm">
               <div v-if="business.bank_name" class="flex gap-2"><span class="text-gray-400 w-20 shrink-0">Bank</span><span class="text-gray-700">{{ business.bank_name }}</span></div>
               <div v-if="business.bank_account_no" class="flex gap-2"><span class="text-gray-400 w-20 shrink-0">A/C No</span><span class="font-mono text-gray-700">{{ business.bank_account_no }}</span></div>
@@ -589,31 +567,31 @@ onMounted(load)
           </div>
           <div class="space-y-3">
             <div v-if="invoice.notes || business?.invoice_notes">
-              <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Notes</p>
+              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Notes</p>
               <p class="text-sm text-gray-600">{{ invoice.notes || business?.invoice_notes }}</p>
             </div>
             <div v-if="invoice.terms || business?.invoice_terms">
-              <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Terms & Conditions</p>
+              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Terms & conditions</p>
               <p class="text-sm text-gray-600">{{ invoice.terms || business?.invoice_terms }}</p>
             </div>
           </div>
         </div>
 
         <!-- Authorized Signatory -->
-        <div class="px-5 py-4 border-t border-gray-100 flex justify-end">
-          <div class="text-center min-w-[180px]">
-            <p class="text-xs text-gray-500 mb-12">For {{ business?.name || invoice.business_name }}</p>
-            <div class="border-t border-gray-400 pt-1">
-              <p class="text-xs text-gray-500">Authorized Signatory</p>
+        <div class="px-6 py-5 border-t border-gray-200 flex justify-end bg-white">
+          <div class="text-center min-w-[200px]">
+            <p class="text-xs text-gray-500 mb-10">For {{ business?.name || invoice.business_name }}</p>
+            <div class="border-t border-gray-300 pt-2">
+              <p class="text-xs font-medium text-gray-600">Authorized signatory</p>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Payment history -->
-      <div v-if="payments.length" class="mt-8 animate-fade-in-up delay-200">
-        <h2 class="font-bold text-gray-800 text-sm mb-4 px-1">Payment History</h2>
-        <div class="bg-white rounded-[2rem] shadow-soft border-0 overflow-hidden divide-y divide-gray-50">
+      <div v-if="payments.length" class="mt-2 animate-fade-in-up">
+        <h2 class="text-sm font-semibold text-gray-800 mb-3 px-1">Payment history</h2>
+        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden divide-y divide-gray-100">
           <div v-for="p in payments" :key="p.id" class="flex items-center justify-between px-5 py-3">
             <div>
               <p class="text-sm font-medium text-gray-800">{{ p.method?.toUpperCase() }}</p>
@@ -940,6 +918,65 @@ onMounted(load)
 
   </div>
 </template>
+
+<style scoped>
+.inv-detail-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.inv-detail-btn--primary {
+  background: #4f46e5;
+  color: #fff;
+}
+.inv-detail-btn--primary:hover:not(:disabled) { background: #4338ca; }
+.inv-detail-btn--primary:disabled { opacity: 0.6; }
+.inv-detail-btn--success {
+  background: #059669;
+  color: #fff;
+}
+.inv-detail-btn--success:hover { background: #047857; }
+.inv-detail-btn--ghost {
+  background: #fff;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+.inv-detail-btn--ghost:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+.inv-detail-btn--icon { padding: 0.5rem; }
+.inv-detail-divider {
+  width: 1px;
+  height: 1.25rem;
+  background: #e5e7eb;
+  margin: 0 0.125rem;
+}
+.inv-detail-table thead tr {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+.inv-detail-table th {
+  padding: 0.625rem 1rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.inv-detail-table td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: top;
+}
+.inv-detail-table tbody tr:last-child td { border-bottom: none; }
+</style>
 
 <style>
 @media print {
