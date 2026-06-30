@@ -46,14 +46,12 @@ const showNavbar = computed(() => {
         :class="showNavbar ? 'pb-[calc(4.75rem+env(safe-area-inset-bottom))]' : 'pb-0'"
       >
         <RouterView v-slot="{ Component, route: childRoute }">
-          <KeepAlive :max="12">
             <component
               v-if="Component"
               :is="Component"
               :key="childRoute.matched[1]?.name || 'home'"
               class="flex-1 flex flex-col min-h-0 h-full"
             />
-          </KeepAlive>
         </RouterView>
       </main>
     </div>

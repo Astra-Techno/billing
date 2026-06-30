@@ -60,7 +60,7 @@ export const useBusinessStore = defineStore('business', () => {
 
   async function fetchBusiness(force = false) {
     try {
-      const res = await item('Business', {}, { bust: force, ttl: 300_000 })
+      const res = await item('Business')
       logo.value = res.data?.data?.logo || ''
       if (res.data?.data?.state_id) stateId.value = parseInt(res.data.data.state_id)
     } catch {}

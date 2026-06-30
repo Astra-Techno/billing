@@ -14,6 +14,10 @@ require __DIR__ . '/vendor/autoload.php';
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
+header('Cache-Control: no-cache, no-store, must-revalidate');
+header('Pragma: no-cache');
+header('Expires: 0');
+
 // Global helpers (debugMode, config, request, etc.)
 require __DIR__ . '/app/Helper.php';
 

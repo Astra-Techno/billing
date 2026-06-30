@@ -1,17 +1,18 @@
-import { onActivated, watch } from 'vue'
+import { onActivated, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 /**
- * Refetch when a KeepAlive-cached list page is shown again.
+ * Refetch list data when the page is shown (mount, KeepAlive re-activate, or split-pane list route).
  * @param {Function} load
- * @param {{ listRouteName?: string }} opts - when set, also reload when returning to the list route from a child (split pane)
+ * @param {{ listRouteName?: string }} opts
  */
 export function useListRefresh(load, { listRouteName } = {}) {
-  const route = listRouteName ? useRoute() : null
+  const route = useRoute()
 
+  onMounted(() => load())
   onActivated(() => load())
 
-  if (listRouteName && route) {
+  if (listRouteName) {
     watch(() => route.name, name => {
       if (name === listRouteName) load()
     })
