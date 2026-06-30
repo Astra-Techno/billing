@@ -1,1 +1,0 @@
-import{t as e}from"./auth-CzgSCmAY.js";var t={delete:[`owner`,`admin`],cancel:[`owner`,`admin`],settings:[`owner`,`admin`],reports:[`owner`,`admin`,`accountant`],payments:[`owner`,`admin`,`accountant`],team:[`owner`,`admin`]};function n(){let n=e();function r(e){let r=t[e];return r?r.includes(n.role):!0}return{role:n.role,can:r}}export{n as t};

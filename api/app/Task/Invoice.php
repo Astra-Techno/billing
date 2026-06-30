@@ -316,6 +316,54 @@ class Invoice extends Task
         return $this->success(null, 'Invoice cancelled.');
     }
 
+    // ── Delete draft invoice ──────────────────────────────────────────────────
+
+    public function delete(array $input): array
+    {
+        $this->validate(['id' => 'required|integer']);
+
+        $businessId = $this->requireBusiness();
+        $this->requireRole(['owner', 'admin']);
+        $invoice    = $this->findInvoice((int)$input['id'], $businessId);
+
+        if ($invoice->status !== 'draft')
+            $this->fail('Only draft invoices can be deleted.');
+
+        if ((float)$invoice->amount_paid > 0)
+            $this->fail('Cannot delete — payments exist on this invoice.');
+
+        $payments = (int)(DB::selectOne(
+            "SELECT COUNT(*) AS c FROM payments WHERE invoice_id = ?",
+            [$invoice->id]
+        )->c ?? 0);
+        if ($payments > 0)
+            $this->fail('Cannot delete — payments exist on this invoice.');
+
+        $creditNotes = (int)(DB::selectOne(
+            "SELECT COUNT(*) AS c FROM credit_notes WHERE invoice_id = ?",
+            [$invoice->id]
+        )->c ?? 0);
+        if ($creditNotes > 0)
+            $this->fail('Cannot delete — credit notes exist for this invoice.');
+
+        DB::statement("DELETE FROM invoice_items WHERE invoice_id = ?", [$invoice->id]);
+        DB::statement("DELETE FROM invoices WHERE id = ? AND business_id = ?", [$invoice->id, $businessId]);
+
+        DB::statement(
+            "INSERT INTO audit_log (business_id, user_id, action, entity_type, entity_id, snapshot, note)
+             VALUES (?, ?, 'delete', 'invoice', ?, ?, ?)",
+            [
+                $businessId,
+                $this->userId(),
+                $invoice->id,
+                json_encode(['number' => $invoice->number, 'total' => $invoice->total]),
+                "Invoice {$invoice->number} deleted",
+            ]
+        );
+
+        return $this->success(null, 'Invoice deleted.');
+    }
+
     // ── Duplicate invoice ─────────────────────────────────────────────────────
 
     public function duplicate(array $input): array

@@ -1,10 +1,11 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import api, { item, list, task } from '../../api'
+import { item, list, task } from '../../api'
 import { inr } from '../../utils/currency'
 import { fmtDateShort, today } from '../../utils/date'
 import { statusBadge, statusLabel } from '../../utils/invoice'
+import { useRole } from '../../composables/useRole'
 import QRCode from 'qrcode'
 
 const props = defineProps({ panelId: { type: [String, Number], default: null } })
@@ -12,6 +13,7 @@ const emit  = defineEmits(['back', 'refresh'])
 
 const route  = useRoute()
 const router = useRouter()
+const { can } = useRole()
 
 const invoice  = ref(null)
 const business = ref(null)
@@ -21,10 +23,12 @@ const loading  = ref(true)
 
 const showPayModal    = ref(false)
 const showCancelModal = ref(false)
+const showDeleteModal = ref(false)
 const payForm  = ref({ amount: '', method: 'upi', reference: '', payment_date: today() })
 const payError = ref('')
 const paying   = ref(false)
 const acting   = ref(false)
+const deleting = ref(false)
 const upiQrDataUrl = ref('')
 
 // E-way Bill
@@ -105,6 +109,22 @@ async function cancelInvoice() {
   } finally { acting.value = false }
 }
 
+async function deleteInvoice() {
+  deleting.value = true
+  try {
+    await task('Invoice', 'delete', { id: invoice.value.id })
+    showDeleteModal.value = false
+    emit('refresh')
+    router.push('/invoices')
+  } catch (e) {
+    alert(e.response?.data?.message || 'Could not delete invoice.')
+  } finally { deleting.value = false }
+}
+
+const canDeleteInvoice = computed(() =>
+  invoice.value?.status === 'draft' && can('delete')
+)
+
 function printInvoice() {
   window.open('/print/invoice/' + invoice.value.id, '_blank')
 }
@@ -124,43 +144,20 @@ const invoiceTitle = computed(() => {
 
 const isGst = computed(() => invoice.value?.invoice_type !== 'bill_of_supply')
 
-const downloading = ref(false)
-const exportMenuOpen = ref(false)
-const moreMenuOpen   = ref(false)
+const moreMenuOpen = ref(false)
 
 function closeActionMenus() {
-  exportMenuOpen.value = false
-  moreMenuOpen.value   = false
-}
-
-function toggleExportMenu(e) {
-  e?.stopPropagation()
-  moreMenuOpen.value   = false
-  exportMenuOpen.value = !exportMenuOpen.value
+  moreMenuOpen.value = false
 }
 
 function toggleMoreMenu(e) {
   e?.stopPropagation()
-  exportMenuOpen.value = false
-  moreMenuOpen.value   = !moreMenuOpen.value
+  moreMenuOpen.value = !moreMenuOpen.value
 }
 
 function runExport(action) {
   closeActionMenus()
   action()
-}
-
-async function downloadPdf(mode = '') {
-  downloading.value = true
-  try {
-    const modeParam = mode ? `?mode=${mode}` : ''
-    const res = await api.get(`invoice/${invoice.value.id}/pdf${modeParam}`, { responseType: 'blob' })
-    const prefix = mode === 'dc' ? 'DC-' : mode === 'proforma' ? 'PROFORMA-' : ''
-    const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
-    const a = Object.assign(document.createElement('a'), { href: url, download: `${prefix}${invoice.value.number}.pdf` })
-    a.click()
-    URL.revokeObjectURL(url)
-  } finally { downloading.value = false }
 }
 
 function shareWhatsApp() {
@@ -178,28 +175,6 @@ function shareWhatsApp() {
   if (business.value?.upi_id) msg += `\n\nPay via UPI: *${business.value.upi_id}*`
   msg += `\n\nThank you for your business!`
   window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank')
-}
-
-function shareEmail() {
-  const inv = invoice.value
-  const due = parseFloat(inv.amount_due || 0)
-  const subject = `Invoice ${inv.number} — ${inr(inv.total)}`
-  const lines = [
-    `Dear ${inv.client_name},`,
-    ``,
-    `Please find the details of Invoice ${inv.number}.`,
-    ``,
-    `Invoice No  : ${inv.number}`,
-    `Invoice Date: ${fmtDateShort(inv.issue_date)}`,
-    `Due Date    : ${fmtDateShort(inv.due_date)}`,
-    `Total Amount: ${inr(inv.total)}`,
-    due > 0 ? `Balance Due : ${inr(due)}` : `Status      : PAID`,
-    business.value?.upi_id ? `\nPay via UPI : ${business.value.upi_id}` : ``,
-    ``,
-    `Thank you for your business!`,
-    business.value?.name ? `\n— ${business.value.name}` : ``,
-  ]
-  window.location.href = `mailto:${inv.client_email || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join('\n'))}`
 }
 
 const methods = [
@@ -383,46 +358,34 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.137.565 4.147 1.554 5.887L0 24l6.305-1.524A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.375l-.359-.214-3.735.902.948-3.632-.234-.373A9.818 9.818 0 1112 21.818z"/></svg>
             </button>
 
-            <button type="button" @click="shareEmail" class="inv-detail-btn inv-detail-btn--icon" title="Send email">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-            </button>
-
             <span class="inv-detail-divider" />
 
-            <div class="relative">
-              <button type="button" class="inv-detail-btn inv-detail-btn--ghost"
-                :class="{ 'inv-detail-btn--active': exportMenuOpen }"
-                @click="toggleExportMenu">
-                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                Export
-                <svg class="w-3.5 h-3.5 shrink-0 opacity-60" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-              </button>
-              <div v-show="exportMenuOpen" class="inv-detail-menu" @click.stop>
-                <button type="button" class="inv-detail-menu__item" @click="runExport(printInvoice)">Print invoice</button>
-                <button type="button" class="inv-detail-menu__item" :disabled="downloading" @click="runExport(() => downloadPdf())">
-                  {{ downloading ? 'Downloading…' : 'Download PDF' }}
-                </button>
-                <button type="button" class="inv-detail-menu__item" @click="runExport(printDeliveryChallan)">Print delivery challan</button>
-                <button type="button" class="inv-detail-menu__item" :disabled="downloading" @click="runExport(() => downloadPdf('dc'))">Download DC PDF</button>
-                <button type="button" class="inv-detail-menu__item" @click="runExport(printProforma)">Print proforma</button>
-              </div>
-            </div>
+            <button type="button" @click="printInvoice" class="inv-detail-btn inv-detail-btn--ghost">
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+              Print
+            </button>
+
+            <button type="button" @click="printDeliveryChallan" class="inv-detail-btn inv-detail-btn--ghost" title="Delivery challan (no prices)">
+              DC print
+            </button>
 
             <RouterLink :to="`/invoices/${invoice.id}/edit`" class="inv-detail-btn inv-detail-btn--ghost" @click="closeActionMenus">
               <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
               Edit
             </RouterLink>
 
-            <div class="relative">
+            <button v-if="canDeleteInvoice" type="button" class="inv-detail-btn inv-detail-btn--danger" @click="showDeleteModal = true">
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              Delete
+            </button>
+
+            <div v-if="invoice.status !== 'draft'" class="relative">
               <button type="button" class="inv-detail-btn inv-detail-btn--ghost inv-detail-btn--icon"
                 :class="{ 'inv-detail-btn--active': moreMenuOpen }"
                 aria-label="More actions" @click="toggleMoreMenu">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
               </button>
               <div v-show="moreMenuOpen" class="inv-detail-menu inv-detail-menu--right" @click.stop>
-                <button type="button" class="inv-detail-menu__item" @click="runExport(() => showEwbModal = true)">
-                  {{ ewb ? 'View e-way bill' : 'Generate e-way bill' }}
-                </button>
                 <RouterLink v-if="invoice.status === 'paid' || invoice.status === 'partial'"
                   :to="`/credit-notes/new?from_invoice=${invoice.id}`"
                   class="inv-detail-menu__item" @click="closeActionMenus">
@@ -697,30 +660,23 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
 
     </template>
 
-    <!-- Mobile Floating Circular Action Buttons (Invozen Preview Mockup Style) -->
+    <!-- Mobile Floating Circular Action Buttons -->
     <div v-if="invoice && invoice.status !== 'cancelled'" class="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-gray-900/90 backdrop-blur-md px-4 py-2.5 rounded-full shadow-2xl flex items-center gap-4 border border-white/10">
-      <!-- Print -->
       <button @click="printInvoice" class="w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center hover:bg-white/20 transition active:scale-95" title="Print Invoice">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
       </button>
-      <!-- Download PDF -->
-      <button @click="downloadPdf" :disabled="downloading" class="w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center hover:bg-white/20 transition active:scale-95" title="Download PDF">
-        <svg v-if="downloading" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
-        <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+      <button @click="printDeliveryChallan" class="w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center hover:bg-white/20 transition active:scale-95" title="DC Print">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
       </button>
-      <!-- WhatsApp Share -->
       <button @click="shareWhatsApp" class="w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center hover:bg-white/20 transition active:scale-95" title="Share via WhatsApp">
         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.137.565 4.147 1.554 5.887L0 24l6.305-1.524A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.375l-.359-.214-3.735.902.948-3.632-.234-.373A9.818 9.818 0 1112 21.818z"/></svg>
       </button>
-      <!-- E-way Bill -->
-      <button @click="showEwbModal = true" class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/20 transition active:scale-95"
-        :class="ewb && ewb.status === 'active' ? 'bg-indigo-400/30 text-indigo-200' : 'bg-white/15 text-white'" title="E-way Bill">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
-      </button>
-      <!-- Edit Link -->
       <RouterLink :to="`/invoices/${invoice.id}/edit`" class="w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center hover:bg-white/20 transition active:scale-95" title="Edit Invoice">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
       </RouterLink>
+      <button v-if="canDeleteInvoice" @click="showDeleteModal = true" class="w-10 h-10 rounded-full bg-red-500/80 text-white flex items-center justify-center hover:bg-red-500 transition active:scale-95" title="Delete Invoice">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      </button>
     </div>
 
     <!-- Record Payment Modal -->
@@ -963,6 +919,21 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
       </div>
     </div>
 
+    <!-- Delete Modal -->
+    <div v-if="showDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div class="bg-white rounded-2xl w-full max-w-sm shadow-xl p-6 text-center">
+        <div class="w-12 h-12 rounded-full bg-danger-50 flex items-center justify-center mx-auto mb-4">
+          <svg class="w-6 h-6 text-danger-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </div>
+        <h3 class="font-semibold text-gray-800 mb-2">Delete Invoice?</h3>
+        <p class="text-sm text-gray-500 mb-5">This will permanently delete invoice <strong>{{ invoice?.number }}</strong>. Only draft invoices can be deleted.</p>
+        <div class="flex gap-3">
+          <button @click="showDeleteModal = false" class="btn-outline flex-1" :disabled="deleting">Keep It</button>
+          <button @click="deleteInvoice" :disabled="deleting" class="btn-danger flex-1">{{ deleting ? 'Deleting…' : 'Delete' }}</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -1028,6 +999,15 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
 .inv-detail-btn--ghost:hover {
   background: #f9fafb;
   border-color: #d1d5db;
+}
+.inv-detail-btn--danger {
+  background: #fff;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+.inv-detail-btn--danger:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
 }
 .inv-detail-btn--icon {
   width: 2.25rem;
