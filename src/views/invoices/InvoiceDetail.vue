@@ -1093,15 +1093,6 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
 </style>
 
 <style>
-/* Hide main scrollbar on invoice detail while keeping scroll */
-.app-main-scroll:has(.inv-detail-page) {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.app-main-scroll:has(.inv-detail-page)::-webkit-scrollbar {
-  display: none;
-}
-
 @media print {
   header, nav, footer,
   .btn-primary, .btn-outline, button,

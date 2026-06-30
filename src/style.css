@@ -218,7 +218,7 @@
   }
   .invoice-items-row input[type=number] { -moz-appearance: textfield; }
   .split-pane-right {
-    @apply flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden lg:overflow-hidden bg-surface-dim;
+    @apply flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden bg-surface-dim;
   }
   .split-pane-left {
     @apply w-full lg:w-[300px] xl:w-[320px] gpay-split-left shrink-0;
@@ -231,6 +231,42 @@
   .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
   .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
   .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 99px; }
+
+  /* Hidden by default; thumb appears while scrolling */
+  .scroll-auto-hide,
+  .split-pane-right,
+  .app-main-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+  .scroll-auto-hide::-webkit-scrollbar,
+  .split-pane-right::-webkit-scrollbar,
+  .app-main-scroll::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scroll-auto-hide::-webkit-scrollbar-track,
+  .split-pane-right::-webkit-scrollbar-track,
+  .app-main-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scroll-auto-hide::-webkit-scrollbar-thumb,
+  .split-pane-right::-webkit-scrollbar-thumb,
+  .app-main-scroll::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 99px;
+    transition: background 0.3s ease;
+  }
+  .scroll-auto-hide.is-scrolling,
+  .split-pane-right.is-scrolling,
+  .app-main-scroll.is-scrolling {
+    scrollbar-color: rgba(156, 163, 175, 0.85) transparent;
+  }
+  .scroll-auto-hide.is-scrolling::-webkit-scrollbar-thumb,
+  .split-pane-right.is-scrolling::-webkit-scrollbar-thumb,
+  .app-main-scroll.is-scrolling::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.85);
+  }
 
   .app-main-scroll {
     touch-action: pan-y;

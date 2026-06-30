@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, computed, defineAsyncComponent } from 'vue'
+import { onMounted, computed, defineAsyncComponent, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import Sidebar from './Sidebar.vue'
 import TopBar from './TopBar.vue'
@@ -7,6 +7,7 @@ import DesktopSidebar from './DesktopSidebar.vue'
 import DesktopHeader from './DesktopHeader.vue'
 import Toast from '../Toast.vue'
 import { useBusinessStore } from '../../stores/business'
+import { attachAutoHideScrollbar } from '../../utils/autoHideScrollbar'
 
 const HelpPopup = defineAsyncComponent(() => import('../HelpPopup.vue'))
 
@@ -19,7 +20,11 @@ onMounted(() => {
   if (localStorage.getItem('darkMode') === 'true') {
     document.documentElement.classList.add('dark')
   }
+
+  attachAutoHideScrollbar()
 })
+
+watch(() => route.fullPath, () => nextTick(() => attachAutoHideScrollbar()), { immediate: true })
 
 const showNavbar = computed(() => {
   const regular = ['Dashboard', 'Invoices', 'Quotes', 'Expenses', 'Products', 'CreditNotes', 'PurchaseOrders', 'DeliveryChallans', 'GstReturns', 'Reports', 'Settings', 'Help', 'More', 'Clients', 'Payroll', 'StaffNew', 'StaffEdit', 'PayrollRun'].includes(route.name)
