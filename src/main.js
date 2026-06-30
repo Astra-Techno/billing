@@ -4,6 +4,9 @@ import router from './router'
 import App from './App.vue'
 import './style.css'
 
+// Reload on chunk load failure (stale cache after deployment)
+window.addEventListener('vite:preloadError', () => { window.location.reload() })
+
 const app = createApp(App)
 app.use(createPinia())
 app.use(router)
