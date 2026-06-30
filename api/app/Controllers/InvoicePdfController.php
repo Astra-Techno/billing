@@ -62,7 +62,7 @@ class InvoicePdfController
              FROM invoices i
              LEFT JOIN clients c ON c.id = i.client_id
              LEFT JOIN indian_states s ON s.id = i.place_of_supply
-             WHERE i.id = ? AND i.business_id = ?
+             WHERE i.id = ? AND i.business_id = ? AND i.deleted_at IS NULL
              LIMIT 1',
             [$invoiceId, $businessId]
         );

@@ -29,7 +29,7 @@ class CreditNote extends Task
 
         // Validate invoice belongs to business
         $invoice = DB::selectOne(
-            "SELECT * FROM invoices WHERE id = ? AND business_id = ? LIMIT 1",
+            "SELECT * FROM invoices WHERE id = ? AND business_id = ? AND deleted_at IS NULL LIMIT 1",
             [(int)$input['invoice_id'], $businessId]
         );
         if (!$invoice) $this->fail('Invoice not found.', 404);
@@ -102,7 +102,7 @@ class CreditNote extends Task
 
         $creditAmount = (float)$cn->total;
         $invoice      = DB::selectOne(
-            "SELECT * FROM invoices WHERE id = ? LIMIT 1",
+            "SELECT * FROM invoices WHERE id = ? AND deleted_at IS NULL LIMIT 1",
             [$cn->invoice_id]
         );
 

@@ -110,6 +110,7 @@ $app->group('', function ($group) {
         $results = [];
         $migrations = [
             'nullable_client_id' => "ALTER TABLE invoices MODIFY client_id INT UNSIGNED NULL DEFAULT NULL",
+            'invoice_deleted_at' => "ALTER TABLE invoices ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL COMMENT 'Set when invoice is deleted (hidden from lists)' AFTER updated_at",
         ];
         foreach ($migrations as $name => $sql) {
             try {

@@ -22,7 +22,7 @@ class DebitNote extends Task
         $businessId = $this->requireBusiness();
 
         $invoice = DB::selectOne(
-            "SELECT * FROM invoices WHERE id = ? AND business_id = ? LIMIT 1",
+            "SELECT * FROM invoices WHERE id = ? AND business_id = ? AND deleted_at IS NULL LIMIT 1",
             [(int)$input['invoice_id'], $businessId]
         );
         if (!$invoice) $this->fail('Invoice not found.', 404);

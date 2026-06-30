@@ -24,6 +24,7 @@ class Invoice extends Sql
             ')
             ->select('total', 'COUNT(*) AS total')
             ->filter('i.business_id = {business_id}')
+            ->filter('i.deleted_at IS NULL')
             ->filterOptional('i.status = {filter.status}')
             ->filterOptional('i.client_id = {filter.client_id}')
             ->filterOptional('i.invoice_type = {filter.invoice_type}')
@@ -57,7 +58,8 @@ class Invoice extends Sql
                 s.name AS place_of_supply_name
             ')
             ->filter('i.id = {id}')
-            ->filter('i.business_id = {business_id}');
+            ->filter('i.business_id = {business_id}')
+            ->filter('i.deleted_at IS NULL');
     }
 
     public function items(array $input = []): Query
@@ -104,6 +106,7 @@ class Invoice extends Sql
             ')
             ->select('total', 'COUNT(*) AS total')
             ->filter('i.business_id = {business_id}')
+            ->filter('i.deleted_at IS NULL')
             ->filter('i.status IN (\'sent\',\'partial\')')
             ->filter('i.due_date < CURDATE()')
             ->order('days_overdue', 'desc');
@@ -119,6 +122,7 @@ class Invoice extends Sql
                 i.recur_ends_at, i.total, COALESCE(c.name, "Walk-in Customer") AS client_name
             ')
             ->filter('i.business_id = {business_id}')
+            ->filter('i.deleted_at IS NULL')
             ->filter('i.is_recurring = 1')
             ->filter('i.status != \'cancelled\'')
             ->filterOptional('i.next_recur_date <= {filter.due_before}')

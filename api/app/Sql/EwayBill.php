@@ -11,7 +11,7 @@ class EwayBill extends Sql
     {
         return (new Query('EwayBill.list'))
             ->from('eway_bills e')
-            ->inner('invoices i ON i.id = e.invoice_id')
+            ->inner('invoices i ON i.id = e.invoice_id AND i.deleted_at IS NULL')
             ->select('list', '
                 e.id, e.ewb_number, e.status, e.mode,
                 e.distance, e.vehicle_no, e.vehicle_type, e.transporter,
@@ -31,7 +31,7 @@ class EwayBill extends Sql
     {
         return (new Query('EwayBill.entity'))
             ->from('eway_bills e')
-            ->inner('invoices i ON i.id = e.invoice_id')
+            ->inner('invoices i ON i.id = e.invoice_id AND i.deleted_at IS NULL')
             ->left('clients c ON c.id = i.client_id')
             ->select('entity', '
                 e.*,

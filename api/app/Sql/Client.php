@@ -26,6 +26,7 @@ class Client extends Sql
                 SELECT client_id, COALESCE(SUM(amount_due), 0) AS outstanding_balance
                 FROM invoices
                 WHERE status IN (\'sent\', \'partial\', \'overdue\')
+                  AND deleted_at IS NULL
                 GROUP BY client_id
             ) ob ON ob.client_id = c.id')
             ->select('list', '
@@ -49,11 +50,11 @@ class Client extends Sql
             ->left('indian_states s ON s.id = c.state_id')
             ->select('entity', '
                 c.*, s.name AS state_name, s.code AS state_code, s.is_ut,
-                (SELECT COALESCE(SUM(i.amount_due),0) FROM invoices i WHERE i.client_id = c.id AND i.status IN (\'sent\',\'partial\',\'overdue\')) AS outstanding_balance
+                (SELECT COALESCE(SUM(i.amount_due),0) FROM invoices i WHERE i.client_id = c.id AND i.status IN (\'sent\',\'partial\',\'overdue\') AND i.deleted_at IS NULL) AS outstanding_balance
             ')
             ->select('list', '
                 c.*, s.name AS state_name, s.code AS state_code, s.is_ut,
-                (SELECT COALESCE(SUM(i.amount_due),0) FROM invoices i WHERE i.client_id = c.id AND i.status IN (\'sent\',\'partial\',\'overdue\')) AS outstanding_balance
+                (SELECT COALESCE(SUM(i.amount_due),0) FROM invoices i WHERE i.client_id = c.id AND i.status IN (\'sent\',\'partial\',\'overdue\') AND i.deleted_at IS NULL) AS outstanding_balance
             ')
             ->filter('c.id = {id}')
             ->filter('c.business_id = {business_id}');
@@ -91,7 +92,7 @@ class Client extends Sql
     {
         return (new Query('Client.topItems'))
             ->from('invoice_items ii')
-            ->inner('invoices i ON i.id = ii.invoice_id AND i.business_id = {business_id}')
+            ->inner('invoices i ON i.id = ii.invoice_id AND i.business_id = {business_id} AND i.deleted_at IS NULL')
             ->select('list', '
                 ii.description,
                 COUNT(i.id)        AS order_count,
@@ -110,7 +111,7 @@ class Client extends Sql
     {
         return (new Query('Client.outstanding'))
             ->from('clients c')
-            ->inner('invoices i ON i.client_id = c.id AND i.business_id = c.business_id AND i.status IN (\'sent\',\'partial\',\'overdue\')')
+            ->inner('invoices i ON i.client_id = c.id AND i.business_id = c.business_id AND i.status IN (\'sent\',\'partial\',\'overdue\') AND i.deleted_at IS NULL')
             ->select('list', '
                 c.id, c.name, c.company, c.mobile,
                 COUNT(i.id) AS invoice_count,

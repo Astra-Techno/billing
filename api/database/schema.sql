@@ -525,6 +525,7 @@ CREATE TABLE IF NOT EXISTS `invoices` (
     `paid_at`         TIMESTAMP       NULL DEFAULT NULL,
     `created_at`      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at`      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted_at`      TIMESTAMP       NULL DEFAULT NULL COMMENT 'Set when invoice is deleted (hidden from lists)',
     UNIQUE KEY `inv_biz_number` (`business_id`, `number`),
     FOREIGN KEY (`business_id`)     REFERENCES `businesses`(`id`)    ON DELETE CASCADE,
     FOREIGN KEY (`client_id`)       REFERENCES `clients`(`id`)       ON DELETE RESTRICT,
@@ -535,7 +536,8 @@ CREATE TABLE IF NOT EXISTS `invoices` (
     INDEX `inv_client_id`   (`client_id`),
     INDEX `inv_status`      (`status`),
     INDEX `inv_due_date`    (`due_date`),
-    INDEX `inv_fy`          (`financial_year`)
+    INDEX `inv_fy`          (`financial_year`),
+    INDEX `inv_deleted_at`  (`deleted_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ── Invoice Items ─────────────────────────────────────────────

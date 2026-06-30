@@ -8,6 +8,7 @@ class Invoice extends Table
 {
     protected string $table      = 'invoices';
     protected string $primaryKey = 'id';
+    protected bool   $softDelete  = true;
     protected array  $fillable   = [
         'business_id', 'created_by', 'client_id', 'quote_id',
         'number', 'invoice_type', 'status',

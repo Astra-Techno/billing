@@ -16,8 +16,8 @@ class Admin extends Sql
             ->select('entity', '
                 (SELECT COUNT(*) FROM businesses WHERE active = 1)                AS total_businesses,
                 (SELECT COUNT(*) FROM users WHERE active = 1)                      AS total_users,
-                (SELECT COUNT(*) FROM invoices)                                    AS total_invoices,
-                (SELECT COALESCE(SUM(total), 0) FROM invoices WHERE status != \'cancelled\') AS total_billed
+                (SELECT COUNT(*) FROM invoices WHERE deleted_at IS NULL)                                    AS total_invoices,
+                (SELECT COALESCE(SUM(total), 0) FROM invoices WHERE status != \'cancelled\' AND deleted_at IS NULL) AS total_billed
             ');
     }
 
@@ -34,7 +34,7 @@ class Admin extends Sql
                 b.created_at,
                 u.name AS owner_name,
                 u.email AS owner_email,
-                (SELECT COUNT(*) FROM invoices i WHERE i.business_id = b.id) AS invoice_count
+                (SELECT COUNT(*) FROM invoices i WHERE i.business_id = b.id AND i.deleted_at IS NULL) AS invoice_count
             ')
             ->filterOptional('b.active = {filter.active}')
             ->group('b.id')

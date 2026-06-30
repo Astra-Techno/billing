@@ -26,7 +26,7 @@ class Payment extends Task
 
         // Load invoice
         $invoice = DB::selectOne(
-            "SELECT * FROM invoices WHERE id = ? AND business_id = ? LIMIT 1",
+            "SELECT * FROM invoices WHERE id = ? AND business_id = ? AND deleted_at IS NULL LIMIT 1",
             [(int)$input['invoice_id'], $businessId]
         );
         if (!$invoice) $this->fail('Invoice not found.', 404);
@@ -93,7 +93,7 @@ class Payment extends Task
 
         // Recalculate invoice
         $invoice = DB::selectOne(
-            "SELECT total FROM invoices WHERE id = ? LIMIT 1",
+            "SELECT total FROM invoices WHERE id = ? AND deleted_at IS NULL LIMIT 1",
             [$invoiceId]
         );
         $totalPaid = (float)(DB::selectOne(

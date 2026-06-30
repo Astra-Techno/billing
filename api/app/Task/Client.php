@@ -125,7 +125,8 @@ class Client extends Task
         // Check for open invoices
         $open = DB::selectOne(
             "SELECT COUNT(*) AS cnt FROM invoices
-             WHERE client_id = ? AND business_id = ? AND status NOT IN ('cancelled','paid')",
+             WHERE client_id = ? AND business_id = ? AND deleted_at IS NULL
+               AND status NOT IN ('cancelled','paid')",
             [$client->id, $businessId]
         );
         if ((int)($open->cnt ?? 0) > 0) {

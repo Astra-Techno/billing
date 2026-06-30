@@ -229,6 +229,7 @@ class Invoice extends Task
         $invoices = DB::select(
             "SELECT id, client_id, amount_due FROM invoices
              WHERE id IN ($ph) AND business_id = ?
+               AND deleted_at IS NULL
                AND status NOT IN ('cancelled','paid') AND amount_due > 0",
             [...$ids, $businessId]
         );
@@ -346,8 +347,8 @@ class Invoice extends Task
         if ($creditNotes > 0)
             $this->fail('Cannot delete — credit notes exist for this invoice.');
 
-        DB::statement("DELETE FROM invoice_items WHERE invoice_id = ?", [$invoice->id]);
-        DB::statement("DELETE FROM invoices WHERE id = ? AND business_id = ?", [$invoice->id, $businessId]);
+        if (!$invoice->delete())
+            $this->fail('Could not delete invoice.');
 
         DB::statement(
             "INSERT INTO audit_log (business_id, user_id, action, entity_type, entity_id, snapshot, note)
@@ -356,7 +357,7 @@ class Invoice extends Task
                 $businessId,
                 $this->userId(),
                 $invoice->id,
-                json_encode(['number' => $invoice->number, 'total' => $invoice->total]),
+                json_encode(['number' => $invoice->number, 'total' => $invoice->total, 'status' => $invoice->status]),
                 "Invoice {$invoice->number} deleted",
             ]
         );
@@ -500,7 +501,8 @@ class Invoice extends Task
             "UPDATE invoices
              SET status = 'overdue'
              WHERE status IN ('sent','partial')
-               AND due_date < CURDATE()"
+               AND due_date < CURDATE()
+               AND deleted_at IS NULL"
         );
 
         return $this->success(null, 'Overdue statuses updated.');
@@ -512,6 +514,8 @@ class Invoice extends Task
     {
         $invoice = InvoiceTable::find($id);
         if (!$invoice || (int)$invoice->business_id !== $businessId)
+            $this->fail('Invoice not found.', 404);
+        if (!empty($invoice->deleted_at))
             $this->fail('Invoice not found.', 404);
         return $invoice;
     }

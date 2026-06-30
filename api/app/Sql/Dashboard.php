@@ -27,6 +27,7 @@ class Dashboard extends Sql
                    AND YEAR(e.expense_date)  = YEAR(CURDATE()))                         AS total_expenses_month
             ')
             ->filter('i.business_id = {business_id}')
+            ->filter('i.deleted_at IS NULL')
             ->filter('i.status != \'cancelled\'');
     }
 
@@ -56,6 +57,7 @@ class Dashboard extends Sql
                 SUM(CASE WHEN i.status IN (\'sent\',\'partial\') THEN 1 ELSE 0 END) AS pending_count
             ')
             ->filter('i.business_id = {business_id}')
+            ->filter('i.deleted_at IS NULL')
             ->filterOptional('i.financial_year = {financial_year}');
     }
 
@@ -88,6 +90,7 @@ class Dashboard extends Sql
                 SUM(i.amount_due) AS outstanding
             ')
             ->filter('i.business_id = {business_id}')
+            ->filter('i.deleted_at IS NULL')
             ->filter('i.status IN (\'sent\',\'partial\',\'overdue\')')
             ->filter('i.amount_due > 0')
             ->group('c.id')
@@ -106,6 +109,7 @@ class Dashboard extends Sql
                 COALESCE(c.name, \'Walk-in Customer\') AS client_name
             ')
             ->filter('i.business_id = {business_id}')
+            ->filter('i.deleted_at IS NULL')
             ->order('i.created_at', 'desc');
     }
 
@@ -141,6 +145,7 @@ class Dashboard extends Sql
                 SUM(i.total)       AS total_invoice_value
             ')
             ->filter('i.business_id = {business_id}')
+            ->filter('i.deleted_at IS NULL')
             ->filter('i.status != \'cancelled\'')
             ->filterOptional('i.financial_year = {financial_year}')
             ->filterOptional('i.supply_type = {filter.supply_type}')
