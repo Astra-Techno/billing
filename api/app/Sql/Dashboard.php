@@ -34,7 +34,9 @@ class Dashboard extends Sql
                 (SELECT COALESCE(SUM(e.total_amount), 0) FROM expenses e
                     WHERE e.business_id = b.id
                     AND MONTH(e.expense_date) = MONTH(CURDATE())
-                    AND YEAR(e.expense_date)  = YEAR(CURDATE()))                                    AS total_expenses_month
+                    AND YEAR(e.expense_date)  = YEAR(CURDATE()))                                    AS total_expenses_month,
+                (SELECT COALESCE(SUM(e.total_amount), 0) FROM expenses e
+                    WHERE e.business_id = b.id)                                                     AS total_expenses_all
             ')
             ->filter('b.id = {business_id}');
     }

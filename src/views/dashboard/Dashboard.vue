@@ -23,6 +23,7 @@ const stats  = ref({
   pending_count: 0,
   total_paid_month: 0,
   total_expenses_month: 0,
+  total_expenses_all: 0,
   overdue_count: 0,
   draft_count: 0,
   overdue_amount: 0,
@@ -37,8 +38,8 @@ const monthLabel = computed(() =>
   new Date().toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })
 )
 
-const netThisMonth = computed(() =>
-  parseFloat(stats.value.total_paid_month || 0) - parseFloat(stats.value.total_expenses_month || 0)
+const availableBalance = computed(() =>
+  parseFloat(summary.value.total_collected || 0) - parseFloat(stats.value.total_expenses_all || 0)
 )
 
 const chartMonths = computed(() => {
@@ -284,20 +285,20 @@ const quickActions = [
             </button>
           </div>
 
-          <!-- This month net -->
+          <!-- Available balance -->
           <div class="mt-4 p-3 rounded-xl border"
-            :class="netThisMonth >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'">
+            :class="availableBalance >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'">
             <p class="text-[10px] font-bold uppercase tracking-wide mb-1"
-              :class="netThisMonth >= 0 ? 'text-emerald-600' : 'text-red-600'">
-              Net · {{ monthLabel }}
+              :class="availableBalance >= 0 ? 'text-emerald-600' : 'text-red-600'">
+              Available Balance
             </p>
             <p class="text-lg font-bold tabular-nums"
-              :class="netThisMonth >= 0 ? 'text-emerald-700' : 'text-red-700'">
-              {{ inr(netThisMonth) }}
+              :class="availableBalance >= 0 ? 'text-emerald-700' : 'text-red-700'">
+              {{ inr(availableBalance) }}
             </p>
             <p class="text-[11px] mt-0.5"
-              :class="netThisMonth >= 0 ? 'text-emerald-500' : 'text-red-500'">
-              Collected − expenses this month
+              :class="availableBalance >= 0 ? 'text-emerald-500' : 'text-red-500'">
+              Total collected − total expenses
             </p>
           </div>
         </div>
