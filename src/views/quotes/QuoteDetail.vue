@@ -3,7 +3,7 @@ import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { item, list, task } from '../../api'
 import { inr } from '../../utils/currency'
-import { fmtDateShort } from '../../utils/date'
+import { fmtDateShort, today, addDays } from '../../utils/date'
 import { useRole } from '../../composables/useRole'
 
 const props   = defineProps({ panelId: { type: [String, Number], default: null } })
@@ -21,6 +21,16 @@ const error    = ref('')
 const showConvertConfirm = ref(false)
 const showDeleteConfirm  = ref(false)
 const deleting = ref(false)
+const convertDueDate = ref('')
+
+function openConvertConfirm() {
+  error.value = ''
+  const q = quote.value
+  convertDueDate.value = q?.valid_until && q.valid_until >= today()
+    ? q.valid_until
+    : addDays(today(), 30)
+  showConvertConfirm.value = true
+}
 
 const badgeClass = (s) => ({
   draft: 'badge-gray', sent: 'badge-blue', accepted: 'badge-green',
@@ -59,13 +69,16 @@ async function convertToInvoice() {
   acting.value = 'convert'
   error.value  = ''
   try {
-    const { data } = await task('Quote', 'convertToInvoice', { id: quoteId() })
+    const { data } = await task('Quote', 'convertToInvoice', {
+      id: quoteId(),
+      due_date: convertDueDate.value,
+    })
+    showConvertConfirm.value = false
     emit('refresh')
     router.push('/invoices/' + data.data.invoice_id)
   } catch (e) {
     error.value = e.response?.data?.message || 'Conversion failed.'
     acting.value = ''
-    showConvertConfirm.value = false
   }
 }
 
@@ -135,7 +148,7 @@ onMounted(load)
           <span class="text-xs">{{ acting === 'sent' ? 'Sending…' : 'Mark Sent' }}</span>
         </button>
 
-        <button v-if="['accepted','sent'].includes(quote.status)" @click="showConvertConfirm = true" :disabled="!!acting" class="flex-1 min-w-[120px] btn bg-emerald-600 text-white hover:bg-emerald-700 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
+        <button v-if="['accepted','sent'].includes(quote.status)" @click="openConvertConfirm" :disabled="!!acting" class="flex-1 min-w-[120px] btn bg-emerald-600 text-white hover:bg-emerald-700 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           <span class="text-xs">Convert to Bill</span>
         </button>
@@ -264,6 +277,11 @@ onMounted(load)
         </div>
         <h3 class="text-xl font-extrabold text-gray-900">Convert to Bill?</h3>
         <p class="text-sm text-gray-500">This will create a new bill from this quotation. The quotation will be marked as Converted.</p>
+        <div class="text-left">
+          <label class="label">Bill due date</label>
+          <input v-model="convertDueDate" type="date" class="input w-full" required />
+        </div>
+        <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
         <div class="flex gap-3 pt-2">
           <button @click="showConvertConfirm = false" class="btn bg-gray-100 text-gray-700 hover:bg-gray-200 flex-1 border-0">Cancel</button>
           <button @click="convertToInvoice" :disabled="acting === 'convert'" class="btn bg-primary-600 text-white hover:bg-primary-700 flex-1 border-0">

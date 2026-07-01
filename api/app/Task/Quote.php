@@ -163,7 +163,7 @@ class Quote extends Task
     {
         $this->validate([
             'id'       => 'required|integer',
-            'due_date' => 'required|date',
+            'due_date' => 'nullable|date',
         ]);
 
         $businessId = $this->requireBusiness();
@@ -171,6 +171,10 @@ class Quote extends Task
 
         if (!in_array($quote->status, ['accepted', 'sent']))
             $this->fail('Only accepted or sent quotes can be converted to invoices.');
+
+        $dueDate = $input['due_date']
+            ?? $quote->valid_until
+            ?? date('Y-m-d', strtotime('+30 days'));
 
         // Load quote items
         $items = DB::select(
@@ -198,7 +202,7 @@ class Quote extends Task
             'quote_id'       => $quote->id,
             'invoice_type'   => 'tax_invoice',
             'issue_date'     => date('Y-m-d'),
-            'due_date'       => $input['due_date'],
+            'due_date'       => $dueDate,
             'supply_type'    => $quote->supply_type,
             'place_of_supply'=> $quote->place_of_supply,
             'items'          => $itemsPayload,
