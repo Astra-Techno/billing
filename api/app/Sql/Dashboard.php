@@ -12,23 +12,31 @@ class Dashboard extends Sql
     public function stats(array $input = []): Query
     {
         return (new Query('Dashboard.stats'))
-            ->from('invoices i')
-            ->left('payments p ON p.invoice_id = i.id
-                    AND MONTH(p.payment_date) = MONTH(CURDATE())
-                    AND YEAR(p.payment_date)  = YEAR(CURDATE())')
+            ->from('businesses b')
             ->select('list', '
-                SUM(i.amount_due)                                                       AS total_due,
-                SUM(CASE WHEN i.status = \'overdue\' THEN 1 ELSE 0 END)                AS overdue_count,
-                SUM(CASE WHEN i.status = \'draft\'   THEN 1 ELSE 0 END)                AS draft_count,
-                COALESCE(SUM(DISTINCT p.amount), 0)                                     AS total_paid_month,
+                (SELECT COALESCE(SUM(i.amount_due), 0) FROM invoices i
+                    WHERE i.business_id = b.id AND i.deleted_at IS NULL
+                    AND i.status IN (\'sent\', \'partial\', \'overdue\'))                          AS total_outstanding,
+                (SELECT COUNT(*) FROM invoices i
+                    WHERE i.business_id = b.id AND i.deleted_at IS NULL
+                    AND i.status IN (\'sent\', \'partial\', \'overdue\')
+                    AND i.amount_due > 0)                                                           AS pending_count,
+                (SELECT COUNT(*) FROM invoices i
+                    WHERE i.business_id = b.id AND i.deleted_at IS NULL
+                    AND i.status = \'overdue\')                                                     AS overdue_count,
+                (SELECT COUNT(*) FROM invoices i
+                    WHERE i.business_id = b.id AND i.deleted_at IS NULL
+                    AND i.status = \'draft\')                                                       AS draft_count,
+                (SELECT COALESCE(SUM(p.amount), 0) FROM payments p
+                    WHERE p.business_id = b.id
+                    AND MONTH(p.payment_date) = MONTH(CURDATE())
+                    AND YEAR(p.payment_date)  = YEAR(CURDATE()))                                    AS total_paid_month,
                 (SELECT COALESCE(SUM(e.total_amount), 0) FROM expenses e
-                 WHERE e.business_id = i.business_id
-                   AND MONTH(e.expense_date) = MONTH(CURDATE())
-                   AND YEAR(e.expense_date)  = YEAR(CURDATE()))                         AS total_expenses_month
+                    WHERE e.business_id = b.id
+                    AND MONTH(e.expense_date) = MONTH(CURDATE())
+                    AND YEAR(e.expense_date)  = YEAR(CURDATE()))                                    AS total_expenses_month
             ')
-            ->filter('i.business_id = {business_id}')
-            ->filter('i.deleted_at IS NULL')
-            ->filter('i.status != \'cancelled\'');
+            ->filter('b.id = {business_id}');
     }
 
     // ── Summary counts & amounts ──────────────────────────────

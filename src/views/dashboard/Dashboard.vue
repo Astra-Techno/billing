@@ -12,50 +12,34 @@ const router    = useRouter()
 const authStore = useAuthStore()
 
 const { startTour, isTourSeen } = useTour('dashboard', [
-  { target: '[data-tour="stat-cards"]',    title: 'Business Snapshot', text: 'See your collections, pending invoices, expenses and overdue amounts at a glance.' },
-  { target: '[data-tour="revenue-chart"]', title: 'Revenue Trend',     text: 'Last 6 months of collections visualized.' },
+  { target: '[data-tour="stat-cards"]',    title: 'Business Snapshot', text: 'Outstanding amounts, this month collections & expenses, and overdue alerts.' },
+  { target: '[data-tour="revenue-chart"]', title: 'Revenue Trend',     text: 'Collections received over the last 6 months.' },
   { target: '[data-tour="quick-actions"]', title: 'Quick Actions',     text: 'Shortcuts to common tasks — one click away.' },
   { target: '[data-tour="recent-invoices"]',title: 'Recent Invoices',  text: 'Your latest bills with status.' },
 ])
 
-const stats         = ref({ total_due: 0, total_paid_month: 0, total_expenses_month: 0, overdue_count: 0, draft_count: 0, overdue_amount: 0 })
-const summary       = ref({ total_billed: 0, total_collected: 0, total_outstanding: 0 })
-const totalExpenses = ref(0)
-const recent        = ref([])
-const overdue       = ref([])
-const monthlyRevenue= ref([])
-const loading       = ref(true)
-
-const balance = computed(() => {
-  const collected = parseFloat(summary.value.total_collected || 0)
-  const expenses  = parseFloat(totalExpenses.value || 0)
-  return collected - expenses
+const stats  = ref({
+  total_outstanding: 0,
+  pending_count: 0,
+  total_paid_month: 0,
+  total_expenses_month: 0,
+  overdue_count: 0,
+  draft_count: 0,
+  overdue_amount: 0,
 })
+const summary        = ref({ total_billed: 0, total_collected: 0, total_outstanding: 0, pending_count: 0 })
+const recent         = ref([])
+const overdue        = ref([])
+const monthlyRevenue = ref([])
+const loading        = ref(true)
 
-async function load() {
-  loading.value = true
-  try {
-    const [sR, sumR, expR, rR, oR, mR] = await Promise.all([
-      list('Dashboard:stats'),
-      list('Dashboard:summary'),
-      list('Dashboard:expenseSummary'),
-      list('Invoice', { sort_by: 'i.created_at', sort_order: 'desc', limit: 8 }),
-      list('Invoice:overdue', { limit: 10 }),
-      list('Dashboard:monthlyRevenue'),
-    ])
-    stats.value          = sR.data?.data?.[0]   || {}
-    summary.value        = sumR.data?.data?.[0] || {}
-    totalExpenses.value  = (expR.data?.data || []).reduce((sum, c) => sum + parseFloat(c.total || 0), 0)
-    recent.value         = rR.data?.data  || []
-    overdue.value        = oR.data?.data  || []
-    monthlyRevenue.value = mR.data?.data  || []
-    stats.value.overdue_amount = overdue.value.reduce((sum, inv) => sum + parseFloat(inv.amount_due || 0), 0)
-  } catch {}
-  loading.value = false
-  setTimeout(() => { if (!isTourSeen() && !loading.value) startTour() }, 800)
-}
+const monthLabel = computed(() =>
+  new Date().toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })
+)
 
-useListRefresh(load)
+const netThisMonth = computed(() =>
+  parseFloat(stats.value.total_paid_month || 0) - parseFloat(stats.value.total_expenses_month || 0)
+)
 
 const chartMonths = computed(() => {
   const months = []
@@ -70,6 +54,33 @@ const chartMonths = computed(() => {
   const max        = Math.max(...withData.map(m => m.value), 1)
   return withData.map(m => ({ ...m, pct: Math.max(4, Math.round((m.value / max) * 100)) }))
 })
+
+const chartSixMonthTotal = computed(() =>
+  chartMonths.value.reduce((sum, m) => sum + m.value, 0)
+)
+
+async function load() {
+  loading.value = true
+  try {
+    const [sR, sumR, rR, oR, mR] = await Promise.all([
+      list('Dashboard:stats'),
+      list('Dashboard:summary'),
+      list('Invoice', { sort_by: 'i.created_at', sort_order: 'desc', limit: 8 }),
+      list('Invoice:overdue', { limit: 10 }),
+      list('Dashboard:monthlyRevenue'),
+    ])
+    stats.value   = sR.data?.data?.[0] || {}
+    summary.value = sumR.data?.data?.[0] || {}
+    recent.value  = rR.data?.data || []
+    overdue.value = oR.data?.data || []
+    monthlyRevenue.value = mR.data?.data || []
+    stats.value.overdue_amount = overdue.value.reduce((sum, inv) => sum + parseFloat(inv.amount_due || 0), 0)
+  } catch {}
+  loading.value = false
+  setTimeout(() => { if (!isTourSeen() && !loading.value) startTour() }, 800)
+}
+
+useListRefresh(load)
 
 const statusConfig = {
   paid:      { label: 'Paid',     cls: 'badge-green'  },
@@ -110,20 +121,23 @@ const quickActions = [
         <div class="gpay-hero-balance">
           <div class="relative z-10">
             <div class="flex items-start justify-between">
-              <p class="text-white/80 text-sm font-medium">Pending to collect</p>
+              <p class="text-white/80 text-sm font-medium">Outstanding to collect</p>
               <span v-if="stats.overdue_count > 0"
                 class="text-[10px] font-bold uppercase tracking-wide bg-white/20 px-2 py-1 rounded-full">
                 {{ stats.overdue_count }} overdue
               </span>
             </div>
-            <p class="text-3xl font-bold text-white mt-2 tabular-nums">{{ inr(stats.total_due || 0) }}</p>
+            <p class="text-3xl font-bold text-white mt-2 tabular-nums">{{ inr(stats.total_outstanding || 0) }}</p>
+            <p class="text-white/60 text-xs mt-1">
+              {{ stats.pending_count || 0 }} invoice{{ stats.pending_count === 1 ? '' : 's' }} awaiting payment
+            </p>
             <div class="flex gap-6 mt-4 pt-4 border-t border-white/15">
               <div>
-                <p class="text-white/60 text-[11px] font-medium uppercase tracking-wide">Collected</p>
+                <p class="text-white/60 text-[11px] font-medium uppercase tracking-wide">Collected · {{ monthLabel }}</p>
                 <p class="text-lg font-bold text-white tabular-nums mt-0.5">{{ inrCompact(stats.total_paid_month || 0) }}</p>
               </div>
               <div>
-                <p class="text-white/60 text-[11px] font-medium uppercase tracking-wide">Expenses</p>
+                <p class="text-white/60 text-[11px] font-medium uppercase tracking-wide">Expenses · {{ monthLabel }}</p>
                 <p class="text-lg font-bold text-white tabular-nums mt-0.5">{{ inrCompact(stats.total_expenses_month || 0) }}</p>
               </div>
             </div>
@@ -134,11 +148,11 @@ const quickActions = [
       <!-- ── Stat cards ── -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-5" data-tour="stat-cards">
 
-        <!-- Pending -->
+        <!-- Outstanding -->
         <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-soft cursor-pointer hover:border-indigo-200 hover:shadow-gpay transition-all"
           @click="router.push('/invoices?status=sent')">
           <div class="flex items-center justify-between mb-3">
-            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Pending</p>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Outstanding</p>
             <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
               <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -146,11 +160,13 @@ const quickActions = [
             </div>
           </div>
           <p v-if="loading" class="skeleton h-7 w-24 rounded"></p>
-          <p v-else class="text-xl lg:text-2xl font-bold text-gray-900 tabular-nums tracking-tight">{{ inrCompact(stats.total_due || 0) }}</p>
-          <p class="text-xs text-gray-400 mt-1">to collect</p>
+          <p v-else class="text-xl lg:text-2xl font-bold text-gray-900 tabular-nums tracking-tight">{{ inrCompact(stats.total_outstanding || 0) }}</p>
+          <p class="text-xs text-gray-400 mt-1">
+            {{ stats.pending_count || 0 }} unpaid invoice{{ stats.pending_count === 1 ? '' : 's' }}
+          </p>
         </div>
 
-        <!-- Collected -->
+        <!-- Collected this month -->
         <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-soft cursor-pointer hover:border-emerald-200 hover:shadow-gpay transition-all"
           @click="router.push('/invoices?status=paid')">
           <div class="flex items-center justify-between mb-3">
@@ -163,10 +179,10 @@ const quickActions = [
           </div>
           <p v-if="loading" class="skeleton h-7 w-24 rounded"></p>
           <p v-else class="text-xl lg:text-2xl font-bold text-gray-900 tabular-nums tracking-tight">{{ inrCompact(stats.total_paid_month || 0) }}</p>
-          <p class="text-xs text-gray-400 mt-1">this month</p>
+          <p class="text-xs text-gray-400 mt-1">payments in {{ monthLabel }}</p>
         </div>
 
-        <!-- Expenses -->
+        <!-- Expenses this month -->
         <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-soft cursor-pointer hover:border-rose-200 hover:shadow-gpay transition-all"
           @click="router.push('/expenses')">
           <div class="flex items-center justify-between mb-3">
@@ -179,7 +195,7 @@ const quickActions = [
           </div>
           <p v-if="loading" class="skeleton h-7 w-24 rounded"></p>
           <p v-else class="text-xl lg:text-2xl font-bold text-gray-900 tabular-nums tracking-tight">{{ inrCompact(stats.total_expenses_month || 0) }}</p>
-          <p class="text-xs text-gray-400 mt-1">this month</p>
+          <p class="text-xs text-gray-400 mt-1">spent in {{ monthLabel }}</p>
         </div>
 
         <!-- Overdue -->
@@ -200,9 +216,20 @@ const quickActions = [
             {{ stats.overdue_count || 0 }}
           </p>
           <p class="text-xs text-gray-400 mt-1">
-            {{ stats.overdue_count > 0 ? inrCompact(stats.overdue_amount || 0) + ' at risk' : 'invoices' }}
+            {{ stats.overdue_count > 0 ? inrCompact(stats.overdue_amount || 0) + ' overdue' : 'all clear' }}
           </p>
         </div>
+      </div>
+
+      <!-- Draft hint -->
+      <div v-if="!loading && stats.draft_count > 0"
+        class="mb-4 flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-100 cursor-pointer hover:bg-amber-100/80 transition-colors"
+        @click="router.push('/invoices?status=draft')">
+        <p class="text-sm text-amber-800">
+          <span class="font-semibold">{{ stats.draft_count }} draft invoice{{ stats.draft_count === 1 ? '' : 's' }}</span>
+          waiting to be sent
+        </p>
+        <span class="text-xs font-semibold text-amber-700 shrink-0">Review →</span>
       </div>
 
       <!-- ── Main grid: Chart + Quick actions ── -->
@@ -210,15 +237,18 @@ const quickActions = [
 
         <!-- Revenue chart -->
         <div class="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-5 shadow-soft" data-tour="revenue-chart">
-          <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center justify-between mb-1">
             <div>
-              <p class="text-sm font-semibold text-gray-900">Revenue Trend</p>
-              <p class="text-xs text-gray-400 mt-0.5">Collections — last 6 months</p>
+              <p class="text-sm font-semibold text-gray-900">Collections Trend</p>
+              <p class="text-xs text-gray-400 mt-0.5">Payments received — last 6 months</p>
             </div>
-            <span class="text-xs font-semibold text-primary-600 bg-primary-50 px-2.5 py-1 rounded-full">
-              {{ inrCompact(parseFloat(summary.total_collected || 0)) }} total
+            <span class="text-xs font-semibold text-primary-600 bg-primary-50 px-2.5 py-1 rounded-full tabular-nums">
+              {{ inrCompact(chartSixMonthTotal) }} · 6 mo
             </span>
           </div>
+          <p class="text-[11px] text-gray-400 mb-4">
+            Lifetime collected: {{ inrCompact(summary.total_collected || 0) }}
+          </p>
           <div class="flex items-end gap-2 h-32">
             <template v-for="month in chartMonths" :key="month.key">
               <div class="flex-1 flex flex-col items-center gap-1.5 group">
@@ -254,20 +284,20 @@ const quickActions = [
             </button>
           </div>
 
-          <!-- Balance pill -->
+          <!-- This month net -->
           <div class="mt-4 p-3 rounded-xl border"
-            :class="balance >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'">
+            :class="netThisMonth >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'">
             <p class="text-[10px] font-bold uppercase tracking-wide mb-1"
-              :class="balance >= 0 ? 'text-emerald-600' : 'text-red-600'">
-              Net Balance
+              :class="netThisMonth >= 0 ? 'text-emerald-600' : 'text-red-600'">
+              Net · {{ monthLabel }}
             </p>
             <p class="text-lg font-bold tabular-nums"
-              :class="balance >= 0 ? 'text-emerald-700' : 'text-red-700'">
-              {{ inr(balance) }}
+              :class="netThisMonth >= 0 ? 'text-emerald-700' : 'text-red-700'">
+              {{ inr(netThisMonth) }}
             </p>
             <p class="text-[11px] mt-0.5"
-              :class="balance >= 0 ? 'text-emerald-500' : 'text-red-500'">
-              Collected − Expenses
+              :class="netThisMonth >= 0 ? 'text-emerald-500' : 'text-red-500'">
+              Collected − expenses this month
             </p>
           </div>
         </div>
@@ -333,14 +363,14 @@ const quickActions = [
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                       </svg>
                     </div>
-                    <span class="text-sm font-semibold text-gray-800">{{ inv.invoice_number || '#' + inv.id }}</span>
+                    <span class="text-sm font-semibold text-gray-800">{{ inv.number || '#' + inv.id }}</span>
                   </div>
                 </td>
                 <td class="px-4 py-3 hidden sm:table-cell">
                   <span class="text-sm text-gray-600 truncate max-w-[140px] block">{{ inv.client_name || '—' }}</span>
                 </td>
                 <td class="px-4 py-3 hidden md:table-cell">
-                  <span class="text-sm text-gray-400">{{ fmtDateShort(inv.invoice_date) }}</span>
+                  <span class="text-sm text-gray-400">{{ fmtDateShort(inv.issue_date) }}</span>
                 </td>
                 <td class="px-4 py-3 text-right">
                   <span class="text-sm font-semibold text-gray-900 tabular-nums">{{ inr(inv.total || 0) }}</span>
@@ -356,11 +386,9 @@ const quickActions = [
         </div>
       </div>
 
-      <!-- Bottom spacer for mobile -->
       <div class="h-6"></div>
     </div>
 
-    <!-- Mobile FAB -->
     <RouterLink to="/invoices/new" class="gpay-fab lg:hidden">
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
