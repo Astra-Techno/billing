@@ -573,7 +573,7 @@ CREATE TABLE IF NOT EXISTS `payments` (
     `id`            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `business_id`   BIGINT UNSIGNED NOT NULL,
     `invoice_id`    BIGINT UNSIGNED NOT NULL,
-    `client_id`     BIGINT UNSIGNED NOT NULL,
+    `client_id`     BIGINT UNSIGNED NULL DEFAULT NULL,
     `recorded_by`   BIGINT UNSIGNED DEFAULT NULL,
     `amount`        DECIMAL(15,2)   NOT NULL,
     `method`        ENUM('cash','upi','neft','rtgs','imps','cheque','card','netbanking','other')
@@ -586,7 +586,7 @@ CREATE TABLE IF NOT EXISTS `payments` (
     `updated_at`    TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`business_id`) REFERENCES `businesses`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`invoice_id`)  REFERENCES `invoices`(`id`)   ON DELETE CASCADE,
-    FOREIGN KEY (`client_id`)   REFERENCES `clients`(`id`)    ON DELETE RESTRICT,
+    FOREIGN KEY (`client_id`)   REFERENCES `clients`(`id`)    ON DELETE SET NULL,
     INDEX `pay_business_id` (`business_id`),
     INDEX `pay_invoice_id`  (`invoice_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
