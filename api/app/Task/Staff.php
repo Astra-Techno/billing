@@ -4,12 +4,10 @@ namespace App\Task;
 
 use App\Base\Task;
 use App\Core\DB;
-use App\Tables\BusinessUser;
-use App\Tables\User;
 
 class Staff extends Task
 {
-    // ── List members + pending invites ────────────────────────────────────────
+    // ── List members ────────────────────────────────────────────────────────
 
     public function list(array $input): array
     {
@@ -25,91 +23,64 @@ class Staff extends Task
             [$businessId]
         );
 
-        $pending = DB::select(
-            "SELECT id, email, role, token, expires_at, created_at
-             FROM invitations
-             WHERE business_id = ? AND accepted_at IS NULL AND expires_at > NOW()
-             ORDER BY created_at DESC",
-            [$businessId]
-        );
-
-        return $this->success([
-            'members' => $members,
-            'pending' => $pending,
-        ]);
+        return $this->success(['members' => $members]);
     }
 
-    // ── Invite a new staff member ─────────────────────────────────────────────
+    // ── Create a staff account directly ─────────────────────────────────────
 
-    public function invite(array $input): array
+    public function create(array $input): array
     {
         $this->validate([
-            'email' => 'required|email',
-            'role'  => 'required|in:admin,accountant,staff',
+            'name'     => 'required|string',
+            'email'    => 'required|email',
+            'password' => 'required|string|min:6',
+            'role'     => 'required|in:admin,accountant,staff',
         ]);
 
         $businessId = $this->requireBusiness();
         $this->requireRole(['owner', 'admin']);
 
         $email = strtolower(trim($input['email']));
+        $name  = trim($input['name']);
         $role  = $input['role'];
 
-        // Check if already a member
+        // Check if already a member of this business
         $existing = DB::selectOne(
             "SELECT bu.id FROM business_users bu
              INNER JOIN users u ON u.id = bu.user_id
              WHERE bu.business_id = ? AND u.email = ? AND bu.active = 1 LIMIT 1",
             [$businessId, $email]
         );
-        if ($existing) $this->fail('This person is already a member of your business.');
+        if ($existing) $this->fail('This email is already a member of your business.');
 
-        // Delete any existing pending invite for same email+business
+        // Check if user account exists
+        $user = DB::selectOne("SELECT id FROM users WHERE email = ? LIMIT 1", [$email]);
+
+        if ($user) {
+            // User exists — just link to this business
+            $userId = $user->id;
+        } else {
+            // Create new user account
+            DB::statement(
+                "INSERT INTO users (name, email, password, active, created_at, updated_at)
+                 VALUES (?, ?, ?, 1, NOW(), NOW())",
+                [$name, $email, password_hash($input['password'], PASSWORD_BCRYPT)]
+            );
+            $userId = DB::lastInsertId();
+        }
+
+        // Link user to business
         DB::statement(
-            "DELETE FROM invitations WHERE business_id = ? AND email = ? AND accepted_at IS NULL",
-            [$businessId, $email]
+            "INSERT INTO business_users (business_id, user_id, role, invited_by, accepted_at, active, created_at, updated_at)
+             VALUES (?, ?, ?, ?, NOW(), 1, NOW(), NOW())
+             ON DUPLICATE KEY UPDATE role = VALUES(role), active = 1, updated_at = NOW()",
+            [$businessId, $userId, $role, $this->userId()]
         );
 
-        $token     = bin2hex(random_bytes(32));
-        $expiresAt = date('Y-m-d H:i:s', strtotime('+7 days'));
-
-        DB::statement(
-            "INSERT INTO invitations (business_id, invited_by, email, role, token, expires_at)
-             VALUES (?, ?, ?, ?, ?, ?)",
-            [$businessId, $this->userId(), $email, $role, $token, $expiresAt]
-        );
-
-        $business = DB::selectOne("SELECT name FROM businesses WHERE id = ? LIMIT 1", [$businessId]);
-
-        $inviteUrl  = (isset($_ENV['FRONTEND_URL']) ? rtrim($_ENV['FRONTEND_URL'], '/') : '') . '/accept-invite/' . $token;
-        $waMessage  = urlencode("Hi! You've been invited to join {$business->name} on AI Billing as {$role}. Accept here: {$inviteUrl}");
-        $waShareUrl = "https://wa.me/?text={$waMessage}";
-
-        return $this->success([
-            'token'      => $token,
-            'invite_url' => $inviteUrl,
-            'wa_url'     => $waShareUrl,
-            'expires_at' => $expiresAt,
-        ], "Invite created for {$email}.");
+        return $this->success(null, "Staff account created for {$name}. They can login with their email and password.");
     }
 
-    // ── Cancel a pending invite ───────────────────────────────────────────────
-
-    public function cancelInvite(array $input): array
-    {
-        $this->validate(['id' => 'required|integer']);
-
-        $businessId = $this->requireBusiness();
-        $this->requireRole(['owner', 'admin']);
-
-        DB::statement(
-            "DELETE FROM invitations WHERE id = ? AND business_id = ?",
-            [(int)$input['id'], $businessId]
-        );
-
-        return $this->success(null, 'Invite cancelled.');
-    }
-
-    // ── Update a member's role ────────────────────────────────────────────────
+    // ── Update a member's role ──────────────────────────────────────────────
 
     public function updateRole(array $input): array
     {
@@ -123,7 +94,6 @@ class Staff extends Task
 
         $targetUserId = (int)$input['user_id'];
 
-        // Cannot change own role or owner's role
         $target = DB::selectOne(
             "SELECT role FROM business_users WHERE business_id = ? AND user_id = ? AND active = 1 LIMIT 1",
             [$businessId, $targetUserId]
@@ -140,13 +110,13 @@ class Staff extends Task
         return $this->success(null, 'Role updated.');
     }
 
-    // ── Remove a member ───────────────────────────────────────────────────────
+    // ── Remove a member ─────────────────────────────────────────────────────
 
     public function remove(array $input): array
     {
         $this->validate(['user_id' => 'required|integer']);
 
-        $businessId   = $this->requireBusiness();
+        $businessId = $this->requireBusiness();
         $this->requireRole(['owner', 'admin']);
 
         $targetUserId = (int)$input['user_id'];

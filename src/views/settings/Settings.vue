@@ -57,15 +57,13 @@ async function saveFeatures() {
 
 // Team
 const teamMembers   = ref([])
-const teamPending   = ref([])
 const teamLoading   = ref(false)
 const teamError     = ref('')
-const inviteForm    = ref({ email: '', role: 'staff' })
-const inviteModal   = ref(false)
-const inviting      = ref(false)
-const inviteResult  = ref(null)   // { invite_url, wa_url } after invite created
-const roleChanging  = ref(null)   // user_id being changed
-const removing      = ref(null)   // user_id being removed
+const staffForm     = ref({ name: '', email: '', password: '', role: 'staff' })
+const staffModal    = ref(false)
+const creatingStaff = ref(false)
+const roleChanging  = ref(null)
+const removing      = ref(null)
 const removeTarget  = ref(null)
 
 const ROLE_LABELS = { owner: 'Owner', admin: 'Admin', accountant: 'Accountant', staff: 'Staff' }
@@ -82,34 +80,30 @@ async function loadTeam() {
   try {
     const res = await task('Staff', 'list', {})
     teamMembers.value = res.data?.data?.members || []
-    teamPending.value = res.data?.data?.pending  || []
   } catch (e) {
     teamError.value = e.response?.data?.message || 'Failed to load team.'
   }
   teamLoading.value = false
 }
 
-async function sendInvite() {
-  if (!inviteForm.value.email) return
-  inviting.value = true
+function openStaffModal() {
+  staffForm.value = { name: '', email: '', password: '', role: 'staff' }
   teamError.value = ''
-  try {
-    const res = await task('Staff', 'invite', inviteForm.value)
-    inviteResult.value = res.data?.data
-  } catch (e) {
-    teamError.value = e.response?.data?.message || 'Failed to send invite.'
-    inviting.value = false
-    return
-  }
-  inviting.value = false
-  await loadTeam()
+  staffModal.value = true
 }
 
-function openInviteModal() {
-  inviteForm.value  = { email: '', role: 'staff' }
-  inviteResult.value = null
-  teamError.value   = ''
-  inviteModal.value = true
+async function createStaff() {
+  if (!staffForm.value.name || !staffForm.value.email || !staffForm.value.password) return
+  creatingStaff.value = true
+  teamError.value = ''
+  try {
+    await task('Staff', 'create', staffForm.value)
+    staffModal.value = false
+    await loadTeam()
+  } catch (e) {
+    teamError.value = e.response?.data?.message || 'Failed to create staff account.'
+  }
+  creatingStaff.value = false
 }
 
 async function changeRole(userId, newRole) {
@@ -133,18 +127,6 @@ async function confirmRemove() {
   }
   removing.value   = null
   removeTarget.value = null
-}
-
-async function cancelInvite(id) {
-  try {
-    await task('Staff', 'cancelInvite', { id })
-    await loadTeam()
-  } catch {}
-}
-
-function copyInviteLink() {
-  if (inviteResult.value?.invite_url)
-    navigator.clipboard.writeText(inviteResult.value.invite_url)
 }
 
 const businessForm = ref({
@@ -1125,10 +1107,10 @@ async function saveInvoice() {
             <h2 class="section-title mb-0">Team Members</h2>
             <p class="text-xs text-gray-400 mt-0.5">Manage who has access to this business</p>
           </div>
-          <button v-if="can('team')" @click="openInviteModal"
+          <button v-if="can('team')" @click="openStaffModal"
             class="btn btn-primary flex items-center gap-2 text-sm">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-            Invite Staff
+            Add Staff
           </button>
         </div>
 
@@ -1174,28 +1156,6 @@ async function saveInvoice() {
           </div>
         </div>
 
-        <!-- Pending Invites -->
-        <div v-if="teamPending.length" class="card border-0 overflow-hidden">
-          <div class="px-5 py-3 border-b border-gray-50">
-            <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Pending Invites</p>
-          </div>
-          <div class="divide-y divide-gray-50">
-            <div v-for="inv in teamPending" :key="inv.id" class="flex items-center gap-4 px-5 py-4">
-              <div class="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
-                <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="font-bold text-gray-900 text-sm truncate">{{ inv.email }}</p>
-                <p class="text-xs text-gray-500 mt-0.5">
-                  <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mr-1.5" :class="ROLE_COLORS[inv.role]">{{ ROLE_LABELS[inv.role] }}</span>
-                  Expires {{ new Date(inv.expires_at).toLocaleDateString('en-IN', { day:'numeric', month:'short' }) }}
-                </p>
-              </div>
-              <button @click="cancelInvite(inv.id)" class="text-xs text-gray-400 hover:text-red-500 font-bold transition-colors">Cancel</button>
-            </div>
-          </div>
-        </div>
-
         <!-- Role Reference Card -->
         <div class="card card-body bg-gray-50 border-gray-100">
           <p class="text-xs font-bold text-gray-600 mb-3">Role Permissions</p>
@@ -1208,51 +1168,37 @@ async function saveInvoice() {
         </div>
       </div>
 
-      <!-- Invite Modal -->
-      <div v-if="inviteModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+      <!-- Create Staff Modal -->
+      <div v-if="staffModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
         <div class="bg-white rounded-[2rem] shadow-xl max-w-sm w-full p-6 space-y-4">
-          <template v-if="!inviteResult">
-            <h3 class="text-lg font-extrabold text-gray-900">Invite Staff Member</h3>
-            <div>
-              <label class="form-label">Email Address</label>
-              <input v-model="inviteForm.email" type="email" class="form-input" placeholder="staff@example.com" />
-            </div>
-            <div>
-              <label class="form-label">Role</label>
-              <select v-model="inviteForm.role" class="form-input">
-                <option value="admin">Admin — full access</option>
-                <option value="accountant">Accountant — bills + reports, no delete</option>
-                <option value="staff">Staff — create bills only</option>
-              </select>
-            </div>
-            <div v-if="teamError" class="text-sm text-danger-600 bg-danger-50 rounded-lg px-3 py-2">{{ teamError }}</div>
-            <div class="flex gap-3 pt-2">
-              <button @click="inviteModal = false; inviteResult = null" class="btn bg-gray-100 text-gray-700 hover:bg-gray-200 flex-1 border-0">Cancel</button>
-              <button @click="sendInvite" :disabled="inviting || !inviteForm.email" class="btn btn-primary flex-1">
-                {{ inviting ? 'Creating…' : 'Create Invite' }}
-              </button>
-            </div>
-          </template>
-
-          <template v-else>
-            <div class="text-center">
-              <div class="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-3 text-3xl">✓</div>
-              <h3 class="text-lg font-extrabold text-gray-900">Invite Ready!</h3>
-              <p class="text-sm text-gray-500 mt-1">Share this link with your staff member. It expires in 7 days.</p>
-            </div>
-            <div class="bg-gray-50 rounded-xl p-3 text-xs text-gray-600 font-mono break-all border border-gray-100">
-              {{ inviteResult.invite_url }}
-            </div>
-            <div class="flex flex-col gap-2">
-              <a :href="inviteResult.wa_url" target="_blank"
-                class="btn flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1db954] text-white border-0 w-full">
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                Share on WhatsApp
-              </a>
-              <button @click="copyInviteLink" class="btn bg-gray-100 text-gray-700 hover:bg-gray-200 border-0 w-full">Copy Link</button>
-              <button @click="inviteModal = false; inviteResult = null" class="text-sm text-gray-400 hover:text-gray-600 pt-1">Done</button>
-            </div>
-          </template>
+          <h3 class="text-lg font-extrabold text-gray-900">Add Staff Member</h3>
+          <div>
+            <label class="form-label">Full Name</label>
+            <input v-model="staffForm.name" type="text" class="form-input" placeholder="Staff name" />
+          </div>
+          <div>
+            <label class="form-label">Email (Login ID)</label>
+            <input v-model="staffForm.email" type="email" class="form-input" placeholder="staff@example.com" />
+          </div>
+          <div>
+            <label class="form-label">Password</label>
+            <input v-model="staffForm.password" type="text" class="form-input" placeholder="Min 6 characters" />
+          </div>
+          <div>
+            <label class="form-label">Role</label>
+            <select v-model="staffForm.role" class="form-input">
+              <option value="admin">Admin — full access</option>
+              <option value="accountant">Accountant — bills + reports, no delete</option>
+              <option value="staff">Staff — create bills only</option>
+            </select>
+          </div>
+          <div v-if="teamError" class="text-sm text-danger-600 bg-danger-50 rounded-lg px-3 py-2">{{ teamError }}</div>
+          <div class="flex gap-3 pt-2">
+            <button @click="staffModal = false" class="btn bg-gray-100 text-gray-700 hover:bg-gray-200 flex-1 border-0">Cancel</button>
+            <button @click="createStaff" :disabled="creatingStaff || !staffForm.name || !staffForm.email || !staffForm.password" class="btn btn-primary flex-1">
+              {{ creatingStaff ? 'Creating…' : 'Create Account' }}
+            </button>
+          </div>
         </div>
       </div>
 
