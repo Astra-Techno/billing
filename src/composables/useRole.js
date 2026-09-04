@@ -1,12 +1,26 @@
 import { useAuthStore } from '../stores/auth'
 
 const PERMISSIONS = {
+  // Actions
   delete:   ['owner', 'admin'],
   cancel:   ['owner', 'admin'],
   settings: ['owner', 'admin'],
-  reports:  ['owner', 'admin', 'accountant'],
-  payments: ['owner', 'admin', 'accountant'],
   team:     ['owner', 'admin'],
+
+  // Pages
+  dashboard:        ['owner', 'admin', 'accountant', 'staff'],
+  invoices:         ['owner', 'admin', 'accountant', 'staff'],
+  quotes:           ['owner', 'admin', 'accountant'],
+  expenses:         ['owner', 'admin', 'accountant'],
+  clients:          ['owner', 'admin', 'accountant', 'staff'],
+  products:         ['owner', 'admin', 'accountant', 'staff'],
+  payments:         ['owner', 'admin', 'accountant'],
+  reports:          ['owner', 'admin', 'accountant'],
+  gst:              ['owner', 'admin', 'accountant'],
+  credit_notes:     ['owner', 'admin', 'accountant'],
+  purchase_orders:  ['owner', 'admin', 'accountant'],
+  delivery_challans:['owner', 'admin', 'accountant', 'staff'],
+  payroll:          ['owner', 'admin'],
 }
 
 export function useRole() {
