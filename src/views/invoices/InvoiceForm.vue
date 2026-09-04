@@ -760,6 +760,11 @@ async function submit() {
                             @blur="onItemPriceBlur(i)"
                             @keydown="onPriceKeydown(i, $event)" />
                         </div>
+                        <!-- Discount chip -->
+                        <div class="chip-disc">
+                          <input v-model="it.discount_pct" type="number" min="0" max="100" step="0.01" class="w-12 text-right tabular-nums" placeholder="0" />
+                          <span class="shrink-0">% off</span>
+                        </div>
                         <!-- GST chip -->
                         <div class="chip-tax">
                           <select v-model="it.gst_rate" @keydown.tab="onLastFieldTab(i, $event)">
@@ -797,7 +802,7 @@ async function submit() {
                     class="w-full p-4 text-left hover:bg-gray-50/50 flex items-center justify-between gap-3">
                     <div class="min-w-0 flex-1">
                       <p class="font-semibold text-gray-800 text-sm truncate">{{ it.description || `Item ${i + 1}` }}</p>
-                      <p class="text-xs text-gray-400 mt-0.5">{{ it.quantity }} × {{ inr(it.unit_price || 0) }} · {{ it.gst_rate }}% GST</p>
+                      <p class="text-xs text-gray-400 mt-0.5">{{ it.quantity }} × {{ inr(it.unit_price || 0) }}<template v-if="it.discount_pct > 0"> · {{ it.discount_pct }}% off</template> · {{ it.gst_rate }}% GST</p>
                     </div>
                     <span class="text-sm font-bold text-gray-900 tabular-nums shrink-0">{{ inr(lineTotal(it)) }}</span>
                   </button>
@@ -835,7 +840,7 @@ async function submit() {
                         </div>
                       </div>
                     </div>
-                    <!-- Mobile chips for qty/price/gst -->
+                    <!-- Mobile chips for qty/price/discount/gst -->
                     <div class="item-chips">
                       <div class="chip-qty">
                         <input v-model="it.quantity" type="number" :min="qtyStep(it.unit)" :step="qtyStep(it.unit)" class="w-12 text-center tabular-nums" />
@@ -849,6 +854,10 @@ async function submit() {
                         <input v-model="it.unit_price" type="number" :data-line-price="i" min="0" step="0.01" class="w-20 text-right tabular-nums" placeholder="0.00"
                           @blur="onItemPriceBlur(i)"
                           @keydown="onPriceKeydown(i, $event)" />
+                      </div>
+                      <div class="chip-disc">
+                        <input v-model="it.discount_pct" type="number" min="0" max="100" step="0.01" class="w-12 text-right tabular-nums" placeholder="0" />
+                        <span class="shrink-0">% off</span>
                       </div>
                       <div class="chip-tax">
                         <select v-model="it.gst_rate">
@@ -878,6 +887,10 @@ async function submit() {
                 <div class="flex justify-between font-medium">
                   <span>Sub Total :</span>
                   <span class="font-bold text-gray-900 tabular-nums">{{ inr(totals.subtotal) }}</span>
+                </div>
+                <div v-if="totals.discount > 0" class="flex justify-between font-medium text-green-600">
+                  <span>Discount :</span>
+                  <span class="font-bold tabular-nums">-{{ inr(totals.discount) }}</span>
                 </div>
                 <div v-if="totals.tax > 0" class="flex justify-between font-medium">
                   <span>Tax :</span>
@@ -1091,6 +1104,10 @@ async function submit() {
               <div class="flex justify-between text-gray-500">
                 <span>Subtotal</span>
                 <span class="font-medium text-gray-800 tabular-nums">{{ inr(totals.subtotal) }}</span>
+              </div>
+              <div v-if="totals.discount > 0" class="flex justify-between text-green-600">
+                <span>Discount</span>
+                <span class="font-medium tabular-nums">-{{ inr(totals.discount) }}</span>
               </div>
               <div v-if="totals.tax > 0" class="flex justify-between text-gray-500">
                 <span>Tax</span>

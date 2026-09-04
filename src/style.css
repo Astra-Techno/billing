@@ -368,16 +368,19 @@
   .item-row:hover { @apply bg-surface-dim; }
   .item-num { @apply w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center text-[11px] font-bold text-gray-400 shrink-0; }
   .item-chips { @apply flex gap-1.5 mt-2 flex-wrap items-center; }
-  .chip-qty, .chip-price, .chip-tax { @apply flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border border-transparent transition-all; }
+  .chip-qty, .chip-price, .chip-disc, .chip-tax { @apply flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border border-transparent transition-all; }
   .chip-qty   { @apply bg-gray-100 text-gray-600; }
   .chip-qty:focus-within   { @apply border-gray-300 bg-white; }
   .chip-price { @apply bg-indigo-50 text-indigo-600; }
   .chip-price:focus-within { @apply border-indigo-300 bg-white; }
+  .chip-disc  { @apply bg-green-50 text-green-600; }
+  .chip-disc:focus-within  { @apply border-green-300 bg-white; }
   .chip-tax   { @apply bg-purple-50 text-purple-600; }
   .chip-tax:focus-within   { @apply border-purple-300 bg-white; }
-  .chip-qty input, .chip-price input, .chip-tax select { @apply border-none outline-none bg-transparent text-xs font-semibold; font-family: inherit; }
+  .chip-qty input, .chip-price input, .chip-disc input, .chip-tax select { @apply border-none outline-none bg-transparent text-xs font-semibold; font-family: inherit; }
   .chip-qty select   { @apply border-none outline-none bg-transparent text-xs font-semibold appearance-none; font-family: inherit; }
   .chip-price input  { @apply text-indigo-600; }
+  .chip-disc input   { @apply text-green-600; }
   .chip-tax select   { @apply text-purple-600 appearance-none; }
 
   /* Floating label */
@@ -443,6 +446,7 @@
 .dark .item-num { @apply bg-gray-700 text-gray-400; }
 .dark .chip-qty   { @apply bg-gray-700 text-gray-300; }
 .dark .chip-price { @apply bg-indigo-900/40 text-indigo-300; }
+.dark .chip-disc  { @apply bg-green-900/40 text-green-300; }
 .dark .chip-tax   { @apply bg-purple-900/40 text-purple-300; }
 .dark .client-chip { @apply bg-indigo-900/30 border-indigo-800/50; }
 .dark .glass { background: rgba(17,24,39,0.9); backdrop-filter: blur(12px); }
