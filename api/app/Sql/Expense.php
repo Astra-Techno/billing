@@ -26,7 +26,7 @@ class Expense extends Sql
             ->filterOptional('e.financial_year = {filter.financial_year}')
             ->filterOptional('e.expense_date >= {filter.from_date}')
             ->filterOptional('e.expense_date <= {filter.to_date}')
-            ->filterOptional('(e.vendor_name LIKE {filter.search} OR e.description LIKE {filter.search})')
+            ->filterOptional('(e.vendor_name LIKE {filter.search} OR e.description LIKE {filter.search} OR e.reference LIKE {filter.search} OR ec.name LIKE {filter.search} OR CAST(e.amount AS CHAR) LIKE {filter.search})')
             ->order('{sort_by}', '{sort_order}');
     }
 

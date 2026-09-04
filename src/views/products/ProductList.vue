@@ -8,7 +8,7 @@ import { useTour } from '../../composables/useTour'
 import { useListRefresh } from '../../composables/useListRefresh'
 
 const { startTour, isTourSeen } = useTour('product-list', [
-  { target: '[data-tour="prod-search"]', title: 'Search Items', text: 'Search by product name or HSN/SAC code. Filter by type using the dropdown.' },
+  { target: '[data-tour="prod-search"]', title: 'Search Items', text: 'Search by name, HSN/SAC, SKU, or price. Filter by type using the dropdown.' },
   { target: '[data-tour="prod-add"]', title: 'Add Item', text: 'Create a new product or service that can be used in invoices.' },
   { target: '[data-tour="prod-list"]', title: 'Your Items', text: 'Tap any item to edit its name, price, or tax rate.' },
 ])
@@ -38,7 +38,7 @@ const filteredProducts = () => {
   if (typeFilter.value) p = p.filter(x => x.type === typeFilter.value)
   if (searchQ.value) {
     const q = searchQ.value.toLowerCase()
-    p = p.filter(x => x.name?.toLowerCase().includes(q) || x.hsn_sac?.includes(q))
+    p = p.filter(x => x.name?.toLowerCase().includes(q) || x.hsn_sac?.includes(q) || x.sku?.toLowerCase().includes(q) || String(x.price).includes(q))
   }
   return p
 }
@@ -187,7 +187,7 @@ useListRefresh(() => {
             <div class="flex gap-2">
                 <input v-model="searchQ" type="text" data-tour="prod-search"
                   class="flex-1 bg-white border border-gray-200 shadow-sm text-gray-900 text-xs font-semibold rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 block px-3 py-2 transition-all min-w-0"
-                  placeholder="Search item or HSN..." />
+                  placeholder="Search name, HSN, SKU, price..." />
                   
                 <div class="shrink-0 w-24 relative">
                   <select v-model="typeFilter" class="w-full h-full bg-white border border-gray-200 shadow-sm text-gray-700 text-[11px] rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 pl-2.5 pr-6 appearance-none cursor-pointer font-bold transition-all">

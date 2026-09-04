@@ -73,7 +73,7 @@ const filteredExpenses = () => {
   if (catFilter.value) e = e.filter(x => x.category_id == catFilter.value)
   if (searchQ.value) {
     const q = searchQ.value.toLowerCase()
-    e = e.filter(x => x.description?.toLowerCase().includes(q) || x.vendor_name?.toLowerCase().includes(q))
+    e = e.filter(x => x.description?.toLowerCase().includes(q) || x.vendor_name?.toLowerCase().includes(q) || x.category_name?.toLowerCase().includes(q) || x.reference?.toLowerCase().includes(q) || String(x.amount).includes(q))
   }
   return e
 }
@@ -140,7 +140,7 @@ useListRefresh(() => {
         <div v-show="showFilters" class="mb-4 space-y-2 animate-fade-in-up">
             <input v-model="searchQ" type="text"
               class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-xs font-semibold rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 block px-3 py-2 transition-all"
-              placeholder="Search description or vendor..." />
+              placeholder="Search vendor, description, amount..." />
             
             <div class="flex gap-2 items-center">
               <input v-model="filter.from_date" type="date" class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-[11px] font-semibold rounded-lg px-2 py-1.5 focus:border-primary-500 transition-all" @change="filter.preset = ''; load()" />

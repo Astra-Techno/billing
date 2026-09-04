@@ -281,7 +281,7 @@ const activeDateLabel = () => {
         <div v-show="showFilters" class="mb-4 space-y-2 animate-fade-in-up">
             <input v-model="filter.search" @input="onSearch" type="text"
               class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-xs font-semibold rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 block px-3 py-2 transition-all"
-              placeholder="Search invoices..." />
+              placeholder="Search no., customer, mobile, amount..." />
             
             <div class="flex gap-2 items-center">
               <input v-model="filter.from_date" type="date" class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-[11px] font-semibold rounded-lg px-2 py-1.5 focus:border-primary-500 transition-all" @change="load()" />

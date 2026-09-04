@@ -25,7 +25,7 @@ class DeliveryChallan extends Sql
             ->filterOptional('d.client_id = {filter.client_id}')
             ->filterOptional('d.challan_date >= {filter.from_date}')
             ->filterOptional('d.challan_date <= {filter.to_date}')
-            ->filterOptional('(d.number LIKE {filter.search} OR c.name LIKE {filter.search})')
+            ->filterOptional('(d.number LIKE {filter.search} OR c.name LIKE {filter.search} OR c.company LIKE {filter.search} OR c.mobile LIKE {filter.search} OR d.vehicle_no LIKE {filter.search} OR d.driver_name LIKE {filter.search} OR d.destination LIKE {filter.search})')
             ->order('{sort_by}', '{sort_order}');
     }
 

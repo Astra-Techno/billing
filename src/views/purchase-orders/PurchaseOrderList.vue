@@ -71,7 +71,7 @@ useListRefresh(load, { listRouteName: 'PurchaseOrders' })
         <div v-show="showFilters" class="mb-3 animate-fade-in-up">
           <input v-model="filter.search" @input="onSearch" type="text"
             class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-xs font-semibold rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 block px-3 py-2 transition-all"
-            placeholder="Search by PO no. or supplier…" />
+            placeholder="Search no., supplier, mobile, amount…" />
         </div>
 
         <!-- Status Tabs -->

@@ -25,7 +25,7 @@ class Quote extends Sql
             ->filterOptional('q.financial_year = {filter.financial_year}')
             ->filterOptional('q.issue_date >= {filter.from_date}')
             ->filterOptional('q.issue_date <= {filter.to_date}')
-            ->filterOptional('(q.number LIKE {filter.search} OR c.name LIKE {filter.search})')
+            ->filterOptional('(q.number LIKE {filter.search} OR c.name LIKE {filter.search} OR c.company LIKE {filter.search} OR c.mobile LIKE {filter.search} OR CAST(q.total AS CHAR) LIKE {filter.search})')
             ->order('{sort_by}', '{sort_order}');
     }
 

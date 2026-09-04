@@ -39,7 +39,7 @@ class Client extends Sql
             ->filter('c.business_id = {business_id}')
             ->filterOptional('c.active = {filter.active}')
             ->filterOptional('c.type = {filter.type}')
-            ->filterOptional('(c.name LIKE {filter.search} OR c.mobile LIKE {filter.search} OR c.gstin LIKE {filter.search})')
+            ->filterOptional('(c.name LIKE {filter.search} OR c.company LIKE {filter.search} OR c.mobile LIKE {filter.search} OR c.email LIKE {filter.search} OR c.gstin LIKE {filter.search} OR c.city LIKE {filter.search})')
             ->order('{sort_by}', '{sort_order}');
     }
 

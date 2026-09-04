@@ -31,7 +31,7 @@ class Invoice extends Sql
             ->filterOptional('i.financial_year = {filter.financial_year}')
             ->filterOptional('i.issue_date >= {filter.from_date}')
             ->filterOptional('i.issue_date <= {filter.to_date}')
-            ->filterOptional('(i.number LIKE {filter.search} OR c.name LIKE {filter.search})')
+            ->filterOptional('(i.number LIKE {filter.search} OR c.name LIKE {filter.search} OR c.company LIKE {filter.search} OR c.mobile LIKE {filter.search} OR c.gstin LIKE {filter.search} OR CAST(i.total AS CHAR) LIKE {filter.search})')
             ->order('{sort_by}', '{sort_order}');
     }
 

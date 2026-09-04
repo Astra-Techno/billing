@@ -29,7 +29,7 @@ class Product extends Sql
             ->filter('p.business_id = {business_id}')
             ->filterOptional('p.active = {filter.active}')
             ->filterOptional('p.type = {filter.type}')
-            ->filterOptional('(p.name LIKE {filter.search} OR p.hsn_sac LIKE {filter.search} OR p.sku LIKE {filter.search})')
+            ->filterOptional('(p.name LIKE {filter.search} OR p.hsn_sac LIKE {filter.search} OR p.sku LIKE {filter.search} OR CAST(p.price AS CHAR) LIKE {filter.search})')
             ->order('{sort_by}', '{sort_order}');
     }
 

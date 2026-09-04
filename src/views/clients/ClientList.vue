@@ -67,7 +67,7 @@ const avatarColor  = (name) => avatarColors[(name?.charCodeAt(0) || 0) % avatarC
         <div class="mb-2 space-y-2 animate-fade-in-up">
             <input v-model="search" @input="onSearch" type="text"
               class="gpay-list-search" data-tour="client-search"
-              placeholder="Search customers..." />
+              placeholder="Search name, company, mobile, GSTIN..." />
         </div>
       </div>
 

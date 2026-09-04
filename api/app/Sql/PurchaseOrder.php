@@ -27,7 +27,7 @@ class PurchaseOrder extends Sql
             ->filterOptional('po.supplier_id = {filter.supplier_id}')
             ->filterOptional('po.order_date >= {filter.from_date}')
             ->filterOptional('po.order_date <= {filter.to_date}')
-            ->filterOptional('(po.number LIKE {filter.search} OR c.name LIKE {filter.search})')
+            ->filterOptional('(po.number LIKE {filter.search} OR c.name LIKE {filter.search} OR c.company LIKE {filter.search} OR c.mobile LIKE {filter.search} OR c.gstin LIKE {filter.search} OR CAST(po.total AS CHAR) LIKE {filter.search})')
             ->order('{sort_by}', '{sort_order}');
     }
 
