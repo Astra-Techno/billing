@@ -35,7 +35,9 @@ class Invoice extends Task
         $fy     = Sequence::currentFinancialYear();
 
         // Calculate totals
-        $totals = $this->calculateTotals($input['items'], $supplyType);
+        $discountType  = $input['discount_type']  ?? 'percent';
+        $discountValue = (float)($input['discount_value'] ?? 0);
+        $totals = $this->calculateTotals($input['items'], $supplyType, $discountType, $discountValue);
 
         $invoice = InvoiceTable::create([
             'business_id'   => $businessId,
@@ -57,6 +59,8 @@ class Invoice extends Task
             'igst_total'    => $totals['igst_total'],
             'utgst_total'   => $totals['utgst_total'],
             'tax_total'     => $totals['tax_total'],
+            'discount_type' => $discountType,
+            'discount_value'=> $discountValue,
             'discount'      => $totals['discount'],
             'round_off'     => $totals['round_off'],
             'total'         => $totals['total'],
@@ -107,8 +111,10 @@ class Invoice extends Task
         $this->validateItems($input['items'] ?? []);
         $clientId = !empty($input['client_id']) ? (int)$input['client_id'] : null;
         // client_id is optional — retail/walk-in invoices
-        $supplyType = $this->resolveSupplyType($businessId, $clientId, $input);
-        $totals     = $this->calculateTotals($input['items'], $supplyType);
+        $supplyType    = $this->resolveSupplyType($businessId, $clientId, $input);
+        $discountType  = $input['discount_type']  ?? 'percent';
+        $discountValue = (float)($input['discount_value'] ?? 0);
+        $totals        = $this->calculateTotals($input['items'], $supplyType, $discountType, $discountValue);
 
         $invoice->fill([
             'client_id'      => $clientId,
@@ -124,6 +130,8 @@ class Invoice extends Task
             'igst_total'     => $totals['igst_total'],
             'utgst_total'    => $totals['utgst_total'],
             'tax_total'      => $totals['tax_total'],
+            'discount_type'  => $discountType,
+            'discount_value' => $discountValue,
             'discount'       => $totals['discount'],
             'round_off'      => $totals['round_off'],
             'total'          => $totals['total'],
@@ -398,6 +406,8 @@ class Invoice extends Task
             'igst_total'     => $original->igst_total,
             'utgst_total'    => $original->utgst_total,
             'tax_total'      => $original->tax_total,
+            'discount_type'  => $original->discount_type ?? 'percent',
+            'discount_value' => $original->discount_value ?? 0,
             'discount'       => $original->discount,
             'round_off'      => $original->round_off,
             'total'          => $original->total,
@@ -558,26 +568,38 @@ class Invoice extends Task
     /**
      * Calculate all GST totals from items array.
      */
-    private function calculateTotals(array $items, string $supplyType): array
+    private function calculateTotals(array $items, string $supplyType, string $discountType = 'percent', float $discountValue = 0): array
     {
-        $subtotal   = 0;
+        $grossSubtotal = 0;
         $cgstTotal  = 0;
         $sgstTotal  = 0;
         $igstTotal  = 0;
         $utgstTotal = 0;
-        $discount   = 0;
 
+        // First pass: compute gross subtotal
         foreach ($items as $item) {
-            $qty          = (float)($item['quantity']   ?? 1);
-            $price        = (float)($item['unit_price'] ?? 0);
-            $discPct      = (float)($item['discount_pct'] ?? 0);
-            $lineTotal    = $qty * $price;
-            $discAmt      = round($lineTotal * ($discPct / 100), 2);
-            $taxable      = $lineTotal - $discAmt;
-            $gstRate      = (float)($item['gst_rate'] ?? 0);
+            $qty   = (float)($item['quantity']   ?? 1);
+            $price = (float)($item['unit_price'] ?? 0);
+            $grossSubtotal += $qty * $price;
+        }
 
-            $discount  += $discAmt;
-            $subtotal  += $taxable;
+        // Invoice-level discount
+        if ($discountType === 'percent') {
+            $discount = round($grossSubtotal * (min($discountValue, 100) / 100), 2);
+        } else {
+            $discount = round(min($discountValue, $grossSubtotal), 2);
+        }
+
+        $subtotal = round($grossSubtotal - $discount, 2);
+
+        // Second pass: compute tax proportionally on discounted subtotal
+        foreach ($items as $item) {
+            $qty     = (float)($item['quantity']   ?? 1);
+            $price   = (float)($item['unit_price'] ?? 0);
+            $gstRate = (float)($item['gst_rate']   ?? 0);
+            $lineGross = $qty * $price;
+            $ratio     = $grossSubtotal > 0 ? $lineGross / $grossSubtotal : 0;
+            $taxable   = $subtotal * $ratio;
 
             if ($supplyType === 'intra') {
                 $cgstAmt   = round($taxable * ($gstRate / 2 / 100), 2);
@@ -610,12 +632,10 @@ class Invoice extends Task
         foreach ($items as $i => $item) {
             $qty     = (float)($item['quantity']    ?? 1);
             $price   = (float)($item['unit_price']  ?? 0);
-            $discPct = (float)($item['discount_pct']?? 0);
             $gstRate = (float)($item['gst_rate']    ?? 0);
 
             $lineTotal  = $qty * $price;
-            $discAmt    = round($lineTotal * ($discPct / 100), 2);
-            $taxable    = $lineTotal - $discAmt;
+            $taxable    = $lineTotal;
 
             $cgstRate = $sgstRate = $igstRate = $utgstRate = 0.0;
             $cgstAmt  = $sgstAmt  = $igstAmt  = $utgstAmt  = 0.0;
@@ -639,8 +659,8 @@ class Invoice extends Task
                 'unit'         => $item['unit']     ?? 'Nos',
                 'quantity'     => $qty,
                 'unit_price'   => $price,
-                'discount_pct' => $discPct,
-                'discount_amt' => $discAmt,
+                'discount_pct' => 0,
+                'discount_amt' => 0,
                 'taxable_amt'  => $taxable,
                 'gst_rate'     => $gstRate,
                 'cgst_rate'    => $cgstRate,

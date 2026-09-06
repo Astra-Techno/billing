@@ -179,7 +179,8 @@ onMounted(async () => {
           <p class="text-sm font-medium text-gray-700 italic">{{ amountInWords(invoice.total) }}</p>
         </div>
         <div class="w-52 space-y-1 text-xs">
-          <div class="flex justify-between text-gray-600"><span>Subtotal</span><span>{{ inr(invoice.subtotal) }}</span></div>
+          <div class="flex justify-between text-gray-600"><span>Subtotal</span><span>{{ inr(parseFloat(invoice.subtotal||0) + parseFloat(invoice.discount||0)) }}</span></div>
+          <div v-if="invoice.discount > 0" class="flex justify-between text-green-700"><span>Discount</span><span>-{{ inr(invoice.discount) }}</span></div>
           <div v-if="invoice.cgst_total > 0" class="flex justify-between text-gray-600"><span>CGST</span><span>{{ inr(invoice.cgst_total) }}</span></div>
           <div v-if="invoice.sgst_total > 0" class="flex justify-between text-gray-600"><span>SGST</span><span>{{ inr(invoice.sgst_total) }}</span></div>
           <div v-if="invoice.igst_total > 0" class="flex justify-between text-gray-600"><span>IGST</span><span>{{ inr(invoice.igst_total) }}</span></div>
@@ -322,7 +323,8 @@ onMounted(async () => {
           <p style="font-size: 12px; font-weight: 500; color: #374151; font-style: italic;">{{ amountInWords(invoice.total) }}</p>
         </div>
         <div style="width: 220px;">
-          <div style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563;"><span>Subtotal</span><span>{{ inr(invoice.subtotal) }}</span></div>
+          <div style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563;"><span>Subtotal</span><span>{{ inr(parseFloat(invoice.subtotal||0) + parseFloat(invoice.discount||0)) }}</span></div>
+          <div v-if="invoice.discount > 0" style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #15803d;"><span>Discount</span><span>-{{ inr(invoice.discount) }}</span></div>
           <div v-if="invoice.cgst_total > 0" style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563;"><span>CGST</span><span>{{ inr(invoice.cgst_total) }}</span></div>
           <div v-if="invoice.sgst_total > 0" style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563;"><span>SGST</span><span>{{ inr(invoice.sgst_total) }}</span></div>
           <div v-if="invoice.igst_total > 0" style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563;"><span>IGST</span><span>{{ inr(invoice.igst_total) }}</span></div>
@@ -450,7 +452,8 @@ onMounted(async () => {
           <p style="font-size: 12px; color: #6b7280; font-style: italic;">{{ amountInWords(invoice.total) }}</p>
         </div>
         <div style="width: 200px; border-top: 2px solid #111827; padding-top: 8px;">
-          <div style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280;"><span>Subtotal</span><span>{{ inr(invoice.subtotal) }}</span></div>
+          <div style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280;"><span>Subtotal</span><span>{{ inr(parseFloat(invoice.subtotal||0) + parseFloat(invoice.discount||0)) }}</span></div>
+          <div v-if="invoice.discount > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #15803d;"><span>Discount</span><span>-{{ inr(invoice.discount) }}</span></div>
           <div v-if="invoice.cgst_total > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280;"><span>CGST</span><span>{{ inr(invoice.cgst_total) }}</span></div>
           <div v-if="invoice.sgst_total > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280;"><span>SGST</span><span>{{ inr(invoice.sgst_total) }}</span></div>
           <div v-if="invoice.igst_total > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280;"><span>IGST</span><span>{{ inr(invoice.igst_total) }}</span></div>

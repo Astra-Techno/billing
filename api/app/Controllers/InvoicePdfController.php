@@ -257,7 +257,8 @@ class InvoicePdfController
 
         // ── Totals block ──────────────────────────────────────────────────────
         $totals = '';
-        $totals .= $this->totalRow('Subtotal', $this->inr($inv['subtotal'] ?? 0), self::MUTED, '12px', false);
+        $grossSub = (float)($inv['subtotal'] ?? 0) + (float)($inv['discount'] ?? 0);
+        $totals .= $this->totalRow('Subtotal', $this->inr($grossSub), self::MUTED, '12px', false);
         if ((float)($inv['cgst_total'] ?? 0) > 0) $totals .= $this->totalRow('CGST', $this->inr($inv['cgst_total']), self::MUTED, '12px', false);
         if ((float)($inv['sgst_total'] ?? 0) > 0) $totals .= $this->totalRow('SGST', $this->inr($inv['sgst_total']), self::MUTED, '12px', false);
         if ((float)($inv['igst_total'] ?? 0) > 0) $totals .= $this->totalRow('IGST', $this->inr($inv['igst_total']), self::MUTED, '12px', false);

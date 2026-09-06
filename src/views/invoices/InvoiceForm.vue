@@ -328,7 +328,7 @@ const isDuplicate = computed(() => !!route.query.duplicate)
 let itemKeySeq = 0
 const blankItem = () => ({
   _key: ++itemKeySeq,
-  description: '', hsn_sac: '', unit: 'Nos', quantity: 1, unit_price: '', discount_pct: 0, gst_rate: 18, product_id: null,
+  description: '', hsn_sac: '', unit: 'Nos', quantity: 1, unit_price: '', gst_rate: 18, product_id: null,
 })
 
 const form = ref({
@@ -338,6 +338,8 @@ const form = ref({
   due_date:        addDays(today(), 30),
   place_of_supply: '',
   notes: '', terms: '',
+  discount_type: 'percent',
+  discount_value: 0,
   is_recurring:  false,
   recur_every:   1,
   recur_period:  'month',
@@ -358,11 +360,13 @@ const recurPeriods = ['day', 'week', 'month', 'year']
 // hsn_sac, unit etc. no longer causes totals to re-calculate or the summary to re-render.
 const totals = computed(() => calcInvoice(
   form.value.items.map(it => ({
-    quantity:     it.quantity,
-    unit_price:   it.unit_price,
-    discount_pct: it.discount_pct,
-    gst_rate:     it.gst_rate,
-  }))
+    quantity:   it.quantity,
+    unit_price: it.unit_price,
+    gst_rate:   it.gst_rate,
+  })),
+  undefined,
+  form.value.discount_type,
+  form.value.discount_value,
 ))
 
 const selectedClient = computed(() => clients.value.find(c => c.id == form.value.client_id))
@@ -371,9 +375,11 @@ function applySourceInvoice(inv) {
   form.value.client_id       = inv.client_id
   form.value.invoice_type    = inv.invoice_type
   form.value.place_of_supply = inv.place_of_supply || businessStore.stateId || ''
-  form.value.notes        = inv.notes  || ''
-  form.value.terms        = inv.terms  || ''
-  form.value.is_recurring = !!inv.is_recurring
+  form.value.notes          = inv.notes  || ''
+  form.value.terms          = inv.terms  || ''
+  form.value.discount_type  = inv.discount_type || 'percent'
+  form.value.discount_value = parseFloat(inv.discount_value || 0)
+  form.value.is_recurring   = !!inv.is_recurring
   form.value.recur_every  = inv.recur_every  || 1
   form.value.recur_period = inv.recur_period || 'month'
   form.value.recur_ends_at= inv.recur_ends_at || ''
@@ -392,7 +398,6 @@ function applySourceInvoice(inv) {
       unit:         it.unit         || 'Nos',
       quantity:     it.quantity,
       unit_price:   it.unit_price,
-      discount_pct: it.discount_pct || 0,
       gst_rate:     parseFloat(it.gst_rate || 0),
       product_id:   it.product_id   || null,
     }))
@@ -449,7 +454,6 @@ onMounted(async () => {
             unit:         it.unit || 'Nos',
             quantity:     parseFloat(it.quantity) || 1,
             unit_price:   0,
-            discount_pct: 0,
             gst_rate:     18,
             product_id:   it.product_id || null,
           }))
@@ -577,23 +581,14 @@ function onPriceKeydown(i, e) {
 
 function lineTotal(it) {
   return parseFloat(it.quantity||0) * parseFloat(it.unit_price||0)
-       * (1 - parseFloat(it.discount_pct||0)/100)
        * (1 + parseFloat(it.gst_rate||0)/100)
 }
 
 function lineTaxAmount(it) {
   const qty = parseFloat(it.quantity || 0)
   const price = parseFloat(it.unit_price || 0)
-  const disc = parseFloat(it.discount_pct || 0)
   const gst = parseFloat(it.gst_rate || 0)
-  return qty * price * (1 - disc / 100) * (gst / 100)
-}
-
-function lineDiscountAmount(it) {
-  const qty = parseFloat(it.quantity || 0)
-  const price = parseFloat(it.unit_price || 0)
-  const disc = parseFloat(it.discount_pct || 0)
-  return qty * price * (disc / 100)
+  return qty * price * (gst / 100)
 }
 
 function formatDateDisplay(d) {
@@ -760,11 +755,6 @@ async function submit() {
                             @blur="onItemPriceBlur(i)"
                             @keydown="onPriceKeydown(i, $event)" />
                         </div>
-                        <!-- Discount chip -->
-                        <div class="chip-disc">
-                          <input v-model="it.discount_pct" type="number" min="0" max="100" step="0.01" class="w-12 text-right tabular-nums" placeholder="0" />
-                          <span class="shrink-0">% off</span>
-                        </div>
                         <!-- GST chip -->
                         <div class="chip-tax">
                           <select v-model="it.gst_rate" @keydown.tab="onLastFieldTab(i, $event)">
@@ -802,7 +792,7 @@ async function submit() {
                     class="w-full p-4 text-left hover:bg-gray-50/50 flex items-center justify-between gap-3">
                     <div class="min-w-0 flex-1">
                       <p class="font-semibold text-gray-800 text-sm truncate">{{ it.description || `Item ${i + 1}` }}</p>
-                      <p class="text-xs text-gray-400 mt-0.5">{{ it.quantity }} × {{ inr(it.unit_price || 0) }}<template v-if="it.discount_pct > 0"> · {{ it.discount_pct }}% off</template> · {{ it.gst_rate }}% GST</p>
+                      <p class="text-xs text-gray-400 mt-0.5">{{ it.quantity }} × {{ inr(it.unit_price || 0) }} · {{ it.gst_rate }}% GST</p>
                     </div>
                     <span class="text-sm font-bold text-gray-900 tabular-nums shrink-0">{{ inr(lineTotal(it)) }}</span>
                   </button>
@@ -855,10 +845,6 @@ async function submit() {
                           @blur="onItemPriceBlur(i)"
                           @keydown="onPriceKeydown(i, $event)" />
                       </div>
-                      <div class="chip-disc">
-                        <input v-model="it.discount_pct" type="number" min="0" max="100" step="0.01" class="w-12 text-right tabular-nums" placeholder="0" />
-                        <span class="shrink-0">% off</span>
-                      </div>
                       <div class="chip-tax">
                         <select v-model="it.gst_rate">
                           <option v-for="r in gstRates" :key="r" :value="r">{{ r }}% GST</option>
@@ -886,10 +872,20 @@ async function submit() {
               <div class="lg:hidden p-4 border-t border-gray-100 bg-gray-50/50 space-y-2.5 text-sm text-gray-600">
                 <div class="flex justify-between font-medium">
                   <span>Sub Total :</span>
-                  <span class="font-bold text-gray-900 tabular-nums">{{ inr(totals.subtotal) }}</span>
+                  <span class="font-bold text-gray-900 tabular-nums">{{ inr(totals.grossSubtotal) }}</span>
                 </div>
-                <div v-if="totals.discount > 0" class="flex justify-between font-medium text-green-600">
-                  <span>Discount :</span>
+                <div class="flex items-center justify-between gap-2 text-green-600">
+                  <span class="font-medium shrink-0">Discount :</span>
+                  <div class="flex items-center gap-1">
+                    <select v-model="form.discount_type" class="text-xs border border-gray-200 rounded-md px-1.5 py-1 bg-white text-green-700 font-medium">
+                      <option value="percent">%</option>
+                      <option value="amount">₹</option>
+                    </select>
+                    <input v-model="form.discount_value" type="number" min="0" step="0.01" class="w-20 text-right border border-gray-200 rounded-md px-2 py-1 text-sm tabular-nums bg-white text-green-700 font-bold" placeholder="0" />
+                  </div>
+                </div>
+                <div v-if="totals.discount > 0" class="flex justify-between text-green-600 text-xs">
+                  <span></span>
                   <span class="font-bold tabular-nums">-{{ inr(totals.discount) }}</span>
                 </div>
                 <div v-if="totals.tax > 0" class="flex justify-between font-medium">
@@ -1103,10 +1099,20 @@ async function submit() {
             <div class="space-y-2 text-sm">
               <div class="flex justify-between text-gray-500">
                 <span>Subtotal</span>
-                <span class="font-medium text-gray-800 tabular-nums">{{ inr(totals.subtotal) }}</span>
+                <span class="font-medium text-gray-800 tabular-nums">{{ inr(totals.grossSubtotal) }}</span>
               </div>
-              <div v-if="totals.discount > 0" class="flex justify-between text-green-600">
-                <span>Discount</span>
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-green-600 font-medium">Discount</span>
+                <div class="flex items-center gap-1">
+                  <select v-model="form.discount_type" class="text-xs border border-gray-200 rounded-md px-1.5 py-1 bg-white text-green-700 font-medium">
+                    <option value="percent">%</option>
+                    <option value="amount">₹</option>
+                  </select>
+                  <input v-model="form.discount_value" type="number" min="0" step="0.01" class="w-20 text-right border border-gray-200 rounded-md px-2 py-1 text-sm tabular-nums bg-white text-green-700 font-bold" placeholder="0" />
+                </div>
+              </div>
+              <div v-if="totals.discount > 0" class="flex justify-between text-green-600 text-xs">
+                <span></span>
                 <span class="font-medium tabular-nums">-{{ inr(totals.discount) }}</span>
               </div>
               <div v-if="totals.tax > 0" class="flex justify-between text-gray-500">
