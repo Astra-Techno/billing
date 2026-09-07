@@ -219,7 +219,7 @@ const filteredProducts = computed(() => {
   if (productSearchIdx.value === null) return []
   const q = productSearchDebounced.value.trim().toLowerCase()
   if (!q) return products.value.slice(0, 6)
-  return products.value.filter(p => p.name?.toLowerCase().includes(q)).slice(0, 6)
+  return products.value.filter(p => p.name?.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q)).slice(0, 6)
 })
 const showProductInlineCreate = computed(() =>
   productSearchQuery.value.trim().length >= 2 && filteredProducts.value.length === 0
@@ -715,7 +715,7 @@ async function submit() {
                             <button v-for="(p, pi) in filteredProducts" :key="p.id" type="button"
                               @pointerdown.prevent="selectProduct(i, p)" @mouseenter="productHighlight = pi"
                               :class="['w-full flex items-center justify-between px-3 py-2 transition text-left text-xs', pi === productHighlight ? 'bg-blue-50 pd-active' : 'hover:bg-gray-50']">
-                              <span class="font-medium text-gray-800 truncate">{{ p.name }}</span>
+                              <span class="font-medium text-gray-800 truncate">{{ p.name }}<span v-if="p.sku" class="text-gray-400 font-normal ml-1">({{ p.sku }})</span></span>
                               <span class="text-gray-400 tabular-nums shrink-0 ml-2">{{ inr(p.price) }}</span>
                             </button>
                           </div>
@@ -810,7 +810,7 @@ async function submit() {
                           <button v-for="p in filteredProducts" :key="p.id" type="button"
                             @pointerdown.prevent="selectProduct(i, p)"
                             class="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 active:bg-primary-50 text-left text-sm touch-manipulation">
-                            <span class="font-medium text-gray-800 truncate">{{ p.name }}</span>
+                            <span class="font-medium text-gray-800 truncate">{{ p.name }}<span v-if="p.sku" class="text-gray-400 font-normal ml-1">({{ p.sku }})</span></span>
                             <span class="text-gray-400 text-xs tabular-nums shrink-0 ml-2">{{ inr(p.price) }}</span>
                           </button>
                         </div>

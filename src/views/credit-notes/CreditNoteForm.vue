@@ -76,7 +76,7 @@ const filteredProducts = computed(() => {
     ? form.value.items[idx].description?.trim().toLowerCase() || ''
     : productSearch.value.trim().toLowerCase()
   if (!q) return products.value.slice(0, 8)
-  return products.value.filter(p => p.name?.toLowerCase().includes(q))
+  return products.value.filter(p => p.name?.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q))
 })
 
 const showProductInlineCreate = computed(() => {
@@ -289,7 +289,7 @@ onMounted(load)
                           <button v-for="p in filteredProducts" :key="p.id" type="button"
                             @click="selectProduct(i, p)"
                             class="w-full flex items-center justify-between px-3 py-2 hover:bg-gray-50 transition text-left text-xs">
-                            <span class="font-medium text-gray-800 truncate">{{ p.name }}</span>
+                            <span class="font-medium text-gray-800 truncate">{{ p.name }}<span v-if="p.sku" class="text-gray-400 font-normal ml-1">({{ p.sku }})</span></span>
                             <span class="text-gray-400 tabular-nums shrink-0 ml-2">{{ inr(p.price) }}</span>
                           </button>
                         </div>
@@ -357,7 +357,7 @@ onMounted(load)
                         <button v-for="p in filteredProducts" :key="p.id" type="button"
                           @click="selectProduct(i, p)"
                           class="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 text-left text-sm">
-                          <span class="font-medium text-gray-800 truncate">{{ p.name }}</span>
+                          <span class="font-medium text-gray-800 truncate">{{ p.name }}<span v-if="p.sku" class="text-gray-400 font-normal ml-1">({{ p.sku }})</span></span>
                           <span class="text-gray-400 text-xs tabular-nums shrink-0 ml-2">{{ inr(p.price) }}</span>
                         </button>
                       </div>
