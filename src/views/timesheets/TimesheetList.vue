@@ -79,7 +79,17 @@ function openAdd() {
 }
 
 function addRow() {
-  multiRows.value.push(blankRow())
+  const prev = multiRows.value[multiRows.value.length - 1]
+  const fromTime = prev?.to_time || '09:00'
+  multiRows.value.push({ from_time: fromTime, to_time: '', description: '', project: '' })
+}
+
+function onToTimeChange(ri) {
+  // Auto-update next row's from_time to match this row's to_time
+  const next = multiRows.value[ri + 1]
+  if (next) {
+    next.from_time = multiRows.value[ri].to_time
+  }
 }
 
 function removeRow(i) {
@@ -319,24 +329,21 @@ onMounted(load)
               :disabled="!isOwnerAdmin" :min="isOwnerAdmin ? undefined : today()" :max="isOwnerAdmin ? undefined : today()" />
           </div>
           <div class="px-5 overflow-y-auto flex-1 pb-2 pt-2 space-y-3">
-            <div v-for="(row, ri) in multiRows" :key="ri" class="rounded-xl bg-gray-50 p-3 space-y-2 relative group">
+            <div v-for="(row, ri) in multiRows" :key="ri" class="rounded-xl bg-gray-50 p-3 space-y-2.5 relative group">
               <button type="button" @click="removeRow(ri)" v-if="multiRows.length > 1"
                 class="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
-              <div class="flex items-center gap-2">
-                <div class="flex items-center gap-1.5">
-                  <label class="text-[10px] font-semibold text-gray-400 uppercase w-8">From</label>
-                  <input v-model="row.from_time" type="time" class="inv-input text-sm w-28" />
-                </div>
-                <div class="flex items-center gap-1.5">
-                  <label class="text-[10px] font-semibold text-gray-400 uppercase w-5">To</label>
-                  <input v-model="row.to_time" type="time" class="inv-input text-sm w-28" />
-                </div>
-                <span class="text-xs font-bold text-primary-600 ml-1 tabular-nums">{{ calcHours(row.from_time, row.to_time) }}h</span>
-                <div class="flex-1"></div>
+              <div class="grid grid-cols-[auto_1fr_auto_1fr_auto_1fr] items-center gap-x-2 gap-y-1">
+                <label class="text-[10px] font-semibold text-gray-400 uppercase">From</label>
+                <input v-model="row.from_time" type="time" class="inv-input text-sm"
+                  :min="ri > 0 ? multiRows[ri - 1].to_time : undefined" :disabled="ri > 0" />
+                <label class="text-[10px] font-semibold text-gray-400 uppercase">To</label>
+                <input v-model="row.to_time" type="time" class="inv-input text-sm"
+                  :min="row.from_time" @change="onToTimeChange(ri)" />
+                <span class="text-xs font-bold text-primary-600 tabular-nums whitespace-nowrap">{{ calcHours(row.from_time, row.to_time) }}h</span>
                 <input v-model="row.project" type="text"
-                  class="inv-input text-sm w-32" placeholder="Project (optional)" />
+                  class="inv-input text-sm" placeholder="Project (optional)" />
               </div>
               <textarea v-model="row.description" rows="2"
                 class="inv-input w-full text-sm resize-none" placeholder="What did you work on?"></textarea>
