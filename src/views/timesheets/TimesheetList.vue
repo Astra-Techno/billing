@@ -57,6 +57,10 @@ const pendingCount = computed(() =>
 )
 
 // ── Form ──────────────────────────────────────────────────────────────────────
+function canStaffEdit(entry) {
+  return isOwnerAdmin.value || entry.work_date === today()
+}
+
 function openAdd() {
   editingId.value = null
   form.value = { work_date: today(), hours: '', description: '', project: '' }
@@ -218,14 +222,14 @@ onMounted(load)
             </button>
           </template>
 
-          <!-- Edit (own pending or owner/admin) -->
-          <button v-if="e.status === 'pending' || isOwnerAdmin" @click="openEdit(e)"
+          <!-- Edit (own pending today or owner/admin) -->
+          <button v-if="(e.status === 'pending' && canStaffEdit(e)) || isOwnerAdmin" @click="openEdit(e)"
             class="w-8 h-8 rounded-lg bg-gray-50 text-gray-500 hover:bg-gray-100 flex items-center justify-center transition" title="Edit">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
           </button>
 
           <!-- Delete -->
-          <button v-if="e.status === 'pending' || isOwnerAdmin" @click="deleteEntry(e)"
+          <button v-if="(e.status === 'pending' && canStaffEdit(e)) || isOwnerAdmin" @click="deleteEntry(e)"
             class="w-8 h-8 rounded-lg bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition" title="Delete">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
           </button>
@@ -243,7 +247,8 @@ onMounted(load)
         <form @submit.prevent="saveEntry" class="p-5 space-y-4">
           <div>
             <label class="block text-xs font-medium text-gray-500 mb-1">Date *</label>
-            <input v-model="form.work_date" type="date" required class="inv-input w-full" />
+            <input v-model="form.work_date" type="date" required class="inv-input w-full"
+              :disabled="!isOwnerAdmin" :min="isOwnerAdmin ? undefined : today()" :max="isOwnerAdmin ? undefined : today()" />
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-500 mb-1">Hours *</label>

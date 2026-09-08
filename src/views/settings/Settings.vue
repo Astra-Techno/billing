@@ -4,7 +4,7 @@ import { task, all, item, list } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { useBusinessStore } from '../../stores/business'
 import { useAuthStore } from '../../stores/auth'
-import { useRole } from '../../composables/useRole'
+import { useRole, PAGE_PERMISSIONS } from '../../composables/useRole'
 import { useTour } from '../../composables/useTour'
 
 const { startTour, isTourSeen } = useTour('settings', [
@@ -59,7 +59,7 @@ async function saveFeatures() {
 const teamMembers   = ref([])
 const teamLoading   = ref(false)
 const teamError     = ref('')
-const staffForm     = ref({ name: '', email: '', password: '', role: 'staff' })
+const staffForm     = ref({ name: '', email: '', password: '', role: 'staff', permissions: [] })
 const staffModal    = ref(false)
 const creatingStaff = ref(false)
 const roleChanging  = ref(null)
@@ -86,8 +86,14 @@ async function loadTeam() {
   teamLoading.value = false
 }
 
+function onRoleChange() {
+  if (staffForm.value.role === 'admin') {
+    staffForm.value.permissions = []
+  }
+}
+
 function openStaffModal() {
-  staffForm.value = { name: '', email: '', password: '', role: 'staff' }
+  staffForm.value = { name: '', email: '', password: '', role: 'staff', permissions: ['dashboard', 'invoices', 'clients', 'products'] }
   teamError.value = ''
   staffModal.value = true
 }
@@ -1158,12 +1164,12 @@ async function saveInvoice() {
 
         <!-- Role Reference Card -->
         <div class="card card-body bg-gray-50 border-gray-100">
-          <p class="text-xs font-bold text-gray-600 mb-3">Role Permissions</p>
+          <p class="text-xs font-bold text-gray-600 mb-3">Role Guide</p>
           <div class="space-y-2 text-xs text-gray-600">
             <div class="flex items-start gap-2"><span class="font-bold text-violet-700 w-20 shrink-0">Owner</span><span>Full access. Cannot be removed or changed.</span></div>
-            <div class="flex items-start gap-2"><span class="font-bold text-blue-700 w-20 shrink-0">Admin</span><span>Everything except deleting the business. Can manage staff.</span></div>
-            <div class="flex items-start gap-2"><span class="font-bold text-amber-700 w-20 shrink-0">Accountant</span><span>Create/edit bills, record payments, view reports. Cannot delete.</span></div>
-            <div class="flex items-start gap-2"><span class="font-bold text-gray-600 w-20 shrink-0">Staff</span><span>Create/edit bills only. No delete, no reports, no settings.</span></div>
+            <div class="flex items-start gap-2"><span class="font-bold text-blue-700 w-20 shrink-0">Admin</span><span>Full access. Can manage staff. Cannot delete business.</span></div>
+            <div class="flex items-start gap-2"><span class="font-bold text-amber-700 w-20 shrink-0">Accountant</span><span>Custom page access. Cannot delete records or manage settings.</span></div>
+            <div class="flex items-start gap-2"><span class="font-bold text-gray-600 w-20 shrink-0">Staff</span><span>Custom page access. Cannot delete records or manage settings.</span></div>
           </div>
         </div>
       </div>
@@ -1186,11 +1192,22 @@ async function saveInvoice() {
           </div>
           <div>
             <label class="form-label">Role</label>
-            <select v-model="staffForm.role" class="form-input">
+            <select v-model="staffForm.role" class="form-input" @change="onRoleChange">
               <option value="admin">Admin — full access</option>
-              <option value="accountant">Accountant — bills + reports, no delete</option>
-              <option value="staff">Staff — bills, timesheets &amp; challans</option>
+              <option value="accountant">Accountant</option>
+              <option value="staff">Staff</option>
             </select>
+          </div>
+          <div v-if="staffForm.role !== 'admin'">
+            <label class="form-label">Page Access</label>
+            <div class="grid grid-cols-2 gap-1.5">
+              <label v-for="p in PAGE_PERMISSIONS" :key="p.key"
+                class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 cursor-pointer text-xs">
+                <input type="checkbox" :value="p.key" v-model="staffForm.permissions"
+                  class="w-3.5 h-3.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                <span class="text-gray-700">{{ p.label }}</span>
+              </label>
+            </div>
           </div>
           <div v-if="teamError" class="text-sm text-danger-600 bg-danger-50 rounded-lg px-3 py-2">{{ teamError }}</div>
           <div class="flex gap-3 pt-2">

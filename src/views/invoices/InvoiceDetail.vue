@@ -6,6 +6,7 @@ import { inr } from '../../utils/currency'
 import { fmtDateShort, today } from '../../utils/date'
 import { statusBadge, statusLabel } from '../../utils/invoice'
 import { useRole } from '../../composables/useRole'
+import { useAuthStore } from '../../stores/auth'
 import QRCode from 'qrcode'
 
 const props = defineProps({ panelId: { type: [String, Number], default: null } })
@@ -151,10 +152,22 @@ function printProforma() {
   }
 }
 
-function downloadPdf(mode = '') {
+async function downloadPdf(mode = '') {
   const base = import.meta.env.VITE_API_URL || '/api'
   const url = `${base}/invoice/${invoice.value.id}/pdf${mode ? '?mode=' + mode : ''}`
-  window.location.href = url
+  try {
+    const res = await fetch(url, {
+      headers: { 'Authorization': 'Bearer ' + useAuthStore().token }
+    })
+    const blob = await res.blob()
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `invoice-${invoice.value.number || invoice.value.id}.pdf`
+    a.click()
+    URL.revokeObjectURL(a.href)
+  } catch {
+    window.location.href = url
+  }
 }
 
 const invoiceTitle = computed(() => {

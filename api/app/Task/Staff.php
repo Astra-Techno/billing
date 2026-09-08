@@ -15,13 +15,18 @@ class Staff extends Task
         $this->requireRole(['owner', 'admin']);
 
         $members = DB::select(
-            "SELECT u.id, u.name, u.email, u.mobile, bu.role, bu.created_at AS joined_at
+            "SELECT u.id, u.name, u.email, u.mobile, bu.role, bu.permissions, bu.created_at AS joined_at
              FROM business_users bu
              INNER JOIN users u ON u.id = bu.user_id
              WHERE bu.business_id = ? AND bu.active = 1
              ORDER BY FIELD(bu.role,'owner','admin','accountant','staff'), u.name",
             [$businessId]
         );
+
+        foreach ($members as &$m) {
+            $m->permissions = $m->permissions ? json_decode($m->permissions, true) : null;
+        }
+        unset($m);
 
         return $this->success(['members' => $members]);
     }
@@ -40,9 +45,12 @@ class Staff extends Task
         $businessId = $this->requireBusiness();
         $this->requireRole(['owner', 'admin']);
 
-        $email = strtolower(trim($input['email']));
-        $name  = trim($input['name']);
-        $role  = $input['role'];
+        $email       = strtolower(trim($input['email']));
+        $name        = trim($input['name']);
+        $role        = $input['role'];
+        $permissions = !empty($input['permissions']) && is_array($input['permissions'])
+            ? json_encode(array_values($input['permissions']))
+            : null;
 
         // Check if already a member of this business
         $existing = DB::selectOne(
@@ -71,10 +79,10 @@ class Staff extends Task
 
         // Link user to business
         DB::statement(
-            "INSERT INTO business_users (business_id, user_id, role, invited_by, accepted_at, active, created_at, updated_at)
-             VALUES (?, ?, ?, ?, NOW(), 1, NOW(), NOW())
-             ON DUPLICATE KEY UPDATE role = VALUES(role), active = 1, updated_at = NOW()",
-            [$businessId, $userId, $role, $this->userId()]
+            "INSERT INTO business_users (business_id, user_id, role, permissions, invited_by, accepted_at, active, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, NOW(), 1, NOW(), NOW())
+             ON DUPLICATE KEY UPDATE role = VALUES(role), permissions = VALUES(permissions), active = 1, updated_at = NOW()",
+            [$businessId, $userId, $role, $permissions, $this->userId()]
         );
 
         return $this->success(null, "Staff account created for {$name}. They can login with their email and password.");
@@ -102,9 +110,13 @@ class Staff extends Task
         if ($target->role === 'owner') $this->fail('The owner role cannot be changed.');
         if ($targetUserId === $this->userId()) $this->fail('You cannot change your own role.');
 
+        $permissions = !empty($input['permissions']) && is_array($input['permissions'])
+            ? json_encode(array_values($input['permissions']))
+            : null;
+
         DB::statement(
-            "UPDATE business_users SET role = ? WHERE business_id = ? AND user_id = ?",
-            [$input['role'], $businessId, $targetUserId]
+            "UPDATE business_users SET role = ?, permissions = ? WHERE business_id = ? AND user_id = ?",
+            [$input['role'], $permissions, $businessId, $targetUserId]
         );
 
         return $this->success(null, 'Role updated.');

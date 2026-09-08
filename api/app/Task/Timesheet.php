@@ -19,6 +19,12 @@ class Timesheet extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+
+        // Staff can only log time for today
+        if (!in_array($this->getRole(), ['owner', 'admin']) && $input['work_date'] !== date('Y-m-d')) {
+            $this->fail('You can only log time for today.');
+        }
+
         $hours = (float)$input['hours'];
         if ($hours <= 0 || $hours > 24) $this->fail('Hours must be between 0.25 and 24.');
 
@@ -48,13 +54,17 @@ class Timesheet extends Task
 
         $businessId = $this->requireBusiness();
         $entry = $this->findEntry((int)$input['id'], $businessId);
+        $role = $this->getRole();
 
-        // Staff can only edit their own pending entries
+        // Staff can only edit their own pending entries for today
         if ((int)$entry->user_id !== $this->userId()) {
             $this->requireRole(['owner', 'admin']);
         }
-        if ($entry->status !== 'pending' && !in_array($this->getRole(), ['owner', 'admin'])) {
+        if ($entry->status !== 'pending' && !in_array($role, ['owner', 'admin'])) {
             $this->fail('Only pending entries can be edited.');
+        }
+        if (!in_array($role, ['owner', 'admin']) && $input['work_date'] !== date('Y-m-d')) {
+            $this->fail('You can only edit today\'s entries.');
         }
 
         $hours = (float)$input['hours'];
@@ -80,9 +90,15 @@ class Timesheet extends Task
         $businessId = $this->requireBusiness();
         $entry = $this->findEntry((int)$input['id'], $businessId);
 
-        // Staff can delete own pending entries; owner/admin can delete any
-        if ((int)$entry->user_id !== $this->userId() || $entry->status !== 'pending') {
-            $this->requireRole(['owner', 'admin']);
+        // Staff can delete own pending entries for today only; owner/admin can delete any
+        $isAdmin = in_array($this->getRole(), ['owner', 'admin']);
+        if (!$isAdmin) {
+            if ((int)$entry->user_id !== $this->userId() || $entry->status !== 'pending') {
+                $this->requireRole(['owner', 'admin']);
+            }
+            if ($entry->work_date !== date('Y-m-d')) {
+                $this->fail('You can only delete today\'s entries.');
+            }
         }
 
         DB::statement("DELETE FROM timesheets WHERE id = ?", [$entry->id]);

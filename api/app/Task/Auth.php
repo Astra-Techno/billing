@@ -32,13 +32,17 @@ class Auth extends Task
 
         // Load user's businesses
         $businesses = DB::select(
-            "SELECT b.id, b.name, b.slug, b.logo, bu.role
+            "SELECT b.id, b.name, b.slug, b.logo, bu.role, bu.permissions
              FROM businesses b
              INNER JOIN business_users bu ON bu.business_id = b.id AND bu.user_id = ? AND bu.active = 1
              WHERE b.active = 1
              ORDER BY b.name",
             [$row->id]
         );
+        foreach ($businesses as &$biz) {
+            $biz->permissions = $biz->permissions ? json_decode($biz->permissions, true) : null;
+        }
+        unset($biz);
 
         // Auto-select if only one business, generate scoped token
         $businessId = null;
@@ -133,7 +137,7 @@ class Auth extends Task
         $businessId = (int)$input['business_id'];
 
         $member = DB::selectOne(
-            "SELECT bu.role, b.name
+            "SELECT bu.role, bu.permissions, b.name
              FROM business_users bu
              INNER JOIN businesses b ON b.id = bu.business_id AND b.active = 1
              WHERE bu.business_id = ? AND bu.user_id = ? AND bu.active = 1 LIMIT 1",

@@ -23,6 +23,12 @@ export const useAuthStore = defineStore('auth', () => {
     return biz?.role || 'staff'
   })
 
+  // Custom permissions for current business (null = use role defaults)
+  const permissions = computed(() => {
+    const biz = businesses.value?.find(b => String(b.id) === String(businessId.value))
+    return biz?.permissions || null
+  })
+
   function setSession(data) {
     token.value      = data.token
     user.value       = data.user
@@ -78,5 +84,5 @@ export const useAuthStore = defineStore('auth', () => {
     return data
   }
 
-  return { token, user, businessId, businesses, role, isLoggedIn, isSuperAdmin, setSession, logout, login, register, switchBusiness }
+  return { token, user, businessId, businesses, role, permissions, isLoggedIn, isSuperAdmin, setSession, logout, login, register, switchBusiness }
 })
