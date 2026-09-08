@@ -117,7 +117,7 @@ const filteredProducts = computed(() => {
     ? form.value.items[idx].description?.trim().toLowerCase() || ''
     : productSearch.value.trim().toLowerCase()
   if (!q) return products.value.slice(0, 8)
-  return products.value.filter(p => p.name?.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q))
+  return products.value.filter(p => p.name?.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q) || p.hsn_sac?.toLowerCase().includes(q))
 })
 const showProductInlineCreate = computed(() => {
   const idx = productSearchIdx.value

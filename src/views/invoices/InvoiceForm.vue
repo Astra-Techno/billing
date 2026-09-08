@@ -219,7 +219,7 @@ const filteredProducts = computed(() => {
   if (productSearchIdx.value === null) return []
   const q = productSearchDebounced.value.trim().toLowerCase()
   if (!q) return products.value.slice(0, 6)
-  return products.value.filter(p => p.name?.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q)).slice(0, 6)
+  return products.value.filter(p => p.name?.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q) || p.hsn_sac?.toLowerCase().includes(q)).slice(0, 6)
 })
 const showProductInlineCreate = computed(() =>
   productSearchQuery.value.trim().length >= 2 && filteredProducts.value.length === 0
