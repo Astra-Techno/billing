@@ -125,16 +125,36 @@ const canDeleteInvoice = computed(() =>
   invoice.value?.status === 'draft' && can('delete')
 )
 
+const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+
 function printInvoice() {
-  window.open('/print/invoice/' + invoice.value.id, '_blank')
+  if (isMobile) {
+    downloadPdf()
+  } else {
+    window.open('/print/invoice/' + invoice.value.id, '_blank')
+  }
 }
 
 function printDeliveryChallan() {
-  window.open('/print/invoice/' + invoice.value.id + '?mode=dc', '_blank')
+  if (isMobile) {
+    downloadPdf('dc')
+  } else {
+    window.open('/print/invoice/' + invoice.value.id + '?mode=dc', '_blank')
+  }
 }
 
 function printProforma() {
-  window.open('/print/invoice/' + invoice.value.id + '?mode=proforma', '_blank')
+  if (isMobile) {
+    downloadPdf('proforma')
+  } else {
+    window.open('/print/invoice/' + invoice.value.id + '?mode=proforma', '_blank')
+  }
+}
+
+function downloadPdf(mode = '') {
+  const base = import.meta.env.VITE_API_URL || '/api'
+  const url = `${base}/invoice/${invoice.value.id}/pdf${mode ? '?mode=' + mode : ''}`
+  window.location.href = url
 }
 
 const invoiceTitle = computed(() => {
