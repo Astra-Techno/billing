@@ -17,6 +17,8 @@ const showForm   = ref(false)
 const editingId  = ref(null)
 
 const form = ref({ work_date: today(), hours: '', description: '', project: '' })
+const blankRow = () => ({ hours: '', description: '', project: '' })
+const multiRows = ref([blankRow()])
 
 // Filters
 const filter = ref({ from_date: '', to_date: '', user_id: '' })
@@ -64,7 +66,16 @@ function canStaffEdit(entry) {
 function openAdd() {
   editingId.value = null
   form.value = { work_date: today(), hours: '', description: '', project: '' }
+  multiRows.value = [blankRow()]
   showForm.value = true
+}
+
+function addRow() {
+  multiRows.value.push(blankRow())
+}
+
+function removeRow(i) {
+  if (multiRows.value.length > 1) multiRows.value.splice(i, 1)
 }
 
 function openEdit(entry) {
@@ -85,7 +96,11 @@ async function saveEntry() {
     if (editingId.value) {
       await task('Timesheet', 'update', { id: editingId.value, ...form.value })
     } else {
-      await task('Timesheet', 'create', form.value)
+      const rows = multiRows.value.filter(r => r.hours && r.description?.trim())
+      if (!rows.length) { saving.value = false; return }
+      for (const r of rows) {
+        await task('Timesheet', 'create', { work_date: form.value.work_date, ...r })
+      }
     }
     showForm.value = false
     await load()
@@ -239,12 +254,14 @@ onMounted(load)
 
     <!-- Add/Edit Modal -->
     <div v-if="showForm" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40" @click.self="showForm = false">
-      <div class="bg-white rounded-2xl w-full max-w-md shadow-xl">
-        <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+      <div class="bg-white rounded-2xl w-full shadow-xl flex flex-col overflow-hidden" :class="editingId ? 'max-w-md' : 'max-w-lg max-h-[90vh]'">
+        <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
           <h3 class="font-semibold text-gray-800">{{ editingId ? 'Edit Entry' : 'Log Time' }}</h3>
           <button @click="showForm = false" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
         </div>
-        <form @submit.prevent="saveEntry" class="p-5 space-y-4">
+
+        <!-- Edit single entry -->
+        <form v-if="editingId" @submit.prevent="saveEntry" class="p-5 space-y-4">
           <div>
             <label class="block text-xs font-medium text-gray-500 mb-1">Date *</label>
             <input v-model="form.work_date" type="date" required class="inv-input w-full"
@@ -264,8 +281,46 @@ onMounted(load)
             <input v-model="form.project" type="text" class="inv-input w-full" placeholder="Project name (optional)" />
           </div>
           <button type="submit" :disabled="saving" class="btn-primary w-full py-2.5">
-            {{ saving ? 'Saving...' : (editingId ? 'Update' : 'Save Entry') }}
+            {{ saving ? 'Saving...' : 'Update' }}
           </button>
+        </form>
+
+        <!-- Add multiple entries -->
+        <form v-else @submit.prevent="saveEntry" class="flex flex-col flex-1 overflow-hidden">
+          <div class="px-5 pt-4 pb-2 shrink-0">
+            <label class="block text-xs font-medium text-gray-500 mb-1">Date *</label>
+            <input v-model="form.work_date" type="date" required class="inv-input w-full"
+              :disabled="!isOwnerAdmin" :min="isOwnerAdmin ? undefined : today()" :max="isOwnerAdmin ? undefined : today()" />
+          </div>
+          <div class="px-5 pt-2 pb-1 shrink-0">
+            <div class="flex items-center text-[10px] font-semibold text-gray-400 uppercase tracking-wider gap-2">
+              <span class="w-16">Hours</span>
+              <span class="flex-1">Description</span>
+              <span class="w-24">Project</span>
+              <span class="w-7"></span>
+            </div>
+          </div>
+          <div class="px-5 overflow-y-auto flex-1 space-y-2 pb-2">
+            <div v-for="(row, ri) in multiRows" :key="ri" class="flex items-start gap-2">
+              <input v-model="row.hours" type="number" min="0.25" max="24" step="0.25"
+                class="inv-input w-16 shrink-0 text-sm" placeholder="hrs" />
+              <input v-model="row.description" type="text"
+                class="inv-input flex-1 text-sm" placeholder="What did you work on?" />
+              <input v-model="row.project" type="text"
+                class="inv-input w-24 shrink-0 text-sm" placeholder="Project" />
+              <button type="button" @click="removeRow(ri)" :disabled="multiRows.length <= 1"
+                class="w-7 h-9 flex items-center justify-center rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition shrink-0 disabled:opacity-30 disabled:pointer-events-none">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="px-5 py-3 border-t border-gray-100 flex items-center gap-3 shrink-0">
+            <button type="button" @click="addRow" class="text-xs font-semibold text-primary-600 hover:text-primary-700 transition">+ Add Row</button>
+            <div class="flex-1"></div>
+            <button type="submit" :disabled="saving" class="btn-primary px-6 py-2">
+              {{ saving ? 'Saving...' : 'Save All' }}
+            </button>
+          </div>
         </form>
       </div>
     </div>
