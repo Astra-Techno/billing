@@ -1189,7 +1189,7 @@ async function saveInvoice() {
             <select v-model="staffForm.role" class="form-input">
               <option value="admin">Admin — full access</option>
               <option value="accountant">Accountant — bills + reports, no delete</option>
-              <option value="staff">Staff — create bills only</option>
+              <option value="staff">Staff — bills, timesheets &amp; challans</option>
             </select>
           </div>
           <div v-if="teamError" class="text-sm text-danger-600 bg-danger-50 rounded-lg px-3 py-2">{{ teamError }}</div>
