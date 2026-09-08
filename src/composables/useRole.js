@@ -20,6 +20,7 @@ const PERMISSIONS = {
   credit_notes:     ['owner', 'admin', 'accountant'],
   purchase_orders:  ['owner', 'admin', 'accountant'],
   delivery_challans:['owner', 'admin', 'accountant', 'staff'],
+  timesheets:       ['owner', 'admin', 'accountant', 'staff'],
   payroll:          ['owner', 'admin'],
 }
 

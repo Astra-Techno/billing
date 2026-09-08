@@ -84,6 +84,7 @@ const routes = [
           { path: ':id',       name: 'DeliveryChallanView', component: () => import('../views/delivery-challans/DeliveryChallanDetail.vue') },
         ]
       },
+      { path: 'timesheets',        name: 'Timesheets',    component: () => import('../views/timesheets/TimesheetList.vue'), meta: { permission: 'timesheets' } },
       { path: 'gst-returns',      name: 'GstReturns',   component: () => import('../views/gst/GstReturns.vue'), meta: { permission: 'gst' } },
       { path: 'reports',          name: 'Reports',      component: () => import('../views/reports/Reports.vue'), meta: { permission: 'reports' } },
       { path: 'settings',         name: 'Settings',     component: () => import('../views/settings/Settings.vue'), meta: { permission: 'settings' } },
@@ -122,6 +123,7 @@ const ROUTE_PERMISSIONS = {
   credit_notes:     ['owner', 'admin', 'accountant'],
   purchase_orders:  ['owner', 'admin', 'accountant'],
   delivery_challans:['owner', 'admin', 'accountant', 'staff'],
+  timesheets:       ['owner', 'admin', 'accountant', 'staff'],
   payroll:          ['owner', 'admin'],
   settings:         ['owner', 'admin'],
 }
