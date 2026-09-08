@@ -353,10 +353,10 @@ onMounted(load)
                       @focus="openProductSearch(i)" @input="productSearch = it.description; newProduct.name = it.description" />
                     <!-- Mobile product autocomplete -->
                     <div v-if="productSearchIdx === i && it.description?.trim().length >= 1" class="mt-1.5 space-y-1.5">
-                      <div v-if="filteredProducts.length" class="max-h-36 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-50 bg-white">
+                      <div v-if="filteredProducts.length" class="max-h-48 overflow-y-auto overscroll-contain rounded-lg border border-gray-200 divide-y divide-gray-50 bg-white shadow-lg">
                         <button v-for="p in filteredProducts" :key="p.id" type="button"
                           @click="selectProduct(i, p)"
-                          class="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 text-left text-sm">
+                          class="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 text-left text-sm touch-manipulation">
                           <span class="font-medium text-gray-800 truncate">{{ p.name }}<span v-if="p.sku" class="text-gray-400 font-normal ml-1">({{ p.sku }})</span></span>
                           <span class="text-gray-400 text-xs tabular-nums shrink-0 ml-2">{{ inr(p.price) }}</span>
                         </button>
