@@ -9,6 +9,14 @@ const auth = useAuthStore()
 const { can, role } = useRole()
 const isOwnerAdmin = computed(() => ['owner', 'admin'].includes(auth.role))
 
+function calcHours(from, to) {
+  if (!from || !to) return 0
+  const [fh, fm] = from.split(':').map(Number)
+  const [th, tm] = to.split(':').map(Number)
+  const diff = (th * 60 + tm) - (fh * 60 + fm)
+  return diff > 0 ? Math.round(diff / 15) * 0.25 : 0
+}
+
 const entries    = ref([])
 const loading    = ref(true)
 const searchQ    = ref('')
@@ -17,7 +25,7 @@ const showForm   = ref(false)
 const editingId  = ref(null)
 
 const form = ref({ work_date: today(), hours: '', description: '', project: '' })
-const blankRow = () => ({ hours: '', description: '', project: '' })
+const blankRow = () => ({ from_time: '09:00', to_time: '18:00', description: '', project: '' })
 const multiRows = ref([blankRow()])
 
 // Filters
@@ -82,6 +90,8 @@ function openEdit(entry) {
   editingId.value = entry.id
   form.value = {
     work_date:   entry.work_date,
+    from_time:   entry.from_time?.slice(0, 5) || '09:00',
+    to_time:     entry.to_time?.slice(0, 5) || '18:00',
     hours:       entry.hours,
     description: entry.description || '',
     project:     entry.project || '',
@@ -94,12 +104,19 @@ async function saveEntry() {
   saving.value = true
   try {
     if (editingId.value) {
-      await task('Timesheet', 'update', { id: editingId.value, ...form.value })
+      const hours = calcHours(form.value.from_time, form.value.to_time)
+      await task('Timesheet', 'update', { id: editingId.value, ...form.value, hours })
     } else {
-      const rows = multiRows.value.filter(r => r.hours && r.description?.trim())
+      const rows = multiRows.value.filter(r => r.from_time && r.to_time && r.description?.trim())
       if (!rows.length) { saving.value = false; return }
       for (const r of rows) {
-        await task('Timesheet', 'create', { work_date: form.value.work_date, ...r })
+        const hours = calcHours(r.from_time, r.to_time)
+        if (hours <= 0) continue
+        await task('Timesheet', 'create', {
+          work_date: form.value.work_date, hours,
+          description: r.description, project: r.project,
+          from_time: r.from_time, to_time: r.to_time,
+        })
       }
     }
     showForm.value = false
@@ -218,6 +235,7 @@ onMounted(load)
           </div>
           <div class="flex items-center gap-2 text-xs text-gray-400">
             <span>{{ fmtDateShort(e.work_date) }}</span>
+            <span v-if="e.from_time && e.to_time" class="text-gray-500">· {{ e.from_time?.slice(0,5) }} – {{ e.to_time?.slice(0,5) }}</span>
             <span v-if="e.project" class="text-gray-500">· {{ e.project }}</span>
             <span v-if="e.user_name && isOwnerAdmin" class="text-primary-500">· {{ e.user_name }}</span>
           </div>
@@ -254,7 +272,7 @@ onMounted(load)
 
     <!-- Add/Edit Modal -->
     <div v-if="showForm" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40" @click.self="showForm = false">
-      <div class="bg-white rounded-2xl w-full shadow-xl flex flex-col overflow-hidden" :class="editingId ? 'max-w-md' : 'max-w-lg max-h-[90vh]'">
+      <div class="bg-white rounded-2xl w-full shadow-xl flex flex-col overflow-hidden" :class="editingId ? 'max-w-md' : 'max-w-2xl max-h-[90vh]'">
         <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
           <h3 class="font-semibold text-gray-800">{{ editingId ? 'Edit Entry' : 'Log Time' }}</h3>
           <button @click="showForm = false" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
@@ -267,10 +285,18 @@ onMounted(load)
             <input v-model="form.work_date" type="date" required class="inv-input w-full"
               :disabled="!isOwnerAdmin" :min="isOwnerAdmin ? undefined : today()" :max="isOwnerAdmin ? undefined : today()" />
           </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">Hours *</label>
-            <input v-model="form.hours" type="number" min="0.25" max="24" step="0.25" required
-              class="inv-input w-full" placeholder="e.g. 8" />
+          <div class="flex gap-3">
+            <div class="flex-1">
+              <label class="block text-xs font-medium text-gray-500 mb-1">From *</label>
+              <input v-model="form.from_time" type="time" required class="inv-input w-full" />
+            </div>
+            <div class="flex-1">
+              <label class="block text-xs font-medium text-gray-500 mb-1">To *</label>
+              <input v-model="form.to_time" type="time" required class="inv-input w-full" />
+            </div>
+            <div class="w-14 pt-5 text-center">
+              <span class="text-sm font-bold text-primary-600">{{ calcHours(form.from_time, form.to_time) }}h</span>
+            </div>
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-500 mb-1">Description *</label>
@@ -292,26 +318,28 @@ onMounted(load)
             <input v-model="form.work_date" type="date" required class="inv-input w-full"
               :disabled="!isOwnerAdmin" :min="isOwnerAdmin ? undefined : today()" :max="isOwnerAdmin ? undefined : today()" />
           </div>
-          <div class="px-5 pt-2 pb-1 shrink-0">
-            <div class="flex items-center text-[10px] font-semibold text-gray-400 uppercase tracking-wider gap-2">
-              <span class="w-16">Hours</span>
-              <span class="flex-1">Description</span>
-              <span class="w-24">Project</span>
-              <span class="w-7"></span>
-            </div>
-          </div>
-          <div class="px-5 overflow-y-auto flex-1 space-y-2 pb-2">
-            <div v-for="(row, ri) in multiRows" :key="ri" class="flex items-start gap-2">
-              <input v-model="row.hours" type="number" min="0.25" max="24" step="0.25"
-                class="inv-input w-16 shrink-0 text-sm" placeholder="hrs" />
-              <input v-model="row.description" type="text"
-                class="inv-input flex-1 text-sm" placeholder="What did you work on?" />
-              <input v-model="row.project" type="text"
-                class="inv-input w-24 shrink-0 text-sm" placeholder="Project" />
-              <button type="button" @click="removeRow(ri)" :disabled="multiRows.length <= 1"
-                class="w-7 h-9 flex items-center justify-center rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition shrink-0 disabled:opacity-30 disabled:pointer-events-none">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          <div class="px-5 overflow-y-auto flex-1 pb-2 pt-2 space-y-3">
+            <div v-for="(row, ri) in multiRows" :key="ri" class="rounded-xl bg-gray-50 p-3 space-y-2 relative group">
+              <button type="button" @click="removeRow(ri)" v-if="multiRows.length > 1"
+                class="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
+              <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1.5">
+                  <label class="text-[10px] font-semibold text-gray-400 uppercase w-8">From</label>
+                  <input v-model="row.from_time" type="time" class="inv-input text-sm w-28" />
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <label class="text-[10px] font-semibold text-gray-400 uppercase w-5">To</label>
+                  <input v-model="row.to_time" type="time" class="inv-input text-sm w-28" />
+                </div>
+                <span class="text-xs font-bold text-primary-600 ml-1 tabular-nums">{{ calcHours(row.from_time, row.to_time) }}h</span>
+                <div class="flex-1"></div>
+                <input v-model="row.project" type="text"
+                  class="inv-input text-sm w-32" placeholder="Project (optional)" />
+              </div>
+              <textarea v-model="row.description" rows="2"
+                class="inv-input w-full text-sm resize-none" placeholder="What did you work on?"></textarea>
             </div>
           </div>
           <div class="px-5 py-3 border-t border-gray-100 flex items-center gap-3 shrink-0">

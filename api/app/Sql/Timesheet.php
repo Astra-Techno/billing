@@ -14,8 +14,9 @@ class Timesheet extends Sql
             ->left('users u ON u.id = t.user_id')
             ->left('users a ON a.id = t.approved_by')
             ->select('list', '
-                t.id, t.user_id, t.work_date, t.hours, t.description,
-                t.project, t.status, t.approved_at, t.created_at,
+                t.id, t.user_id, t.work_date, t.from_time, t.to_time,
+                t.hours, t.description, t.project, t.status,
+                t.approved_at, t.created_at,
                 u.name AS user_name,
                 a.name AS approved_by_name
             ')
@@ -45,7 +46,7 @@ class Timesheet extends Sql
     {
         return (new Query('Timesheet.my'))
             ->from('timesheets t')
-            ->select('list', 't.id, t.work_date, t.hours, t.description, t.project, t.status, t.created_at')
+            ->select('list', 't.id, t.work_date, t.from_time, t.to_time, t.hours, t.description, t.project, t.status, t.created_at')
             ->select('total', 'COUNT(*) AS total')
             ->filter('t.business_id = {business_id}')
             ->filter('t.user_id = {user_id}')

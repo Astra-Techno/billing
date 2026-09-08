@@ -32,6 +32,8 @@ class Timesheet extends Task
             'business_id' => $businessId,
             'user_id'     => $this->userId(),
             'work_date'   => $input['work_date'],
+            'from_time'   => $input['from_time'] ?? null,
+            'to_time'     => $input['to_time'] ?? null,
             'hours'       => $hours,
             'description' => trim($input['description']),
             'project'     => $input['project'] ?? null,
@@ -72,6 +74,8 @@ class Timesheet extends Task
 
         $entry->fill([
             'work_date'   => $input['work_date'],
+            'from_time'   => $input['from_time'] ?? $entry->from_time,
+            'to_time'     => $input['to_time'] ?? $entry->to_time,
             'hours'       => $hours,
             'description' => trim($input['description']),
             'project'     => $input['project'] ?? $entry->project,
