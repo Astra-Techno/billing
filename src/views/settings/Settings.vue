@@ -1176,41 +1176,47 @@ async function saveInvoice() {
 
       <!-- Create Staff Modal -->
       <div v-if="staffModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-[2rem] shadow-xl max-w-sm w-full p-6 space-y-4">
-          <h3 class="text-lg font-extrabold text-gray-900">Add Staff Member</h3>
-          <div>
-            <label class="form-label">Full Name</label>
-            <input v-model="staffForm.name" type="text" class="form-input" placeholder="Staff name" />
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] flex flex-col overflow-hidden">
+          <div class="px-6 pt-5 pb-3 border-b border-gray-100">
+            <h3 class="text-lg font-extrabold text-gray-900">Add Staff Member</h3>
           </div>
-          <div>
-            <label class="form-label">Email (Login ID)</label>
-            <input v-model="staffForm.email" type="email" class="form-input" placeholder="staff@example.com" />
-          </div>
-          <div>
-            <label class="form-label">Password</label>
-            <input v-model="staffForm.password" type="text" class="form-input" placeholder="Min 6 characters" />
-          </div>
-          <div>
-            <label class="form-label">Role</label>
-            <select v-model="staffForm.role" class="form-input" @change="onRoleChange">
-              <option value="admin">Admin — full access</option>
-              <option value="accountant">Accountant</option>
-              <option value="staff">Staff</option>
-            </select>
-          </div>
-          <div v-if="staffForm.role !== 'admin'">
-            <label class="form-label">Page Access</label>
-            <div class="grid grid-cols-2 gap-1.5">
-              <label v-for="p in PAGE_PERMISSIONS" :key="p.key"
-                class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 cursor-pointer text-xs">
-                <input type="checkbox" :value="p.key" v-model="staffForm.permissions"
-                  class="w-3.5 h-3.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-                <span class="text-gray-700">{{ p.label }}</span>
-              </label>
+          <div class="px-6 py-4 space-y-4 overflow-y-auto flex-1">
+            <div class="grid grid-cols-2 gap-3">
+              <div class="col-span-2 sm:col-span-1">
+                <label class="form-label">Full Name</label>
+                <input v-model="staffForm.name" type="text" class="form-input" placeholder="Staff name" />
+              </div>
+              <div class="col-span-2 sm:col-span-1">
+                <label class="form-label">Role</label>
+                <select v-model="staffForm.role" class="form-input" @change="onRoleChange">
+                  <option value="admin">Admin — full access</option>
+                  <option value="accountant">Accountant</option>
+                  <option value="staff">Staff</option>
+                </select>
+              </div>
             </div>
+            <div>
+              <label class="form-label">Email (Login ID)</label>
+              <input v-model="staffForm.email" type="email" class="form-input" placeholder="staff@example.com" />
+            </div>
+            <div>
+              <label class="form-label">Password</label>
+              <input v-model="staffForm.password" type="text" class="form-input" placeholder="Min 6 characters" />
+            </div>
+            <div v-if="staffForm.role !== 'admin'">
+              <label class="form-label mb-2">Page Access</label>
+              <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 bg-gray-50 rounded-xl p-3">
+                <label v-for="p in PAGE_PERMISSIONS" :key="p.key"
+                  class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white cursor-pointer text-xs transition">
+                  <input type="checkbox" :value="p.key" v-model="staffForm.permissions"
+                    class="w-3.5 h-3.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                  <span class="text-gray-700">{{ p.label }}</span>
+                </label>
+              </div>
+            </div>
+            <div v-if="teamError" class="text-sm text-danger-600 bg-danger-50 rounded-lg px-3 py-2">{{ teamError }}</div>
           </div>
-          <div v-if="teamError" class="text-sm text-danger-600 bg-danger-50 rounded-lg px-3 py-2">{{ teamError }}</div>
-          <div class="flex gap-3 pt-2">
+          <div class="px-6 py-4 border-t border-gray-100 flex gap-3">
             <button @click="staffModal = false" class="btn bg-gray-100 text-gray-700 hover:bg-gray-200 flex-1 border-0">Cancel</button>
             <button @click="createStaff" :disabled="creatingStaff || !staffForm.name || !staffForm.email || !staffForm.password" class="btn btn-primary flex-1">
               {{ creatingStaff ? 'Creating…' : 'Create Account' }}
