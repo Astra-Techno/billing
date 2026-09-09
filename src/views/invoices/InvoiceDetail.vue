@@ -159,12 +159,27 @@ async function downloadPdf(mode = '') {
     const res = await fetch(url, {
       headers: { 'Authorization': 'Bearer ' + useAuthStore().token }
     })
+    if (!res.ok) throw new Error('PDF fetch failed')
     const blob = await res.blob()
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `invoice-${invoice.value.number || invoice.value.id}.pdf`
-    a.click()
-    URL.revokeObjectURL(a.href)
+    const pdfFile = new File([blob], `invoice-${invoice.value.number || invoice.value.id}.pdf`, { type: 'application/pdf' })
+
+    // Use Web Share API on mobile if available (best UX for mobile)
+    if (isMobile && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+      await navigator.share({ files: [pdfFile], title: `Invoice ${invoice.value.number || ''}` })
+      return
+    }
+
+    // Fallback: open blob URL in new tab (works on most mobile browsers)
+    const blobUrl = URL.createObjectURL(blob)
+    if (isMobile) {
+      window.open(blobUrl, '_blank')
+    } else {
+      const a = document.createElement('a')
+      a.href = blobUrl
+      a.download = pdfFile.name
+      a.click()
+    }
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 10000)
   } catch {
     window.location.href = url
   }
