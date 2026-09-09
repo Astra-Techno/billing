@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { list, task } from '../../api'
+import { list, count, task } from '../../api'
 import { useAuthStore } from '../../stores/auth'
 import { useRole } from '../../composables/useRole'
 import { fmtDateShort, today } from '../../utils/date'
@@ -17,54 +17,66 @@ function calcHours(from, to) {
   return diff > 0 ? Math.round(diff / 15) * 0.25 : 0
 }
 
+function fmtTime12(t) {
+  if (!t) return ''
+  const [h, m] = t.slice(0, 5).split(':').map(Number)
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  const h12 = h % 12 || 12
+  return `${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`
+}
+
 const entries    = ref([])
 const loading    = ref(true)
-const searchQ    = ref('')
 const statusTab  = ref('')
 const showForm   = ref(false)
 const editingId  = ref(null)
+
+// Pagination
+const page       = ref(1)
+const perPage    = 20
+const totalCount = ref(0)
+const totalPages = computed(() => Math.ceil(totalCount.value / perPage) || 1)
 
 const form = ref({ work_date: today(), hours: '', description: '', project: '' })
 const blankRow = () => ({ from_time: '09:00', to_time: '18:00', description: '', project: '' })
 const multiRows = ref([blankRow()])
 
-// Filters
-const filter = ref({ from_date: '', to_date: '', user_id: '' })
-
 async function load() {
   loading.value = true
   try {
-    const p = { sort_by: 't.work_date', sort_order: 'desc' }
-    if (filter.value.from_date) p['filter.from_date'] = filter.value.from_date
-    if (filter.value.to_date)   p['filter.to_date']   = filter.value.to_date
-    if (statusTab.value)        p['filter.status']     = statusTab.value
-    if (filter.value.user_id)   p['filter.user_id']    = filter.value.user_id
+    const p = {
+      sort_by: 't.work_date', sort_order: 'desc',
+      limit: perPage, page: page.value,
+    }
+    if (statusTab.value) p['filter.status'] = statusTab.value
 
-    // Owner/admin see all; staff sees own via Timesheet:my
     const sqlName = isOwnerAdmin.value ? 'Timesheet' : 'Timesheet:my'
-    const res = await list(sqlName, p)
+    const [res, cntRes] = await Promise.all([
+      list(sqlName, p),
+      count(sqlName, p),
+    ])
     entries.value = res.data?.data || []
+    totalCount.value = cntRes.data?.total || 0
   } catch {}
   loading.value = false
 }
 
-const filteredEntries = computed(() => {
-  if (!searchQ.value) return entries.value
-  const q = searchQ.value.toLowerCase()
-  return entries.value.filter(e =>
-    e.description?.toLowerCase().includes(q) ||
-    e.project?.toLowerCase().includes(q) ||
-    e.user_name?.toLowerCase().includes(q)
-  )
-})
+function goPage(p) {
+  if (p < 1 || p > totalPages.value) return
+  page.value = p
+  load()
+}
 
-const totalHours = computed(() =>
-  filteredEntries.value.reduce((s, e) => s + parseFloat(e.hours || 0), 0).toFixed(1)
-)
+function changeStatus(s) {
+  statusTab.value = s
+  page.value = 1
+  load()
+}
 
+// Group entries by date
 const groupedEntries = computed(() => {
   const groups = {}
-  for (const e of filteredEntries.value) {
+  for (const e of entries.value) {
     const d = e.work_date
     if (!groups[d]) groups[d] = { date: d, entries: [], hours: 0 }
     groups[d].entries.push(e)
@@ -72,6 +84,36 @@ const groupedEntries = computed(() => {
   }
   return Object.values(groups).sort((a, b) => b.date.localeCompare(a.date))
 })
+
+// Within each date group, sub-group by user
+function userGroupsForDate(dateEntries) {
+  const groups = {}
+  for (const e of dateEntries) {
+    const uid = e.user_id || 'me'
+    if (!groups[uid]) {
+      groups[uid] = {
+        user_id: uid,
+        user_name: e.user_name || auth.user?.name || 'You',
+        entries: [],
+        totalHours: 0,
+        minFrom: null,
+        maxTo: null,
+      }
+    }
+    const g = groups[uid]
+    g.entries.push(e)
+    g.totalHours += parseFloat(e.hours || 0)
+    const ft = e.from_time?.slice(0, 5)
+    const tt = e.to_time?.slice(0, 5)
+    if (ft && (!g.minFrom || ft < g.minFrom)) g.minFrom = ft
+    if (tt && (!g.maxTo || tt > g.maxTo)) g.maxTo = tt
+  }
+  return Object.values(groups)
+}
+
+const totalHours = computed(() =>
+  entries.value.reduce((s, e) => s + parseFloat(e.hours || 0), 0)
+)
 
 const pendingCount = computed(() =>
   entries.value.filter(e => e.status === 'pending').length
@@ -96,11 +138,8 @@ function addRow() {
 }
 
 function onToTimeChange(ri) {
-  // Auto-update next row's from_time to match this row's to_time
   const next = multiRows.value[ri + 1]
-  if (next) {
-    next.from_time = multiRows.value[ri].to_time
-  }
+  if (next) next.from_time = multiRows.value[ri].to_time
 }
 
 function removeRow(i) {
@@ -201,24 +240,19 @@ onMounted(load)
         </div>
       </div>
 
-      <!-- Tabs -->
-      <div class="flex gap-1 px-4 pb-2 overflow-x-auto no-scrollbar">
-        <button @click="statusTab = ''; load()" :class="['tab-chip', !statusTab ? 'tab-chip--active' : '']">All</button>
-        <button @click="statusTab = 'pending'; load()" :class="['tab-chip', statusTab === 'pending' ? 'tab-chip--active' : '']">Pending</button>
-        <button @click="statusTab = 'approved'; load()" :class="['tab-chip', statusTab === 'approved' ? 'tab-chip--active' : '']">Approved</button>
-        <button @click="statusTab = 'rejected'; load()" :class="['tab-chip', statusTab === 'rejected' ? 'tab-chip--active' : '']">Rejected</button>
-      </div>
-
-      <!-- Search -->
-      <div class="px-4 pb-3">
-        <input v-model="searchQ" type="search" placeholder="Search entries..." class="inv-input w-full text-sm" />
+      <!-- Status tabs -->
+      <div class="flex gap-1 px-4 pb-3 overflow-x-auto no-scrollbar">
+        <button @click="changeStatus('')" :class="['tab-chip', !statusTab ? 'tab-chip--active' : '']">All</button>
+        <button @click="changeStatus('pending')" :class="['tab-chip', statusTab === 'pending' ? 'tab-chip--active' : '']">Pending</button>
+        <button @click="changeStatus('approved')" :class="['tab-chip', statusTab === 'approved' ? 'tab-chip--active' : '']">Approved</button>
+        <button @click="changeStatus('rejected')" :class="['tab-chip', statusTab === 'rejected' ? 'tab-chip--active' : '']">Rejected</button>
       </div>
     </div>
 
     <!-- Summary bar -->
     <div class="px-4 py-2 bg-gray-50 border-b border-gray-100 flex items-center justify-between text-xs text-gray-500">
-      <span>{{ filteredEntries.length }} entries</span>
-      <span class="font-semibold text-gray-700">{{ totalHours }} hrs total</span>
+      <span>{{ totalCount }} entries</span>
+      <span class="font-semibold text-gray-700">{{ totalHours.toFixed(1) }} hrs (this page)</span>
     </div>
 
     <!-- Loading -->
@@ -227,75 +261,160 @@ onMounted(load)
     </div>
 
     <!-- Empty state -->
-    <div v-else-if="!filteredEntries.length" class="text-center py-16 px-6">
+    <div v-else-if="!entries.length" class="text-center py-16 px-6">
       <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 flex items-center justify-center">
         <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       </div>
       <p class="text-gray-500 font-medium">No timesheet entries</p>
-      <p class="text-gray-400 text-sm mt-1">Click "Log Time" to add your first entry</p>
+      <p class="text-gray-400 text-sm mt-1">Click "+ Log Time" to add an entry</p>
     </div>
 
-    <!-- Entries list grouped by date -->
+    <!-- Entries grouped by date, then by user -->
     <div v-else>
-      <div v-for="group in groupedEntries" :key="group.date" class="border-b border-gray-200 last:border-b-0">
+      <div v-for="group in groupedEntries" :key="group.date">
         <!-- Date header -->
-        <div class="px-4 py-2.5 bg-gray-100 border-b border-gray-200 flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <span class="text-sm font-bold text-gray-700">{{ fmtDateShort(group.date) }}</span>
-            <span class="text-[10px] text-gray-400 font-medium">{{ group.entries.length }} {{ group.entries.length === 1 ? 'entry' : 'entries' }}</span>
-          </div>
-          <span class="text-sm font-bold text-primary-600">{{ group.hours.toFixed(1) }} hrs</span>
+        <div class="px-4 py-2 bg-primary-600 text-white flex items-center justify-between">
+          <span class="text-sm font-semibold">{{ fmtDateShort(group.date) }}</span>
+          <span class="text-sm font-bold">{{ group.hours.toFixed(1) }} hrs</span>
         </div>
-        <div class="divide-y divide-gray-100">
-          <div v-for="e in group.entries" :key="e.id"
-            class="px-4 py-3 flex items-start gap-3 hover:bg-gray-50/50 transition-colors">
 
-            <!-- Hours badge -->
-            <div class="w-12 h-12 rounded-xl bg-primary-50 flex flex-col items-center justify-center shrink-0">
-              <span class="text-base font-bold text-primary-700 leading-none">{{ parseFloat(e.hours).toFixed(1) }}</span>
-              <span class="text-[9px] text-primary-500 font-medium">hrs</span>
-            </div>
-
-            <!-- Content -->
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 mb-0.5">
-                <p class="text-sm font-semibold text-gray-800 truncate">{{ e.description }}</p>
-                <span :class="['inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold shrink-0', statusColor(e.status)]">
-                  {{ e.status }}
-                </span>
-              </div>
-              <div class="flex items-center gap-2 text-xs text-gray-400">
-                <span v-if="e.from_time && e.to_time" class="text-gray-500">{{ e.from_time?.slice(0,5) }} – {{ e.to_time?.slice(0,5) }}</span>
-                <span v-if="e.project" class="text-gray-500">· {{ e.project }}</span>
-                <span v-if="e.user_name && isOwnerAdmin" class="text-primary-500">· {{ e.user_name }}</span>
-              </div>
-            </div>
-
-            <!-- Actions -->
-            <div class="flex items-center gap-1 shrink-0">
-              <template v-if="isOwnerAdmin && e.status === 'pending'">
-                <button @click="approveEntry(e)" :disabled="actionLoading === e.id"
-                  class="w-8 h-8 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 flex items-center justify-center transition" title="Approve">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                </button>
-                <button @click="rejectEntry(e)" :disabled="actionLoading === e.id"
-                  class="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center transition" title="Reject">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
+        <!-- Desktop table -->
+        <div class="hidden sm:block overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-gray-50 border-b border-gray-200">
+                <th class="text-left px-4 py-2 font-semibold text-gray-600 w-44">User</th>
+                <th class="text-left px-4 py-2 font-semibold text-gray-600">Task Description</th>
+                <th class="text-center px-4 py-2 font-semibold text-gray-600 w-20">Time</th>
+                <th class="text-center px-4 py-2 font-semibold text-gray-600 w-24">Status</th>
+                <th class="text-center px-4 py-2 font-semibold text-gray-600 w-28">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template v-for="ug in userGroupsForDate(group.entries)" :key="ug.user_id">
+                <tr class="border-b border-gray-100 hover:bg-gray-50/50">
+                  <td class="px-4 py-3 align-top" :rowspan="ug.entries.length">
+                    <div class="font-semibold text-gray-800">{{ ug.user_name }}</div>
+                    <div class="text-xs text-gray-400 mt-0.5" v-if="ug.minFrom && ug.maxTo">
+                      {{ fmtTime12(ug.minFrom) }} - {{ fmtTime12(ug.maxTo) }}
+                    </div>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="text-xs text-gray-400 mr-2">{{ fmtTime12(ug.entries[0].from_time) }} - {{ fmtTime12(ug.entries[0].to_time) }}</span>
+                    <span v-if="ug.entries[0].project" class="text-xs font-medium text-primary-600 mr-1">{{ ug.entries[0].project }} -</span>
+                    <span class="text-gray-700">{{ ug.entries[0].description }}</span>
+                  </td>
+                  <td class="px-4 py-3 text-center font-bold text-gray-700 align-top" :rowspan="ug.entries.length">
+                    {{ ug.totalHours.toFixed(2) }}
+                  </td>
+                  <td class="px-4 py-3 text-center align-top" :rowspan="ug.entries.length">
+                    <span :class="['inline-block px-2 py-0.5 rounded text-[11px] font-semibold', statusColor(ug.entries[0].status)]">
+                      {{ ug.entries[0].status }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 align-top" :rowspan="ug.entries.length">
+                    <div class="flex items-center justify-center gap-1">
+                      <template v-if="isOwnerAdmin && ug.entries.some(e => e.status === 'pending')">
+                        <button @click="ug.entries.filter(e => e.status === 'pending').forEach(e => approveEntry(e))"
+                          class="w-7 h-7 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 flex items-center justify-center transition" title="Approve">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        </button>
+                        <button @click="ug.entries.filter(e => e.status === 'pending').forEach(e => rejectEntry(e))"
+                          class="w-7 h-7 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center transition" title="Reject">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                      </template>
+                    </div>
+                  </td>
+                </tr>
+                <tr v-for="e in ug.entries.slice(1)" :key="e.id"
+                  class="border-b border-gray-50 hover:bg-gray-50/50">
+                  <td class="px-4 py-2">
+                    <span class="text-xs text-gray-400 mr-2">{{ fmtTime12(e.from_time) }} - {{ fmtTime12(e.to_time) }}</span>
+                    <span v-if="e.project" class="text-xs font-medium text-primary-600 mr-1">{{ e.project }} -</span>
+                    <span class="text-gray-700">{{ e.description }}</span>
+                  </td>
+                </tr>
               </template>
+            </tbody>
+          </table>
+        </div>
 
-              <button v-if="(e.status === 'pending' && canStaffEdit(e)) || isOwnerAdmin" @click="openEdit(e)"
-                class="w-8 h-8 rounded-lg bg-gray-50 text-gray-500 hover:bg-gray-100 flex items-center justify-center transition" title="Edit">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-              </button>
-
-              <button v-if="(e.status === 'pending' && canStaffEdit(e)) || isOwnerAdmin" @click="deleteEntry(e)"
-                class="w-8 h-8 rounded-lg bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition" title="Delete">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-              </button>
+        <!-- Mobile card view -->
+        <div class="sm:hidden">
+          <div v-for="ug in userGroupsForDate(group.entries)" :key="ug.user_id"
+            class="border-b border-gray-200">
+            <div class="px-4 py-2.5 bg-gray-50 flex items-center justify-between">
+              <div>
+                <div class="font-semibold text-gray-800 text-sm">{{ ug.user_name }}</div>
+                <div class="text-xs text-gray-400" v-if="ug.minFrom && ug.maxTo">
+                  {{ fmtTime12(ug.minFrom) }} - {{ fmtTime12(ug.maxTo) }}
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-base font-bold text-primary-700">{{ ug.totalHours.toFixed(2) }}</div>
+                <div class="text-[10px] text-gray-400">hours</div>
+              </div>
+            </div>
+            <div class="divide-y divide-gray-50">
+              <div v-for="e in ug.entries" :key="e.id" class="px-4 py-2.5 flex items-start gap-3">
+                <div class="flex-1 min-w-0">
+                  <div class="text-xs text-gray-400 mb-0.5">
+                    {{ fmtTime12(e.from_time) }} - {{ fmtTime12(e.to_time) }}
+                    <span class="ml-1 font-medium" :class="statusColor(e.status)" style="padding: 1px 6px; border-radius: 4px; font-size: 10px;">{{ e.status }}</span>
+                  </div>
+                  <div class="text-sm text-gray-700">
+                    <span v-if="e.project" class="font-medium text-primary-600">{{ e.project }} - </span>{{ e.description }}
+                  </div>
+                </div>
+                <div class="flex items-center gap-1 shrink-0">
+                  <template v-if="isOwnerAdmin && e.status === 'pending'">
+                    <button @click="approveEntry(e)" :disabled="actionLoading === e.id"
+                      class="w-7 h-7 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 flex items-center justify-center" title="Approve">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    </button>
+                    <button @click="rejectEntry(e)" :disabled="actionLoading === e.id"
+                      class="w-7 h-7 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center" title="Reject">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                  </template>
+                  <button v-if="(e.status === 'pending' && canStaffEdit(e)) || isOwnerAdmin" @click="openEdit(e)"
+                    class="w-7 h-7 rounded-lg bg-gray-50 text-gray-500 hover:bg-gray-100 flex items-center justify-center" title="Edit">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                  </button>
+                  <button v-if="(e.status === 'pending' && canStaffEdit(e)) || isOwnerAdmin" @click="deleteEntry(e)"
+                    class="w-7 h-7 rounded-lg bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center" title="Delete">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Pagination -->
+      <div v-if="totalPages > 1" class="px-4 py-3 border-t border-gray-200 flex items-center justify-between bg-white">
+        <button @click="goPage(page - 1)" :disabled="page <= 1"
+          class="px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition">
+          Previous
+        </button>
+        <div class="flex items-center gap-1">
+          <template v-for="p in totalPages" :key="p">
+            <button v-if="p === 1 || p === totalPages || (p >= page - 1 && p <= page + 1)"
+              @click="goPage(p)"
+              :class="['w-8 h-8 rounded-lg text-sm font-medium transition',
+                p === page ? 'bg-primary-600 text-white' : 'text-gray-600 hover:bg-gray-100']">
+              {{ p }}
+            </button>
+            <span v-else-if="p === 2 && page > 3" class="text-gray-400 text-xs px-1">...</span>
+            <span v-else-if="p === totalPages - 1 && page < totalPages - 2" class="text-gray-400 text-xs px-1">...</span>
+          </template>
+        </div>
+        <button @click="goPage(page + 1)" :disabled="page >= totalPages"
+          class="px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition">
+          Next
+        </button>
       </div>
     </div>
 
