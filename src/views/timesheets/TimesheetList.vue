@@ -62,6 +62,17 @@ const totalHours = computed(() =>
   filteredEntries.value.reduce((s, e) => s + parseFloat(e.hours || 0), 0).toFixed(1)
 )
 
+const groupedEntries = computed(() => {
+  const groups = {}
+  for (const e of filteredEntries.value) {
+    const d = e.work_date
+    if (!groups[d]) groups[d] = { date: d, entries: [], hours: 0 }
+    groups[d].entries.push(e)
+    groups[d].hours += parseFloat(e.hours || 0)
+  }
+  return Object.values(groups).sort((a, b) => b.date.localeCompare(a.date))
+})
+
 const pendingCount = computed(() =>
   entries.value.filter(e => e.status === 'pending').length
 )
@@ -224,58 +235,66 @@ onMounted(load)
       <p class="text-gray-400 text-sm mt-1">Click "Log Time" to add your first entry</p>
     </div>
 
-    <!-- Entries list -->
-    <div v-else class="divide-y divide-gray-100">
-      <div v-for="e in filteredEntries" :key="e.id"
-        class="px-4 py-3 flex items-start gap-3 hover:bg-gray-50/50 transition-colors">
-
-        <!-- Hours badge -->
-        <div class="w-12 h-12 rounded-xl bg-primary-50 flex flex-col items-center justify-center shrink-0">
-          <span class="text-base font-bold text-primary-700 leading-none">{{ parseFloat(e.hours).toFixed(1) }}</span>
-          <span class="text-[9px] text-primary-500 font-medium">hrs</span>
-        </div>
-
-        <!-- Content -->
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2 mb-0.5">
-            <p class="text-sm font-semibold text-gray-800 truncate">{{ e.description }}</p>
-            <span :class="['inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold shrink-0', statusColor(e.status)]">
-              {{ e.status }}
-            </span>
+    <!-- Entries list grouped by date -->
+    <div v-else>
+      <div v-for="group in groupedEntries" :key="group.date" class="border-b border-gray-200 last:border-b-0">
+        <!-- Date header -->
+        <div class="px-4 py-2.5 bg-gray-100 border-b border-gray-200 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-bold text-gray-700">{{ fmtDateShort(group.date) }}</span>
+            <span class="text-[10px] text-gray-400 font-medium">{{ group.entries.length }} {{ group.entries.length === 1 ? 'entry' : 'entries' }}</span>
           </div>
-          <div class="flex items-center gap-2 text-xs text-gray-400">
-            <span>{{ fmtDateShort(e.work_date) }}</span>
-            <span v-if="e.from_time && e.to_time" class="text-gray-500">· {{ e.from_time?.slice(0,5) }} – {{ e.to_time?.slice(0,5) }}</span>
-            <span v-if="e.project" class="text-gray-500">· {{ e.project }}</span>
-            <span v-if="e.user_name && isOwnerAdmin" class="text-primary-500">· {{ e.user_name }}</span>
-          </div>
+          <span class="text-sm font-bold text-primary-600">{{ group.hours.toFixed(1) }} hrs</span>
         </div>
+        <div class="divide-y divide-gray-100">
+          <div v-for="e in group.entries" :key="e.id"
+            class="px-4 py-3 flex items-start gap-3 hover:bg-gray-50/50 transition-colors">
 
-        <!-- Actions -->
-        <div class="flex items-center gap-1 shrink-0">
-          <!-- Approve/Reject for owner/admin on pending entries -->
-          <template v-if="isOwnerAdmin && e.status === 'pending'">
-            <button @click="approveEntry(e)" :disabled="actionLoading === e.id"
-              class="w-8 h-8 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 flex items-center justify-center transition" title="Approve">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-            </button>
-            <button @click="rejectEntry(e)" :disabled="actionLoading === e.id"
-              class="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center transition" title="Reject">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-          </template>
+            <!-- Hours badge -->
+            <div class="w-12 h-12 rounded-xl bg-primary-50 flex flex-col items-center justify-center shrink-0">
+              <span class="text-base font-bold text-primary-700 leading-none">{{ parseFloat(e.hours).toFixed(1) }}</span>
+              <span class="text-[9px] text-primary-500 font-medium">hrs</span>
+            </div>
 
-          <!-- Edit (own pending today or owner/admin) -->
-          <button v-if="(e.status === 'pending' && canStaffEdit(e)) || isOwnerAdmin" @click="openEdit(e)"
-            class="w-8 h-8 rounded-lg bg-gray-50 text-gray-500 hover:bg-gray-100 flex items-center justify-center transition" title="Edit">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-          </button>
+            <!-- Content -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-0.5">
+                <p class="text-sm font-semibold text-gray-800 truncate">{{ e.description }}</p>
+                <span :class="['inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold shrink-0', statusColor(e.status)]">
+                  {{ e.status }}
+                </span>
+              </div>
+              <div class="flex items-center gap-2 text-xs text-gray-400">
+                <span v-if="e.from_time && e.to_time" class="text-gray-500">{{ e.from_time?.slice(0,5) }} – {{ e.to_time?.slice(0,5) }}</span>
+                <span v-if="e.project" class="text-gray-500">· {{ e.project }}</span>
+                <span v-if="e.user_name && isOwnerAdmin" class="text-primary-500">· {{ e.user_name }}</span>
+              </div>
+            </div>
 
-          <!-- Delete -->
-          <button v-if="(e.status === 'pending' && canStaffEdit(e)) || isOwnerAdmin" @click="deleteEntry(e)"
-            class="w-8 h-8 rounded-lg bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition" title="Delete">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-          </button>
+            <!-- Actions -->
+            <div class="flex items-center gap-1 shrink-0">
+              <template v-if="isOwnerAdmin && e.status === 'pending'">
+                <button @click="approveEntry(e)" :disabled="actionLoading === e.id"
+                  class="w-8 h-8 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 flex items-center justify-center transition" title="Approve">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                </button>
+                <button @click="rejectEntry(e)" :disabled="actionLoading === e.id"
+                  class="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center transition" title="Reject">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </template>
+
+              <button v-if="(e.status === 'pending' && canStaffEdit(e)) || isOwnerAdmin" @click="openEdit(e)"
+                class="w-8 h-8 rounded-lg bg-gray-50 text-gray-500 hover:bg-gray-100 flex items-center justify-center transition" title="Edit">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+              </button>
+
+              <button v-if="(e.status === 'pending' && canStaffEdit(e)) || isOwnerAdmin" @click="deleteEntry(e)"
+                class="w-8 h-8 rounded-lg bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition" title="Delete">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
