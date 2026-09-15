@@ -67,15 +67,13 @@ describe('calcLine()', () => {
     expect(result.total).toBe(2360) // 2000 + 180 + 180
   })
 
-  it('applies discount before tax', () => {
+  it('leaves invoice-level discount allocation to calcInvoice', () => {
     const item = { ...base, discount_pct: 10 }
     const result = calcLine(item)
-    // taxable = 2000 - 200 = 1800
-    expect(result.taxable).toBe(1800)
-    // CGST = SGST = 1800 * 9% = 162
-    expect(result.cgst).toBe(162)
-    expect(result.sgst).toBe(162)
-    expect(result.total).toBe(2124) // 1800 + 162 + 162
+    expect(result.taxable).toBe(2000)
+    expect(result.cgst).toBe(180)
+    expect(result.sgst).toBe(180)
+    expect(result.total).toBe(2360)
   })
 
   it('handles zero GST rate', () => {
@@ -159,8 +157,10 @@ describe('calcInvoice()', () => {
     const discountedItems = [
       { quantity: 2, unit_price: 1000, discount_pct: 10, gst_rate: 18 },
     ]
-    const result = calcInvoice(discountedItems)
+    const result = calcInvoice(discountedItems, 'intra', 'percent', 10)
     expect(result.discount).toBe(200) // 2000 * 10%
+    expect(result.subtotal).toBe(1800)
+    expect(result.tax).toBe(324)
   })
 
   it('roundOff non-zero when raw total has fraction', () => {

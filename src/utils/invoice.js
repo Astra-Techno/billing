@@ -67,21 +67,23 @@ export function calcInvoice(items, supplyType = 'intra', discountType = 'percent
 
   const subtotal = round2(grossSubtotal - discount)
 
-  // Calculate tax on discounted subtotal, proportionally per line
-  for (const item of items) {
+  // Allocate cents and round each line identically to the persisted API calculation.
+  let allocated = 0
+  for (const [index, item] of items.entries()) {
     const qty   = parseFloat(item.quantity || 0)
     const price = parseFloat(item.unit_price || 0)
     const gstRate = parseFloat(item.gst_rate || 0)
     const lineGross = qty * price
     // Proportion of this line in gross subtotal
     const ratio = grossSubtotal > 0 ? lineGross / grossSubtotal : 0
-    const lineTaxable = subtotal * ratio
+    const lineTaxable = index === items.length - 1 ? round2(subtotal - allocated) : round2(subtotal * ratio)
+    allocated += lineTaxable
 
     if (supplyType === 'intra') {
-      cgst += lineTaxable * (gstRate / 2 / 100)
-      sgst += lineTaxable * (gstRate / 2 / 100)
+      cgst += round2(lineTaxable * (gstRate / 2 / 100))
+      sgst += round2(lineTaxable * (gstRate / 2 / 100))
     } else {
-      igst += lineTaxable * (gstRate / 100)
+      igst += round2(lineTaxable * (gstRate / 100))
     }
   }
 

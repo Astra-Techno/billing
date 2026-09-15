@@ -73,6 +73,8 @@ class Auth extends Task
 
     public function register(array $input): array
     {
+        if (($_ENV['DESKTOP_MODE'] ?? '') === 'true' && (int)DB::selectOne('SELECT COUNT(*) AS total FROM users')->total > 0)
+            $this->fail('This PC is already set up. Sign in with your local account.', 403);
         $this->validate([
             'name'                  => 'required|string|min_length:2',
             'email'                 => 'required|email|unique:users,email',

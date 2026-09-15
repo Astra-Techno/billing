@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "build:offline": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File desktop/Build.ps1",
+    "test:offline": "node desktop/test-offline.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "node node_modules/@playwright/test/cli.js test",

@@ -2,7 +2,7 @@ import axios from 'axios'
 import { useAuthStore } from '../stores/auth'
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost/billing/api',
+  baseURL: window.__BILLING_DESKTOP__ ? '/api/' : (import.meta.env.VITE_API_URL || 'http://localhost/billing/api'),
   headers: {
     'Content-Type': 'application/json',
     'Cache-Control': 'no-cache, no-store, must-revalidate',

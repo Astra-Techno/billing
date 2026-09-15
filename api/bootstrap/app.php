@@ -14,7 +14,7 @@ $dbConfig  = require __DIR__ . '/../config/database.php';
 DB::connect($dbConfig);
 
 // ── Cache ─────────────────────────────────────────────────────────────────────
-Cache::init(__DIR__ . '/../storage/cache');
+Cache::init(($_ENV['STORAGE_PATH'] ?? (__DIR__ . '/../storage')) . '/cache');
 
 // ── Slim App ──────────────────────────────────────────────────────────────────
 $app = AppFactory::create();
@@ -42,7 +42,8 @@ $errorMiddleware = $app->addErrorMiddleware(
 
 // Custom JSON error handler
 $errorMiddleware->setDefaultErrorHandler(function ($request, \Throwable $e) use ($app) {
-    $status  = method_exists($e, 'getStatusCode') ? $e->getStatusCode() : 400;
+    $status  = method_exists($e, 'getStatusCode') ? $e->getStatusCode() : $e->getCode();
+    if ($status < 400 || $status > 599) $status = 500;
     $payload = ['success' => false, 'message' => $e->getMessage()];
 
     if (($_ENV['APP_DEBUG'] ?? 'false') === 'true') {

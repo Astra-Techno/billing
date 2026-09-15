@@ -42,6 +42,7 @@ const pageTitle = computed(() => {
   if (name.startsWith('Admin'))                       return 'Admin Panel'
   if (name === 'Reports')                             return 'Reports'
   if (name === 'Settings')                            return 'Settings'
+  if (name === 'OfflineBackups')                      return 'Backup & Restore'
   if (name === 'GstReturns')                          return 'GST Returns'
   if (name === 'Payroll' || name === 'PayrollRun')    return 'Payroll'
   return name

@@ -93,6 +93,12 @@ class InvoicePdfController
         $options->set('isRemoteEnabled', false);
         $options->set('defaultFont', 'DejaVu Sans');
         $options->set('isFontSubsettingEnabled', true);
+        if (($_ENV['DESKTOP_MODE'] ?? '') === 'true') {
+            $fontCache = $_ENV['STORAGE_PATH'] . '/cache/fonts';
+            if (!is_dir($fontCache)) mkdir($fontCache, 0700, true);
+            $options->set('fontCache', $fontCache);
+            $options->set('tempDir', $fontCache);
+        }
 
         $dompdf = new Dompdf($options);
         $dompdf->setPaper('A4', 'portrait');
@@ -170,7 +176,9 @@ class InvoicePdfController
     {
         $parsed = parse_url($logoUrl, PHP_URL_PATH);
         if (!$parsed) return null;
-        $filePath = dirname(__DIR__, 2) . $parsed;
+        $filePath = (($_ENV['DESKTOP_MODE'] ?? '') === 'true')
+            ? $_ENV['STORAGE_PATH'] . '/logos/' . basename($parsed)
+            : dirname(__DIR__, 2) . $parsed;
         if (!file_exists($filePath)) return null;
         $raw = @file_get_contents($filePath);
         if (!$raw) return null;

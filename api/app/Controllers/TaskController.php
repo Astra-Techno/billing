@@ -37,6 +37,8 @@ class TaskController
      */
     public function guest(Request $request, Response $response, array $args): Response
     {
+        if ($args['name'] !== 'Invite' || !in_array($args['method'] ?? '', ['check','accept'], true))
+            throw new \Exception('Guest task not allowed.', 403);
         return $this->action($request, $response, $args);
     }
 

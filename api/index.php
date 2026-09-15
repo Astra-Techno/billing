@@ -5,14 +5,16 @@ declare(strict_types=1);
 error_reporting(E_ALL);
 
 // Display errors directly in the browser
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
 
 require __DIR__ . '/vendor/autoload.php';
 
 // Load environment
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-$dotenv->load();
+if (($_ENV['DESKTOP_MODE'] ?? '') !== 'true') {
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+    $dotenv->load();
+}
 
 header('Cache-Control: no-cache, no-store, must-revalidate');
 header('Pragma: no-cache');

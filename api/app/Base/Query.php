@@ -230,7 +230,11 @@ class Query extends ClassObject
         foreach (array_unique($matches[1]) as $match) {
             $requestField = $this->getRequestField($match);
 
-            if ($requestField && array_key_exists($requestField, $request))
+            if ($match === 'business_id' && Auth::check())
+                $value = Auth::businessId();
+            elseif ($match === 'user_id' && Auth::check())
+                $value = Auth::id();
+            elseif ($requestField && array_key_exists($requestField, $request))
                 $value = $request[$requestField];
             elseif (array_key_exists($match, $input))
                 $value = $input[$match];

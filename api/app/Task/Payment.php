@@ -8,6 +8,7 @@ use App\Tables\Payment as PaymentTable;
 
 class Payment extends Task
 {
+    protected bool $useTransaction = true;
     // ── Record partial or full payment ────────────────────────────────────────
 
     public function record(array $input): array
@@ -26,7 +27,7 @@ class Payment extends Task
 
         // Load invoice
         $invoice = DB::selectOne(
-            "SELECT * FROM invoices WHERE id = ? AND business_id = ? AND deleted_at IS NULL LIMIT 1",
+            "SELECT * FROM invoices WHERE id = ? AND business_id = ? AND deleted_at IS NULL LIMIT 1 FOR UPDATE",
             [(int)$input['invoice_id'], $businessId]
         );
         if (!$invoice) $this->fail('Invoice not found.', 404);
@@ -88,14 +89,12 @@ class Payment extends Task
 
         $invoiceId = $payment->invoice_id;
         $amount    = (float)$payment->amount;
+        $invoice = DB::selectOne('SELECT total, status FROM invoices WHERE id = ? AND business_id = ? AND deleted_at IS NULL FOR UPDATE', [$invoiceId, $businessId]);
+        if (!$invoice) $this->fail('Invoice not found.', 404);
 
         DB::statement("DELETE FROM payments WHERE id = ?", [$payment->id]);
 
         // Recalculate invoice
-        $invoice = DB::selectOne(
-            "SELECT total FROM invoices WHERE id = ? AND deleted_at IS NULL LIMIT 1",
-            [$invoiceId]
-        );
         $totalPaid = (float)(DB::selectOne(
             "SELECT COALESCE(SUM(amount),0) AS paid FROM payments WHERE invoice_id = ?",
             [$invoiceId]

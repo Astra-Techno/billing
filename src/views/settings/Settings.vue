@@ -16,6 +16,7 @@ const { startTour, isTourSeen } = useTour('settings', [
 const bizStore  = useBusinessStore()
 const authStore = useAuthStore()
 const { can }   = useRole()
+const desktopMode = !!window.__BILLING_DESKTOP__
 
 const saving   = ref(false)
 const loading  = ref(true)
@@ -31,7 +32,7 @@ const tabs = [
   { key: 'bank',      label: 'Payment Info', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
   { key: 'invoice',   label: 'Bill Settings',icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
   { key: 'tax_rates', label: 'Tax Rates',    icon: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z' },
-  ...(can('team') ? [{ key: 'team', label: 'Team', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' }] : []),
+  ...(can('team') && !window.__BILLING_DESKTOP__ ? [{ key: 'team', label: 'Team', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' }] : []),
   { key: 'profile',   label: 'My Profile',   icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
   { key: 'password',  label: 'Password',     icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
 ]
@@ -489,7 +490,7 @@ async function changePassword() {
   if (pwForm.value.password !== pwForm.value.password_confirmation) return (pwError.value = 'New passwords do not match.')
   pwSaving.value = true
   try {
-    await task('User', 'changePassword', pwForm.value)
+    await task('Auth', 'changePassword', pwForm.value)
     pwSuccess.value = 'Password changed successfully.'
     pwForm.value = { current_password: '', password: '', password_confirmation: '' }
   } catch (e) {
@@ -567,7 +568,7 @@ async function saveInvoice() {
     <template v-if="!loading && activeTab === 'business'">
 
       <!-- Digital Business Card Banner -->
-      <div v-if="bizSlug" class="bg-white border border-gray-200 rounded-xl p-4 shadow-soft mb-5">
+      <div v-if="bizSlug && !desktopMode" class="bg-white border border-gray-200 rounded-xl p-4 shadow-soft mb-5">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background: linear-gradient(135deg, #6366f1, #4f46e5);">
             <svg class="w-4.5 h-4.5 text-white" style="width:18px;height:18px" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">

@@ -7,6 +7,7 @@ import AppLogo from '../../components/AppLogo.vue'
 
 const router = useRouter()
 const auth   = useAuthStore()
+const desktopMode = !!window.__BILLING_DESKTOP__
 
 const step     = ref(1)
 const error    = ref('')
@@ -72,7 +73,7 @@ async function submit() {
         <AppLogo size="lg" />
       </div>
       <p class="text-primary-200 text-sm mt-2 text-center leading-relaxed max-w-xs">
-        Free for 30 days · No credit card needed
+        {{ desktopMode ? 'Set up your business on this PC · Works without internet' : 'Free for 30 days · No credit card needed' }}
       </p>
 
       <!-- Step indicator -->
@@ -117,7 +118,7 @@ async function submit() {
             <AppLogo size="sm" />
           </div>
           <div class="mb-4">
-            <h2 class="text-xl font-bold text-gray-900">Create your account</h2>
+            <h2 class="text-xl font-bold text-gray-900">{{ desktopMode ? 'Set up your local account' : 'Create your account' }}</h2>
             <p class="text-sm text-gray-400 mt-0.5">Enter your personal details to get started</p>
           </div>
 
@@ -248,7 +249,7 @@ async function submit() {
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
             </svg>
-            {{ loading ? 'Creating account…' : 'Create Free Account' }}
+            {{ loading ? 'Creating account…' : desktopMode ? 'Set Up This PC' : 'Create Free Account' }}
           </button>
         </form>
 
@@ -269,7 +270,7 @@ async function submit() {
         </button>
         <button v-else type="submit" form="register-step2" :disabled="loading"
           class="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-primary-600 text-white font-semibold text-base shadow-lg disabled:opacity-60">
-          {{ loading ? 'Creating account…' : 'Create Free Account' }}
+          {{ loading ? 'Creating account…' : desktopMode ? 'Set Up This PC' : 'Create Free Account' }}
         </button>
         <p class="text-sm text-center text-gray-400 mt-3">
           Already have an account?

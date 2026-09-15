@@ -19,6 +19,8 @@ class Business extends Task
 
     public function setup(array $input): array
     {
+        if (($_ENV['DESKTOP_MODE'] ?? '') === 'true' && (int)DB::selectOne('SELECT COUNT(*) AS total FROM businesses')->total > 0)
+            $this->fail('The offline edition supports one business on this PC.', 403);
         $this->validate([
             'name'          => 'required|string|min_length:2',
             'business_type' => 'required|in:proprietorship,partnership,llp,private_ltd,public_ltd,trust,society,other',
@@ -62,11 +64,11 @@ class Business extends Task
         Subscription::create([
             'business_id'          => $business->id,
             'plan_id'              => $freePlan ? $freePlan->id : 1,
-            'status'               => 'trialing',
+            'status'               => (($_ENV['DESKTOP_MODE'] ?? '') === 'true') ? 'active' : 'trialing',
             'billing_cycle'        => 'monthly',
-            'trial_ends_at'        => date('Y-m-d', strtotime('+30 days')),
+            'trial_ends_at'        => (($_ENV['DESKTOP_MODE'] ?? '') === 'true') ? null : date('Y-m-d', strtotime('+30 days')),
             'current_period_start' => date('Y-m-d'),
-            'current_period_end'   => date('Y-m-d', strtotime('+30 days')),
+            'current_period_end'   => (($_ENV['DESKTOP_MODE'] ?? '') === 'true') ? null : date('Y-m-d', strtotime('+30 days')),
         ]);
 
         // Seed default GST tax rates
@@ -137,20 +139,20 @@ class Business extends Task
         $raw     = base64_decode($m[3]);
         if (!$raw || strlen($raw) > 2 * 1024 * 1024) $this->fail('Image too large. Max 2 MB.');
 
-        $logoDir = dirname(__DIR__, 2) . '/storage/logos';
+        $logoDir = ($_ENV['STORAGE_PATH'] ?? (dirname(__DIR__, 2) . '/storage')) . '/logos';
         if (!is_dir($logoDir)) mkdir($logoDir, 0755, true);
 
         // Delete old logo file if exists
         $business = BusinessTable::findOrFail($businessId);
         if ($business->logo && str_contains($business->logo, '/storage/logos/')) {
-            $old = dirname(__DIR__, 2) . parse_url($business->logo, PHP_URL_PATH);
+            $old = $logoDir . '/' . basename(parse_url($business->logo, PHP_URL_PATH));
             if (file_exists($old)) @unlink($old);
         }
 
         $filename = 'biz_' . $businessId . '_' . time() . '.' . $ext;
         file_put_contents($logoDir . '/' . $filename, $raw);
 
-        $url = rtrim($_ENV['APP_URL'] ?? '', '/') . '/storage/logos/' . $filename;
+        $url = (($_ENV['DESKTOP_MODE'] ?? '') === 'true' ? '/api' : rtrim($_ENV['APP_URL'] ?? '', '/')) . '/storage/logos/' . $filename;
         $business->fill(['logo' => $url]);
         $business->save();
 
@@ -166,7 +168,7 @@ class Business extends Task
 
         $business = BusinessTable::findOrFail($businessId);
         if ($business->logo && str_contains($business->logo, '/storage/logos/')) {
-            $old = dirname(__DIR__, 2) . parse_url($business->logo, PHP_URL_PATH);
+            $old = ($_ENV['STORAGE_PATH'] ?? (dirname(__DIR__, 2) . '/storage')) . '/logos/' . basename(parse_url($business->logo, PHP_URL_PATH));
             if (file_exists($old)) @unlink($old);
         }
         $business->fill(['logo' => null]);

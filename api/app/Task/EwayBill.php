@@ -16,6 +16,7 @@ class EwayBill extends Task
 
     public function create(array $input): array
     {
+        if (($_ENV['DESKTOP_MODE'] ?? '') === 'true') $this->fail('Live E-way Bill generation requires the online edition.', 403);
         $this->validate([
             'invoice_id' => 'required|integer',
             'mode'       => 'required|string',

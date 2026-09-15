@@ -88,6 +88,7 @@ const routes = [
       { path: 'gst-returns',      name: 'GstReturns',   component: () => import('../views/gst/GstReturns.vue'), meta: { permission: 'gst' } },
       { path: 'reports',          name: 'Reports',      component: () => import('../views/reports/Reports.vue'), meta: { permission: 'reports' } },
       { path: 'settings',         name: 'Settings',     component: () => import('../views/settings/Settings.vue'), meta: { permission: 'settings' } },
+      { path: 'offline-backups', name: 'OfflineBackups', component: () => import('../views/settings/OfflineBackups.vue'), meta: { permission: 'settings', desktop: true } },
       { path: 'help',             name: 'Help',         component: () => import('../views/help/Help.vue') },
       { path: 'more',             name: 'More',         component: () => import('../views/more/More.vue') },
 
@@ -135,8 +136,14 @@ const router = createRouter({
 })
 
 // Guards
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore()
+  if (to.meta.desktop && !window.__BILLING_DESKTOP__) return { name: 'Dashboard' }
+  if (window.__BILLING_DESKTOP__ && !auth.isLoggedIn && !['Register', 'Login'].includes(to.name)) {
+    const response = await fetch('/desktop-info')
+    if (!response.ok) throw new Error('Local billing service unavailable.')
+    if ((await response.json()).needs_setup) return { name: 'Register' }
+  }
   if (to.meta.auth  && !auth.isLoggedIn)                           return { name: 'Login' }
   if (to.meta.guest && auth.isLoggedIn)                            return auth.isSuperAdmin && !auth.businessId ? { name: 'AdminDashboard' } : { name: 'Dashboard' }
   if (to.meta.superAdmin && !auth.isSuperAdmin)                    return { name: 'Dashboard' }

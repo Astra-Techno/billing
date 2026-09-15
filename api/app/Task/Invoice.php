@@ -80,7 +80,7 @@ class Invoice extends Task
         }
 
         // Save line items
-        $this->saveItems((int)$invoice->id, $input['items'], $supplyType);
+        $this->saveItems((int)$invoice->id, $input['items'], $supplyType, $totals['subtotal']);
 
         // Track usage
         $this->trackUsage($businessId, 'invoices_created');
@@ -143,7 +143,7 @@ class Invoice extends Task
 
         // Replace items
         DB::statement("DELETE FROM invoice_items WHERE invoice_id = ?", [$invoice->id]);
-        $this->saveItems((int)$invoice->id, $input['items'], $supplyType);
+        $this->saveItems((int)$invoice->id, $input['items'], $supplyType, $totals['subtotal']);
 
         return $this->success(['invoice_id' => $invoice->id], 'Invoice updated.');
     }
@@ -157,8 +157,8 @@ class Invoice extends Task
         $businessId = $this->requireBusiness();
         $invoice    = $this->findInvoice((int)$input['id'], $businessId);
 
-        if ($invoice->status === 'cancelled')
-            $this->fail('Cannot send a cancelled invoice.');
+        if (in_array($invoice->status, ['cancelled','paid'], true))
+            $this->fail('Cannot send a cancelled or fully paid invoice.');
 
         DB::statement(
             "UPDATE invoices SET status = 'sent', sent_at = NOW() WHERE id = ?",
@@ -522,6 +522,9 @@ class Invoice extends Task
 
     private function findInvoice(int $id, int $businessId): object
     {
+        if (DB::getPdo()->inTransaction()) {
+            DB::selectOne('SELECT id FROM invoices WHERE id = ? AND business_id = ? FOR UPDATE', [$id, $businessId]);
+        }
         $invoice = InvoiceTable::find($id);
         if (!$invoice || (int)$invoice->business_id !== $businessId)
             $this->fail('Invoice not found.', 404);
@@ -536,7 +539,8 @@ class Invoice extends Task
         foreach ($items as $i => $item) {
             if (empty($item['description'])) $this->fail("Item " . ($i + 1) . ": description is required.");
             if (!isset($item['quantity']) || (float)$item['quantity'] <= 0) $this->fail("Item " . ($i + 1) . ": quantity must be > 0.");
-            if (!isset($item['unit_price'])) $this->fail("Item " . ($i + 1) . ": unit price is required.");
+            if (!isset($item['unit_price']) || !is_numeric($item['unit_price']) || (float)$item['unit_price'] < 0)
+                $this->fail("Item " . ($i + 1) . ": unit price must be zero or greater.");
         }
     }
 
@@ -570,6 +574,8 @@ class Invoice extends Task
      */
     private function calculateTotals(array $items, string $supplyType, string $discountType = 'percent', float $discountValue = 0): array
     {
+        if (!in_array($discountType, ['percent','amount'], true) || $discountValue < 0 || !is_finite($discountValue))
+            $this->fail('Invalid invoice discount.', 422);
         $grossSubtotal = 0;
         $cgstTotal  = 0;
         $sgstTotal  = 0;
@@ -592,14 +598,17 @@ class Invoice extends Task
 
         $subtotal = round($grossSubtotal - $discount, 2);
 
-        // Second pass: compute tax proportionally on discounted subtotal
-        foreach ($items as $item) {
+        // Allocate taxable values identically to saved items, including the final cent remainder.
+        $allocated = 0;
+        foreach ($items as $index => $item) {
             $qty     = (float)($item['quantity']   ?? 1);
             $price   = (float)($item['unit_price'] ?? 0);
             $gstRate = (float)($item['gst_rate']   ?? 0);
             $lineGross = $qty * $price;
             $ratio     = $grossSubtotal > 0 ? $lineGross / $grossSubtotal : 0;
-            $taxable   = $subtotal * $ratio;
+            $taxable = round($subtotal * $ratio, 2);
+            if ($index === array_key_last($items)) $taxable = round($subtotal - $allocated, 2);
+            $allocated += $taxable;
 
             if ($supplyType === 'intra') {
                 $cgstAmt   = round($taxable * ($gstRate / 2 / 100), 2);
@@ -627,15 +636,19 @@ class Invoice extends Task
         ];
     }
 
-    private function saveItems(int $invoiceId, array $items, string $supplyType): void
+    private function saveItems(int $invoiceId, array $items, string $supplyType, float $discountedSubtotal): void
     {
+        $gross = array_sum(array_map(fn($item)=>(float)$item['quantity'] * (float)$item['unit_price'], $items));
+        $allocated = 0;
         foreach ($items as $i => $item) {
             $qty     = (float)($item['quantity']    ?? 1);
             $price   = (float)($item['unit_price']  ?? 0);
             $gstRate = (float)($item['gst_rate']    ?? 0);
 
             $lineTotal  = $qty * $price;
-            $taxable    = $lineTotal;
+            $taxable = round($gross > 0 ? $discountedSubtotal * $lineTotal / $gross : 0, 2);
+            if ($i === array_key_last($items)) $taxable = round($discountedSubtotal - $allocated, 2);
+            $allocated += $taxable;
 
             $cgstRate = $sgstRate = $igstRate = $utgstRate = 0.0;
             $cgstAmt  = $sgstAmt  = $igstAmt  = $utgstAmt  = 0.0;
@@ -660,7 +673,7 @@ class Invoice extends Task
                 'quantity'     => $qty,
                 'unit_price'   => $price,
                 'discount_pct' => 0,
-                'discount_amt' => 0,
+                'discount_amt' => round($lineTotal - $taxable, 2),
                 'taxable_amt'  => $taxable,
                 'gst_rate'     => $gstRate,
                 'cgst_rate'    => $cgstRate,

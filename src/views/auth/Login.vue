@@ -7,6 +7,7 @@ import { APP_NAME, APP_TAGLINE } from '../../config/brand'
 
 const router = useRouter()
 const auth   = useAuthStore()
+const desktopMode = !!window.__BILLING_DESKTOP__
 
 const form     = ref({ email: '', password: '' })
 const error    = ref('')
@@ -21,7 +22,7 @@ async function submit() {
     router.push(auth.isSuperAdmin && !auth.businessId ? '/admin' : '/')
   } catch (e) {
     if (!e.response) {
-      error.value = 'Cannot reach server. Check your internet connection and try again.'
+      error.value = window.__BILLING_DESKTOP__ ? 'Cannot reach the local billing service. Close and reopen AI Billing Offline.' : 'Cannot reach server. Check your internet connection and try again.'
     } else {
       error.value = e.response?.data?.message || 'Login failed. Please try again.'
     }
@@ -122,8 +123,9 @@ const features = [
           </form>
 
           <p class="text-sm md:text-[15px] text-center text-gray-400 mt-6 md:mt-8 hidden md:block">
-            New business?
-            <RouterLink to="/register" class="text-primary-600 font-semibold hover:underline">Create free account</RouterLink>
+            <span v-if="!desktopMode">New business? </span>
+            <RouterLink v-if="!desktopMode" to="/register" class="text-primary-600 font-semibold hover:underline">Create free account</RouterLink>
+            <span v-else>Use the account set up on this PC. <RouterLink to="/register" class="text-primary-600 font-semibold hover:underline">Set up this PC</RouterLink></span>
           </p>
         </div>
       </div>
@@ -140,8 +142,9 @@ const features = [
           {{ loading ? 'Signing in…' : 'Sign In' }}
         </button>
         <p class="text-sm text-center text-gray-400 mt-3">
-          New business?
-          <RouterLink to="/register" class="text-primary-600 font-semibold">Create free account</RouterLink>
+          <span v-if="!desktopMode">New business? </span>
+          <RouterLink v-if="!desktopMode" to="/register" class="text-primary-600 font-semibold">Create free account</RouterLink>
+          <span v-else>Use your local account. <RouterLink to="/register" class="text-primary-600 font-semibold">Set up this PC</RouterLink></span>
         </p>
       </div>
     </div>

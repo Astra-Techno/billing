@@ -39,3 +39,7 @@ api/storage/
 # Test results
 test-results/
 playwright-report/
+desktop/runtime/
+desktop/web/
+desktop/.test-data*/
+api/.phpunit.result.cache
