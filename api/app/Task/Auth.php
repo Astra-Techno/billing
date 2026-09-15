@@ -124,6 +124,14 @@ class Auth extends Task
                     'email'  => $user->email,
                     'mobile' => $user->mobile,
                 ],
+                'businesses'  => [[
+                    'id'          => $businessId,
+                    'name'        => $bizResult['data']['name'],
+                    'slug'        => $bizResult['data']['slug'],
+                    'logo'        => null,
+                    'role'        => 'owner',
+                    'permissions' => null,
+                ]],
                 'business_id' => $businessId,
             ], 'Welcome! Your account and business have been created.');
         });
