@@ -20,13 +20,15 @@ export const useAuthStore = defineStore('auth', () => {
   // Role of current user in the active business
   const role = computed(() => {
     const biz = businesses.value?.find(b => String(b.id) === String(businessId.value))
-    return biz?.role || 'staff'
+    // The offline edition is single-PC/single-owner. Older desktop sessions created
+    // before roles were returned by registration must not become restricted staff.
+    return biz?.role || (window.__BILLING_DESKTOP__ && businessId.value ? 'owner' : 'staff')
   })
 
   // Custom permissions for current business (null = use role defaults)
   const permissions = computed(() => {
     const biz = businesses.value?.find(b => String(b.id) === String(businessId.value))
-    return biz?.permissions || null
+    return window.__BILLING_DESKTOP__ ? null : (biz?.permissions || null)
   })
 
   function setSession(data) {

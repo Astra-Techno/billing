@@ -58,6 +58,7 @@ export const useBusinessStore = defineStore('business', () => {
   }
 
   function isEnabled(key) {
+    if (window.__BILLING_DESKTOP__) return true
     return features.value[key] !== false
   }
 

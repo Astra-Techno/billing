@@ -39,13 +39,13 @@ public static class AIBillingWindow {
 }
 '@
             }
-            [AIBillingWindow]::ShowWindow($existing.MainWindowHandle, 9) | Out-Null
+            [AIBillingWindow]::ShowWindow($existing.MainWindowHandle, 3) | Out-Null
             [AIBillingWindow]::SetForegroundWindow($existing.MainWindowHandle) | Out-Null
             return
         }
     }
     $engine = Find-DesktopEngine
-    Start-Process -FilePath $engine -ArgumentList @("--app=$url", "--user-data-dir=`"$appProfile`"", '--no-first-run', '--no-default-browser-check', '--disable-background-mode') | Out-Null
+    Start-Process -FilePath $engine -ArgumentList @("--app=$url", "--user-data-dir=`"$appProfile`"", '--start-maximized', '--no-first-run', '--no-default-browser-check', '--disable-background-mode') | Out-Null
 }
 function Get-DesktopProcesses {
     @(Get-CimInstance Win32_Process -Filter "Name='msedge.exe'" | Where-Object { $_.CommandLine -and $_.CommandLine.Contains($appProfile) -and $_.CommandLine -notmatch '--type=' })
@@ -139,6 +139,13 @@ try {
             Start-Sleep -Milliseconds 500
         }
         if (!$opened) { throw 'Could not open the AI Billing desktop window.' }
+        # Edge may create the app window after processing --start-maximized; maximize the
+        # actual top-level window once its native handle is ready.
+        for ($i=0; $i -lt 20; $i++) {
+            $window = Get-DesktopProcesses | ForEach-Object { Get-Process -Id $_.ProcessId -ErrorAction SilentlyContinue } | Where-Object MainWindowHandle -ne 0 | Select-Object -First 1
+            if ($window) { Open-DesktopWindow; break }
+            Start-Sleep -Milliseconds 250
+        }
         # A separate profile keeps the app independent of ordinary browser windows.
         while (@(Get-DesktopProcesses).Count -gt 0) {
             if ($webProcess.HasExited -or $dbProcess.HasExited) { throw 'A local service stopped. Close and reopen AI Billing Offline.' }
