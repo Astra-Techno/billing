@@ -49,6 +49,8 @@ async function login() {
 }
 try {
   await waitReady()
+  const migrationCheck = await promisify(execFile)(phpRoot + '/php.exe', ['-c',path.join(app,'php.ini'),'-d',`extension_dir=${path.join(phpRoot,'ext')}`,path.resolve('desktop/test-cloud-migration.php'),home])
+  assert.match(migrationCheck.stdout, /desktop exclusion verified/)
   assert.equal((await (await fetch(base+'/desktop-info')).json()).needs_setup, true)
   browser = await chromium.launch({ headless: true })
   const context = await browser.newContext()

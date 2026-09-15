@@ -41,8 +41,9 @@ try {
         if ($pending && in_array('001_initial_schema.sql', $applied, true)) DesktopBackup::create('before-update');
         foreach ($pending as $file) {
             $name = basename($file);
-            // A desktop install must never contain the shared, seeded platform administrator.
-            if ($name !== '010_seed_super_admin.sql') $pdo->exec(file_get_contents($file));
+            // Cloud platform data and its administrator never belong in a customer database.
+            $cloudOnly = str_contains($name, '_cloud_') || str_starts_with($name, 'cloud_');
+            if ($name !== '010_seed_super_admin.sql' && !$cloudOnly) $pdo->exec(file_get_contents($file));
             $pdo->prepare('INSERT INTO _migrations (filename) VALUES (?)')->execute([$name]);
         }
         DesktopBackup::daily();

@@ -3,6 +3,8 @@
 The production activation and super-admin management design is documented in
 [`LICENSING-ADMIN-PLAN.md`](LICENSING-ADMIN-PLAN.md). It requires cloud-side key
 configuration and a compiled Windows host before licence enforcement is enabled.
+Migration files containing `_cloud_` in their filename are recorded but not executed
+by the desktop migration runner, so platform licensing tables remain cloud-only.
 
 The Windows edition runs the existing Vue/PHP/MySQL application on a single PC. It opens from a desktop shortcut in a dedicated Microsoft Edge app-mode window, without browser tabs or an address bar. Microsoft Edge must be installed (included with standard Windows 10/11 installations). A separate app profile keeps it independent of normal browser windows. Node, Laragon and internet access are not required at runtime. Supported target: Windows 10/11 x64 with Windows PowerShell 5.1 and .NET Framework 4.x. Microsoft's signed Visual C++ x64 prerequisite installer is bundled and installed when needed, which may display Windows administrator approval (UAC).
 
