@@ -6,11 +6,13 @@ use App\Controllers\TaskController;
 use App\Controllers\EntityController;
 use App\Controllers\InvoicePdfController;
 use App\Middleware\AuthMiddleware;
+use App\Middleware\DesktopLicenseMiddleware;
 
 // ── Guest routes ───────────────────────────────────────────────────────────────
 
 $app->post('/login',    [AuthController::class, 'login']);
 $app->post('/register', [AuthController::class, 'register']);
+$app->post('/desktop-license/{method:publicKey|request|status|refresh}', [TaskController::class, 'desktopLicense']);
 
 // One-time migration endpoint (public, idempotent)
 $app->get('/run-migrate', function ($request, $response) {
@@ -124,4 +126,4 @@ $app->group('', function ($group) {
         return $response->withHeader('Content-Type', 'application/json');
     });
 
-})->add(new AuthMiddleware());
+})->add(new DesktopLicenseMiddleware())->add(new AuthMiddleware());

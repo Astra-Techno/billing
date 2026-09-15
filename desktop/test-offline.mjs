@@ -1,8 +1,9 @@
 import { spawn, execFile } from 'node:child_process'
-import { mkdir, readFile, writeFile, unlink } from 'node:fs/promises'
+import { mkdir, readFile, writeFile, unlink, copyFile } from 'node:fs/promises'
 import { promisify } from 'node:util'
 import path from 'node:path'
 import assert from 'node:assert/strict'
+import { generateKeyPairSync, sign } from 'node:crypto'
 import { chromium } from '@playwright/test'
 
 const home = path.resolve(`desktop/.test-data-${Date.now()}/PC Data`)
@@ -11,6 +12,16 @@ const app = path.resolve(process.env.BILLING_OFFLINE_PACKAGE ? path.join(process
 const phpRoot = process.env.BILLING_OFFLINE_PACKAGE ? path.join(app,'runtime/php') : 'C:/laragon1/bin/php/php-8.3.16-Win32-vs16-x64'
 const mysqlRoot = process.env.BILLING_OFFLINE_PACKAGE ? path.join(app,'runtime/mysql') : 'C:/laragon1/bin/mysql/mysql-8.4.3-winx64'
 await mkdir(home, { recursive: true })
+const { publicKey, privateKey } = generateKeyPairSync('rsa',{modulusLength:3072})
+const jwk = publicKey.export({format:'jwk'})
+const toB64 = value => Buffer.from(value.replace(/-/g,'+').replace(/_/g,'/') + '='.repeat((4-value.length%4)%4),'base64').toString('base64')
+const testPublicKey = `<RSAKeyValue><Modulus>${toB64(jwk.n)}</Modulus><Exponent>${toB64(jwk.e)}</Exponent></RSAKeyValue>`
+const keyFile = path.join(home,'test-public-key.xml'), testHost = path.join(home,'LicenseHost.exe'), appHost = path.join(app,'LicenseHost.exe')
+await writeFile(keyFile,testPublicKey)
+await promisify(execFile)(`${process.env.WINDIR}/Microsoft.NET/Framework64/v4.0.30319/csc.exe`,['/nologo','/target:exe','/platform:x64',`/out:${testHost}`,'/reference:System.Management.dll','/reference:System.Security.dll','/reference:System.Web.Extensions.dll',`/resource:${keyFile},license-public-key.xml`,path.resolve('desktop/LicenseHost.cs')])
+let originalHost = null
+try { originalHost = await readFile(appHost) } catch {}
+await copyFile(testHost,appHost)
 let launcher, output = ''
 function start() {
   launcher = spawn('powershell.exe', ['-NoProfile','-ExecutionPolicy','Bypass','-File',path.join(app,'Launch.ps1'),'-Headless','-DataRoot',home,'-AppPort','19765','-DatabasePort','19766','-PhpRoot',phpRoot,'-MysqlRoot',mysqlRoot], { stdio: ['ignore','pipe','pipe'] })
@@ -47,9 +58,18 @@ async function login() {
   const session = (await (await request('login', credentials)).json()).data
   token = session.token; businessId = session.business_id; return session
 }
+async function installTestLicense() {
+  const device = JSON.parse((await promisify(execFile)(appHost,['device'])).stdout)
+  const claims = {license_id:'offline-integration-test',device_id:device.device_id,customer:{email:credentials.email},company:{name:'Offline Test Shop'},edition:'offline-single-pc',status:'active',issued_at:Math.floor(Date.now()/1000),expires_at:null,max_version:null}
+  const payload = Buffer.from(JSON.stringify(claims)), signature = sign('sha256',payload,privateKey)
+  const document = JSON.stringify({payload:payload.toString('base64url'),signature:signature.toString('base64url')})
+  const responseFile=path.join(home,'test-license-response.json')
+  await writeFile(responseFile,JSON.stringify({data:{license_id:claims.license_id,license_document:document,public_key:testPublicKey}}))
+  await promisify(execFile)(appHost,['install',responseFile,home])
+}
 try {
   await waitReady()
-  const migrationCheck = await promisify(execFile)(phpRoot + '/php.exe', ['-c',path.join(app,'php.ini'),'-d',`extension_dir=${path.join(phpRoot,'ext')}`,path.resolve('desktop/test-cloud-migration.php'),home])
+  const migrationCheck = await promisify(execFile)(phpRoot + '/php.exe', ['-c',path.join(app,'php.ini'),'-d',`extension_dir=${path.join(phpRoot,'ext')}`,path.resolve('desktop/test-cloud-migration.php'),home], { env:{...process.env,OPENSSL_CONF:path.join(phpRoot,'extras/ssl/openssl.cnf')} })
   assert.match(migrationCheck.stdout, /desktop exclusion verified/)
   assert.equal((await (await fetch(base+'/desktop-info')).json()).needs_setup, true)
   browser = await chromium.launch({ headless: true })
@@ -65,6 +85,8 @@ try {
   await page.waitForURL('**/register')
   const session = (await (await request('register', { ...credentials, password_confirmation:credentials.password, name:'Offline Owner', mobile:'9876543210', business_name:'Offline Test Shop', business_type:'proprietorship', state_id:26 })).json()).data
   token = session.token; businessId = session.business_id
+  await request('all/Client',undefined,402)
+  await installTestLicense()
   await page.getByRole('link',{name:'Sign in',exact:true}).click()
   await page.waitForURL('**/login')
   await page.locator('input[type=email]').fill(credentials.email)
@@ -141,4 +163,5 @@ try {
 } finally {
   await browser?.close()
   await stop()
+  if (originalHost) await writeFile(appHost,originalHost); else await unlink(appHost).catch(()=>{})
 }

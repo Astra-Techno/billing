@@ -28,7 +28,14 @@ async function checkBackup() {
 onUnmounted(() => clearInterval(backupTimer))
 
 onMounted(() => {
-  if (desktopMode) { checkBackup(); backupTimer = setInterval(checkBackup, 60000) }
+  if (desktopMode) {
+    checkBackup(); backupTimer = setInterval(checkBackup, 60000)
+    const last = Number(localStorage.getItem('desktop_license_refresh') || 0)
+    if (Date.now() - last > 86400000) task('DesktopLicense', 'localRefresh').then(({ data }) => {
+      localStorage.setItem('desktop_license_refresh', String(Date.now()))
+      if (!data.data?.active) location.assign('/activation')
+    }).catch(() => {})
+  }
   bizStore.ensureLoaded()
 
   if (localStorage.getItem('darkMode') === 'true') {

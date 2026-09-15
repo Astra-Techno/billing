@@ -77,6 +77,14 @@ function fmt(val, currency = false) {
 
       <!-- Quick nav -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <RouterLink to="/admin/desktop-licenses"
+          class="bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-3 hover:border-indigo-200 hover:bg-indigo-50/30 transition-colors group">
+          <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12l2 2 4-4m5 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <div><p class="text-sm font-semibold text-gray-800">Desktop Licences</p><p class="text-xs text-gray-400">Approve, suspend and revoke offline PCs</p></div>
+          <svg class="w-4 h-4 text-gray-300 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </RouterLink>
         <RouterLink to="/admin/businesses"
           class="bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-3 hover:border-blue-200 hover:bg-blue-50/30 transition-colors group">
           <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200 transition-colors">

@@ -55,7 +55,7 @@ async function submit() {
   loading.value = true
   try {
     await auth.register(form.value)
-    router.push('/')
+    router.push(desktopMode ? '/activation' : '/')
   } catch (e) {
     error.value = e.response?.data?.message || 'Registration failed. Please try again.'
   } finally {

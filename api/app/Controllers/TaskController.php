@@ -9,6 +9,11 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 class TaskController
 {
+    public function desktopLicense(Request $request, Response $response, array $args): Response
+    {
+        $args['name'] = 'DesktopLicense';
+        return $this->guest($request, $response, $args);
+    }
     /**
      * POST /api/task/{name}/{method}[/{param}]
      *
@@ -37,7 +42,9 @@ class TaskController
      */
     public function guest(Request $request, Response $response, array $args): Response
     {
-        if ($args['name'] !== 'Invite' || !in_array($args['method'] ?? '', ['check','accept'], true))
+        $allowed = ($args['name'] === 'Invite' && in_array($args['method'] ?? '', ['check','accept'], true))
+            || ($args['name'] === 'DesktopLicense' && in_array($args['method'] ?? '', ['publicKey','request','status','refresh'], true));
+        if (!$allowed)
             throw new \Exception('Guest task not allowed.', 403);
         return $this->action($request, $response, $args);
     }

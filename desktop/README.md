@@ -1,10 +1,24 @@
 # AI Billing Offline for Windows
 
-The production activation and super-admin management design is documented in
-[`LICENSING-ADMIN-PLAN.md`](LICENSING-ADMIN-PLAN.md). It requires cloud-side key
-configuration and a compiled Windows host before licence enforcement is enabled.
-Migration files containing `_cloud_` in their filename are recorded but not executed
-by the desktop migration runner, so platform licensing tables remain cloud-only.
+The desktop edition uses cloud-managed, single-PC activation. After local account and
+business registration, it submits the registered user, company and a hashed PC
+fingerprint to `billing.cloudkart24.com`. A super administrator approves the request
+from **Admin > Desktop Licences**. The signed licence then installs automatically; no
+activation key is displayed or typed. An internet connection is needed for the initial
+request and approval. Billing continues offline after activation.
+
+The licence is signed by the cloud service and stored with Windows DPAPI protection for
+the current Windows user. Protected API routes also verify the licence against the PC
+fingerprint. When internet is available, the application checks cloud status once per
+day so suspension, revocation and reactivation can reach the PC. No local protection can
+be completely tamper-proof against a determined Windows administrator, so production
+installers should also be Authenticode-signed and the server signing key must remain only
+on the cloud host. The architecture is documented in
+[`LICENSING-ADMIN-PLAN.md`](LICENSING-ADMIN-PLAN.md).
+
+Migration files containing `_cloud_` in their filename are recorded but not executed by
+the desktop migration runner, so activation requests, licences and audit events remain
+cloud-only.
 
 The Windows edition runs the existing Vue/PHP/MySQL application on a single PC. It opens from a desktop shortcut in a dedicated Microsoft Edge app-mode window, without browser tabs or an address bar. Microsoft Edge must be installed (included with standard Windows 10/11 installations). A separate app profile keeps it independent of normal browser windows. Node, Laragon and internet access are not required at runtime. Supported target: Windows 10/11 x64 with Windows PowerShell 5.1 and .NET Framework 4.x. Microsoft's signed Visual C++ x64 prerequisite installer is bundled and installed when needed, which may display Windows administrator approval (UAC).
 
@@ -14,7 +28,14 @@ From the repository, run `powershell.exe -NoProfile -ExecutionPolicy Bypass -Fil
 
 Run Setup and open the AI Billing Offline desktop shortcut. Setup installs a new version directory under `%LOCALAPPDATA%\Programs\AI Billing Offline`; it does not overwrite running versions or customer data. The launcher starts an isolated MySQL instance and a loopback-only PHP server, opens the billing desktop window. Closing the billing window stops services, including a graceful database shutdown. Opening the shortcut again while running returns to the same app profile. Reopen the shortcut to recover after a PC restart.
 
-First launch initializes an empty local database and shows business/account setup. No demo records or default administrator account are installed. Subsequent launches show local login. The Sign in link also works before setup; online account credentials are separate from the account created on this PC. One business is supported. Remember the local account password; restore uses the credentials contained in the selected backup.
+First launch initializes an empty local database and shows business/account setup. After
+setup it opens the activation page inside the desktop window. Keep the app open while a
+super administrator approves the PC; it polls securely and installs the licence without
+revealing it. No demo records or default administrator account are installed. Subsequent
+launches show local login. The Sign in link also works before setup; online account
+credentials are separate from the account created on this PC. One business is supported.
+Remember the local account password; restore uses the credentials contained in the
+selected backup.
 
 ## Data and backups
 

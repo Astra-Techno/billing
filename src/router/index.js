@@ -6,6 +6,7 @@ const routes = [
   // Auth
   { path: '/login',    name: 'Login',    component: () => import('../views/auth/Login.vue'),    meta: { guest: true } },
   { path: '/register', name: 'Register', component: () => import('../views/auth/Register.vue'), meta: { guest: true } },
+  { path: '/activation', name: 'Activation', component: () => import('../views/auth/Activation.vue'), meta: { auth: true, desktop: true } },
 
   // App (authenticated)
   {
@@ -96,6 +97,7 @@ const routes = [
       { path: 'admin',           name: 'AdminDashboard',  component: () => import('../views/admin/AdminDashboard.vue'),  meta: { superAdmin: true } },
       { path: 'admin/businesses',name: 'AdminBusinesses', component: () => import('../views/admin/AdminBusinesses.vue'), meta: { superAdmin: true } },
       { path: 'admin/users',     name: 'AdminUsers',      component: () => import('../views/admin/AdminUsers.vue'),      meta: { superAdmin: true } },
+      { path: 'admin/desktop-licenses', name: 'AdminDesktopLicenses', component: () => import('../views/admin/AdminDesktopLicenses.vue'), meta: { superAdmin: true } },
     ],
   },
 
@@ -149,6 +151,11 @@ router.beforeEach(async (to) => {
   if (to.meta.superAdmin && !auth.isSuperAdmin)                    return { name: 'Dashboard' }
   // Super admin with no business trying to access regular pages → send to admin
   if (auth.isSuperAdmin && !auth.businessId && !to.meta.superAdmin) return { name: 'AdminDashboard' }
+  if (window.__BILLING_DESKTOP__ && auth.isLoggedIn && !['Activation','OfflineBackups'].includes(to.name)) {
+    const response = await fetch('/api/task/DesktopLicense/localStatus', { headers: { Authorization: `Bearer ${auth.token}`, 'X-Business-ID': String(auth.businessId) } })
+    const result = response.ok ? await response.json() : null
+    if (!result?.data?.active) return { name: 'Activation' }
+  }
 
   // Role-based page access: check the permission from the matched route chain
   const permission = to.matched.find(r => r.meta.permission)?.meta.permission
