@@ -93,6 +93,20 @@ try {
   await page.locator('input[autocomplete=current-password]').fill(credentials.password)
   await page.locator('#login-form button[type=submit]').click()
   await page.waitForURL(base+'/')
+  // Upgrade compatibility: early desktop builds stored a business without its owner
+  // role, which reduced navigation to Dashboard and Invoices and blocked Settings.
+  await page.evaluate(() => {
+    const businesses = JSON.parse(localStorage.getItem('businesses') || '[]')
+    localStorage.setItem('businesses', JSON.stringify(businesses.map(({ role, permissions, ...business }) => business)))
+  })
+  await page.reload()
+  for (const menu of ['Clients','Quotes','Expenses','Products','Reports','Settings']) {
+    await page.getByRole('link',{name:menu,exact:true}).waitFor()
+  }
+  await page.goto(base+'/settings')
+  await page.getByRole('heading',{name:'Settings',exact:true}).waitFor()
+  await page.getByRole('button',{name:'My Business',exact:true}).waitFor()
+  await page.goto(base+'/')
   await request('register', { ...credentials }, 403)
   const customer = await command('Client','create',{ name:'Offline Customer', type:'individual', state_id:26 })
   const clientId = customer.client_id
