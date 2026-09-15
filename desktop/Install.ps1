@@ -21,7 +21,25 @@ try {
         $shortcut.Arguments = '"' + (Join-Path $release 'desktop\Launch.vbs') + '"'
         $shortcut.WorkingDirectory = Join-Path $release 'desktop'
         $shortcut.Description = 'Offline billing and local backup/restore'
+        $shortcut.IconLocation = (Join-Path $release 'desktop\app.ico') + ',0'
         $shortcut.Save()
     }
+    $uninstallShortcut = $shell.CreateShortcut((Join-Path ([Environment]::GetFolderPath('Programs')) 'Uninstall AI Billing Offline.lnk'))
+    $uninstallShortcut.TargetPath = "$env:WINDIR\System32\wscript.exe"
+    $uninstallShortcut.Arguments = '"' + (Join-Path $release 'desktop\Uninstall.vbs') + '"'
+    $uninstallShortcut.WorkingDirectory = Join-Path $release 'desktop'
+    $uninstallShortcut.IconLocation = (Join-Path $release 'desktop\app.ico') + ',0'
+    $uninstallShortcut.Description = 'Uninstall AI Billing Offline'
+    $uninstallShortcut.Save()
+
+    $uninstallKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\AI Billing Offline'
+    New-Item -Path $uninstallKey -Force | Out-Null
+    New-ItemProperty -Path $uninstallKey -Name DisplayName -Value 'AI Billing Offline' -PropertyType String -Force | Out-Null
+    New-ItemProperty -Path $uninstallKey -Name Publisher -Value 'AI Billing' -PropertyType String -Force | Out-Null
+    New-ItemProperty -Path $uninstallKey -Name DisplayVersion -Value (Get-Date -Format 'yyyy.MM.dd.HHmm') -PropertyType String -Force | Out-Null
+    New-ItemProperty -Path $uninstallKey -Name DisplayIcon -Value ((Join-Path $release 'desktop\app.ico') + ',0') -PropertyType String -Force | Out-Null
+    New-ItemProperty -Path $uninstallKey -Name UninstallString -Value ('"' + "$env:WINDIR\System32\wscript.exe" + '" "' + (Join-Path $release 'desktop\Uninstall.vbs') + '"') -PropertyType String -Force | Out-Null
+    New-ItemProperty -Path $uninstallKey -Name NoModify -Value 1 -PropertyType DWord -Force | Out-Null
+    New-ItemProperty -Path $uninstallKey -Name NoRepair -Value 1 -PropertyType DWord -Force | Out-Null
     [Windows.Forms.MessageBox]::Show('Installed successfully. Open AI Billing Offline from your desktop. Your existing billing data is preserved.', 'AI Billing Offline') | Out-Null
 } catch { [Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Installation failed') | Out-Null; exit 1 }

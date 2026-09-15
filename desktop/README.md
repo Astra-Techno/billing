@@ -28,6 +28,11 @@ From the repository, run `powershell.exe -NoProfile -ExecutionPolicy Bypass -Fil
 
 Run Setup and open the AI Billing Offline desktop shortcut. Setup installs a new version directory under `%LOCALAPPDATA%\Programs\AI Billing Offline`; it does not overwrite running versions or customer data. The launcher starts an isolated MySQL instance and a loopback-only PHP server, opens the billing desktop window. Closing the billing window stops services, including a graceful database shutdown. Opening the shortcut again while running returns to the same app profile. Reopen the shortcut to recover after a PC restart.
 
+Uninstall from **Windows Settings > Apps > Installed apps > AI Billing Offline**, or
+open **Uninstall AI Billing Offline** from the Start Menu. The uninstaller first offers
+to keep local billing data for a later reinstall. Its permanent-delete choice removes
+the local database, uploads, licence and backups, so export a backup before choosing it.
+
 First launch initializes an empty local database and shows business/account setup. After
 setup it opens the activation page inside the desktop window. Keep the app open while a
 super administrator approves the PC; it polls securely and installs the licence without

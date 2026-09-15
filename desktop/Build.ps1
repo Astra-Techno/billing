@@ -10,6 +10,21 @@ $desktopRoot = Join-Path $payloadRoot 'desktop'
 New-Item -ItemType Directory -Force -Path $desktopRoot | Out-Null
 Push-Location $repo
 try {
+    Add-Type -AssemblyName System.Drawing
+    $iconPath = Join-Path $PSScriptRoot 'app.ico'
+    $sourceLogo = [Drawing.Image]::FromFile((Join-Path $repo 'public\logo.png'))
+    try {
+        $bitmap = New-Object Drawing.Bitmap 256, 256
+        $graphics = [Drawing.Graphics]::FromImage($bitmap)
+        try {
+            $graphics.Clear([Drawing.Color]::Transparent)
+            $graphics.InterpolationMode = [Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+            $graphics.DrawImage($sourceLogo, 0, 0, 256, 256)
+            $handle = $bitmap.GetHicon()
+            $icon = [Drawing.Icon]::FromHandle($handle)
+            try { $stream = [IO.File]::Create($iconPath); try { $icon.Save($stream) } finally { $stream.Dispose() } } finally { $icon.Dispose() }
+        } finally { $graphics.Dispose(); $bitmap.Dispose() }
+    } finally { $sourceLogo.Dispose() }
     & node node_modules/vite/bin/vite.js build --outDir desktop/web
     if ($LASTEXITCODE -ne 0) { throw 'Frontend build failed.' }
     $htmlPath = Join-Path $PSScriptRoot 'web\index.html'
@@ -21,7 +36,7 @@ try {
         Copy-Item -LiteralPath "$repo\api\$name" -Destination "$payloadRoot\api\$name" -Recurse
     }
     Copy-Item -LiteralPath "$repo\api\index.php" -Destination "$payloadRoot\api\index.php"
-    foreach ($name in @('Launch.ps1','Launch.vbs','php.ini','router.php','environment.php','cli.php','check-runtime.php','README.md','web')) {
+    foreach ($name in @('Launch.ps1','Launch.vbs','Uninstall.ps1','Uninstall.vbs','app.ico','php.ini','router.php','environment.php','cli.php','check-runtime.php','README.md','web')) {
         Copy-Item -LiteralPath "$PSScriptRoot\$name" -Destination "$desktopRoot\$name" -Recurse
     }
     New-Item -ItemType Directory -Force -Path "$desktopRoot\runtime\php", "$desktopRoot\runtime\mysql\bin" | Out-Null
@@ -60,7 +75,7 @@ try {
     $zip = Join-Path $buildRoot 'AI-Billing-Offline.zip'
     [IO.Compression.ZipFile]::CreateFromDirectory($payloadRoot, $zip)
     $installer = Join-Path $buildRoot 'AI-Billing-Offline-Setup.exe'
-    & $compiler /nologo /target:winexe /platform:x64 "/out:$installer" /reference:System.Windows.Forms.dll "/resource:$zip,payload.zip" "/resource:$PSScriptRoot\Install.ps1,Install.ps1" "$PSScriptRoot\Installer.cs"
+    & $compiler /nologo /target:winexe /platform:x64 "/win32icon:$iconPath" "/out:$installer" /reference:System.Windows.Forms.dll "/resource:$zip,payload.zip" "/resource:$PSScriptRoot\Install.ps1,Install.ps1" "$PSScriptRoot\Installer.cs"
     if ($LASTEXITCODE -ne 0) { throw 'Installer compilation failed.' }
     Get-FileHash -LiteralPath $installer -Algorithm SHA256 | Format-List | Out-File "$buildRoot\SHA256.txt"
     Write-Output "INSTALLER $installer"

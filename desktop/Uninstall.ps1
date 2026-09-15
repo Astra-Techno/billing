@@ -1,9 +1,21 @@
+param([switch]$Silent, [switch]$DeleteData)
 $ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName System.Windows.Forms
 $programRoot = [IO.Path]::GetFullPath((Join-Path $env:LOCALAPPDATA 'Programs\AI Billing Offline'))
 $expectedRoot = [IO.Path]::GetFullPath((Join-Path $env:LOCALAPPDATA 'Programs'))
 $dataRoot = [IO.Path]::GetFullPath((Join-Path $env:LOCALAPPDATA 'AI Billing\Data'))
 if (!$programRoot.StartsWith($expectedRoot + '\', [StringComparison]::OrdinalIgnoreCase) -or (Split-Path $programRoot -Leaf) -ne 'AI Billing Offline') {
     throw 'Unexpected installation path; uninstall stopped.'
+}
+if (!$Silent) {
+    $choice = [Windows.Forms.MessageBox]::Show(
+        "Uninstall AI Billing Offline?`n`nYES: remove the app and KEEP billing data for a future reinstall.`nNO: remove the app and PERMANENTLY DELETE all local billing data and backups.`nCANCEL: do nothing.",
+        'Uninstall AI Billing Offline',
+        [Windows.Forms.MessageBoxButtons]::YesNoCancel,
+        [Windows.Forms.MessageBoxIcon]::Warning
+    )
+    if ($choice -eq [Windows.Forms.DialogResult]::Cancel) { exit 0 }
+    $DeleteData = $choice -eq [Windows.Forms.DialogResult]::No
 }
 $owned = @(Get-CimInstance Win32_Process | Where-Object {
     $_.ProcessId -ne $PID -and $_.CommandLine -and (
@@ -34,7 +46,14 @@ foreach ($entry in $mysqlOwned) {
 }
 $desktopShortcut = Join-Path ([Environment]::GetFolderPath('Desktop')) 'AI Billing Offline.lnk'
 $menuShortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'AI Billing Offline.lnk'
-Remove-Item -LiteralPath $desktopShortcut, $menuShortcut -Force -ErrorAction SilentlyContinue
+$uninstallShortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'Uninstall AI Billing Offline.lnk'
+Remove-Item -LiteralPath $desktopShortcut, $menuShortcut, $uninstallShortcut -Force -ErrorAction SilentlyContinue
+Remove-Item -LiteralPath 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\AI Billing Offline' -Recurse -Force -ErrorAction SilentlyContinue
+if ($DeleteData -and (Test-Path -LiteralPath $dataRoot)) {
+    $expectedDataParent = [IO.Path]::GetFullPath((Join-Path $env:LOCALAPPDATA 'AI Billing'))
+    if (!$dataRoot.StartsWith($expectedDataParent + '\', [StringComparison]::OrdinalIgnoreCase) -or (Split-Path $dataRoot -Leaf) -ne 'Data') { throw 'Unexpected data path; data deletion stopped.' }
+    Remove-Item -LiteralPath $dataRoot -Recurse -Force
+}
 if (Test-Path -LiteralPath $programRoot) { Remove-Item -LiteralPath $programRoot -Recurse -Force }
 [pscustomobject]@{
     ProgramRemoved = !(Test-Path -LiteralPath $programRoot)
@@ -43,3 +62,4 @@ if (Test-Path -LiteralPath $programRoot) { Remove-Item -LiteralPath $programRoot
     DataPreserved = Test-Path -LiteralPath $dataRoot
     DataPath = $dataRoot
 } | Format-List
+if (!$Silent) { [Windows.Forms.MessageBox]::Show('AI Billing Offline was uninstalled successfully.', 'AI Billing Offline') | Out-Null }
