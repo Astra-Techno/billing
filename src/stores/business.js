@@ -21,6 +21,7 @@ export const useBusinessStore = defineStore('business', () => {
   const features = ref({ ...DEFAULT_FEATURES })
   const darkMode = ref(localStorage.getItem('darkMode') === 'true')
   const invoiceTemplate = ref(localStorage.getItem('invoiceTemplate') || 'classic')
+  const invoicePaper = ref(localStorage.getItem('invoicePaper') || 'a4')
 
   function toggleDarkMode() {
     darkMode.value = !darkMode.value
@@ -31,6 +32,11 @@ export const useBusinessStore = defineStore('business', () => {
   function setInvoiceTemplate(t) {
     invoiceTemplate.value = t
     localStorage.setItem('invoiceTemplate', t)
+  }
+
+  function setInvoicePaper(paper) {
+    invoicePaper.value = paper
+    localStorage.setItem('invoicePaper', paper)
   }
 
   function initDarkMode() {
@@ -96,5 +102,5 @@ export const useBusinessStore = defineStore('business', () => {
     } catch {}
   }
 
-  return { logo, stateId, features, darkMode, invoiceTemplate, setLogo, setStateId, setFeatures, isEnabled, fetchBusiness, loadFeatures, ensureLoaded, saveFeatures, toggleDarkMode, initDarkMode, setInvoiceTemplate }
+  return { logo, stateId, features, darkMode, invoiceTemplate, invoicePaper, setLogo, setStateId, setFeatures, isEnabled, fetchBusiness, loadFeatures, ensureLoaded, saveFeatures, toggleDarkMode, initDarkMode, setInvoiceTemplate, setInvoicePaper }
 })

@@ -255,6 +255,17 @@ function closeProductSearch() {
 }
 
 function selectProduct(i, p) {
+  const duplicateIndex = form.value.items.findIndex((item, index) => index !== i && item.product_id == p.id)
+  if (duplicateIndex !== -1) {
+    const existing = form.value.items[duplicateIndex]
+    existing.quantity = (parseFloat(existing.quantity) || 0) + (parseFloat(form.value.items[i]?.quantity) || 1)
+    form.value.items.splice(i, 1)
+    const targetIndex = duplicateIndex > i ? duplicateIndex - 1 : duplicateIndex
+    closeProductSearch()
+    ensureTrailingEmptyRow()
+    focusItemField(targetIndex, 'qty', true)
+    return
+  }
   pickProduct(i, p.id)
   form.value.items[i].product_id = p.id
   closeProductSearch()
@@ -262,7 +273,7 @@ function selectProduct(i, p) {
   if (window.innerWidth < 1024) {
     activeItemIndex.value = i
   } else {
-    focusItemField(i, 'qty')
+    focusItemField(i, 'qty', true)
   }
 }
 
@@ -511,7 +522,7 @@ function ensureTrailingEmptyRow({ focus = false } = {}) {
   }
 }
 
-function focusItemField(index, field) {
+function focusItemField(index, field, select = false) {
   activeItemIndex.value = index
   nextTick(() => {
     const sel = {
@@ -519,7 +530,9 @@ function focusItemField(index, field) {
       qty:   `[data-line-qty="${index}"]`,
       price: `[data-line-price="${index}"]`,
     }
-    document.querySelector(sel[field])?.focus()
+    const input = document.querySelector(sel[field])
+    input?.focus()
+    if (select && typeof input?.select === 'function') input.select()
   })
 }
 
@@ -569,6 +582,15 @@ function pickProduct(i, productId) {
 // Tab from GST on last row → add next line and focus its description
 function onLastFieldTab(i, e) {
   handleLineItemTab(i, e, form.value.items, () => ensureTrailingEmptyRow({ focus: true }), '[data-line-desc]')
+}
+
+// Quantity is the last editable field in the rapid-entry path. Price, unit and GST
+// remain mouse-editable, while Tab starts the next product immediately.
+function onQuantityTab(i, e) {
+  if (e.shiftKey) return
+  e.preventDefault()
+  if (i === form.value.items.length - 1) ensureTrailingEmptyRow({ focus: true })
+  else focusItemDescription(i + 1)
 }
 
 function onPriceKeydown(i, e) {
@@ -740,7 +762,7 @@ async function submit() {
                       <div class="item-chips">
                         <!-- Qty + Unit chip -->
                         <div class="chip-qty">
-                          <input v-model="it.quantity" type="number" :data-line-qty="i" :min="qtyStep(it.unit)" :step="qtyStep(it.unit)"
+                          <input v-model="it.quantity" type="number" :data-line-qty="i" :min="qtyStep(it.unit)" :step="qtyStep(it.unit)" @keydown.tab="onQuantityTab(i, $event)"
                             class="w-12 text-center tabular-nums" />
                           <span class="text-gray-300 select-none">×</span>
                           <select v-model="it.unit" class="max-w-[52px]">

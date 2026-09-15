@@ -757,6 +757,26 @@ async function saveInvoice() {
         </div>
       </div>
 
+      <div class="card card-body !p-5 space-y-4 mb-4">
+        <div>
+          <h3 class="text-sm font-bold text-ink dark:text-white">Printer & Paper</h3>
+          <p class="text-xs text-google-muted mt-0.5">Set the layout used by the Print button</p>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <button v-for="paper in [
+            { id: 'a4', name: 'A4', desc: 'Standard invoice' },
+            { id: 'a3', name: 'A3', desc: 'Large-format sheet' },
+            { id: 'thermal80', name: '80mm', desc: 'Thermal receipt' },
+            { id: 'thermal58', name: '58mm', desc: 'Compact receipt' },
+          ]" :key="paper.id" @click="bizStore.setInvoicePaper(paper.id)"
+            class="rounded-xl border-2 p-3 text-left transition"
+            :class="bizStore.invoicePaper === paper.id ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-slate-600'">
+            <p class="text-xs font-bold text-ink dark:text-white">{{ paper.name }}</p>
+            <p class="text-[10px] text-google-muted">{{ paper.desc }}</p>
+          </button>
+        </div>
+      </div>
+
       <!-- Dark Mode Toggle -->
       <div class="card card-body mb-4">
         <div class="flex items-center justify-between">

@@ -16,6 +16,9 @@ const qrDataUrl = ref('')
 
 // Template: classic (default), modern, minimal
 const tpl = computed(() => route.query.tpl || localStorage.getItem('invoiceTemplate') || 'classic')
+const paper = computed(() => route.query.paper || localStorage.getItem('invoicePaper') || 'a4')
+const isReceipt = computed(() => paper.value === 'thermal58' || paper.value === 'thermal80')
+const effectiveTpl = computed(() => isReceipt.value ? 'minimal' : tpl.value)
 
 // Print modes: normal, dc (delivery challan — no prices), proforma
 const mode = computed(() => route.query.mode || 'normal')
@@ -52,6 +55,11 @@ function amountInWords(amount) {
 }
 
 onMounted(async () => {
+  document.body.className = `paper-${paper.value}`
+  const sizes = { a4: 'A4', a3: 'A3', thermal80: '80mm auto', thermal58: '58mm auto' }
+  const style = document.createElement('style')
+  style.textContent = `@page { size: ${sizes[paper.value] || 'A4'}; margin: ${isReceipt.value ? '3mm' : '10mm'}; }`
+  document.head.appendChild(style)
   try {
     const id = route.params.id
     const [invRes, itmRes, bizRes] = await Promise.all([
@@ -90,7 +98,7 @@ onMounted(async () => {
     <!-- ════════════════════════════════════════════════════════════════ -->
     <!-- TEMPLATE: CLASSIC                                               -->
     <!-- ════════════════════════════════════════════════════════════════ -->
-    <div v-else-if="invoice && tpl === 'classic'" class="invoice-doc">
+    <div v-else-if="invoice && effectiveTpl === 'classic'" class="invoice-doc">
       <!-- Title row -->
       <div class="flex items-center justify-between mb-4 pb-3 border-b-2 border-gray-800">
         <p class="text-2xl font-black text-blue-800 uppercase tracking-widest">{{ invoiceTitle }}</p>
@@ -229,7 +237,7 @@ onMounted(async () => {
     <!-- ════════════════════════════════════════════════════════════════ -->
     <!-- TEMPLATE: MODERN                                                -->
     <!-- ════════════════════════════════════════════════════════════════ -->
-    <div v-else-if="invoice && tpl === 'modern'" class="invoice-doc">
+    <div v-else-if="invoice && effectiveTpl === 'modern'" class="invoice-doc">
       <!-- Accent header bar -->
       <div style="background: linear-gradient(135deg, #1a5fd4, #3b7ded); padding: 20px 24px; border-radius: 8px 8px 0 0; margin: -20px -20px 0 -20px; color: white; display: flex; justify-content: space-between; align-items: center;">
         <div>
@@ -373,7 +381,7 @@ onMounted(async () => {
     <!-- ════════════════════════════════════════════════════════════════ -->
     <!-- TEMPLATE: MINIMAL                                               -->
     <!-- ════════════════════════════════════════════════════════════════ -->
-    <div v-else-if="invoice && tpl === 'minimal'" class="invoice-doc" style="font-family: 'Georgia', 'Times New Roman', serif;">
+    <div v-else-if="invoice && effectiveTpl === 'minimal'" class="invoice-doc" style="font-family: 'Georgia', 'Times New Roman', serif;">
       <!-- Clean header -->
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px;">
         <div>
@@ -507,6 +515,15 @@ onMounted(async () => {
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: white; color: #111; }
 .print-page { max-width: 900px; margin: 0 auto; padding: 20px; }
 .invoice-doc { background: white; }
+body.paper-a3 .print-page { max-width: 1300px; }
+body.paper-thermal80 .print-page { width: 74mm; padding: 2mm; }
+body.paper-thermal58 .print-page { width: 52mm; padding: 1mm; }
+body.paper-thermal80 .invoice-doc, body.paper-thermal58 .invoice-doc { font-family: Arial, sans-serif !important; overflow: hidden; }
+body.paper-thermal80 .invoice-doc *, body.paper-thermal58 .invoice-doc * { max-width: 100%; }
+body.paper-thermal80 .invoice-doc table, body.paper-thermal58 .invoice-doc table { table-layout: fixed; font-size: 8px; }
+body.paper-thermal80 .invoice-doc img, body.paper-thermal58 .invoice-doc img { max-width: 18mm !important; max-height: 18mm !important; }
+body.paper-thermal80 .invoice-doc [style*="grid-template-columns"], body.paper-thermal58 .invoice-doc [style*="grid-template-columns"] { display: block !important; }
+body.paper-thermal80 .invoice-doc [style*="width: 200px"], body.paper-thermal58 .invoice-doc [style*="width: 200px"] { width: 100% !important; margin-top: 3mm; }
 @media print {
   .print-page { padding: 0; max-width: 100%; }
   body { margin: 0; }

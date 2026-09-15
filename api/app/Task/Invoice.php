@@ -69,7 +69,7 @@ class Invoice extends Task
             'is_recurring'  => !empty($input['is_recurring']) ? 1 : 0,
             'recur_every'   => $input['recur_every']   ?? null,
             'recur_period'  => $input['recur_period']  ?? null,
-            'recur_ends_at' => $input['recur_ends_at'] ?? null,
+            'recur_ends_at' => !empty($input['recur_ends_at']) ? $input['recur_ends_at'] : null,
             'notes'         => $input['notes']         ?? null,
             'terms'         => $input['terms']         ?? null,
         ]);
@@ -536,11 +536,18 @@ class Invoice extends Task
     private function validateItems(array $items): void
     {
         if (empty($items)) $this->fail('At least one item is required.');
+        $productIds = [];
         foreach ($items as $i => $item) {
             if (empty($item['description'])) $this->fail("Item " . ($i + 1) . ": description is required.");
             if (!isset($item['quantity']) || (float)$item['quantity'] <= 0) $this->fail("Item " . ($i + 1) . ": quantity must be > 0.");
             if (!isset($item['unit_price']) || !is_numeric($item['unit_price']) || (float)$item['unit_price'] < 0)
                 $this->fail("Item " . ($i + 1) . ": unit price must be zero or greater.");
+            if (!empty($item['product_id'])) {
+                $productId = (int)$item['product_id'];
+                if (isset($productIds[$productId]))
+                    $this->fail("Item " . ($i + 1) . ": this product is already included. Increase its quantity instead.");
+                $productIds[$productId] = true;
+            }
         }
     }
 
