@@ -26,7 +26,7 @@ function Find-DesktopEngine {
     throw 'Microsoft Edge is required for the desktop window. Install Edge and reopen AI Billing Offline.'
 }
 function Open-DesktopWindow {
-    foreach ($entry in (Get-DesktopProcesses)) {
+    foreach ($entry in (@(Get-DesktopProcesses) + @(Get-DesktopWindows))) {
         $existing = Get-Process -Id $entry.ProcessId -ErrorAction SilentlyContinue
         if ($existing -and $existing.MainWindowHandle -ne 0) {
             if (!('AIBillingWindow' -as [type])) {
@@ -49,6 +49,14 @@ public static class AIBillingWindow {
 }
 function Get-DesktopProcesses {
     @(Get-CimInstance Win32_Process -Filter "Name='msedge.exe'" | Where-Object { $_.CommandLine -and $_.CommandLine.Contains($appProfile) -and $_.CommandLine -notmatch '--type=' })
+}
+function Get-DesktopWindows {
+    @(Get-Process msedge -ErrorAction SilentlyContinue | Where-Object {
+        $_.MainWindowHandle -ne 0 -and ($_.MainWindowTitle -eq 'AI Billing' -or $_.MainWindowTitle -like 'AI Billing *')
+    } | ForEach-Object { [pscustomobject]@{ ProcessId = $_.Id } })
+}
+function Test-DesktopWindowOpen {
+    return @(Get-DesktopProcesses).Count -gt 0 -or @(Get-DesktopWindows).Count -gt 0
 }
 $lockName = 'Local\AIBilling-' + ([Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($DataRoot))).Replace('/','_').Replace('\','_')
 $mutex = New-Object Threading.Mutex($false, $lockName)
@@ -135,21 +143,23 @@ try {
         Open-DesktopWindow
         $opened = $false
         for ($i=0; $i -lt 60; $i++) {
-            if (@(Get-DesktopProcesses).Count -gt 0) { $opened = $true; break }
+            if (Test-DesktopWindowOpen) { $opened = $true; break }
             Start-Sleep -Milliseconds 500
         }
         if (!$opened) { throw 'Could not open the AI Billing desktop window.' }
         # Edge may create the app window after processing --start-maximized; maximize the
         # actual top-level window once its native handle is ready.
         for ($i=0; $i -lt 20; $i++) {
-            $window = Get-DesktopProcesses | ForEach-Object { Get-Process -Id $_.ProcessId -ErrorAction SilentlyContinue } | Where-Object MainWindowHandle -ne 0 | Select-Object -First 1
+            $window = (@(Get-DesktopProcesses) + @(Get-DesktopWindows)) | ForEach-Object { Get-Process -Id $_.ProcessId -ErrorAction SilentlyContinue } | Where-Object MainWindowHandle -ne 0 | Select-Object -First 1
             if ($window) { Open-DesktopWindow; break }
             Start-Sleep -Milliseconds 250
         }
         # A separate profile keeps the app independent of ordinary browser windows.
-        while (@(Get-DesktopProcesses).Count -gt 0) {
+        $missingChecks = 0
+        while ($missingChecks -lt 20) {
             if ($webProcess.HasExited -or $dbProcess.HasExited) { throw 'A local service stopped. Close and reopen AI Billing Offline.' }
-            Start-Sleep -Seconds 1
+            if (Test-DesktopWindowOpen) { $missingChecks = 0 } else { $missingChecks++ }
+            Start-Sleep -Milliseconds 500
         }
     }
 } catch {

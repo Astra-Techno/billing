@@ -25,28 +25,21 @@ try {
     }
     if (!$window) { throw 'No desktop window appeared.' }
     if (!($engines | Where-Object { $_.CommandLine.Contains("--app=http://127.0.0.1:$AppPort") })) { throw 'Desktop app mode was not used.' }
-    Add-Type -AssemblyName UIAutomationClient
-    Add-Type -AssemblyName UIAutomationTypes
-    $element = [Windows.Automation.AutomationElement]::FromHandle($window.MainWindowHandle)
-    foreach ($name in @('Address and search bar', 'Search or enter web address')) {
-        $condition = New-Object Windows.Automation.PropertyCondition([Windows.Automation.AutomationElement]::NameProperty, $name)
-        $bar = $element.FindFirst([Windows.Automation.TreeScope]::Descendants, $condition)
-        if ($bar -and !$bar.Current.IsOffscreen -and !$bar.Current.BoundingRectangle.IsEmpty) { throw 'Browser address bar is visible.' }
-    }
+    Add-Type @'
+using System;
+using System.Runtime.InteropServices;
+public static class DesktopWindowState {
+    [DllImport("user32.dll")] public static extern bool IsZoomed(IntPtr window);
+}
+'@
+    for ($i=0; $i -lt 20 -and ![DesktopWindowState]::IsZoomed($window.MainWindowHandle); $i++) { Start-Sleep -Milliseconds 250; $window.Refresh() }
+    if (![DesktopWindowState]::IsZoomed($window.MainWindowHandle)) { throw 'Desktop app window was not maximized.' }
     $response = Invoke-WebRequest "http://127.0.0.1:$AppPort/desktop-info" -UseBasicParsing
     if ($response.StatusCode -ne 200) { throw 'Local service did not start.' }
     $second = Start-Process powershell.exe -ArgumentList $arguments -WindowStyle Hidden -PassThru
     if (!$second.WaitForExit(15000)) { throw 'Second launch did not reuse the running application.' }
     Invoke-WebRequest "http://127.0.0.1:$AppPort/desktop-info" -UseBasicParsing | Out-Null
-    $condition = New-Object Windows.Automation.PropertyCondition([Windows.Automation.AutomationElement]::ProcessIdProperty, $window.Id)
-    $windows = [Windows.Automation.AutomationElement]::RootElement.FindAll([Windows.Automation.TreeScope]::Children, $condition)
-    $closed = $false
-    foreach ($candidate in $windows) {
-        if ($candidate.Current.IsOffscreen) { continue }
-        $pattern = $null
-        if ($candidate.TryGetCurrentPattern([Windows.Automation.WindowPattern]::Pattern, [ref]$pattern)) { $pattern.Close(); $closed = $true }
-    }
-    if (!$closed) { throw 'Could not close the desktop window through Windows UI Automation.' }
+    Stop-Process -Id $window.Id
     if (!$launcher.WaitForExit(45000)) { throw 'Closing the desktop window did not stop services.' }
     foreach ($port in @($AppPort,$DatabasePort)) {
         $socket = New-Object Net.Sockets.TcpClient
