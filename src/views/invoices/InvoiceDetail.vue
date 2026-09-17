@@ -129,27 +129,15 @@ const canDeleteInvoice = computed(() =>
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
 
 function printInvoice() {
-  if (isMobile) {
-    downloadPdf()
-  } else {
-    window.open('/print/invoice/' + invoice.value.id, '_blank')
-  }
+  window.open('/print/invoice/' + invoice.value.id, '_blank')
 }
 
 function printDeliveryChallan() {
-  if (isMobile) {
-    downloadPdf('dc')
-  } else {
-    window.open('/print/invoice/' + invoice.value.id + '?mode=dc', '_blank')
-  }
+  window.open('/print/invoice/' + invoice.value.id + '?mode=dc', '_blank')
 }
 
 function printProforma() {
-  if (isMobile) {
-    downloadPdf('proforma')
-  } else {
-    window.open('/print/invoice/' + invoice.value.id + '?mode=proforma', '_blank')
-  }
+  window.open('/print/invoice/' + invoice.value.id + '?mode=proforma', '_blank')
 }
 
 async function downloadPdf(mode = '') {
