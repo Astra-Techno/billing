@@ -169,6 +169,17 @@ try {
   await page.evaluate(session=>{ localStorage.setItem('token',session.token);localStorage.setItem('user',JSON.stringify(session.user));localStorage.setItem('business_id',String(session.business_id));localStorage.setItem('businesses',JSON.stringify(session.businesses)) },afterUiRestore)
   await page.goto(base+`/print/invoice/${invoice.invoice_id}`)
   await page.getByText('Offline item',{exact:true}).first().waitFor()
+  await page.goto(base+`/print/invoice/${invoice.invoice_id}?paper=thermal58`)
+  await page.locator('.receipt-doc').waitFor({timeout:10000}).catch(async e => { throw new Error(`${e.message}\nPrint page: ${await page.locator('body').innerText()}`) })
+  assert.equal(await page.locator('.receipt-item').count(),1)
+  assert.match(await page.locator('.receipt-doc').innerText(),/Offline item/)
+  const receiptWidth = await page.evaluate(() => {
+    const page = document.querySelector('.print-page')
+    const receipt = document.querySelector('.receipt-doc')
+    return { page: page.getBoundingClientRect().width, content: receipt.getBoundingClientRect().width, overflow: receipt.scrollWidth > receipt.clientWidth }
+  })
+  assert(receiptWidth.page >= 210 && receiptWidth.page <= 230,`58mm page width: ${receiptWidth.page}`)
+  assert(receiptWidth.content < receiptWidth.page && !receiptWidth.overflow,'Receipt must fit inside 58mm paper')
   await stop(); await unlink(path.join(home,'stop')); start(); await waitReady(); await login()
   assert.equal((await (await request('all/Client')).json()).data.length,1)
   assert.equal(Number((await (await request(`item/Invoice?id=${invoice.invoice_id}`)).json()).data.amount_paid),50)

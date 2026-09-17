@@ -29,7 +29,7 @@ if (str_starts_with($path, '/api/storage/')) {
 }
 if (str_starts_with($path, '/api/')) {
     // The desktop edition does not expose maintenance, public cards or team invitations.
-    if (preg_match('#^/api/(run-migrate|migrate|entity|shop|guest-task)#', $path)) { http_response_code(404); return; }
+    if (preg_match('#^/api/(run-migrate|migrate|entity|shop|guest-task|invoice/(?:bluetooth-print|[0-9]+/bluetooth-print))#', $path)) { http_response_code(404); return; }
     if (preg_match('#^/api/(task/(Admin|Staff|Invite)/|task/Business/(inviteMember|removeMember)|(?:list|all|item|count|options|group-list)/(Admin|User)(?:[:/]|$))#', $path)) { http_response_code(404); return; }
     if ($_SERVER['REQUEST_METHOD'] !== 'GET' && $origin !== $_ENV['FRONTEND_URL']) { http_response_code(403); exit('Origin required.'); }
     require dirname(__DIR__) . '/api/index.php'; return;

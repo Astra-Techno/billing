@@ -767,7 +767,7 @@ async function saveInvoice() {
             { id: 'a4', name: 'A4', desc: 'Standard invoice' },
             { id: 'a3', name: 'A3', desc: 'Large-format sheet' },
             { id: 'thermal80', name: '80mm', desc: 'Thermal receipt' },
-            { id: 'thermal58', name: '58mm', desc: 'Compact receipt' },
+            { id: 'thermal58', name: '58mm', desc: 'SC588 / compact receipt' },
           ]" :key="paper.id" @click="bizStore.setInvoicePaper(paper.id)"
             class="rounded-xl border-2 p-3 text-left transition"
             :class="bizStore.invoicePaper === paper.id ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-slate-600'">
@@ -775,6 +775,7 @@ async function saveInvoice() {
             <p class="text-[10px] text-google-muted">{{ paper.desc }}</p>
           </button>
         </div>
+        <p v-if="bizStore.invoicePaper === 'thermal58'" class="text-xs text-google-muted">For SC588, pair/install the printer in Windows, select it in the print dialog, and use 58mm paper with no margins and 100% scale.</p>
       </div>
 
       <!-- Dark Mode Toggle -->

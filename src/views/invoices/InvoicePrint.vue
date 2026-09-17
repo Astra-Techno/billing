@@ -18,7 +18,7 @@ const qrDataUrl = ref('')
 const tpl = computed(() => route.query.tpl || localStorage.getItem('invoiceTemplate') || 'classic')
 const paper = computed(() => route.query.paper || localStorage.getItem('invoicePaper') || 'a4')
 const isReceipt = computed(() => paper.value === 'thermal58' || paper.value === 'thermal80')
-const effectiveTpl = computed(() => isReceipt.value ? 'minimal' : tpl.value)
+const effectiveTpl = computed(() => tpl.value)
 
 // Print modes: normal, dc (delivery challan — no prices), proforma
 const mode = computed(() => route.query.mode || 'normal')
@@ -56,9 +56,10 @@ function amountInWords(amount) {
 
 onMounted(async () => {
   document.body.className = `paper-${paper.value}`
-  const sizes = { a4: 'A4', a3: 'A3', thermal80: '80mm auto', thermal58: '58mm auto' }
+  // Roll height comes from the Windows printer driver; CSS sets only the content width.
+  const sizes = { a4: 'A4', a3: 'A3', thermal80: 'auto', thermal58: 'auto' }
   const style = document.createElement('style')
-  style.textContent = `@page { size: ${sizes[paper.value] || 'A4'}; margin: ${isReceipt.value ? '3mm' : '10mm'}; }`
+  style.textContent = `@page { size: ${sizes[paper.value] || 'A4'}; margin: ${isReceipt.value ? '0' : '10mm'}; }`
   document.head.appendChild(style)
   try {
     const id = route.params.id
@@ -98,6 +99,49 @@ onMounted(async () => {
     <!-- ════════════════════════════════════════════════════════════════ -->
     <!-- TEMPLATE: CLASSIC                                               -->
     <!-- ════════════════════════════════════════════════════════════════ -->
+    <div v-else-if="invoice && isReceipt" class="receipt-doc">
+      <header class="receipt-header">
+        <img v-if="business?.logo" :src="business.logo" alt="" class="receipt-logo" />
+        <h1>{{ business?.name || invoice.business_name }}</h1>
+        <p v-if="business?.address_line1">{{ [business.address_line1, business.address_line2, business.city, business.state_name, business.pincode].filter(Boolean).join(', ') }}</p>
+        <p v-if="business?.mobile">Tel: {{ business.mobile }}</p>
+        <p v-if="business?.gstin">GSTIN: {{ business.gstin }}</p>
+      </header>
+      <div class="receipt-rule"></div>
+      <p class="receipt-title">{{ invoiceTitle }}</p>
+      <div class="receipt-pair"><span>No.</span><strong>{{ invoice.number }}</strong></div>
+      <div class="receipt-pair"><span>Date</span><span>{{ fmtDateShort(invoice.issue_date) }}</span></div>
+      <div v-if="!isDC" class="receipt-pair"><span>Due</span><span>{{ fmtDateShort(invoice.due_date) }}</span></div>
+      <div class="receipt-rule"></div>
+      <p>Bill to: <strong>{{ invoice.client_name || 'Walk-in Customer' }}</strong></p>
+      <p v-if="invoice.client_gstin">Customer GSTIN: {{ invoice.client_gstin }}</p>
+      <p v-if="invoice.client_mobile">Mobile: {{ invoice.client_mobile }}</p>
+      <div class="receipt-rule"></div>
+      <div v-for="(it, idx) in items" :key="it.id || idx" class="receipt-item">
+        <strong>{{ idx + 1 }}. {{ it.description }}</strong>
+        <p v-if="it.hsn_sac || (isGst && Number(it.gst_rate))"><span v-if="it.hsn_sac">HSN/SAC: {{ it.hsn_sac }}</span><span v-if="it.hsn_sac && isGst && Number(it.gst_rate)"> · </span><span v-if="isGst && Number(it.gst_rate)">GST {{ it.gst_rate }}%</span></p>
+        <div class="receipt-pair"><span>{{ it.quantity }} {{ it.unit || 'Nos' }}<template v-if="!isDC"> × {{ inr(it.unit_price) }}</template></span><strong v-if="!isDC">{{ inr(it.total) }}</strong></div>
+      </div>
+      <div class="receipt-rule"></div>
+      <template v-if="isDC"><div class="receipt-pair"><strong>Total Qty</strong><strong>{{ items.reduce((sum, it) => sum + Number(it.quantity || 0), 0) }}</strong></div></template>
+      <template v-else>
+        <div class="receipt-pair"><span>Subtotal</span><span>{{ inr(Number(invoice.subtotal || 0) + Number(invoice.discount || 0)) }}</span></div>
+        <div v-if="Number(invoice.discount)" class="receipt-pair"><span>Discount</span><span>-{{ inr(invoice.discount) }}</span></div>
+        <div v-if="Number(invoice.cgst_total)" class="receipt-pair"><span>CGST</span><span>{{ inr(invoice.cgst_total) }}</span></div>
+        <div v-if="Number(invoice.sgst_total)" class="receipt-pair"><span>SGST</span><span>{{ inr(invoice.sgst_total) }}</span></div>
+        <div v-if="Number(invoice.igst_total)" class="receipt-pair"><span>IGST</span><span>{{ inr(invoice.igst_total) }}</span></div>
+        <div class="receipt-rule"></div>
+        <div class="receipt-pair receipt-total"><strong>Total</strong><strong>{{ inr(invoice.total) }}</strong></div>
+        <div v-if="Number(invoice.amount_paid)" class="receipt-pair"><span>Paid</span><span>{{ inr(invoice.amount_paid) }}</span></div>
+        <div v-if="Number(invoice.amount_due)" class="receipt-pair"><strong>Balance Due</strong><strong>{{ inr(invoice.amount_due) }}</strong></div>
+      </template>
+      <div class="receipt-rule"></div>
+      <p v-if="business?.upi_id">UPI: {{ business.upi_id }}</p>
+      <img v-if="qrDataUrl && !isDC && Number(invoice.amount_due) > 0" :src="qrDataUrl" alt="UPI payment QR" class="receipt-qr" />
+      <p v-if="invoice.notes || business?.invoice_notes">{{ invoice.notes || business.invoice_notes }}</p>
+      <p v-if="isProforma">Proforma only — not a tax invoice</p>
+      <p class="receipt-thanks">Thank you!</p>
+    </div>
     <div v-else-if="invoice && effectiveTpl === 'classic'" class="invoice-doc">
       <!-- Title row -->
       <div class="flex items-center justify-between mb-4 pb-3 border-b-2 border-gray-800">
@@ -516,16 +560,27 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .print-page { max-width: 900px; margin: 0 auto; padding: 20px; }
 .invoice-doc { background: white; }
 body.paper-a3 .print-page { max-width: 1300px; }
-body.paper-thermal80 .print-page { width: 74mm; padding: 2mm; }
-body.paper-thermal58 .print-page { width: 52mm; padding: 1mm; }
-body.paper-thermal80 .invoice-doc, body.paper-thermal58 .invoice-doc { font-family: Arial, sans-serif !important; overflow: hidden; }
-body.paper-thermal80 .invoice-doc *, body.paper-thermal58 .invoice-doc * { max-width: 100%; }
-body.paper-thermal80 .invoice-doc table, body.paper-thermal58 .invoice-doc table { table-layout: fixed; font-size: 8px; }
-body.paper-thermal80 .invoice-doc img, body.paper-thermal58 .invoice-doc img { max-width: 18mm !important; max-height: 18mm !important; }
-body.paper-thermal80 .invoice-doc [style*="grid-template-columns"], body.paper-thermal58 .invoice-doc [style*="grid-template-columns"] { display: block !important; }
-body.paper-thermal80 .invoice-doc [style*="width: 200px"], body.paper-thermal58 .invoice-doc [style*="width: 200px"] { width: 100% !important; margin-top: 3mm; }
+body.paper-thermal80 .print-page { width: 80mm; padding: 2mm 3mm; }
+body.paper-thermal58 .print-page { width: 58mm; padding: 2mm 3mm; }
+.receipt-doc { width: 100%; color: #000; background: #fff; font: 11px/1.35 Arial, sans-serif; overflow-wrap: anywhere; }
+.receipt-doc h1 { font-size: 15px; line-height: 1.15; font-weight: 800; margin: 0 0 1mm; }
+.receipt-doc p { margin: 1mm 0; }
+.receipt-header, .receipt-title, .receipt-thanks { text-align: center; }
+.receipt-logo { display: block; max-width: 16mm; max-height: 16mm; object-fit: contain; margin: 0 auto 1mm; }
+.receipt-title { font-size: 12px; font-weight: 800; text-transform: uppercase; margin: 1mm 0; }
+.receipt-rule { border-top: 1px dashed #000; margin: 2mm 0; }
+.receipt-pair { display: flex; justify-content: space-between; align-items: baseline; gap: 2mm; }
+.receipt-pair > :last-child { text-align: right; }
+.receipt-item { padding: 1.5mm 0; border-bottom: 1px dotted #666; break-inside: avoid; }
+.receipt-item > strong { display: block; }
+.receipt-item p { font-size: 10px; }
+.receipt-total { font-size: 14px; }
+.receipt-qr { display: block; width: 22mm; height: 22mm; margin: 2mm auto; image-rendering: pixelated; }
+.receipt-thanks { font-weight: 700; margin: 3mm 0 5mm !important; }
 @media print {
-  .print-page { padding: 0; max-width: 100%; }
+  .print-page { max-width: 100%; }
+  body.paper-thermal58 .print-page { width: 58mm; padding: 2mm 3mm; }
+  body.paper-thermal80 .print-page { width: 80mm; padding: 2mm 3mm; }
   body { margin: 0; }
 }
 .flex { display: flex; }

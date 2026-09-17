@@ -5,6 +5,7 @@ use App\Controllers\SqlController;
 use App\Controllers\TaskController;
 use App\Controllers\EntityController;
 use App\Controllers\InvoicePdfController;
+use App\Controllers\InvoiceThermalController;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\DesktopLicenseMiddleware;
 
@@ -13,6 +14,7 @@ use App\Middleware\DesktopLicenseMiddleware;
 $app->post('/login',    [AuthController::class, 'login']);
 $app->post('/register', [AuthController::class, 'register']);
 $app->post('/desktop-license/{method:publicKey|request|status|refresh}', [TaskController::class, 'desktopLicense']);
+$app->get('/invoice/bluetooth-print/{token:[a-f0-9]{64}}', [InvoiceThermalController::class, 'show']);
 
 // One-time migration endpoint (public, idempotent)
 $app->get('/run-migrate', function ($request, $response) {
@@ -103,6 +105,7 @@ $app->group('', function ($group) {
     $group->post('/task/{name}/{method}[/{param:.*}]', [TaskController::class, 'action']);
 
     $group->get('/invoice/{id:[0-9]+}/pdf', [InvoicePdfController::class, 'download']);
+    $group->post('/invoice/{id:[0-9]+}/bluetooth-print', [InvoiceThermalController::class, 'create']);
 
     $group->get( '/entity/{path:.*}', [EntityController::class, 'fetch']);
     $group->post('/entity/{path:.*}', [EntityController::class, 'fetch']);
