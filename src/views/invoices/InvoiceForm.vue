@@ -174,7 +174,13 @@ async function saveNewClient() {
   addingClient.value = true
   try {
     const res = await task('Client', 'create', { ...newClient.value, type: 'individual' })
-    const created = res.data?.data
+    const resData = res.data?.data
+    const created = {
+      id: resData.client_id,
+      name: newClient.value.name,
+      mobile: newClient.value.mobile || null,
+      email: newClient.value.email || null,
+    }
     clients.value = [...clients.value, created].sort((a, b) => (a.name || '').localeCompare(b.name || ''))
     form.value.client_id = created.id
     showAddClient.value = false

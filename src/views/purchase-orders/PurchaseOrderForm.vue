@@ -48,7 +48,13 @@ async function saveNewSupplier() {
   addingSupplier.value = true
   try {
     const res = await task('Client', 'create', { ...newSupplier.value, type: 'business' })
-    const created = res.data?.data
+    const resData = res.data?.data
+    const created = {
+      id: resData.client_id,
+      name: newSupplier.value.name,
+      mobile: newSupplier.value.mobile || null,
+      email: newSupplier.value.email || null,
+    }
     suppliers.value.push(created)
     suppliers.value.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
     form.value.supplier_id = created.id
