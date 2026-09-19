@@ -58,18 +58,51 @@ internal static class LicenseHost {
         var outer=Json.DeserializeObject(File.ReadAllText(responseFile)) as Dictionary<string,object>;var data=outer.ContainsKey("data")?(Dictionary<string,object>)outer["data"]:outer;
         if(!String.Equals(Convert.ToString(data["public_key"]).Trim(),PublicKey(),StringComparison.Ordinal))throw new Exception("Activation server public key does not match this installer.");
         var envelope=new Dictionary<string,object>{{"license_document",data["license_document"]},{"public_key",data["public_key"]},{"license_id",data["license_id"]}};
-        string temp=Path.GetTempFileName();try{File.WriteAllText(temp,Json.Serialize(envelope));VerifyDocument(Json.Serialize(envelope),false);Protect(File.ReadAllBytes(temp),Path.Combine(dataRoot,"license.dat"));}finally{File.Delete(temp);}
+        string temp=Path.GetTempFileName();try{File.WriteAllText(temp,Json.Serialize(envelope));VerifyDocument(Json.Serialize(envelope),false);Protect(File.ReadAllBytes(temp),Path.Combine(dataRoot,"license.dat"));ResetClockGuard(dataRoot);}finally{File.Delete(temp);}
     }
-    static Dictionary<string,object> Verify(string dataRoot) { return VerifyDocument(Encoding.UTF8.GetString(Unprotect(Path.Combine(dataRoot,"license.dat"))),true); }
+    static Dictionary<string,object> Verify(string dataRoot) { var result=VerifyDocument(Encoding.UTF8.GetString(Unprotect(Path.Combine(dataRoot,"license.dat"))),true);CheckClockGuard(dataRoot,result);return result; }
     static Dictionary<string,object> VerifyDocument(string envelopeJson,bool requireActive) {
         var envelope=(Dictionary<string,object>)Json.DeserializeObject(envelopeJson);if(!String.Equals(Convert.ToString(envelope["public_key"]).Trim(),PublicKey(),StringComparison.Ordinal))throw new Exception("Licence signing key mismatch.");
         var document=(Dictionary<string,object>)Json.DeserializeObject(Convert.ToString(envelope["license_document"]));byte[] payload=Base64Url(Convert.ToString(document["payload"]));byte[] signature=Base64Url(Convert.ToString(document["signature"]));
         using(var rsa=new RSACryptoServiceProvider()){rsa.FromXmlString(PublicKey());if(!rsa.VerifyData(payload,CryptoConfig.MapNameToOID("SHA256"),signature))throw new Exception("Licence signature is invalid.");}
         var claims=(Dictionary<string,object>)Json.DeserializeObject(Encoding.UTF8.GetString(payload));var device=Device();if(!String.Equals(Convert.ToString(claims["device_id"]),Convert.ToString(device["device_id"]),StringComparison.OrdinalIgnoreCase))throw new Exception("Licence belongs to another PC.");
         bool active=String.Equals(Convert.ToString(claims["status"]),"active",StringComparison.OrdinalIgnoreCase);
-        if(claims.ContainsKey("expires_at")&&claims["expires_at"]!=null&&Convert.ToInt64(claims["expires_at"])<DateTimeOffset.UtcNow.ToUnixTimeSeconds())active=false;
-        if(requireActive&&!active)throw new Exception("Licence is not active.");
-        return new Dictionary<string,object>{{"active",active},{"license_id",claims["license_id"]},{"claims",claims},{"device",device}};
+        string expiryReason=null;
+        if(claims.ContainsKey("expires_at")&&claims["expires_at"]!=null&&Convert.ToInt64(claims["expires_at"])<DateTimeOffset.UtcNow.ToUnixTimeSeconds()){active=false;expiryReason="expired";}
+        if(requireActive&&!active)throw new Exception(expiryReason=="expired"?"Licence has expired. Please request re-activation.":"Licence is not active.");
+        var result=new Dictionary<string,object>{{"active",active},{"license_id",claims["license_id"]},{"claims",claims},{"device",device}};
+        if(claims.ContainsKey("expires_at")&&claims["expires_at"]!=null)result["expires_at"]=Convert.ToInt64(claims["expires_at"]);
+        return result;
     }
+
+    // ── Clock guard: detects system time manipulation ────────────────────────
+    static string ClockGuardPath(string dataRoot) { return Path.Combine(dataRoot, "clock-guard.dat"); }
+    static void ResetClockGuard(string dataRoot) {
+        long now=DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var guard=new Dictionary<string,object>{{"last_verified_at",now},{"installed_at",now}};
+        byte[] raw=Encoding.UTF8.GetBytes(Json.Serialize(guard));
+        Protect(raw,ClockGuardPath(dataRoot));
+    }
+    static void CheckClockGuard(string dataRoot,Dictionary<string,object> verifyResult) {
+        string guardPath=ClockGuardPath(dataRoot);
+        long now=DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        long tolerance=300; // 5 minutes tolerance for minor clock drift
+        if(!File.Exists(guardPath)){ResetClockGuard(dataRoot);return;}
+        try {
+            var guard=(Dictionary<string,object>)Json.DeserializeObject(Encoding.UTF8.GetString(Unprotect(guardPath)));
+            long lastVerified=Convert.ToInt64(guard["last_verified_at"]);
+            // If system clock is set back more than 5 minutes from last verification, block
+            if(now<lastVerified-tolerance)throw new Exception("System clock manipulation detected. Licence verification failed. Contact CloudKart support.");
+            // Update last verified timestamp
+            guard["last_verified_at"]=now;
+            byte[] raw=Encoding.UTF8.GetBytes(Json.Serialize(guard));
+            Protect(raw,ClockGuardPath(dataRoot));
+        } catch(Exception e) {
+            if(e.Message.Contains("clock manipulation"))throw;
+            // If guard file is corrupted, treat as tampering
+            throw new Exception("Licence integrity check failed. Contact CloudKart support.");
+        }
+    }
+
     static byte[] Base64Url(string s){s=s.Replace('-','+').Replace('_','/');switch(s.Length%4){case 2:s+="==";break;case 3:s+="=";break;}return Convert.FromBase64String(s);}
 }

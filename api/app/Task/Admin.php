@@ -115,15 +115,16 @@ class Admin extends Task
 
     public function approveDesktopActivation(array $input): array
     {
-        $this->requireSuperAdmin(); $this->validate(['request_id'=>'required|integer']);
-        return DB::transaction(function() use($input) {
+        $this->requireSuperAdmin(); $this->validate(['request_id'=>'required|integer','years'=>'required|integer']);
+        $years=(int)($input['years']??0); if($years<1||$years>10) $this->fail('Licence validity must be between 1 and 10 years.',422);
+        return DB::transaction(function() use($input,$years) {
             $request=DB::selectOne('SELECT * FROM desktop_activation_requests WHERE id=? FOR UPDATE',[(int)$input['request_id']]);
             if(!$request) $this->fail('Activation request not found.',404);
             if($request->status!=='pending') $this->fail('Only pending activation requests can be approved.',422);
             if(strtotime($request->expires_at)<time()) { DB::statement("UPDATE desktop_activation_requests SET status='expired' WHERE id=?",[$request->id]); $this->fail('Activation request expired. Ask the PC to retry.',422); }
             $crypto=new DesktopLicenseCrypto(); $payload=$crypto->decrypt($request->encrypted_payload); $uuid=$this->licenseUuid();
-            $expires=!empty($input['expires_at']) ? date('Y-m-d 23:59:59',strtotime($input['expires_at'])) : null;
-            $claims=['license_id'=>$uuid,'device_id'=>$payload['device_id'],'customer'=>$payload['user']??[],'company'=>$payload['company']??[],'edition'=>$input['edition']??'offline-single-pc','status'=>'active','issued_at'=>time(),'expires_at'=>$expires?strtotime($expires):null,'max_version'=>$input['max_version']??null];
+            $expires=date('Y-m-d 23:59:59',strtotime("+{$years} years"));
+            $claims=['license_id'=>$uuid,'device_id'=>$payload['device_id'],'customer'=>$payload['user']??[],'company'=>$payload['company']??[],'edition'=>$input['edition']??'offline-single-pc','status'=>'active','issued_at'=>time(),'expires_at'=>strtotime($expires),'max_version'=>$input['max_version']??null];
             $document=$crypto->sign($claims);
             DB::statement("INSERT INTO desktop_licenses (license_uuid,activation_request_id,user_id,business_id,device_hmac,encrypted_customer,encrypted_device,status,edition,issued_at,expires_at,max_version,license_document_hash,license_document,approved_by,created_at,updated_at) VALUES (?,?,?,?,?,?,?,'active',?,NOW(),?,?,?, ?,?,NOW(),NOW())",[
                 $uuid,$request->id,$request->user_id,$request->business_id,$request->device_hmac,$crypto->encrypt(['user'=>$payload['user']??[],'company'=>$payload['company']??[]]),$crypto->encrypt(['device'=>$payload['device']??[],'device_id'=>$payload['device_id'],'app_version'=>$payload['app_version']??null]),$claims['edition'],$expires,$claims['max_version'],hash('sha256',$document),$document,\App\Core\Auth::id()
