@@ -775,7 +775,7 @@ async function saveInvoice() {
             <p class="text-[10px] text-google-muted">{{ paper.desc }}</p>
           </button>
         </div>
-        <p v-if="bizStore.invoicePaper === 'thermal58'" class="text-xs text-google-muted">For SC588/PSF588 on a PC, pair it in Windows Bluetooth settings, then use Bluetooth SC588 on an invoice for direct printing. On iPhone, install the Bluetooth Print app and enable Browser Print before using the invoice’s Bluetooth button.</p>
+        <p v-if="bizStore.invoicePaper === 'thermal58'" class="text-xs text-google-muted">For SC588/PSF588 on a PC, pair it in Windows Bluetooth settings, then use Bluetooth SC588 on an invoice. In Edge/Chrome, select PSF588/COM6 when prompted. On iPhone, install the Bluetooth Print app and enable Browser Print before using the invoice’s Bluetooth button.</p>
       </div>
 
       <!-- Dark Mode Toggle -->

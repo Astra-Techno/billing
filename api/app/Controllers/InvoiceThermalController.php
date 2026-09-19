@@ -9,6 +9,19 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 class InvoiceThermalController
 {
+    public function serialData(Request $request, Response $response, array $args): Response
+    {
+        $businessId = Auth::businessId();
+        $invoiceId = (int)($args['id'] ?? 0);
+        $invoice = $businessId ? $this->invoice($invoiceId, $businessId) : null;
+        if (!$invoice) return $this->error($response, 404, 'Invoice not found');
+        $business = DB::selectOne('SELECT name, mobile, gstin, address_line1, address_line2, city, pincode, upi_id FROM businesses WHERE id = ? LIMIT 1', [$businessId]);
+        $items = DB::select('SELECT description, quantity, unit, unit_price, total, gst_rate, hsn_sac FROM invoice_items WHERE invoice_id = ? ORDER BY sort_order ASC', [$invoiceId]);
+        $lines = self::formatReceipt((array)$invoice, (array)($business ?? []), array_map(fn($item) => (array)$item, $items));
+        $response->getBody()->write(json_encode(['success' => true, 'data' => ['bytes' => base64_encode(self::escPos($lines))]]));
+        return $response->withHeader('Content-Type', 'application/json')->withHeader('Cache-Control', 'no-store');
+    }
+
     public function serialPrint(Request $request, Response $response, array $args): Response
     {
         if (($_ENV['DESKTOP_MODE'] ?? '') !== 'true') return $this->error($response, 404, 'Desktop printing only');

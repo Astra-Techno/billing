@@ -72,7 +72,7 @@ try {
   const migrationCheck = await promisify(execFile)(phpRoot + '/php.exe', ['-c',path.join(app,'php.ini'),'-d',`extension_dir=${path.join(phpRoot,'ext')}`,path.resolve('desktop/test-cloud-migration.php'),home], { env:{...process.env,OPENSSL_CONF:path.join(phpRoot,'extras/ssl/openssl.cnf')} })
   assert.match(migrationCheck.stdout, /desktop exclusion verified/)
   assert.equal((await (await fetch(base+'/desktop-info')).json()).needs_setup, true)
-  browser = await chromium.launch({ headless: true })
+  browser = await chromium.launch({ headless: true, ...(process.platform === 'win32' ? { channel: 'msedge' } : {}) })
   const context = await browser.newContext()
   await context.route('**/*', route => new URL(route.request().url()).origin === base ? route.continue() : route.abort())
   const page = await context.newPage()
@@ -146,6 +146,8 @@ try {
   assert.equal((await fetch(base+uploaded.logo)).status,200)
   const pdf = await request(`invoice/${invoice.invoice_id}/pdf`)
   assert((await pdf.text()).startsWith('%PDF-'))
+  const serialData = (await (await request(`invoice/${invoice.invoice_id}/serial-data`)).json()).data.bytes
+  assert(Buffer.from(serialData,'base64').includes(Buffer.from('Offline item')))
   await request(`invoice/${invoice.invoice_id}/serial-print`,{port:'COM0'},422)
   await request(`invoice/${invoice.invoice_id}/bluetooth-print`,{},404)
   await request('run-migrate',undefined,404)

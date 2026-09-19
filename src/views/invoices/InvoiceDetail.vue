@@ -129,6 +129,7 @@ const canDeleteInvoice = computed(() =>
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
 const isIPhone = /iPhone|iPad|iPod/i.test(navigator.userAgent)
 const isDesktop = !!window.__BILLING_DESKTOP__
+const hasWebSerial = !isDesktop && !isIPhone && window.isSecureContext && 'serial' in navigator
 const bluetoothPrintBusy = ref(false)
 const bluetoothPrintError = ref('')
 const bluetoothPrintMessage = ref('')
@@ -146,14 +147,34 @@ async function printBluetooth() {
     if (isDesktop) {
       const response = await api.post(`invoice/${invoice.value.id}/serial-print`, {})
       bluetoothPrintMessage.value = response.data?.message || 'Receipt sent to PSF588.'
-    } else {
+    } else if (isIPhone) {
       const response = await api.post(`invoice/${invoice.value.id}/bluetooth-print`)
       const url = response.data?.data?.url
       if (!url || !url.startsWith('https://')) throw new Error('Secure print link unavailable')
       window.location.href = 'bprint://' + url
+    } else if (hasWebSerial) {
+      // requestPort must run directly from the click before any network request.
+      const port = await navigator.serial.requestPort()
+      let opened = false
+      try {
+        const response = await api.get(`invoice/${invoice.value.id}/serial-data`)
+        const encoded = response.data?.data?.bytes
+        if (!encoded) throw new Error('Could not prepare the receipt.')
+        const raw = atob(encoded)
+        const bytes = Uint8Array.from(raw, char => char.charCodeAt(0))
+        await port.open({ baudRate: 9600 })
+        opened = true
+        const writer = port.writable.getWriter()
+        try { await writer.write(bytes) } finally { writer.releaseLock() }
+        bluetoothPrintMessage.value = 'Receipt sent to the selected Bluetooth printer.'
+      } finally {
+        if (opened) await port.close()
+      }
+    } else {
+      throw new Error('Use Microsoft Edge or Chrome on a secure connection for Bluetooth printing.')
     }
   } catch (error) {
-    bluetoothPrintError.value = error.response?.data?.message || error.message || 'Could not open Bluetooth Print.'
+    bluetoothPrintError.value = error.name === 'NotFoundError' ? 'No printer selected.' : (error.response?.data?.message || error.message || 'Could not open Bluetooth Print.')
   } finally {
     bluetoothPrintBusy.value = false
   }
@@ -436,7 +457,7 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
             <button type="button" @click="printThermal58" class="inv-detail-btn inv-detail-btn--ghost" title="58mm SC588 receipt">
               Print 58mm
             </button>
-            <button v-if="isDesktop || isIPhone" type="button" @click="printBluetooth" :disabled="bluetoothPrintBusy" class="inv-detail-btn inv-detail-btn--ghost" title="Print to paired PSF588">
+            <button v-if="isDesktop || isIPhone || hasWebSerial" type="button" @click="printBluetooth" :disabled="bluetoothPrintBusy" class="inv-detail-btn inv-detail-btn--ghost" title="Print to paired PSF588">
               {{ bluetoothPrintBusy ? 'Preparing…' : 'Bluetooth SC588' }}
             </button>
 
@@ -744,7 +765,7 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
       </button>
       <button @click="printThermal58" class="w-10 h-10 rounded-full bg-white/15 text-white text-xs font-bold flex items-center justify-center hover:bg-white/20 transition active:scale-95" title="Print 58mm SC588 receipt">58</button>
-      <button v-if="isDesktop || isIPhone" @click="printBluetooth" :disabled="bluetoothPrintBusy" class="w-10 h-10 rounded-full bg-white/15 text-white text-xs font-bold flex items-center justify-center hover:bg-white/20 transition active:scale-95" title="Print to paired PSF588">BT</button>
+      <button v-if="isDesktop || isIPhone || hasWebSerial" @click="printBluetooth" :disabled="bluetoothPrintBusy" class="w-10 h-10 rounded-full bg-white/15 text-white text-xs font-bold flex items-center justify-center hover:bg-white/20 transition active:scale-95" title="Print to paired PSF588">BT</button>
       <button @click="printDeliveryChallan" class="w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center hover:bg-white/20 transition active:scale-95" title="DC Print">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
       </button>
