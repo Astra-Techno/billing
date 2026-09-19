@@ -9,6 +9,33 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 class InvoiceThermalController
 {
+    public function serialPrint(Request $request, Response $response, array $args): Response
+    {
+        if (($_ENV['DESKTOP_MODE'] ?? '') !== 'true') return $this->error($response, 404, 'Desktop printing only');
+        $businessId = Auth::businessId();
+        $invoiceId = (int)($args['id'] ?? 0);
+        $invoice = $businessId ? $this->invoice($invoiceId, $businessId) : null;
+        if (!$invoice) return $this->error($response, 404, 'Invoice not found');
+        $port = strtoupper((string)(($request->getParsedBody() ?? [])['port'] ?? ''));
+        if ($port !== '' && !preg_match('/^COM(?:[1-9]|[1-9][0-9])$/D', $port)) return $this->error($response, 422, 'Select a valid Bluetooth COM port');
+
+        $business = DB::selectOne('SELECT name, mobile, gstin, address_line1, address_line2, city, pincode, upi_id FROM businesses WHERE id = ? LIMIT 1', [$businessId]);
+        $items = DB::select('SELECT description, quantity, unit, unit_price, total, gst_rate, hsn_sac FROM invoice_items WHERE invoice_id = ? ORDER BY sort_order ASC', [$invoiceId]);
+        $lines = self::formatReceipt((array)$invoice, (array)($business ?? []), array_map(fn($item) => (array)$item, $items));
+        $bytes = self::escPos($lines);
+        $helper = dirname(__DIR__, 3) . '/desktop/ThermalPrintHost.exe';
+        if (!is_file($helper)) return $this->error($response, 503, 'Bluetooth print helper is missing');
+        $process = proc_open([$helper, $port ?: '--auto'], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, null, null, ['bypass_shell' => true]);
+        if (!is_resource($process)) return $this->error($response, 503, 'Could not start Bluetooth print helper');
+        fwrite($pipes[0], $bytes);
+        fclose($pipes[0]);
+        stream_get_contents($pipes[1]); fclose($pipes[1]);
+        $error = trim(stream_get_contents($pipes[2])); fclose($pipes[2]);
+        if (proc_close($process) !== 0) return $this->error($response, 503, $error ?: 'Printer did not accept the job');
+        $response->getBody()->write(json_encode(['success' => true, 'message' => 'Receipt sent to PSF588']));
+        return $response->withHeader('Content-Type', 'application/json')->withHeader('Cache-Control', 'no-store');
+    }
+
     public function create(Request $request, Response $response, array $args): Response
     {
         $businessId = Auth::businessId();
@@ -94,6 +121,19 @@ class InvoiceThermalController
         $add('Thank you!', true, 1);
         $add(' ');
         return $lines;
+    }
+
+    public static function escPos(array $lines): string
+    {
+        $bytes = "\x1B\x40";
+        foreach ($lines as $line) {
+            $align = in_array($line['align'] ?? 0, [0, 1, 2], true) ? $line['align'] : 0;
+            $bold = !empty($line['bold']) ? 1 : 0;
+            $text = preg_replace('/[\x00-\x1F\x7F]/', ' ', (string)($line['content'] ?? ''));
+            $text = iconv('UTF-8', 'CP437//TRANSLIT//IGNORE', $text) ?: '';
+            $bytes .= "\x1B\x61" . chr($align) . "\x1B\x45" . chr($bold) . substr($text, 0, 512) . "\n";
+        }
+        return $bytes . "\x1B\x45\x00\x1B\x61\x00\n\n";
     }
 
     private function invoice(int $invoiceId, int $businessId): ?object

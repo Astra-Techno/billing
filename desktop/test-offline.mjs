@@ -146,6 +146,8 @@ try {
   assert.equal((await fetch(base+uploaded.logo)).status,200)
   const pdf = await request(`invoice/${invoice.invoice_id}/pdf`)
   assert((await pdf.text()).startsWith('%PDF-'))
+  await request(`invoice/${invoice.invoice_id}/serial-print`,{port:'COM0'},422)
+  await request(`invoice/${invoice.invoice_id}/bluetooth-print`,{},404)
   await request('run-migrate',undefined,404)
   await request('guest-task/Invoice/updateOverdue',{},404)
   const badOrigin = await fetch(base+'/api/task/Desktop/backup',{method:'POST',headers:{Origin:'https://example.com'}})

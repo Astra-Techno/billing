@@ -68,6 +68,8 @@ try {
     $compiler = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
     & $compiler /nologo /target:exe /platform:x64 "/out:$desktopRoot\LicenseHost.exe" /reference:System.Management.dll /reference:System.Security.dll /reference:System.Web.Extensions.dll "/resource:$publicKey,license-public-key.xml" "$PSScriptRoot\LicenseHost.cs"
     if ($LASTEXITCODE -ne 0) { throw 'Licence host compilation failed.' }
+    & $compiler /nologo /target:exe /platform:x64 "/out:$desktopRoot\ThermalPrintHost.exe" /reference:System.dll /reference:System.Management.dll "$PSScriptRoot\ThermalPrintHost.cs"
+    if ($LASTEXITCODE -ne 0) { throw 'Thermal printer helper compilation failed.' }
     # Validate extensions against the shipped configuration before creating an installer.
     & "$desktopRoot\runtime\php\php.exe" -c "$desktopRoot\php.ini" -d "extension_dir=$desktopRoot\runtime\php\ext" "$desktopRoot\check-runtime.php"
     if ($LASTEXITCODE -ne 0) { throw 'Bundled PHP extension validation failed.' }

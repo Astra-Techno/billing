@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { item, list, task } from '../../api'
+import api, { item, list, task } from '../../api'
 import { inr } from '../../utils/currency'
 import { fmtDateShort, today } from '../../utils/date'
 import { statusBadge, statusLabel } from '../../utils/invoice'
@@ -127,6 +127,37 @@ const canDeleteInvoice = computed(() =>
 )
 
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+const isIPhone = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+const isDesktop = !!window.__BILLING_DESKTOP__
+const bluetoothPrintBusy = ref(false)
+const bluetoothPrintError = ref('')
+const bluetoothPrintMessage = ref('')
+
+function printThermal58() {
+  window.open('/print/invoice/' + invoice.value.id + '?paper=thermal58', '_blank')
+}
+
+async function printBluetooth() {
+  if (bluetoothPrintBusy.value) return
+  bluetoothPrintBusy.value = true
+  bluetoothPrintError.value = ''
+  bluetoothPrintMessage.value = ''
+  try {
+    if (isDesktop) {
+      const response = await api.post(`invoice/${invoice.value.id}/serial-print`, {})
+      bluetoothPrintMessage.value = response.data?.message || 'Receipt sent to PSF588.'
+    } else {
+      const response = await api.post(`invoice/${invoice.value.id}/bluetooth-print`)
+      const url = response.data?.data?.url
+      if (!url || !url.startsWith('https://')) throw new Error('Secure print link unavailable')
+      window.location.href = 'bprint://' + url
+    }
+  } catch (error) {
+    bluetoothPrintError.value = error.response?.data?.message || error.message || 'Could not open Bluetooth Print.'
+  } finally {
+    bluetoothPrintBusy.value = false
+  }
+}
 
 function printInvoice() {
   window.open('/print/invoice/' + invoice.value.id, '_blank')
@@ -402,6 +433,13 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
               Print
             </button>
 
+            <button type="button" @click="printThermal58" class="inv-detail-btn inv-detail-btn--ghost" title="58mm SC588 receipt">
+              Print 58mm
+            </button>
+            <button v-if="isDesktop || isIPhone" type="button" @click="printBluetooth" :disabled="bluetoothPrintBusy" class="inv-detail-btn inv-detail-btn--ghost" title="Print to paired PSF588">
+              {{ bluetoothPrintBusy ? 'Preparing…' : 'Bluetooth SC588' }}
+            </button>
+
             <button type="button" @click="printDeliveryChallan" class="inv-detail-btn inv-detail-btn--ghost" title="Delivery challan (no prices)">
               DC print
             </button>
@@ -453,6 +491,9 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
           <p class="text-lg font-bold text-gray-900 tabular-nums shrink-0">{{ inr(invoice.total) }}</p>
         </div>
       </div>
+
+      <p v-if="bluetoothPrintError" class="text-sm text-red-600 mb-3">{{ bluetoothPrintError }}</p>
+      <p v-if="bluetoothPrintMessage" class="text-sm text-green-700 mb-3">{{ bluetoothPrintMessage }}</p>
 
       <!-- UPI Collect Payment card — shown when balance due and business has UPI -->
       <div v-if="invoice.status !== 'cancelled' && invoice.amount_due > 0 && (business?.upi_qr_image || business?.upi_id)"
@@ -702,6 +743,8 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
       <button @click="printInvoice" class="w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center hover:bg-white/20 transition active:scale-95" title="Print Invoice">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
       </button>
+      <button @click="printThermal58" class="w-10 h-10 rounded-full bg-white/15 text-white text-xs font-bold flex items-center justify-center hover:bg-white/20 transition active:scale-95" title="Print 58mm SC588 receipt">58</button>
+      <button v-if="isDesktop || isIPhone" @click="printBluetooth" :disabled="bluetoothPrintBusy" class="w-10 h-10 rounded-full bg-white/15 text-white text-xs font-bold flex items-center justify-center hover:bg-white/20 transition active:scale-95" title="Print to paired PSF588">BT</button>
       <button @click="printDeliveryChallan" class="w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center hover:bg-white/20 transition active:scale-95" title="DC Print">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
       </button>
