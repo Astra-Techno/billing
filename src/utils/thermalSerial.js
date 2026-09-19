@@ -12,8 +12,10 @@ export function testReceiptBytes() {
 }
 
 export async function sendWebSerial(bytesOrLoad) {
-  // The browser requires device selection to start directly from a user click.
-  const port = await navigator.serial.requestPort()
+  // Reuse a previously authorized port to skip the picker dialog.
+  // Falls back to requestPort() (shows picker) on first use or if no ports are saved.
+  const ports = await navigator.serial.getPorts()
+  const port = ports.length > 0 ? ports[0] : await navigator.serial.requestPort()
   let opened = false
   try {
     const bytes = typeof bytesOrLoad === 'function' ? await bytesOrLoad() : bytesOrLoad
