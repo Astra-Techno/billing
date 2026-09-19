@@ -8,6 +8,7 @@ import { statusBadge, statusLabel } from '../../utils/invoice'
 import { useRole } from '../../composables/useRole'
 import { useAuthStore } from '../../stores/auth'
 import QRCode from 'qrcode'
+import { canUseWebSerial, decodeReceiptBytes, sendWebSerial } from '../../utils/thermalSerial'
 
 const props = defineProps({ panelId: { type: [String, Number], default: null } })
 const emit  = defineEmits(['back', 'refresh'])
@@ -129,7 +130,7 @@ const canDeleteInvoice = computed(() =>
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
 const isIPhone = /iPhone|iPad|iPod/i.test(navigator.userAgent)
 const isDesktop = !!window.__BILLING_DESKTOP__
-const hasWebSerial = !isDesktop && !isIPhone && window.isSecureContext && 'serial' in navigator
+const hasWebSerial = !isDesktop && !isIPhone && canUseWebSerial()
 const bluetoothPrintBusy = ref(false)
 const bluetoothPrintError = ref('')
 const bluetoothPrintMessage = ref('')
@@ -153,23 +154,13 @@ async function printBluetooth() {
       if (!url || !url.startsWith('https://')) throw new Error('Secure print link unavailable')
       window.location.href = 'bprint://' + url
     } else if (hasWebSerial) {
-      // requestPort must run directly from the click before any network request.
-      const port = await navigator.serial.requestPort()
-      let opened = false
-      try {
+      await sendWebSerial(async () => {
         const response = await api.get(`invoice/${invoice.value.id}/serial-data`)
         const encoded = response.data?.data?.bytes
         if (!encoded) throw new Error('Could not prepare the receipt.')
-        const raw = atob(encoded)
-        const bytes = Uint8Array.from(raw, char => char.charCodeAt(0))
-        await port.open({ baudRate: 9600 })
-        opened = true
-        const writer = port.writable.getWriter()
-        try { await writer.write(bytes) } finally { writer.releaseLock() }
-        bluetoothPrintMessage.value = 'Receipt sent to the selected Bluetooth printer.'
-      } finally {
-        if (opened) await port.close()
-      }
+        return decodeReceiptBytes(encoded)
+      })
+      bluetoothPrintMessage.value = 'Receipt sent to the selected Bluetooth printer.'
     } else {
       throw new Error('Use Microsoft Edge or Chrome on a secure connection for Bluetooth printing.')
     }

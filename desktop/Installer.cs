@@ -17,7 +17,11 @@ internal static class Installer {
             ProcessStartInfo start = new ProcessStartInfo("powershell.exe",
                 "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"" + Path.Combine(temp, "Install.ps1") + "\" -Payload \"" + Path.Combine(temp, "payload.zip") + "\"");
             start.UseShellExecute = false; start.CreateNoWindow = true;
-            using (Process process = Process.Start(start)) process.WaitForExit();
+            using (Process process = Process.Start(start)) {
+                process.WaitForExit();
+                if (process.ExitCode != 0)
+                    throw new InvalidOperationException("Installation did not complete. Check the installation error shown by Windows and run Setup again.");
+            }
         } catch (Exception error) { MessageBox.Show(error.Message, "AI Billing installation failed"); }
         finally { try { Directory.Delete(temp, true); } catch {} }
     }

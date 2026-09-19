@@ -108,6 +108,7 @@ $app->group('', function ($group) {
     $group->post('/invoice/{id:[0-9]+}/bluetooth-print', [InvoiceThermalController::class, 'create']);
     $group->post('/invoice/{id:[0-9]+}/serial-print', [InvoiceThermalController::class, 'serialPrint']);
     $group->get('/invoice/{id:[0-9]+}/serial-data', [InvoiceThermalController::class, 'serialData']);
+    $group->post('/desktop/thermal-test', [InvoiceThermalController::class, 'serialTest']);
 
     $group->get( '/entity/{path:.*}', [EntityController::class, 'fetch']);
     $group->post('/entity/{path:.*}', [EntityController::class, 'fetch']);

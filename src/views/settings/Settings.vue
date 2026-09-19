@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
-import { task, all, item, list } from '../../api'
+import api, { task, all, item, list } from '../../api'
+import { canUseWebSerial, sendWebSerial, testReceiptBytes } from '../../utils/thermalSerial'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { useBusinessStore } from '../../stores/business'
 import { useAuthStore } from '../../stores/auth'
@@ -17,6 +18,26 @@ const bizStore  = useBusinessStore()
 const authStore = useAuthStore()
 const { can }   = useRole()
 const desktopMode = !!window.__BILLING_DESKTOP__
+const webSerialAvailable = !desktopMode && canUseWebSerial()
+const printerTestBusy = ref(false)
+const printerTestMessage = ref('')
+const printerTestError = ref('')
+
+async function testThermalPrinter() {
+  if (printerTestBusy.value) return
+  printerTestBusy.value = true
+  printerTestMessage.value = ''
+  printerTestError.value = ''
+  try {
+    if (desktopMode) await api.post('desktop/thermal-test', {})
+    else await sendWebSerial(testReceiptBytes())
+    printerTestMessage.value = 'Test receipt sent to SC588.'
+  } catch (error) {
+    printerTestError.value = error.name === 'NotFoundError' ? 'No printer selected.' : (error.response?.data?.message || error.message || 'Printer test failed.')
+  } finally {
+    printerTestBusy.value = false
+  }
+}
 
 const saving   = ref(false)
 const loading  = ref(true)
@@ -775,7 +796,12 @@ async function saveInvoice() {
             <p class="text-[10px] text-google-muted">{{ paper.desc }}</p>
           </button>
         </div>
-        <p v-if="bizStore.invoicePaper === 'thermal58'" class="text-xs text-google-muted">For SC588/PSF588 on a PC, pair it in Windows Bluetooth settings, then use Bluetooth SC588 on an invoice. In Edge/Chrome, select PSF588/COM6 when prompted. On iPhone, install the Bluetooth Print app and enable Browser Print before using the invoice’s Bluetooth button.</p>
+        <p v-if="bizStore.invoicePaper === 'thermal58'" class="text-xs text-google-muted">Pair SC588/PSF588 in Windows Bluetooth settings, then use Bluetooth SC588 on an invoice. In Edge/Chrome, choose PSF588 when prompted; the COM port number varies by PC. On iPhone, the Bluetooth Print app must be installed with Browser Print enabled.</p>
+        <div v-if="desktopMode || webSerialAvailable" class="flex flex-wrap items-center gap-3">
+          <button type="button" @click="testThermalPrinter" :disabled="printerTestBusy" class="rounded-lg bg-primary-500 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-600 disabled:opacity-60">{{ printerTestBusy ? 'Testing…' : 'Test SC588 printer' }}</button>
+          <span v-if="printerTestMessage" class="text-xs text-green-700">{{ printerTestMessage }}</span>
+          <span v-if="printerTestError" class="text-xs text-red-600">{{ printerTestError }}</span>
+        </div>
       </div>
 
       <!-- Dark Mode Toggle -->

@@ -16,6 +16,7 @@ try {
     }
     $shell = New-Object -ComObject WScript.Shell
     foreach ($folder in @([Environment]::GetFolderPath('Desktop'), [Environment]::GetFolderPath('Programs'))) {
+        if (!(Test-Path -LiteralPath $folder)) { New-Item -ItemType Directory -Force -Path $folder | Out-Null }
         $shortcut = $shell.CreateShortcut((Join-Path $folder 'AI Billing Offline.lnk'))
         $shortcut.TargetPath = "$env:WINDIR\System32\wscript.exe"
         $shortcut.Arguments = '"' + (Join-Path $release 'desktop\Launch.vbs') + '"'
@@ -31,6 +32,7 @@ try {
     $uninstallShortcut.IconLocation = (Join-Path $release 'desktop\app.ico') + ',0'
     $uninstallShortcut.Description = 'Uninstall AI Billing Offline'
     $uninstallShortcut.Save()
+    if (!(Test-Path -LiteralPath (Join-Path ([Environment]::GetFolderPath('Programs')) 'AI Billing Offline.lnk'))) { throw 'The Start Menu shortcut could not be created.' }
 
     $uninstallKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\AI Billing Offline'
     New-Item -Path $uninstallKey -Force | Out-Null
@@ -41,5 +43,7 @@ try {
     New-ItemProperty -Path $uninstallKey -Name UninstallString -Value ('"' + "$env:WINDIR\System32\wscript.exe" + '" "' + (Join-Path $release 'desktop\Uninstall.vbs') + '"') -PropertyType String -Force | Out-Null
     New-ItemProperty -Path $uninstallKey -Name NoModify -Value 1 -PropertyType DWord -Force | Out-Null
     New-ItemProperty -Path $uninstallKey -Name NoRepair -Value 1 -PropertyType DWord -Force | Out-Null
+    $installedShortcut = $shell.CreateShortcut((Join-Path ([Environment]::GetFolderPath('Programs')) 'AI Billing Offline.lnk'))
+    if ($installedShortcut.Arguments -notlike ('*' + $release + '*')) { throw 'The new version was extracted, but the launcher shortcut was not updated.' }
     [Windows.Forms.MessageBox]::Show('Installed successfully. Open AI Billing Offline from your desktop. Your existing billing data is preserved.', 'AI Billing Offline') | Out-Null
 } catch { [Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Installation failed') | Out-Null; exit 1 }

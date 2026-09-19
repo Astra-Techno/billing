@@ -42,6 +42,14 @@ credentials are separate from the account created on this PC. One business is su
 Remember the local account password; restore uses the credentials contained in the
 selected backup.
 
+## SC588/PSF588 printer setup for customers
+
+The Windows desktop installer contains the Bluetooth receipt sender. Pair each printer once in **Windows Settings > Bluetooth & devices**, then open **Settings > Printer & Paper > Test SC588 printer**. A successful test prints a short line. The app finds the paired Bluetooth serial port automatically, even when its COM number differs between PCs. Windows may show **Driver is unavailable** for this device; that does not prevent direct Bluetooth serial receipts. On an invoice choose **Bluetooth SC588**. Keep the printer powered on while printing. A first-time customer still needs cloud activation approval before using billing.
+
+For the hosted web app on a Windows PC, use current Microsoft Edge or Chrome over HTTPS. Pair the printer in Windows, open **Settings > Printer & Paper > Test SC588 printer**, and select its serial port in the browser prompt. On an invoice choose **Bluetooth SC588** and select the port again when prompted. Browser permission requires a user click, so fully silent printing is not available from the web page. The browser route needs no desktop installer, but it does need a compatible browser and OS Bluetooth pairing. If a printer uses a Windows print driver instead, **Print 58mm** uses the normal browser print dialog.
+
+The supplied `bprint://` instructions target an iPhone Bluetooth Print app. Mobile Safari cannot directly use the Windows Bluetooth serial route, so iPhone printing needs that separate helper app. Test each customer's actual printer before delivery; printer model labels and Bluetooth profiles can vary.
+
 ## Data and backups
 
 Data is stored under `%LOCALAPPDATA%\AI Billing\Data`, separately from application files. `state.json` contains the local database credential and active database/storage pointers; keep this directory private to the Windows user. Database services bind to 127.0.0.1 and use ports 18765 (app) and 18766 (database). The launcher refuses occupied ports rather than connecting to an unrelated service.

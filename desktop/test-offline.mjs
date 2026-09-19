@@ -148,7 +148,6 @@ try {
   assert((await pdf.text()).startsWith('%PDF-'))
   const serialData = (await (await request(`invoice/${invoice.invoice_id}/serial-data`)).json()).data.bytes
   assert(Buffer.from(serialData,'base64').includes(Buffer.from('Offline item')))
-  await request(`invoice/${invoice.invoice_id}/serial-print`,{port:'COM0'},422)
   await request(`invoice/${invoice.invoice_id}/bluetooth-print`,{},404)
   await request('run-migrate',undefined,404)
   await request('guest-task/Invoice/updateOverdue',{},404)

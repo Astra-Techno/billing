@@ -9,6 +9,18 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 class InvoiceThermalController
 {
+    public function serialTest(Request $request, Response $response): Response
+    {
+        if (($_ENV['DESKTOP_MODE'] ?? '') !== 'true') return $this->error($response, 404, 'Desktop printing only');
+        if (!Auth::businessId()) return $this->error($response, 403, 'No business selected');
+        $lines = [
+            ['content' => 'AI Billing', 'bold' => 1, 'align' => 1],
+            ['content' => 'SC588 printer ready', 'bold' => 0, 'align' => 1],
+            ['content' => ' ', 'bold' => 0, 'align' => 0],
+        ];
+        return $this->sendDesktopBytes($response, self::escPos($lines));
+    }
+
     public function serialData(Request $request, Response $response, array $args): Response
     {
         $businessId = Auth::businessId();
@@ -29,16 +41,17 @@ class InvoiceThermalController
         $invoiceId = (int)($args['id'] ?? 0);
         $invoice = $businessId ? $this->invoice($invoiceId, $businessId) : null;
         if (!$invoice) return $this->error($response, 404, 'Invoice not found');
-        $port = strtoupper((string)(($request->getParsedBody() ?? [])['port'] ?? ''));
-        if ($port !== '' && !preg_match('/^COM(?:[1-9]|[1-9][0-9])$/D', $port)) return $this->error($response, 422, 'Select a valid Bluetooth COM port');
-
         $business = DB::selectOne('SELECT name, mobile, gstin, address_line1, address_line2, city, pincode, upi_id FROM businesses WHERE id = ? LIMIT 1', [$businessId]);
         $items = DB::select('SELECT description, quantity, unit, unit_price, total, gst_rate, hsn_sac FROM invoice_items WHERE invoice_id = ? ORDER BY sort_order ASC', [$invoiceId]);
         $lines = self::formatReceipt((array)$invoice, (array)($business ?? []), array_map(fn($item) => (array)$item, $items));
-        $bytes = self::escPos($lines);
+        return $this->sendDesktopBytes($response, self::escPos($lines));
+    }
+
+    private function sendDesktopBytes(Response $response, string $bytes): Response
+    {
         $helper = dirname(__DIR__, 3) . '/desktop/ThermalPrintHost.exe';
         if (!is_file($helper)) return $this->error($response, 503, 'Bluetooth print helper is missing');
-        $process = proc_open([$helper, $port ?: '--auto'], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, null, null, ['bypass_shell' => true]);
+        $process = proc_open([$helper, '--auto'], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, null, null, ['bypass_shell' => true]);
         if (!is_resource($process)) return $this->error($response, 503, 'Could not start Bluetooth print helper');
         fwrite($pipes[0], $bytes);
         fclose($pipes[0]);

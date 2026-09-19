@@ -55,7 +55,7 @@ internal static class ThermalPrintHost
                 {
                     var nameBytes = device == null ? null : device.GetValue("Name") as byte[];
                     var name = nameBytes == null ? "" : Encoding.UTF8.GetString(nameBytes).TrimEnd('\0');
-                    if (!name.Equals("PSF588", StringComparison.OrdinalIgnoreCase) && !name.Equals("SC588", StringComparison.OrdinalIgnoreCase)) continue;
+                    if (name.IndexOf("PSF588", StringComparison.OrdinalIgnoreCase) < 0 && name.IndexOf("SC588", StringComparison.OrdinalIgnoreCase) < 0) continue;
                     using (var search = new ManagementObjectSearcher("SELECT Name, PNPDeviceID FROM Win32_PnPEntity WHERE Name LIKE '%(COM%'"))
                     {
                         foreach (ManagementObject port in search.Get())
