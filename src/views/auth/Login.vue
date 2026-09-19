@@ -1,7 +1,8 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
+import api from '../../api'
 import AppLogo from '../../components/AppLogo.vue'
 import { APP_NAME, APP_TAGLINE } from '../../config/brand'
 
@@ -13,6 +14,22 @@ const form     = ref({ email: '', password: '' })
 const error    = ref('')
 const loading  = ref(false)
 const showPass = ref(false)
+const localUsers = ref([])
+
+onMounted(async () => {
+  if (!desktopMode) return
+  try {
+    const res = await api.get('desktop-users')
+    localUsers.value = res.data?.data || []
+    if (localUsers.value.length === 1) {
+      form.value.email = localUsers.value[0].email
+    }
+  } catch {}
+})
+
+function selectUser(user) {
+  form.value.email = user.email
+}
 
 async function submit() {
   error.value   = ''
@@ -76,8 +93,27 @@ const features = [
           <h2 class="text-[22px] md:text-[28px] font-bold text-gray-900 tracking-tight mb-1">Welcome back</h2>
           <p class="text-sm md:text-base text-gray-500 mb-6 md:mb-8">Sign in to your {{ APP_NAME }} account</p>
 
+          <!-- Desktop: local user accounts -->
+          <div v-if="desktopMode && localUsers.length" class="mb-5">
+            <label class="form-label md:text-sm mb-2">Select account</label>
+            <div class="space-y-2">
+              <button v-for="u in localUsers" :key="u.id" type="button" @click="selectUser(u)"
+                class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border transition-all text-left"
+                :class="form.email === u.email ? 'border-primary-400 bg-primary-50 ring-1 ring-primary-200' : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'">
+                <div class="w-9 h-9 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-sm shrink-0">
+                  {{ u.name?.charAt(0)?.toUpperCase() || '?' }}
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm font-semibold text-gray-900 truncate">{{ u.name }}</p>
+                  <p class="text-xs text-gray-500 truncate">{{ u.email }}</p>
+                </div>
+                <svg v-if="form.email === u.email" class="w-5 h-5 text-primary-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              </button>
+            </div>
+          </div>
+
           <form id="login-form" @submit.prevent="submit" class="space-y-4 md:space-y-5">
-            <div>
+            <div v-if="!desktopMode || !localUsers.length">
               <label class="form-label md:text-sm">Email address</label>
               <div class="relative">
                 <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">

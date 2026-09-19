@@ -80,6 +80,17 @@ $app->post('/guest-task/{name}/{method}[/{param:.*}]', [TaskController::class, '
 // Public reference data (no auth needed)
 $app->get('/all/{name:IndianState|Plan}', [SqlController::class, 'all']);
 
+// Desktop-only: list local user accounts for login selector
+$app->get('/desktop-users', function ($request, $response) {
+    if (($_ENV['DESKTOP_MODE'] ?? '') !== 'true') {
+        $response->getBody()->write(json_encode(['success' => false, 'message' => 'Not available']));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+    }
+    $users = \App\Core\DB::select('SELECT u.id, u.name, u.email FROM users u ORDER BY u.name ASC');
+    $response->getBody()->write(json_encode(['success' => true, 'data' => $users ?: []]));
+    return $response->withHeader('Content-Type', 'application/json');
+});
+
 // ── Authenticated routes ───────────────────────────────────────────────────────
 
 $app->group('', function ($group) {
