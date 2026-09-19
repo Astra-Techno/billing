@@ -1,18 +1,51 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import api, { item, list } from '../../api'
+import { useAuthStore } from '../../stores/auth'
 import { inr } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
 import QRCode from 'qrcode'
 
 const route    = useRoute()
+const router   = useRouter()
 const invoice  = ref(null)
 const business = ref(null)
 const items    = ref([])
 const loading  = ref(true)
 const error    = ref('')
 const qrDataUrl = ref('')
+const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+
+function triggerPrint() { window.print() }
+function goBack() { router.back() }
+
+async function downloadPdf() {
+  const base = import.meta.env.VITE_API_URL || '/api'
+  const url = `${base}/invoice/${invoice.value.id}/pdf`
+  try {
+    const res = await fetch(url, {
+      headers: { 'Authorization': 'Bearer ' + useAuthStore().token }
+    })
+    if (!res.ok) throw new Error('PDF failed')
+    const blob = await res.blob()
+    const pdfFile = new File([blob], `invoice-${invoice.value.number || invoice.value.id}.pdf`, { type: 'application/pdf' })
+    if (isMobile && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+      await navigator.share({ files: [pdfFile], title: `Invoice ${invoice.value.number || ''}` })
+      return
+    }
+    const blobUrl = URL.createObjectURL(blob)
+    if (isMobile) {
+      window.open(blobUrl, '_blank')
+    } else {
+      const a = document.createElement('a')
+      a.href = blobUrl
+      a.download = pdfFile.name
+      a.click()
+    }
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 10000)
+  } catch { /* silent */ }
+}
 
 // Template: classic (default), modern, minimal
 const tpl = computed(() => route.query.tpl || localStorage.getItem('invoiceTemplate') || 'classic')
@@ -85,7 +118,10 @@ onMounted(async () => {
     return
   }
   loading.value = false
-  setTimeout(() => window.print(), 300)
+  // Auto-print on desktop; on mobile show manual button instead (popup blockers / UX)
+  if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    setTimeout(() => window.print(), 300)
+  }
 })
 </script>
 
@@ -551,13 +587,19 @@ onMounted(async () => {
       </div>
     </div>
 
+    <!-- Mobile action bar (hidden when printing) -->
+    <div v-if="!loading && !error && invoice" class="print-actions no-print">
+      <button @click="goBack" class="print-action-btn">Back</button>
+      <button @click="triggerPrint" class="print-action-btn print-action-primary">Print</button>
+      <button @click="downloadPdf" class="print-action-btn">PDF</button>
+    </div>
   </div>
 </template>
 
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: white; color: #111; }
-.print-page { max-width: 900px; margin: 0 auto; padding: 20px; }
+.print-page { max-width: 900px; margin: 0 auto; padding: 20px; padding-bottom: 80px; }
 .invoice-doc { background: white; }
 body.paper-a3 .print-page { max-width: 1300px; }
 body.paper-thermal80 .print-page { width: 80mm; padding: 2mm 3mm; }
@@ -577,7 +619,13 @@ body.paper-thermal58 .print-page { width: 58mm; padding: 2mm 3mm; }
 .receipt-total { font-size: 14px; }
 .receipt-qr { display: block; width: 22mm; height: 22mm; margin: 2mm auto; image-rendering: pixelated; }
 .receipt-thanks { font-weight: 700; margin: 3mm 0 5mm !important; }
+/* Mobile action bar */
+.print-actions { position: fixed; bottom: 0; left: 0; right: 0; display: flex; gap: 8px; padding: 12px 16px; background: #1f2937; z-index: 100; }
+.print-action-btn { flex: 1; padding: 10px 0; border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; background: rgba(255,255,255,0.1); color: white; font-size: 14px; font-weight: 600; cursor: pointer; }
+.print-action-btn:active { opacity: 0.7; }
+.print-action-primary { background: #2563eb; border-color: #2563eb; }
 @media print {
+  .no-print { display: none !important; }
   .print-page { max-width: 100%; }
   body.paper-thermal58 .print-page { width: 58mm; padding: 2mm 3mm; }
   body.paper-thermal80 .print-page { width: 80mm; padding: 2mm 3mm; }

@@ -172,15 +172,27 @@ async function printBluetooth() {
 }
 
 function printInvoice() {
-  window.open('/print/invoice/' + invoice.value.id, '_blank')
+  if (isMobile) {
+    window.location.href = '/print/invoice/' + invoice.value.id
+  } else {
+    window.open('/print/invoice/' + invoice.value.id, '_blank')
+  }
 }
 
 function printDeliveryChallan() {
-  window.open('/print/invoice/' + invoice.value.id + '?mode=dc', '_blank')
+  if (isMobile) {
+    window.location.href = '/print/invoice/' + invoice.value.id + '?mode=dc'
+  } else {
+    window.open('/print/invoice/' + invoice.value.id + '?mode=dc', '_blank')
+  }
 }
 
 function printProforma() {
-  window.open('/print/invoice/' + invoice.value.id + '?mode=proforma', '_blank')
+  if (isMobile) {
+    window.location.href = '/print/invoice/' + invoice.value.id + '?mode=proforma'
+  } else {
+    window.open('/print/invoice/' + invoice.value.id + '?mode=proforma', '_blank')
+  }
 }
 
 async function downloadPdf(mode = '') {
