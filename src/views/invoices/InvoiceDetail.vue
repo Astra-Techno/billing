@@ -131,7 +131,7 @@ const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
 const isAndroid = /Android/i.test(navigator.userAgent)
 const isIPhone = /iPhone|iPad|iPod/i.test(navigator.userAgent)
 const isDesktop = !!window.__BILLING_DESKTOP__
-const hasWebSerial = !isDesktop && canUseWebSerial()
+const hasWebSerial = !isDesktop && !isMobile && canUseWebSerial()
 const bluetoothPrintBusy = ref(false)
 const bluetoothPrintError = ref('')
 const bluetoothPrintMessage = ref('')
@@ -149,7 +149,7 @@ async function printBluetooth() {
     if (isDesktop) {
       const response = await api.post(`invoice/${invoice.value.id}/serial-print`, {})
       bluetoothPrintMessage.value = response.data?.message || 'Receipt sent to PSF588.'
-    } else if (isAndroid) {
+    } else if (isMobile && !isIPhone) {
       window.location.href = '/print/invoice/' + invoice.value.id + '?paper=thermal58&bluetooth=1'
     } else if (isIPhone) {
       const response = await api.post(`invoice/${invoice.value.id}/bluetooth-print`)

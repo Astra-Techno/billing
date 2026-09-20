@@ -119,8 +119,8 @@ onMounted(async () => {
     return
   }
   loading.value = false
-  // Auto-print on desktop; on mobile show manual button instead (popup blockers / UX)
-  if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+  // Auto-print on desktop; on Android Bluetooth auto-trigger print dialog too
+  if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || isAndroidBluetooth) {
     setTimeout(() => window.print(), 300)
   }
 })
