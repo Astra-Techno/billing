@@ -128,6 +128,7 @@ const canDeleteInvoice = computed(() =>
 )
 
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+const isAndroid = /Android/i.test(navigator.userAgent)
 const isIPhone = /iPhone|iPad|iPod/i.test(navigator.userAgent)
 const isDesktop = !!window.__BILLING_DESKTOP__
 const hasWebSerial = !isDesktop && canUseWebSerial()
@@ -148,6 +149,8 @@ async function printBluetooth() {
     if (isDesktop) {
       const response = await api.post(`invoice/${invoice.value.id}/serial-print`, {})
       bluetoothPrintMessage.value = response.data?.message || 'Receipt sent to PSF588.'
+    } else if (isAndroid) {
+      window.location.href = '/print/invoice/' + invoice.value.id + '?paper=thermal58&bluetooth=1'
     } else if (isIPhone) {
       const response = await api.post(`invoice/${invoice.value.id}/bluetooth-print`)
       const url = response.data?.data?.url
@@ -460,7 +463,7 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
             <button type="button" @click="printThermal58" class="inv-detail-btn inv-detail-btn--ghost" title="58mm SC588 receipt">
               Print 58mm
             </button>
-            <button v-if="isDesktop || isIPhone || hasWebSerial" type="button" @click="printBluetooth" :disabled="bluetoothPrintBusy" class="inv-detail-btn inv-detail-btn--ghost" title="Print to paired PSF588">
+            <button v-if="isDesktop || isMobile || hasWebSerial" type="button" @click="printBluetooth" :disabled="bluetoothPrintBusy" class="inv-detail-btn inv-detail-btn--ghost" :title="isAndroid ? 'Print via Android Bluetooth print service' : 'Print to paired PSF588'">
               {{ bluetoothPrintBusy ? 'Preparing…' : 'Bluetooth SC588' }}
             </button>
 
@@ -768,7 +771,7 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
       </button>
       <button @click="printThermal58" class="w-10 h-10 rounded-full bg-white/15 text-white text-xs font-bold flex items-center justify-center hover:bg-white/20 transition active:scale-95" title="Print 58mm SC588 receipt">58</button>
-      <button v-if="isDesktop || isIPhone || hasWebSerial" @click="printBluetooth" :disabled="bluetoothPrintBusy" class="w-10 h-10 rounded-full bg-white/15 text-white text-xs font-bold flex items-center justify-center hover:bg-white/20 transition active:scale-95" title="Print to paired PSF588">BT</button>
+      <button v-if="isDesktop || isMobile || hasWebSerial" @click="printBluetooth" :disabled="bluetoothPrintBusy" class="w-10 h-10 rounded-full bg-white/15 text-white text-xs font-bold flex items-center justify-center hover:bg-white/20 transition active:scale-95" :title="isAndroid ? 'Print via Android Bluetooth print service' : 'Print to paired PSF588'">BT</button>
       <button @click="printDeliveryChallan" class="w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center hover:bg-white/20 transition active:scale-95" title="DC Print">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
       </button>

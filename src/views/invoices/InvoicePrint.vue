@@ -16,6 +16,7 @@ const loading  = ref(true)
 const error    = ref('')
 const qrDataUrl = ref('')
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+const isAndroidBluetooth = /Android/i.test(navigator.userAgent) && route.query.bluetooth === '1'
 
 function triggerPrint() { window.print() }
 function goBack() { router.back() }
@@ -588,6 +589,9 @@ onMounted(async () => {
     </div>
 
     <!-- Mobile action bar (hidden when printing) -->
+    <div v-if="!loading && !error && invoice && isAndroidBluetooth" class="no-print fixed bottom-16 left-4 right-4 z-[99] mx-auto max-w-lg rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950 shadow-lg">
+      To print on the paired PSF588, install a 58mm ESC/POS Bluetooth print service, enable it in Android Settings &gt; Printing, and add the printer there. Then tap Print below and select PSF588. Bluetooth pairing alone does not add it to Android's print list.
+    </div>
     <div v-if="!loading && !error && invoice" class="print-actions no-print">
       <button @click="goBack" class="print-action-btn">Back</button>
       <button @click="triggerPrint" class="print-action-btn print-action-primary">Print</button>
