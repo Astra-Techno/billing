@@ -1,5 +1,5 @@
 export function canUseWebSerial() {
-  return window.isSecureContext && 'serial' in navigator
+  return window.isSecureContext && !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && 'serial' in navigator
 }
 
 export function decodeReceiptBytes(base64) {

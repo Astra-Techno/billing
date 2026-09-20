@@ -796,7 +796,7 @@ async function saveInvoice() {
             <p class="text-[10px] text-google-muted">{{ paper.desc }}</p>
           </button>
         </div>
-        <p v-if="bizStore.invoicePaper === 'thermal58'" class="text-xs text-google-muted">Pair SC588/PSF588 in Windows Bluetooth settings, then use Bluetooth SC588 on an invoice. In Edge/Chrome, choose PSF588 when prompted; the COM port number varies by PC. On iPhone, the Bluetooth Print app must be installed with Browser Print enabled.</p>
+        <p v-if="bizStore.invoicePaper === 'thermal58'" class="text-xs text-google-muted">On Windows, pair SC588/PSF588 in Bluetooth settings, then use Bluetooth SC588 on an invoice. In Edge/Chrome, choose PSF588 when prompted; the COM port number varies by PC. On Android, use Print 58mm with a compatible Bluetooth print service; Chrome cannot send directly to this Bluetooth Classic printer. On iPhone, the Bluetooth Print app must be installed with Browser Print enabled.</p>
         <div v-if="desktopMode || webSerialAvailable" class="flex flex-wrap items-center gap-3">
           <button type="button" @click="testThermalPrinter" :disabled="printerTestBusy" class="rounded-lg bg-primary-500 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-600 disabled:opacity-60">{{ printerTestBusy ? 'Testing…' : 'Test SC588 printer' }}</button>
           <span v-if="printerTestMessage" class="text-xs text-green-700">{{ printerTestMessage }}</span>

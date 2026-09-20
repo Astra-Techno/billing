@@ -1,7 +1,13 @@
 import { afterEach, expect, test, vi } from 'vitest'
-import { sendWebSerial, testReceiptBytes } from './thermalSerial'
+import { canUseWebSerial, sendWebSerial, testReceiptBytes } from './thermalSerial'
 
 afterEach(() => vi.unstubAllGlobals())
+
+test('does not offer desktop Bluetooth serial on Android even when a serial API is exposed', () => {
+  vi.stubGlobal('window', { isSecureContext: true })
+  vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Linux; Android 16)', serial: {} })
+  expect(canUseWebSerial()).toBe(false)
+})
 
 test('asks for the serial port before loading invoice bytes and closes it after printing', async () => {
   const events = []
@@ -14,7 +20,7 @@ test('asks for the serial port before loading invoice bytes and closes it after 
     writable: { getWriter: () => writer },
     close: vi.fn(async () => events.push('close')),
   }
-  vi.stubGlobal('navigator', { serial: { requestPort: vi.fn(async () => { events.push('select'); return port }) } })
+  vi.stubGlobal('navigator', { serial: { getPorts: vi.fn(async () => []), requestPort: vi.fn(async () => { events.push('select'); return port }) } })
 
   await sendWebSerial(async () => { events.push('load'); return testReceiptBytes() })
 

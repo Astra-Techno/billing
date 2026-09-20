@@ -130,7 +130,7 @@ const canDeleteInvoice = computed(() =>
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
 const isIPhone = /iPhone|iPad|iPod/i.test(navigator.userAgent)
 const isDesktop = !!window.__BILLING_DESKTOP__
-const hasWebSerial = !isDesktop && !isIPhone && canUseWebSerial()
+const hasWebSerial = !isDesktop && canUseWebSerial()
 const bluetoothPrintBusy = ref(false)
 const bluetoothPrintError = ref('')
 const bluetoothPrintMessage = ref('')
