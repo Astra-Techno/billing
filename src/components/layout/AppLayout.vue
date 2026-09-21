@@ -25,16 +25,29 @@ async function checkBackup() {
     backupWarning.value = data.data.warning || ''
   } catch { backupWarning.value = 'Backup check failed. Open Backup & Restore.' }
 }
-onUnmounted(() => clearInterval(backupTimer))
+onUnmounted(() => { clearInterval(backupTimer); clearInterval(licenseTimer) })
 
+function checkLicense() {
+  task('DesktopLicense', 'localStatus').then(({ data }) => {
+    if (!data.data?.active) location.assign('/activation')
+  }).catch(() => {})
+}
+function refreshLicense() {
+  task('DesktopLicense', 'localRefresh').then(({ data }) => {
+    localStorage.setItem('desktop_license_refresh', String(Date.now()))
+    if (!data.data?.active) location.assign('/activation')
+  }).catch(() => {})
+}
+let licenseTimer
 onMounted(() => {
   if (desktopMode) {
     checkBackup(); backupTimer = setInterval(checkBackup, 60000)
+    // Check local license immediately on load
+    checkLicense()
+    // Sync with cloud every 1 hour to pick up revocations/updates
     const last = Number(localStorage.getItem('desktop_license_refresh') || 0)
-    if (Date.now() - last > 86400000) task('DesktopLicense', 'localRefresh').then(({ data }) => {
-      localStorage.setItem('desktop_license_refresh', String(Date.now()))
-      if (!data.data?.active) location.assign('/activation')
-    }).catch(() => {})
+    if (Date.now() - last > 3600000) refreshLicense()
+    licenseTimer = setInterval(refreshLicense, 3600000)
   }
   bizStore.ensureLoaded()
 
@@ -45,7 +58,10 @@ onMounted(() => {
   attachAutoHideScrollbar()
 })
 
-watch(() => route.fullPath, () => nextTick(() => attachAutoHideScrollbar()), { immediate: true })
+watch(() => route.fullPath, () => {
+  nextTick(() => attachAutoHideScrollbar())
+  if (desktopMode) checkLicense()
+}, { immediate: true })
 
 const showNavbar = computed(() => {
   const regular = ['Dashboard', 'Invoices', 'Quotes', 'Expenses', 'Products', 'CreditNotes', 'PurchaseOrders', 'DeliveryChallans', 'GstReturns', 'Reports', 'Settings', 'Help', 'More', 'Clients', 'Payroll', 'StaffNew', 'StaffEdit', 'PayrollRun'].includes(route.name)
