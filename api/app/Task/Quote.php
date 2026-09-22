@@ -169,8 +169,8 @@ class Quote extends Task
         $businessId = $this->requireBusiness();
         $quote      = $this->findQuote((int)$input['id'], $businessId);
 
-        if (!in_array($quote->status, ['accepted', 'sent']))
-            $this->fail('Only accepted or sent quotes can be converted to invoices.');
+        if (in_array($quote->status, ['converted', 'declined']))
+            $this->fail('This quote has already been ' . $quote->status . '.');
 
         $dueDate = $input['due_date']
             ?? $quote->valid_until

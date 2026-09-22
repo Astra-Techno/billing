@@ -87,7 +87,7 @@ function shareWhatsApp() {
   const q = quote.value
   const text = `*${q.type === 'proforma' ? 'Proforma Invoice' : 'Quotation'} ${q.number}*\n` +
     `Dear ${q.client_name},\n\n` +
-    `Please find attached your quotation for *${inr(q.total)}*.\n` +
+    `Please find attached your quotation for *${inr(q.subtotal)}*.\n` +
     `Valid Until: ${fmtDateShort(q.valid_until)}\n\n` +
     `Thank you for your interest!`
   window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank')
@@ -133,7 +133,7 @@ onMounted(load)
           <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         </div>
         <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">{{ quote.client_name }}</p>
-        <h1 class="text-5xl font-extrabold tracking-tight text-gray-900">{{ inr(quote.total) }}</h1>
+        <h1 class="text-5xl font-extrabold tracking-tight text-gray-900">{{ inr(quote.subtotal) }}</h1>
         <div class="flex items-center gap-2 mt-3">
           <p class="text-sm font-semibold text-gray-600">{{ quote.type === 'proforma' ? 'Proforma Invoice' : 'Quotation' }} {{ quote.number }}</p>
           <span :class="badgeClass(quote.status)" class="text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-extrabold">{{ quote.status }}</span>
@@ -148,7 +148,7 @@ onMounted(load)
           <span class="text-xs">{{ acting === 'sent' ? 'Sending…' : 'Mark Sent' }}</span>
         </button>
 
-        <button v-if="['accepted','sent'].includes(quote.status)" @click="openConvertConfirm" :disabled="!!acting" class="flex-1 min-w-[120px] btn bg-emerald-600 text-white hover:bg-emerald-700 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
+        <button v-if="!['converted','declined'].includes(quote.status)" @click="openConvertConfirm" :disabled="!!acting" class="flex-1 min-w-[120px] btn bg-emerald-600 text-white hover:bg-emerald-700 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           <span class="text-xs">Convert to Bill</span>
         </button>
@@ -217,37 +217,30 @@ onMounted(load)
           <table class="w-full text-sm">
             <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
               <tr>
-                <th class="px-4 py-3 text-left">Description</th>
+                <th class="px-4 py-3 text-left">Product</th>
                 <th class="px-4 py-3 text-right">Qty</th>
-                <th class="px-4 py-3 text-right">Rate</th>
-                <th class="px-4 py-3 text-right">GST%</th>
-                <th class="px-4 py-3 text-right">Total</th>
+                <th class="px-4 py-3 text-right">Price</th>
+                <th class="px-4 py-3 text-right">Amount</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
               <tr v-for="it in items" :key="it.id">
                 <td class="px-4 py-3">
                   <p class="font-medium text-gray-800">{{ it.description }}</p>
-                  <p v-if="it.hsn_sac" class="text-xs text-gray-400">HSN/SAC: {{ it.hsn_sac }}</p>
                 </td>
                 <td class="px-4 py-3 text-right text-gray-600">{{ it.quantity }} {{ it.unit }}</td>
                 <td class="px-4 py-3 text-right text-gray-600">{{ inr(it.unit_price) }}</td>
-                <td class="px-4 py-3 text-right text-gray-600">{{ it.gst_rate }}%</td>
-                <td class="px-4 py-3 text-right font-medium text-gray-900">{{ inr(it.total) }}</td>
+                <td class="px-4 py-3 text-right font-medium text-gray-900">{{ inr(it.quantity * it.unit_price) }}</td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <!-- Totals -->
+        <!-- Total (without tax) -->
         <div class="p-5 border-t border-gray-100">
-          <div class="max-w-xs ml-auto space-y-1.5 text-sm">
-            <div class="flex justify-between text-gray-600"><span>Subtotal</span><span>{{ inr(quote.subtotal) }}</span></div>
-            <div v-if="quote.cgst_total > 0" class="flex justify-between text-gray-600"><span>CGST</span><span>{{ inr(quote.cgst_total) }}</span></div>
-            <div v-if="quote.sgst_total > 0" class="flex justify-between text-gray-600"><span>SGST</span><span>{{ inr(quote.sgst_total) }}</span></div>
-            <div v-if="quote.igst_total > 0" class="flex justify-between text-gray-600"><span>IGST</span><span>{{ inr(quote.igst_total) }}</span></div>
-            <div class="flex justify-between font-bold text-base text-gray-900 border-t border-gray-200 pt-2">
-              <span>Total</span><span>{{ inr(quote.total) }}</span>
+          <div class="max-w-xs ml-auto">
+            <div class="flex justify-between font-bold text-base text-gray-900">
+              <span>Total</span><span>{{ inr(quote.subtotal) }}</span>
             </div>
           </div>
         </div>
