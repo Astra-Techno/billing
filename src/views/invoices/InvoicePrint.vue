@@ -630,10 +630,18 @@ body.paper-thermal58 .print-page { width: 58mm; padding: 2mm 3mm; }
 .print-action-primary { background: #2563eb; border-color: #2563eb; }
 @media print {
   .no-print { display: none !important; }
-  .print-page { max-width: 100%; }
+  .print-page { max-width: 100%; padding-bottom: 0; }
   body.paper-thermal58 .print-page { width: 58mm; padding: 2mm 3mm; }
   body.paper-thermal80 .print-page { width: 80mm; padding: 2mm 3mm; }
   body { margin: 0; }
+  /* Multi-page print support */
+  .invoice-doc { overflow: visible !important; }
+  .invoice-doc table { page-break-inside: auto; }
+  .invoice-doc tr { page-break-inside: avoid; page-break-after: auto; }
+  .invoice-doc thead { display: table-header-group; }
+  .invoice-doc tfoot { display: table-footer-group; }
+  .invoice-doc .grid { break-inside: avoid; }
+  .invoice-doc .border-b { break-inside: avoid; }
 }
 .flex { display: flex; }
 .grid { display: grid; }
