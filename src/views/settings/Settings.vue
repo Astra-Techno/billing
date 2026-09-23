@@ -716,11 +716,12 @@ async function saveInvoice() {
           <h3 class="text-sm font-bold text-ink dark:text-white">Invoice Template</h3>
           <p class="text-xs text-google-muted mt-0.5">Choose how your printed invoices look</p>
         </div>
-        <div class="grid grid-cols-3 gap-3">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <button v-for="t in [
             { id: 'classic', name: 'Classic', desc: 'Traditional business style', color: '#1f2937' },
             { id: 'modern', name: 'Modern', desc: 'Clean with accent colors', color: '#1a5fd4' },
             { id: 'minimal', name: 'Minimal', desc: 'Simple & elegant', color: '#111827' },
+            { id: 'traditional', name: 'Traditional', desc: 'Bordered table format', color: '#000000' },
           ]" :key="t.id"
             @click="bizStore.setInvoiceTemplate(t.id)"
             class="relative p-3 rounded-xl border-2 transition-all text-left"
@@ -767,6 +768,21 @@ async function saveInvoice() {
                   <div class="h-1.5 w-3/4 bg-gray-100 rounded-sm"></div>
                 </div>
                 <div class="border-t border-gray-200 pt-1 mt-1"><div class="h-1 w-8 bg-gray-900 rounded ml-auto"></div></div>
+              </div>
+              <!-- Traditional preview -->
+              <div v-if="t.id === 'traditional'" class="p-1.5 h-full flex flex-col border border-gray-900 bg-white">
+                <div class="text-center mb-1"><div class="h-1 w-10 bg-gray-900 rounded mx-auto"></div><div class="h-0.5 w-6 bg-gray-300 rounded mx-auto mt-0.5"></div></div>
+                <div class="h-0.5 bg-gray-900 mb-1"></div>
+                <div class="flex-1 border border-gray-400">
+                  <div class="h-2 w-full bg-gray-100 border-b border-gray-400"></div>
+                  <div class="space-y-px p-0.5">
+                    <div class="h-1.5 w-full border-b border-gray-200"></div>
+                    <div class="h-1.5 w-full border-b border-gray-200"></div>
+                    <div class="h-1.5 w-3/4 border-b border-gray-200"></div>
+                  </div>
+                </div>
+                <div class="h-0.5 bg-gray-900 mt-1"></div>
+                <div class="flex justify-between mt-0.5"><div class="h-1 w-5 bg-gray-300 rounded"></div><div class="h-1 w-8 bg-gray-900 rounded"></div></div>
               </div>
             </div>
             <p class="text-xs font-bold text-ink dark:text-white">{{ t.name }}</p>

@@ -588,6 +588,174 @@ onMounted(async () => {
       </div>
     </div>
 
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- TEMPLATE: TRADITIONAL (bordered table format)                   -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div v-else-if="invoice && effectiveTpl === 'traditional'" class="invoice-doc trad">
+      <!-- Company Header -->
+      <table class="trad-full" style="border-bottom: 2px solid #000;">
+        <tr>
+          <td style="text-align: center; padding: 12px 16px;">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 16px;">
+              <img v-if="business?.logo" :src="business.logo" style="width: 60px; height: 60px; object-fit: contain;" alt="logo" />
+              <div>
+                <p style="font-size: 24px; font-weight: 900; font-style: italic; color: #000; letter-spacing: 0.02em;">{{ business?.name || invoice.business_name }}</p>
+                <p v-if="business?.address_line1" style="font-size: 11px; color: #333;">{{ business.address_line1 }}<span v-if="business.address_line2">, {{ business.address_line2 }}</span></p>
+                <p v-if="business?.city" style="font-size: 11px; color: #333;">{{ [business?.city, business?.state_name, business?.pincode].filter(Boolean).join(' - ') }}<span v-if="business?.state_name"> {{ business.state_name }} Dt.</span></p>
+                <p v-if="business?.gstin || invoice.business_gstin" style="font-size: 12px; font-weight: 700; color: #000;">GST IN : {{ business?.gstin || invoice.business_gstin }}</p>
+                <p v-if="business?.mobile || business?.email" style="font-size: 11px; color: #333;">
+                  <span v-if="business?.mobile">Phone : {{ business.mobile }}</span>
+                  <span v-if="business?.mobile && business?.email"> &nbsp; </span>
+                  <span v-if="business?.email">Email : {{ business.email }}</span>
+                </p>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Invoice Title -->
+      <div style="text-align: center; padding: 8px 0; border-bottom: 1px solid #000;">
+        <p style="font-size: 18px; font-weight: 800; letter-spacing: 0.1em;">{{ invoiceTitle.toUpperCase() }}</p>
+      </div>
+
+      <!-- To + Invoice Details -->
+      <table class="trad-full">
+        <tr>
+          <td style="padding: 10px 12px; vertical-align: top; width: 55%; border-right: 1px solid #000; border-bottom: 1px solid #000;">
+            <p style="font-size: 12px; font-weight: 700;">To</p>
+            <p style="font-size: 14px; font-weight: 700; margin-top: 4px;">{{ invoice.client_name || 'Walk-in Customer' }}</p>
+            <p v-if="invoice.client_company" style="font-size: 12px;">{{ invoice.client_company }}</p>
+            <p v-if="invoice.client_gstin" style="font-size: 11px; margin-top: 2px;">GSTIN: {{ invoice.client_gstin }}</p>
+            <p v-if="invoice.client_mobile" style="font-size: 11px;">Mob: {{ invoice.client_mobile }}</p>
+          </td>
+          <td style="padding: 10px 12px; vertical-align: top; border-bottom: 1px solid #000;">
+            <table style="width: 100%; font-size: 12px;">
+              <tr><td style="padding: 3px 0; font-weight: 600;">Invoice No</td><td style="padding: 3px 0;">: {{ invoice.number }}</td></tr>
+              <tr><td style="padding: 3px 0; font-weight: 600;">Date</td><td style="padding: 3px 0;">: {{ fmtDateShort(invoice.issue_date) }}</td></tr>
+              <tr v-if="!isDC"><td style="padding: 3px 0; font-weight: 600;">Due Dt</td><td style="padding: 3px 0;">: {{ fmtDateShort(invoice.due_date) }}</td></tr>
+              <tr><td style="padding: 3px 0; font-weight: 600;">Supply</td><td style="padding: 3px 0;">: {{ invoice.place_of_supply_name || invoice.supply_type }}</td></tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Items Table -->
+      <table class="trad-full trad-items">
+        <thead>
+          <tr>
+            <th style="width: 40px;">S.No</th>
+            <th style="text-align: left;">Product Name</th>
+            <th>HSN Code</th>
+            <th>Per UOM</th>
+            <th v-if="!isDC" style="text-align: right;">Rate</th>
+            <th style="text-align: right;">Qty</th>
+            <th v-if="!isDC" style="text-align: right;">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(it, idx) in items" :key="it.id">
+            <td style="text-align: center;">{{ idx + 1 }}</td>
+            <td style="text-align: left; font-weight: 500;">{{ it.description }}</td>
+            <td style="text-align: center; font-family: monospace; font-size: 11px;">{{ it.hsn_sac || '' }}</td>
+            <td style="text-align: center;">{{ it.unit || 'Nos' }}</td>
+            <td v-if="!isDC" style="text-align: right;">{{ inr(it.unit_price) }}</td>
+            <td style="text-align: right;">{{ it.quantity }}</td>
+            <td v-if="!isDC" style="text-align: right; font-weight: 600;">{{ inr(it.total) }}</td>
+          </tr>
+          <!-- Empty rows to fill space -->
+          <tr v-for="n in Math.max(0, 8 - items.length)" :key="'empty-'+n">
+            <td>&nbsp;</td><td></td><td></td><td></td>
+            <td v-if="!isDC"></td><td></td><td v-if="!isDC"></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Transport + Totals row -->
+      <table v-if="!isDC" class="trad-full" style="border-top: 2px solid #000;">
+        <tr>
+          <td style="width: 55%; padding: 8px 12px; vertical-align: top; border-right: 1px solid #000; font-size: 12px;">
+            <div style="display: flex; gap: 8px;"><span style="font-weight: 600; min-width: 80px;">No.of.Bdl</span><span>:</span></div>
+            <div style="display: flex; gap: 8px;"><span style="font-weight: 600; min-width: 80px;">Transport</span><span>:</span></div>
+            <div style="display: flex; gap: 8px;"><span style="font-weight: 600; min-width: 80px;">Vehicle No</span><span>:</span></div>
+            <div style="display: flex; gap: 8px;"><span style="font-weight: 600; min-width: 80px;">L.R. No</span><span>:</span></div>
+          </td>
+          <td style="padding: 0; vertical-align: top;">
+            <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
+              <tr style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">Total</td><td style="padding: 4px 12px; text-align: right; font-weight: 600;">{{ inr(parseFloat(invoice.subtotal||0) + parseFloat(invoice.discount||0)) }}</td></tr>
+              <tr v-if="invoice.discount > 0" style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">Discount</td><td style="padding: 4px 12px; text-align: right;">-{{ inr(invoice.discount) }}</td></tr>
+              <tr v-if="invoice.sgst_total > 0" style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">SGST</td><td style="padding: 4px 12px; text-align: right;">{{ inr(invoice.sgst_total) }}</td></tr>
+              <tr v-if="invoice.cgst_total > 0" style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">CGST</td><td style="padding: 4px 12px; text-align: right;">{{ inr(invoice.cgst_total) }}</td></tr>
+              <tr v-if="invoice.igst_total > 0" style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">IGST</td><td style="padding: 4px 12px; text-align: right;">{{ inr(invoice.igst_total) }}</td></tr>
+              <tr style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">Round-off</td><td style="padding: 4px 12px; text-align: right;">{{ inr(Math.round(parseFloat(invoice.total||0)) - parseFloat(invoice.total||0)) }}</td></tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Amount in words + NET AMOUNT -->
+      <table v-if="!isDC" class="trad-full" style="border-top: 2px solid #000;">
+        <tr>
+          <td style="width: 55%; padding: 8px 12px; font-size: 12px; border-right: 1px solid #000;">
+            <span style="font-weight: 700;">RS.</span> {{ amountInWords(invoice.total) }}
+          </td>
+          <td style="padding: 8px 12px; text-align: right;">
+            <span style="font-size: 11px; font-weight: 700; background: #000; color: #fff; padding: 3px 10px;">NET-AMOUNT</span>
+            <p style="font-size: 18px; font-weight: 900; margin-top: 4px;">{{ inr(Math.round(parseFloat(invoice.total||0))) }}</p>
+            <div v-if="invoice.amount_paid > 0" style="font-size: 12px; color: #15803d; margin-top: 2px;">Paid: {{ inr(invoice.amount_paid) }}</div>
+            <div v-if="invoice.amount_due > 0" style="font-size: 14px; font-weight: 800; color: #dc2626; margin-top: 2px;">Balance Due: {{ inr(invoice.amount_due) }}</div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Bank Details -->
+      <div v-if="!isDC && (business?.bank_name || business?.upi_id)" style="border-top: 1px solid #000; padding: 10px 12px; text-align: center;">
+        <p style="font-size: 13px; font-weight: 800; margin-bottom: 6px;">Company's Bank Details</p>
+        <div style="display: flex; justify-content: center; gap: 32px; font-size: 12px;">
+          <div style="text-align: left;">
+            <div v-if="business?.bank_account_holder || business?.name"><span style="font-weight: 600;">A/C Holder's Name</span> : {{ business?.bank_account_holder || business?.name }}</div>
+            <div v-if="business?.bank_account_no"><span style="font-weight: 600;">A/C No</span> : {{ business.bank_account_no }}</div>
+          </div>
+          <div style="text-align: left;">
+            <div v-if="business?.bank_name"><span style="font-weight: 600;">Bank Name</span> : {{ business.bank_name }}</div>
+            <div v-if="business?.bank_ifsc"><span style="font-weight: 600;">IFSC/Branch</span> : {{ business.bank_ifsc }}</div>
+          </div>
+        </div>
+        <div v-if="qrDataUrl && invoice?.amount_due > 0" style="margin-top: 8px;">
+          <img :src="qrDataUrl" style="width: 72px; height: 72px; margin: 0 auto; border: 1px solid #ddd;" alt="UPI QR" />
+          <p style="font-size: 9px; color: #666;">Scan to Pay via UPI</p>
+        </div>
+      </div>
+
+      <!-- Signatures -->
+      <table class="trad-full" style="border-top: 2px solid #000;">
+        <tr>
+          <td style="width: 33%; padding: 12px; vertical-align: bottom; height: 80px; border-right: 1px solid #000;">
+            <div style="border-top: 1px solid #000; padding-top: 4px; text-align: center; font-size: 11px; font-weight: 600;">Receiver's Signature</div>
+          </td>
+          <td style="width: 34%; padding: 12px; vertical-align: bottom; border-right: 1px solid #000;">
+            <div style="border-top: 1px solid #000; padding-top: 4px; text-align: center; font-size: 11px; font-weight: 600;">Checked by</div>
+          </td>
+          <td style="width: 33%; padding: 12px; vertical-align: top; text-align: right;">
+            <p style="font-size: 12px; font-weight: 700; font-style: italic;">For {{ business?.name || invoice.business_name }}</p>
+            <div style="height: 50px;"></div>
+            <p style="font-size: 11px; font-weight: 600; text-align: right;">Authorised Signatory</p>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Terms -->
+      <div style="border-top: 1px solid #000; padding: 8px 12px;">
+        <p style="font-size: 11px; font-weight: 700;">Terms & Conditions</p>
+        <p v-if="invoice.terms || business?.invoice_terms" style="font-size: 10px; color: #333; margin-top: 2px;">{{ invoice.terms || business?.invoice_terms }}</p>
+      </div>
+
+      <!-- Footer -->
+      <div style="border-top: 1px solid #000; padding: 6px; text-align: center;">
+        <p style="font-size: 10px; font-style: italic; color: #666;">This is a Computer Generated Invoice</p>
+      </div>
+    </div>
+
     <!-- Mobile action bar (hidden when printing) -->
     <div v-if="!loading && !error && invoice && isAndroidBluetooth" class="no-print fixed bottom-16 left-4 right-4 z-[99] mx-auto max-w-lg rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950 shadow-lg">
       To print on the paired PSF588, install a 58mm ESC/POS Bluetooth print service, enable it in Android Settings &gt; Printing, and add the printer there. Then tap Print below and select PSF588. Bluetooth pairing alone does not add it to Android's print list.
@@ -623,6 +791,15 @@ body.paper-thermal58 .print-page { width: 58mm; padding: 2mm 3mm; }
 .receipt-total { font-size: 14px; }
 .receipt-qr { display: block; width: 22mm; height: 22mm; margin: 2mm auto; image-rendering: pixelated; }
 .receipt-thanks { font-weight: 700; margin: 3mm 0 5mm !important; }
+/* Traditional template */
+.trad { border: 2px solid #000; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #000; }
+.trad-full { width: 100%; border-collapse: collapse; }
+.trad-full td, .trad-full th { border: none; }
+.trad-items th { padding: 8px 6px; font-size: 12px; font-weight: 700; border-bottom: 2px solid #000; border-right: 1px solid #ccc; text-align: center; background: #f9f9f9; }
+.trad-items th:last-child { border-right: none; }
+.trad-items td { padding: 6px; font-size: 12px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; }
+.trad-items td:last-child { border-right: none; }
+.trad-items tbody tr:last-child td { border-bottom: none; }
 /* Mobile action bar */
 .print-actions { position: fixed; bottom: 0; left: 0; right: 0; display: flex; gap: 8px; padding: 12px 16px; background: #1f2937; z-index: 100; }
 .print-action-btn { flex: 1; padding: 10px 0; border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; background: rgba(255,255,255,0.1); color: white; font-size: 14px; font-weight: 600; cursor: pointer; }
