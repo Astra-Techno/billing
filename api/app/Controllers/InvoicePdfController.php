@@ -255,6 +255,14 @@ class InvoicePdfController
                 $discCell = '<td style="padding:8px;text-align:right;font-size:11px;color:#15803d">' . ($dp > 0 ? $this->h($dp) . '%' : '&mdash;') . '</td>';
             }
 
+            // Simple display values (before invoice-level discount allocation)
+            $qty     = (float)($it['quantity'] ?? 0);
+            $price   = (float)($it['unit_price'] ?? 0);
+            $discPct = (float)($it['discount_pct'] ?? 0);
+            $gstRate = (float)($it['gst_rate'] ?? 0);
+            $simpleTaxable = $qty * $price * (1 - $discPct / 100);
+            $simpleAmount  = $simpleTaxable * (1 + $gstRate / 100);
+
             $itemsHtml .= '<tr style="border-bottom:1px solid #f3f4f6">'
                 . '<td style="padding:8px;color:#9ca3af;font-size:11px">' . ($idx + 1) . '</td>'
                 . '<td style="padding:8px;font-weight:600;color:#1f2937">' . $this->h($it['description']) . '</td>'
@@ -263,18 +271,30 @@ class InvoicePdfController
                 . '<td style="padding:8px;text-align:center;color:#374151;font-size:11px">' . $this->h($it['unit'] ?? 'Nos') . '</td>'
                 . ($isDC ? '' : '<td style="padding:8px;text-align:right;color:#374151">' . $this->inr($it['unit_price']) . '</td>')
                 . $discCell
-                . ($isDC ? '' : '<td style="padding:8px;text-align:right;color:#374151">' . $this->inr($it['taxable_amt']) . '</td>')
+                . ($isDC ? '' : '<td style="padding:8px;text-align:right;color:#374151">' . $this->inr($simpleTaxable) . '</td>')
                 . ($isGst ? '<td style="padding:8px;text-align:right">' . $taxCell . '</td>' : '')
-                . ($isDC ? '' : '<td style="padding:8px;text-align:right;font-weight:600;color:#111827">' . $this->inr($it['total']) . '</td>')
+                . ($isDC ? '' : '<td style="padding:8px;text-align:right;font-weight:600;color:#111827">' . $this->inr($simpleAmount) . '</td>')
                 . '</tr>';
         }
 
+        // ── Compute after-item-discount and invoice-only discount ─────────
+        $afterItemDiscount = 0;
+        $itemDiscountSum   = 0;
+        foreach ($items as $it) {
+            $q = (float)($it['quantity'] ?? 0);
+            $p = (float)($it['unit_price'] ?? 0);
+            $d = (float)($it['discount_pct'] ?? 0);
+            $lineGross = $q * $p;
+            $itemDiscountSum   += round($lineGross * ($d / 100), 2);
+            $afterItemDiscount += $lineGross - round($lineGross * ($d / 100), 2);
+        }
+        $invoiceDiscountOnly = (float)($inv['discount'] ?? 0) - $itemDiscountSum;
+
         // ── Totals ──────────────────────────────────────────────────────────
-        $grossSub = (float)($inv['subtotal'] ?? 0) + (float)($inv['discount'] ?? 0);
         $totalsHtml = '<div style="font-size:12px;color:#4b5563">'
-            . '<div style="display:flex;justify-content:space-between;padding:2px 0"><span>Subtotal</span><span>' . $this->inr($grossSub) . '</span></div>';
-        if ((float)($inv['discount'] ?? 0) > 0)
-            $totalsHtml .= '<div style="display:flex;justify-content:space-between;padding:2px 0;color:#15803d"><span>Discount</span><span>&minus;' . $this->inr($inv['discount']) . '</span></div>';
+            . '<div style="display:flex;justify-content:space-between;padding:2px 0"><span>Subtotal</span><span>' . $this->inr($afterItemDiscount) . '</span></div>';
+        if ($invoiceDiscountOnly > 0)
+            $totalsHtml .= '<div style="display:flex;justify-content:space-between;padding:2px 0;color:#15803d"><span>Discount</span><span>&minus;' . $this->inr($invoiceDiscountOnly) . '</span></div>';
         if ((float)($inv['cgst_total'] ?? 0) > 0)
             $totalsHtml .= '<div style="display:flex;justify-content:space-between;padding:2px 0"><span>CGST</span><span>' . $this->inr($inv['cgst_total']) . '</span></div>';
         if ((float)($inv['sgst_total'] ?? 0) > 0)

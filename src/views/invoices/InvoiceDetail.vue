@@ -239,6 +239,25 @@ const invoiceTitle = computed(() => {
 const isGst = computed(() => invoice.value?.invoice_type !== 'bill_of_supply')
 const hasItemDiscount = computed(() => items.value.some(it => parseFloat(it.discount_pct || 0) > 0))
 
+// Simple display values per item (before invoice-level discount allocation)
+function itemTaxable(it) {
+  return parseFloat(it.quantity || 0) * parseFloat(it.unit_price || 0) * (1 - parseFloat(it.discount_pct || 0) / 100)
+}
+function itemAmount(it) {
+  const t = itemTaxable(it)
+  return t * (1 + parseFloat(it.gst_rate || 0) / 100)
+}
+
+// Totals computed from items for display
+const afterItemDiscount = computed(() => items.value.reduce((s, it) => s + itemTaxable(it), 0))
+const itemDiscountTotal = computed(() => {
+  return items.value.reduce((s, it) => {
+    const lineGross = parseFloat(it.quantity || 0) * parseFloat(it.unit_price || 0)
+    return s + lineGross * (parseFloat(it.discount_pct || 0) / 100)
+  }, 0)
+})
+const invoiceDiscountOnly = computed(() => parseFloat(invoice.value?.discount || 0) - itemDiscountTotal.value)
+
 const moreMenuOpen = ref(false)
 
 function closeActionMenus() {
@@ -633,7 +652,7 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
                 <td class="text-right text-gray-700 tabular-nums">{{ it.quantity }}</td>
                 <td class="hidden sm:table-cell text-right text-gray-700 tabular-nums">{{ inr(it.unit_price) }}</td>
                 <td v-if="hasItemDiscount" class="hidden sm:table-cell text-right text-green-600 text-xs tabular-nums">{{ parseFloat(it.discount_pct || 0) > 0 ? it.discount_pct + '%' : '—' }}</td>
-                <td class="hidden sm:table-cell text-right text-gray-700 tabular-nums">{{ inr(it.taxable_amt) }}</td>
+                <td class="hidden sm:table-cell text-right text-gray-700 tabular-nums">{{ inr(itemTaxable(it)) }}</td>
                 <td v-if="isGst" class="hidden sm:table-cell text-right text-xs text-gray-600">
                   <div v-if="it.cgst_amt > 0" class="space-y-0.5 tabular-nums">
                     <div>CGST {{ it.cgst_rate }}% · {{ inr(it.cgst_amt) }}</div>
@@ -642,7 +661,7 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
                   <div v-else-if="it.igst_amt > 0">IGST {{ it.igst_rate }}% · {{ inr(it.igst_amt) }}</div>
                   <div v-else class="text-gray-400">—</div>
                 </td>
-                <td class="text-right font-semibold text-gray-900 tabular-nums">{{ inr(it.total) }}</td>
+                <td class="text-right font-semibold text-gray-900 tabular-nums">{{ inr(itemAmount(it)) }}</td>
               </tr>
             </tbody>
           </table>
@@ -655,8 +674,8 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
             <p class="text-sm text-gray-700 leading-relaxed">{{ amountInWords(invoice.total) }}</p>
           </div>
           <div class="sm:w-72 shrink-0 space-y-2 text-sm border border-gray-200 rounded-lg bg-white p-4">
-            <div class="flex justify-between text-gray-600"><span>Subtotal</span><span class="tabular-nums">{{ inr(parseFloat(invoice.subtotal || 0) + parseFloat(invoice.discount || 0)) }}</span></div>
-            <div v-if="invoice.discount > 0" class="flex justify-between text-green-600"><span>Discount<template v-if="!hasItemDiscount && invoice.discount_type === 'percent' && invoice.discount_value"> ({{ invoice.discount_value }}%)</template></span><span class="tabular-nums">-{{ inr(invoice.discount) }}</span></div>
+            <div class="flex justify-between text-gray-600"><span>Subtotal</span><span class="tabular-nums">{{ inr(afterItemDiscount) }}</span></div>
+            <div v-if="invoiceDiscountOnly > 0" class="flex justify-between text-green-600"><span>Discount<template v-if="invoice.discount_type === 'percent' && invoice.discount_value"> ({{ invoice.discount_value }}%)</template></span><span class="tabular-nums">-{{ inr(invoiceDiscountOnly) }}</span></div>
             <div v-if="invoice.cgst_total > 0" class="flex justify-between text-gray-600"><span>CGST</span><span class="tabular-nums">{{ inr(invoice.cgst_total) }}</span></div>
             <div v-if="invoice.sgst_total > 0" class="flex justify-between text-gray-600"><span>SGST</span><span class="tabular-nums">{{ inr(invoice.sgst_total) }}</span></div>
             <div v-if="invoice.igst_total > 0" class="flex justify-between text-gray-600"><span>IGST</span><span class="tabular-nums">{{ inr(invoice.igst_total) }}</span></div>

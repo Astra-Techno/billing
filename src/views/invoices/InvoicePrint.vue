@@ -101,6 +101,19 @@ const invoiceTitle = computed(() => {
 const isGst = computed(() => !isDC.value && invoice.value?.invoice_type !== 'bill_of_supply')
 const hasItemDiscount = computed(() => items.value.some(it => parseFloat(it.discount_pct || 0) > 0))
 
+function itemTaxable(it) {
+  return parseFloat(it.quantity || 0) * parseFloat(it.unit_price || 0) * (1 - parseFloat(it.discount_pct || 0) / 100)
+}
+function itemAmount(it) {
+  return itemTaxable(it) * (1 + parseFloat(it.gst_rate || 0) / 100)
+}
+const afterItemDiscount = computed(() => items.value.reduce((s, it) => s + itemTaxable(it), 0))
+const itemDiscountTotal = computed(() => items.value.reduce((s, it) => {
+  const g = parseFloat(it.quantity || 0) * parseFloat(it.unit_price || 0)
+  return s + g * (parseFloat(it.discount_pct || 0) / 100)
+}, 0))
+const invoiceDiscountOnly = computed(() => parseFloat(invoice.value?.discount || 0) - itemDiscountTotal.value)
+
 const ones = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine',
   'Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen']
 const tens = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety']
@@ -195,8 +208,8 @@ onMounted(async () => {
       <div class="receipt-rule"></div>
       <template v-if="isDC"><div class="receipt-pair"><strong>Total Qty</strong><strong>{{ items.reduce((sum, it) => sum + Number(it.quantity || 0), 0) }}</strong></div></template>
       <template v-else>
-        <div class="receipt-pair"><span>Subtotal</span><span>{{ inr(Number(invoice.subtotal || 0) + Number(invoice.discount || 0)) }}</span></div>
-        <div v-if="Number(invoice.discount)" class="receipt-pair"><span>Discount</span><span>-{{ inr(invoice.discount) }}</span></div>
+        <div class="receipt-pair"><span>Subtotal</span><span>{{ inr(afterItemDiscount) }}</span></div>
+        <div v-if="invoiceDiscountOnly > 0" class="receipt-pair"><span>Discount</span><span>-{{ inr(invoiceDiscountOnly) }}</span></div>
         <div v-if="Number(invoice.cgst_total)" class="receipt-pair"><span>CGST</span><span>{{ inr(invoice.cgst_total) }}</span></div>
         <div v-if="Number(invoice.sgst_total)" class="receipt-pair"><span>SGST</span><span>{{ inr(invoice.sgst_total) }}</span></div>
         <div v-if="Number(invoice.igst_total)" class="receipt-pair"><span>IGST</span><span>{{ inr(invoice.igst_total) }}</span></div>
@@ -276,13 +289,13 @@ onMounted(async () => {
             <td class="px-2 py-2 text-center text-gray-700 text-xs">{{ it.unit || 'Nos' }}</td>
             <td v-if="!isDC" class="px-2 py-2 text-right text-gray-700">{{ inr(it.unit_price) }}</td>
             <td v-if="hasItemDiscount && !isDC" class="px-2 py-2 text-right text-green-700 text-xs">{{ parseFloat(it.discount_pct || 0) > 0 ? it.discount_pct + '%' : '—' }}</td>
-            <td v-if="!isDC" class="px-2 py-2 text-right text-gray-700">{{ inr(it.taxable_amt) }}</td>
+            <td v-if="!isDC" class="px-2 py-2 text-right text-gray-700">{{ inr(itemTaxable(it)) }}</td>
             <td v-if="isGst" class="px-2 py-2 text-right text-xs">
               <div v-if="it.cgst_amt > 0"><span class="text-gray-600">CGST {{ it.gst_rate/2 }}%: {{ inr(it.cgst_amt) }}</span><br/><span class="text-gray-600">SGST {{ it.gst_rate/2 }}%: {{ inr(it.sgst_amt) }}</span></div>
               <div v-else-if="it.igst_amt > 0" class="text-gray-600">IGST {{ it.gst_rate }}%: {{ inr(it.igst_amt) }}</div>
               <div v-else class="text-gray-400">Nil</div>
             </td>
-            <td v-if="!isDC" class="px-2 py-2 text-right font-semibold text-gray-900">{{ inr(it.total) }}</td>
+            <td v-if="!isDC" class="px-2 py-2 text-right font-semibold text-gray-900">{{ inr(itemAmount(it)) }}</td>
           </tr>
         </tbody>
       </table>
@@ -303,8 +316,8 @@ onMounted(async () => {
           <p class="text-sm font-medium text-gray-700 italic">{{ amountInWords(invoice.total) }}</p>
         </div>
         <div class="w-52 space-y-1 text-xs">
-          <div class="flex justify-between text-gray-600"><span>Subtotal</span><span>{{ inr(parseFloat(invoice.subtotal||0) + parseFloat(invoice.discount||0)) }}</span></div>
-          <div v-if="invoice.discount > 0" class="flex justify-between text-green-700"><span>Discount</span><span>-{{ inr(invoice.discount) }}</span></div>
+          <div class="flex justify-between text-gray-600"><span>Subtotal</span><span>{{ inr(afterItemDiscount) }}</span></div>
+          <div v-if="invoiceDiscountOnly > 0" class="flex justify-between text-green-700"><span>Discount</span><span>-{{ inr(invoiceDiscountOnly) }}</span></div>
           <div v-if="invoice.cgst_total > 0" class="flex justify-between text-gray-600"><span>CGST</span><span>{{ inr(invoice.cgst_total) }}</span></div>
           <div v-if="invoice.sgst_total > 0" class="flex justify-between text-gray-600"><span>SGST</span><span>{{ inr(invoice.sgst_total) }}</span></div>
           <div v-if="invoice.igst_total > 0" class="flex justify-between text-gray-600"><span>IGST</span><span>{{ inr(invoice.igst_total) }}</span></div>
@@ -428,7 +441,7 @@ onMounted(async () => {
               <span v-else-if="it.igst_amt > 0">{{ it.gst_rate }}%</span>
               <span v-else>—</span>
             </td>
-            <td v-if="!isDC" style="padding: 8px; text-align: right; font-weight: 700; color: #111827;">{{ inr(it.total) }}</td>
+            <td v-if="!isDC" style="padding: 8px; text-align: right; font-weight: 700; color: #111827;">{{ inr(itemAmount(it)) }}</td>
           </tr>
         </tbody>
       </table>
@@ -449,8 +462,8 @@ onMounted(async () => {
           <p style="font-size: 12px; font-weight: 500; color: #374151; font-style: italic;">{{ amountInWords(invoice.total) }}</p>
         </div>
         <div style="width: 220px;">
-          <div style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563;"><span>Subtotal</span><span>{{ inr(parseFloat(invoice.subtotal||0) + parseFloat(invoice.discount||0)) }}</span></div>
-          <div v-if="invoice.discount > 0" style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #15803d;"><span>Discount</span><span>-{{ inr(invoice.discount) }}</span></div>
+          <div style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563;"><span>Subtotal</span><span>{{ inr(afterItemDiscount) }}</span></div>
+          <div v-if="invoiceDiscountOnly > 0" style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #15803d;"><span>Discount</span><span>-{{ inr(invoiceDiscountOnly) }}</span></div>
           <div v-if="invoice.cgst_total > 0" style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563;"><span>CGST</span><span>{{ inr(invoice.cgst_total) }}</span></div>
           <div v-if="invoice.sgst_total > 0" style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563;"><span>SGST</span><span>{{ inr(invoice.sgst_total) }}</span></div>
           <div v-if="invoice.igst_total > 0" style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563;"><span>IGST</span><span>{{ inr(invoice.igst_total) }}</span></div>
@@ -560,7 +573,7 @@ onMounted(async () => {
             <td v-if="!isDC" style="padding: 10px 0; text-align: right; font-size: 13px; color: #374151;">{{ inr(it.unit_price) }}</td>
             <td v-if="hasItemDiscount && !isDC" style="padding: 10px 0; text-align: right; font-size: 11px; color: #15803d;">{{ parseFloat(it.discount_pct || 0) > 0 ? it.discount_pct + '%' : '—' }}</td>
             <td v-if="isGst" style="padding: 10px 0; text-align: right; font-size: 11px; color: #9ca3af;">{{ it.gst_rate }}%</td>
-            <td v-if="!isDC" style="padding: 10px 0; text-align: right; font-size: 13px; font-weight: 600; color: #111827;">{{ inr(it.total) }}</td>
+            <td v-if="!isDC" style="padding: 10px 0; text-align: right; font-size: 13px; font-weight: 600; color: #111827;">{{ inr(itemAmount(it)) }}</td>
           </tr>
         </tbody>
       </table>
@@ -580,8 +593,8 @@ onMounted(async () => {
           <p style="font-size: 12px; color: #6b7280; font-style: italic;">{{ amountInWords(invoice.total) }}</p>
         </div>
         <div style="width: 200px; border-top: 2px solid #111827; padding-top: 8px;">
-          <div style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280;"><span>Subtotal</span><span>{{ inr(parseFloat(invoice.subtotal||0) + parseFloat(invoice.discount||0)) }}</span></div>
-          <div v-if="invoice.discount > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #15803d;"><span>Discount</span><span>-{{ inr(invoice.discount) }}</span></div>
+          <div style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280;"><span>Subtotal</span><span>{{ inr(afterItemDiscount) }}</span></div>
+          <div v-if="invoiceDiscountOnly > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #15803d;"><span>Discount</span><span>-{{ inr(invoiceDiscountOnly) }}</span></div>
           <div v-if="invoice.cgst_total > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280;"><span>CGST</span><span>{{ inr(invoice.cgst_total) }}</span></div>
           <div v-if="invoice.sgst_total > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280;"><span>SGST</span><span>{{ inr(invoice.sgst_total) }}</span></div>
           <div v-if="invoice.igst_total > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280;"><span>IGST</span><span>{{ inr(invoice.igst_total) }}</span></div>
@@ -702,7 +715,7 @@ onMounted(async () => {
             <td v-if="!isDC" style="text-align: right;">{{ inr(it.unit_price) }}</td>
             <td v-if="hasItemDiscount && !isDC" style="text-align: right; color: #15803d;">{{ parseFloat(it.discount_pct || 0) > 0 ? it.discount_pct + '%' : '—' }}</td>
             <td style="text-align: right;">{{ it.quantity }}</td>
-            <td v-if="!isDC" style="text-align: right; font-weight: 600;">{{ inr(it.total) }}</td>
+            <td v-if="!isDC" style="text-align: right; font-weight: 600;">{{ inr(itemAmount(it)) }}</td>
           </tr>
           <!-- Empty rows to fill space -->
           <tr v-for="n in Math.max(0, 8 - items.length)" :key="'empty-'+n">
@@ -724,8 +737,8 @@ onMounted(async () => {
           </td>
           <td style="padding: 0; vertical-align: top;">
             <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
-              <tr style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">Total</td><td style="padding: 4px 12px; text-align: right; font-weight: 600;">{{ inr(parseFloat(invoice.subtotal||0) + parseFloat(invoice.discount||0)) }}</td></tr>
-              <tr v-if="invoice.discount > 0" style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">Discount</td><td style="padding: 4px 12px; text-align: right;">-{{ inr(invoice.discount) }}</td></tr>
+              <tr style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">Total</td><td style="padding: 4px 12px; text-align: right; font-weight: 600;">{{ inr(afterItemDiscount) }}</td></tr>
+              <tr v-if="invoiceDiscountOnly > 0" style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">Discount</td><td style="padding: 4px 12px; text-align: right;">-{{ inr(invoiceDiscountOnly) }}</td></tr>
               <tr v-if="invoice.sgst_total > 0" style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">SGST</td><td style="padding: 4px 12px; text-align: right;">{{ inr(invoice.sgst_total) }}</td></tr>
               <tr v-if="invoice.cgst_total > 0" style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">CGST</td><td style="padding: 4px 12px; text-align: right;">{{ inr(invoice.cgst_total) }}</td></tr>
               <tr v-if="invoice.igst_total > 0" style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">IGST</td><td style="padding: 4px 12px; text-align: right;">{{ inr(invoice.igst_total) }}</td></tr>
