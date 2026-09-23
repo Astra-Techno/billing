@@ -48,34 +48,44 @@ export function calcLine(item, supplyType = 'intra') {
 }
 
 export function calcInvoice(items, supplyType = 'intra', discountType = 'percent', discountValue = 0) {
-  let grossSubtotal = 0, cgst = 0, sgst = 0, igst = 0
+  let grossSubtotal = 0, itemDiscountTotal = 0, cgst = 0, sgst = 0, igst = 0
 
+  // First pass: compute gross subtotal (before any discounts) and per-item discount totals
   for (const item of items) {
     const qty   = parseFloat(item.quantity || 0)
     const price = parseFloat(item.unit_price || 0)
-    grossSubtotal += qty * price
+    const discPct = parseFloat(item.discount_pct || 0)
+    const lineGross = qty * price
+    const lineDisc = round2(lineGross * (Math.min(discPct, 100) / 100))
+    grossSubtotal += lineGross
+    itemDiscountTotal += lineDisc
   }
 
-  // Invoice-level discount on gross subtotal
+  const afterItemDiscount = round2(grossSubtotal - itemDiscountTotal)
+
+  // Invoice-level discount on amount after item discounts
   const dv = parseFloat(discountValue || 0)
-  let discount = 0
+  let invoiceDiscount = 0
   if (discountType === 'percent') {
-    discount = round2(grossSubtotal * (Math.min(dv, 100) / 100))
+    invoiceDiscount = round2(afterItemDiscount * (Math.min(dv, 100) / 100))
   } else {
-    discount = round2(Math.min(dv, grossSubtotal))
+    invoiceDiscount = round2(Math.min(dv, afterItemDiscount))
   }
 
-  const subtotal = round2(grossSubtotal - discount)
+  const discount = round2(itemDiscountTotal + invoiceDiscount)
+  const subtotal = round2(afterItemDiscount - invoiceDiscount)
 
   // Allocate cents and round each line identically to the persisted API calculation.
   let allocated = 0
   for (const [index, item] of items.entries()) {
     const qty   = parseFloat(item.quantity || 0)
     const price = parseFloat(item.unit_price || 0)
+    const discPct = parseFloat(item.discount_pct || 0)
     const gstRate = parseFloat(item.gst_rate || 0)
     const lineGross = qty * price
-    // Proportion of this line in gross subtotal
-    const ratio = grossSubtotal > 0 ? lineGross / grossSubtotal : 0
+    const lineAfterItemDisc = lineGross - round2(lineGross * (Math.min(discPct, 100) / 100))
+    // Proportion of this line in after-item-discount total
+    const ratio = afterItemDiscount > 0 ? lineAfterItemDisc / afterItemDiscount : 0
     const lineTaxable = index === items.length - 1 ? round2(subtotal - allocated) : round2(subtotal * ratio)
     allocated += lineTaxable
 

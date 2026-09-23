@@ -583,36 +583,46 @@ class Invoice extends Task
     {
         if (!in_array($discountType, ['percent','amount'], true) || $discountValue < 0 || !is_finite($discountValue))
             $this->fail('Invalid invoice discount.', 422);
-        $grossSubtotal = 0;
+        $grossSubtotal    = 0;
+        $itemDiscountTotal = 0;
         $cgstTotal  = 0;
         $sgstTotal  = 0;
         $igstTotal  = 0;
         $utgstTotal = 0;
 
-        // First pass: compute gross subtotal
+        // First pass: compute gross subtotal and per-item discounts
         foreach ($items as $item) {
-            $qty   = (float)($item['quantity']   ?? 1);
-            $price = (float)($item['unit_price'] ?? 0);
-            $grossSubtotal += $qty * $price;
+            $qty     = (float)($item['quantity']   ?? 1);
+            $price   = (float)($item['unit_price'] ?? 0);
+            $discPct = (float)($item['discount_pct'] ?? 0);
+            $lineGross = $qty * $price;
+            $lineDisc  = round($lineGross * (min($discPct, 100) / 100), 2);
+            $grossSubtotal    += $lineGross;
+            $itemDiscountTotal += $lineDisc;
         }
 
-        // Invoice-level discount
+        $afterItemDiscount = round($grossSubtotal - $itemDiscountTotal, 2);
+
+        // Invoice-level discount on amount after item discounts
         if ($discountType === 'percent') {
-            $discount = round($grossSubtotal * (min($discountValue, 100) / 100), 2);
+            $invoiceDiscount = round($afterItemDiscount * (min($discountValue, 100) / 100), 2);
         } else {
-            $discount = round(min($discountValue, $grossSubtotal), 2);
+            $invoiceDiscount = round(min($discountValue, $afterItemDiscount), 2);
         }
 
-        $subtotal = round($grossSubtotal - $discount, 2);
+        $discount = round($itemDiscountTotal + $invoiceDiscount, 2);
+        $subtotal = round($afterItemDiscount - $invoiceDiscount, 2);
 
         // Allocate taxable values identically to saved items, including the final cent remainder.
         $allocated = 0;
         foreach ($items as $index => $item) {
             $qty     = (float)($item['quantity']   ?? 1);
             $price   = (float)($item['unit_price'] ?? 0);
+            $discPct = (float)($item['discount_pct'] ?? 0);
             $gstRate = (float)($item['gst_rate']   ?? 0);
             $lineGross = $qty * $price;
-            $ratio     = $grossSubtotal > 0 ? $lineGross / $grossSubtotal : 0;
+            $lineAfterItemDisc = $lineGross - round($lineGross * (min($discPct, 100) / 100), 2);
+            $ratio     = $afterItemDiscount > 0 ? $lineAfterItemDisc / $afterItemDiscount : 0;
             $taxable = round($subtotal * $ratio, 2);
             if ($index === array_key_last($items)) $taxable = round($subtotal - $allocated, 2);
             $allocated += $taxable;
@@ -645,15 +655,28 @@ class Invoice extends Task
 
     private function saveItems(int $invoiceId, array $items, string $supplyType, float $discountedSubtotal): void
     {
-        $gross = array_sum(array_map(fn($item)=>(float)$item['quantity'] * (float)$item['unit_price'], $items));
+        // Compute after-item-discount total for proportional invoice-level discount allocation
+        $afterItemDiscount = 0;
+        foreach ($items as $item) {
+            $qty     = (float)($item['quantity']   ?? 1);
+            $price   = (float)($item['unit_price'] ?? 0);
+            $discPct = (float)($item['discount_pct'] ?? 0);
+            $lineGross = $qty * $price;
+            $afterItemDiscount += $lineGross - round($lineGross * (min($discPct, 100) / 100), 2);
+        }
+
         $allocated = 0;
         foreach ($items as $i => $item) {
             $qty     = (float)($item['quantity']    ?? 1);
             $price   = (float)($item['unit_price']  ?? 0);
+            $discPct = (float)($item['discount_pct'] ?? 0);
             $gstRate = (float)($item['gst_rate']    ?? 0);
 
-            $lineTotal  = $qty * $price;
-            $taxable = round($gross > 0 ? $discountedSubtotal * $lineTotal / $gross : 0, 2);
+            $lineGross = $qty * $price;
+            $itemDiscAmt = round($lineGross * (min($discPct, 100) / 100), 2);
+            $lineAfterItemDisc = $lineGross - $itemDiscAmt;
+            $ratio = $afterItemDiscount > 0 ? $lineAfterItemDisc / $afterItemDiscount : 0;
+            $taxable = round($discountedSubtotal * $ratio, 2);
             if ($i === array_key_last($items)) $taxable = round($discountedSubtotal - $allocated, 2);
             $allocated += $taxable;
 
@@ -679,8 +702,8 @@ class Invoice extends Task
                 'unit'         => $item['unit']     ?? 'Nos',
                 'quantity'     => $qty,
                 'unit_price'   => $price,
-                'discount_pct' => 0,
-                'discount_amt' => round($lineTotal - $taxable, 2),
+                'discount_pct' => $discPct,
+                'discount_amt' => round($lineGross - $taxable, 2),
                 'taxable_amt'  => $taxable,
                 'gst_rate'     => $gstRate,
                 'cgst_rate'    => $cgstRate,

@@ -345,7 +345,7 @@ const isDuplicate = computed(() => !!route.query.duplicate)
 let itemKeySeq = 0
 const blankItem = () => ({
   _key: ++itemKeySeq,
-  description: '', hsn_sac: '', unit: 'Nos', quantity: 1, unit_price: '', gst_rate: 18, product_id: null,
+  description: '', hsn_sac: '', unit: 'Nos', quantity: 1, unit_price: '', gst_rate: 18, discount_pct: 0, product_id: null,
 })
 
 const form = ref({
@@ -377,9 +377,10 @@ const recurPeriods = ['day', 'week', 'month', 'year']
 // hsn_sac, unit etc. no longer causes totals to re-calculate or the summary to re-render.
 const totals = computed(() => calcInvoice(
   form.value.items.map(it => ({
-    quantity:   it.quantity,
-    unit_price: it.unit_price,
-    gst_rate:   it.gst_rate,
+    quantity:     it.quantity,
+    unit_price:   it.unit_price,
+    gst_rate:     it.gst_rate,
+    discount_pct: it.discount_pct,
   })),
   undefined,
   form.value.discount_type,
@@ -416,6 +417,7 @@ function applySourceInvoice(inv) {
       quantity:     it.quantity,
       unit_price:   it.unit_price,
       gst_rate:     parseFloat(it.gst_rate || 0),
+      discount_pct: parseFloat(it.discount_pct || 0),
       product_id:   it.product_id   || null,
     }))
   }
@@ -472,6 +474,7 @@ onMounted(async () => {
             quantity:     parseFloat(it.quantity) || 1,
             unit_price:   0,
             gst_rate:     18,
+            discount_pct: 0,
             product_id:   it.product_id || null,
           }))
         }
@@ -608,8 +611,9 @@ function onPriceKeydown(i, e) {
 }
 
 function lineTotal(it) {
-  return parseFloat(it.quantity||0) * parseFloat(it.unit_price||0)
-       * (1 + parseFloat(it.gst_rate||0)/100)
+  const base = parseFloat(it.quantity||0) * parseFloat(it.unit_price||0)
+  const disc = base * (parseFloat(it.discount_pct||0) / 100)
+  return (base - disc) * (1 + parseFloat(it.gst_rate||0)/100)
 }
 
 function lineTaxAmount(it) {
@@ -783,6 +787,12 @@ async function submit() {
                             @blur="onItemPriceBlur(i)"
                             @keydown="onPriceKeydown(i, $event)" />
                         </div>
+                        <!-- Discount chip -->
+                        <div class="chip-disc">
+                          <input v-model="it.discount_pct" type="number" min="0" max="100" step="0.1"
+                            class="w-12 text-right tabular-nums" placeholder="0" />
+                          <span class="text-gray-400 text-xs select-none">% off</span>
+                        </div>
                         <!-- GST chip -->
                         <div class="chip-tax">
                           <select v-model="it.gst_rate" @keydown.tab="onLastFieldTab(i, $event)">
@@ -872,6 +882,11 @@ async function submit() {
                         <input v-model="it.unit_price" type="number" :data-line-price="i" min="0" step="0.01" class="w-20 text-right tabular-nums" placeholder="0.00"
                           @blur="onItemPriceBlur(i)"
                           @keydown="onPriceKeydown(i, $event)" />
+                      </div>
+                      <div class="chip-disc">
+                        <input v-model="it.discount_pct" type="number" min="0" max="100" step="0.1"
+                          class="w-12 text-right tabular-nums" placeholder="0" />
+                        <span class="text-gray-400 text-xs select-none">% off</span>
                       </div>
                       <div class="chip-tax">
                         <select v-model="it.gst_rate">

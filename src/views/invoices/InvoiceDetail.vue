@@ -237,6 +237,7 @@ const invoiceTitle = computed(() => {
 })
 
 const isGst = computed(() => invoice.value?.invoice_type !== 'bill_of_supply')
+const hasItemDiscount = computed(() => items.value.some(it => parseFloat(it.discount_pct || 0) > 0))
 
 const moreMenuOpen = ref(false)
 
@@ -614,6 +615,7 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
                 <th class="hidden sm:table-cell text-center w-20">HSN/SAC</th>
                 <th class="text-right w-16">Qty</th>
                 <th class="hidden sm:table-cell text-right w-24">Rate</th>
+                <th v-if="hasItemDiscount" class="hidden sm:table-cell text-right w-16">Disc%</th>
                 <th class="hidden sm:table-cell text-right w-24">Taxable</th>
                 <th v-if="isGst" class="hidden sm:table-cell text-right w-28">Tax</th>
                 <th class="text-right w-28">Amount</th>
@@ -625,11 +627,12 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
                 <td>
                   <p class="font-medium text-gray-800">{{ it.description }}</p>
                   <p v-if="it.unit" class="text-xs text-gray-400">{{ it.unit }}</p>
-                  <p class="sm:hidden text-xs text-gray-500 mt-0.5 tabular-nums">{{ it.quantity }} × {{ inr(it.unit_price) }}</p>
+                  <p class="sm:hidden text-xs text-gray-500 mt-0.5 tabular-nums">{{ it.quantity }} × {{ inr(it.unit_price) }}<template v-if="parseFloat(it.discount_pct || 0) > 0"> · {{ it.discount_pct }}% off</template></p>
                 </td>
                 <td class="hidden sm:table-cell text-center font-mono text-xs text-gray-500">{{ it.hsn_sac || '—' }}</td>
                 <td class="text-right text-gray-700 tabular-nums">{{ it.quantity }}</td>
                 <td class="hidden sm:table-cell text-right text-gray-700 tabular-nums">{{ inr(it.unit_price) }}</td>
+                <td v-if="hasItemDiscount" class="hidden sm:table-cell text-right text-green-600 text-xs tabular-nums">{{ parseFloat(it.discount_pct || 0) > 0 ? it.discount_pct + '%' : '—' }}</td>
                 <td class="hidden sm:table-cell text-right text-gray-700 tabular-nums">{{ inr(it.taxable_amt) }}</td>
                 <td v-if="isGst" class="hidden sm:table-cell text-right text-xs text-gray-600">
                   <div v-if="it.cgst_amt > 0" class="space-y-0.5 tabular-nums">

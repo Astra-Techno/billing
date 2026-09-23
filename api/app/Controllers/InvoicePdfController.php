@@ -230,6 +230,10 @@ class InvoicePdfController
         // ── Items table rows ────────────────────────────────────────────────
         $itemsHtml = '';
         $totalQty  = 0;
+        $hasItemDiscount = false;
+        foreach ($items as $it) {
+            if ((float)($it['discount_pct'] ?? 0) > 0) { $hasItemDiscount = true; break; }
+        }
         foreach ($items as $idx => $it) {
             $totalQty += (float)($it['quantity'] ?? 0);
             $taxCell = '';
@@ -245,6 +249,12 @@ class InvoicePdfController
                 }
             }
 
+            $discCell = '';
+            if ($hasItemDiscount && !$isDC) {
+                $dp = (float)($it['discount_pct'] ?? 0);
+                $discCell = '<td style="padding:8px;text-align:right;font-size:11px;color:#15803d">' . ($dp > 0 ? $this->h($dp) . '%' : '&mdash;') . '</td>';
+            }
+
             $itemsHtml .= '<tr style="border-bottom:1px solid #f3f4f6">'
                 . '<td style="padding:8px;color:#9ca3af;font-size:11px">' . ($idx + 1) . '</td>'
                 . '<td style="padding:8px;font-weight:600;color:#1f2937">' . $this->h($it['description']) . '</td>'
@@ -252,6 +262,7 @@ class InvoicePdfController
                 . '<td style="padding:8px;text-align:right;color:#374151">' . $this->h($it['quantity']) . '</td>'
                 . '<td style="padding:8px;text-align:center;color:#374151;font-size:11px">' . $this->h($it['unit'] ?? 'Nos') . '</td>'
                 . ($isDC ? '' : '<td style="padding:8px;text-align:right;color:#374151">' . $this->inr($it['unit_price']) . '</td>')
+                . $discCell
                 . ($isDC ? '' : '<td style="padding:8px;text-align:right;color:#374151">' . $this->inr($it['taxable_amt']) . '</td>')
                 . ($isGst ? '<td style="padding:8px;text-align:right">' . $taxCell . '</td>' : '')
                 . ($isDC ? '' : '<td style="padding:8px;text-align:right;font-weight:600;color:#111827">' . $this->inr($it['total']) . '</td>')
@@ -378,6 +389,7 @@ class InvoicePdfController
         <th style="' . $thStyle . ';text-align:right">Qty</th>
         <th style="' . $thStyle . ';text-align:center">Unit</th>
         ' . ($isDC ? '' : '<th style="' . $thStyle . ';text-align:right">Rate</th>') . '
+        ' . ($hasItemDiscount && !$isDC ? '<th style="' . $thStyle . ';text-align:right">Disc%</th>' : '') . '
         ' . ($isDC ? '' : '<th style="' . $thStyle . ';text-align:right">Taxable</th>') . '
         ' . ($isGst ? '<th style="' . $thStyle . ';text-align:right">Tax</th>' : '') . '
         ' . ($isDC ? '' : '<th style="' . $thStyle . ';text-align:right">Amount</th>') . '
