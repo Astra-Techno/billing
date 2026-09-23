@@ -915,7 +915,7 @@ async function submit() {
               <div class="lg:hidden p-4 border-t border-gray-100 bg-gray-50/50 space-y-2.5 text-sm text-gray-600">
                 <div class="flex justify-between font-medium">
                   <span>Sub Total :</span>
-                  <span class="font-bold text-gray-900 tabular-nums">{{ inr(totals.grossSubtotal) }}</span>
+                  <span class="font-bold text-gray-900 tabular-nums">{{ inr(totals.afterItemDiscount) }}</span>
                 </div>
                 <div class="flex items-center justify-between gap-2 text-green-600">
                   <span class="font-medium shrink-0">Discount :</span>
@@ -927,9 +927,9 @@ async function submit() {
                     <input v-model="form.discount_value" type="number" min="0" step="0.01" class="w-20 text-right border border-gray-200 rounded-md px-2 py-1 text-sm tabular-nums bg-white text-green-700 font-bold" placeholder="0" />
                   </div>
                 </div>
-                <div v-if="totals.discount > 0" class="flex justify-between text-green-600 text-xs">
+                <div v-if="totals.invoiceDiscount > 0" class="flex justify-between text-green-600 text-xs">
                   <span></span>
-                  <span class="font-bold tabular-nums">-{{ inr(totals.discount) }}</span>
+                  <span class="font-bold tabular-nums">-{{ inr(totals.invoiceDiscount) }}</span>
                 </div>
                 <div v-if="totals.tax > 0" class="flex justify-between font-medium">
                   <span>Tax :</span>
@@ -1142,7 +1142,7 @@ async function submit() {
             <div class="space-y-2 text-sm">
               <div class="flex justify-between text-gray-500">
                 <span>Subtotal</span>
-                <span class="font-medium text-gray-800 tabular-nums">{{ inr(totals.grossSubtotal) }}</span>
+                <span class="font-medium text-gray-800 tabular-nums">{{ inr(totals.afterItemDiscount) }}</span>
               </div>
               <div class="flex items-center justify-between gap-2">
                 <span class="text-green-600 font-medium">Discount</span>
@@ -1154,9 +1154,9 @@ async function submit() {
                   <input v-model="form.discount_value" type="number" min="0" step="0.01" class="w-20 text-right border border-gray-200 rounded-md px-2 py-1 text-sm tabular-nums bg-white text-green-700 font-bold" placeholder="0" />
                 </div>
               </div>
-              <div v-if="totals.discount > 0" class="flex justify-between text-green-600 text-xs">
+              <div v-if="totals.invoiceDiscount > 0" class="flex justify-between text-green-600 text-xs">
                 <span></span>
-                <span class="font-medium tabular-nums">-{{ inr(totals.discount) }}</span>
+                <span class="font-medium tabular-nums">-{{ inr(totals.invoiceDiscount) }}</span>
               </div>
               <div v-if="totals.tax > 0" class="flex justify-between text-gray-500">
                 <span>Tax</span>

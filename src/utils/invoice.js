@@ -103,7 +103,7 @@ export function calcInvoice(items, supplyType = 'intra', discountType = 'percent
   const total = Math.round(raw)
   const roundOff = round2(total - raw)
 
-  return { grossSubtotal: round2(grossSubtotal), subtotal, cgst, sgst, igst, tax, discount, total, roundOff }
+  return { grossSubtotal: round2(grossSubtotal), afterItemDiscount, itemDiscountTotal: round2(itemDiscountTotal), invoiceDiscount, subtotal, cgst, sgst, igst, tax, discount, total, roundOff }
 }
 
 function round2(n) { return Math.round(n * 100) / 100 }
