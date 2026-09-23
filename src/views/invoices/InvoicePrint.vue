@@ -771,9 +771,9 @@ onMounted(async () => {
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: white; color: #111; }
-.print-page { max-width: 900px; margin: 0 auto; padding: 20px; padding-bottom: 80px; }
+.print-page { max-width: 210mm; margin: 0 auto; padding: 20px; padding-bottom: 80px; }
 .invoice-doc { background: white; }
-body.paper-a3 .print-page { max-width: 1300px; }
+body.paper-a3 .print-page { max-width: 297mm; }
 body.paper-thermal80 .print-page { width: 80mm; padding: 2mm 3mm; }
 body.paper-thermal58 .print-page { width: 58mm; padding: 2mm 3mm; }
 .receipt-doc { width: 100%; color: #000; background: #fff; font: 11px/1.35 Arial, sans-serif; overflow-wrap: anywhere; }
@@ -807,12 +807,12 @@ body.paper-thermal58 .print-page { width: 58mm; padding: 2mm 3mm; }
 .print-action-primary { background: #2563eb; border-color: #2563eb; }
 @media print {
   .no-print { display: none !important; }
-  .print-page { max-width: 100%; padding-bottom: 0; }
+  html, body { width: 100%; height: auto; margin: 0; padding: 0; }
+  .print-page { max-width: 100%; width: 100%; padding: 0; padding-bottom: 0; margin: 0; }
   body.paper-thermal58 .print-page { width: 58mm; padding: 2mm 3mm; }
   body.paper-thermal80 .print-page { width: 80mm; padding: 2mm 3mm; }
-  body { margin: 0; }
   /* Multi-page print support */
-  .invoice-doc { overflow: visible !important; }
+  .invoice-doc { overflow: visible !important; height: auto !important; }
   .invoice-doc table { page-break-inside: auto; }
   .invoice-doc tr { page-break-inside: avoid; page-break-after: auto; }
   .invoice-doc thead { display: table-header-group; }
