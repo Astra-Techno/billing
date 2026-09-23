@@ -656,7 +656,7 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
           </div>
           <div class="sm:w-72 shrink-0 space-y-2 text-sm border border-gray-200 rounded-lg bg-white p-4">
             <div class="flex justify-between text-gray-600"><span>Subtotal</span><span class="tabular-nums">{{ inr(parseFloat(invoice.subtotal || 0) + parseFloat(invoice.discount || 0)) }}</span></div>
-            <div v-if="invoice.discount > 0" class="flex justify-between text-green-600"><span>Discount<template v-if="invoice.discount_type === 'percent' && invoice.discount_value"> ({{ invoice.discount_value }}%)</template></span><span class="tabular-nums">-{{ inr(invoice.discount) }}</span></div>
+            <div v-if="invoice.discount > 0" class="flex justify-between text-green-600"><span>Discount<template v-if="!hasItemDiscount && invoice.discount_type === 'percent' && invoice.discount_value"> ({{ invoice.discount_value }}%)</template></span><span class="tabular-nums">-{{ inr(invoice.discount) }}</span></div>
             <div v-if="invoice.cgst_total > 0" class="flex justify-between text-gray-600"><span>CGST</span><span class="tabular-nums">{{ inr(invoice.cgst_total) }}</span></div>
             <div v-if="invoice.sgst_total > 0" class="flex justify-between text-gray-600"><span>SGST</span><span class="tabular-nums">{{ inr(invoice.sgst_total) }}</span></div>
             <div v-if="invoice.igst_total > 0" class="flex justify-between text-gray-600"><span>IGST</span><span class="tabular-nums">{{ inr(invoice.igst_total) }}</span></div>
