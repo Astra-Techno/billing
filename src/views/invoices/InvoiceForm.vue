@@ -272,6 +272,7 @@ function openProductSearch(i) {
   productHighlight.value = -1
   addProductError.value = ''
   newProduct.value = { type: 'service', name: desc, price: '', unit: 'Nos', gst_rate: 18 }
+  scrollItemFieldIntoView(i, 'desc')
 }
 
 function onDescInput(i, it) {
@@ -312,6 +313,7 @@ function selectProduct(i, p) {
   ensureTrailingEmptyRow({ focus: false })
   if (window.innerWidth < 1024) {
     activeItemIndex.value = i
+    focusItemField(i, 'qty', true)
   } else {
     focusItemField(i, 'qty', true)
   }
@@ -578,9 +580,26 @@ function focusItemField(index, field, select = false) {
       qty:   `[data-line-qty="${index}"]`,
       price: `[data-line-price="${index}"]`,
     }
-    const input = document.querySelector(sel[field])
-    input?.focus()
+    const input = [...document.querySelectorAll(sel[field])].find(el => el.getClientRects().length) || document.querySelector(sel[field])
+    input?.focus({ preventScroll: true })
     if (select && typeof input?.select === 'function') input.select()
+    scrollFieldIntoView(input)
+  })
+}
+
+/** Keep the current billing field above the sticky footer and mobile keyboard. */
+function scrollFieldIntoView(input) {
+  if (!input) return
+  input.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
+  // Android resizes the viewport after focus; correct the position once more.
+  if (window.innerWidth < 1024) setTimeout(() => input.scrollIntoView({ block: 'center', inline: 'nearest' }), 180)
+}
+
+function scrollItemFieldIntoView(index, field) {
+  nextTick(() => {
+    const selector = field === 'qty' ? `[data-line-qty="${index}"]` : `[data-line-desc="${index}"]`
+    const input = [...document.querySelectorAll(selector)].find(el => el.getClientRects().length)
+    scrollFieldIntoView(input)
   })
 }
 
@@ -830,7 +849,7 @@ async function submit() {
                       <div class="item-chips">
                         <!-- Qty + Unit chip -->
                         <div class="chip-qty">
-                          <input v-model="it.quantity" type="number" :data-line-qty="i" :min="qtyStep(it.unit)" :step="qtyStep(it.unit)" @keydown.tab="onQuantityTab(i, $event)"
+                          <input v-model="it.quantity" type="number" :data-line-qty="i" :min="qtyStep(it.unit)" :step="qtyStep(it.unit)" @focus="scrollItemFieldIntoView(i, 'qty')" @keydown.tab="onQuantityTab(i, $event)"
                             @input="checkStockWarning(i)" class="w-12 text-center tabular-nums" />
                           <span class="text-gray-300 select-none">×</span>
                           <select v-model="it.unit" class="max-w-[52px]">
@@ -930,7 +949,7 @@ async function submit() {
                     <!-- Mobile chips for qty/price/discount/gst -->
                     <div class="item-chips">
                       <div class="chip-qty">
-                        <input v-model="it.quantity" type="number" :min="qtyStep(it.unit)" :step="qtyStep(it.unit)" @input="checkStockWarning(i)" class="w-12 text-center tabular-nums" />
+                        <input v-model="it.quantity" type="number" :data-line-qty="i" :min="qtyStep(it.unit)" :step="qtyStep(it.unit)" @focus="scrollItemFieldIntoView(i, 'qty')" @keydown.tab="onQuantityTab(i, $event)" @input="checkStockWarning(i)" class="w-12 text-center tabular-nums" />
                         <span class="text-gray-300 select-none">×</span>
                         <select v-model="it.unit" class="max-w-[52px]">
                           <option v-for="u in units" :key="u">{{ u }}</option>
