@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS stock_movements (
   location_id BIGINT UNSIGNED NOT NULL,
   product_id BIGINT UNSIGNED NOT NULL,
   movement_type ENUM('opening','purchase','sale','sale_return','purchase_return','transfer_out','transfer_in','adjustment','damage','count') NOT NULL,
-  quantity DECIMAL(15,3) NOT NULL COMMENT 'Positive is stock in; negative is stock out',
+  quantity DECIMAL(15,3) NOT NULL COMMENT 'Positive = stock in, negative = stock out',
   unit_cost DECIMAL(15,4) NOT NULL DEFAULT 0,
   balance_after DECIMAL(15,3) NOT NULL,
   reference_type VARCHAR(40) NULL,
