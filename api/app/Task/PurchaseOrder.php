@@ -23,6 +23,7 @@ class PurchaseOrder extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('purchase_orders', 'create');
         $locationId = (int)($input['location_id'] ?? InventoryStock::defaultLocation($businessId));
         $this->validateItems($input['items'] ?? []);
 
@@ -64,6 +65,7 @@ class PurchaseOrder extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('purchase_orders', 'edit');
         $po         = $this->findPO((int)$input['id'], $businessId);
 
         if ($po->status !== 'draft')
@@ -96,6 +98,7 @@ class PurchaseOrder extends Task
         $this->validate(['id' => 'required|integer']);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('purchase_orders', 'edit');
         $po         = $this->findPO((int)$input['id'], $businessId);
 
         if ($po->status !== 'draft')
@@ -116,6 +119,7 @@ class PurchaseOrder extends Task
         $this->validate(['id' => 'required|integer']);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('purchase_orders', 'edit');
         $po         = $this->findPO((int)$input['id'], $businessId);
 
         if (!in_array($po->status, ['draft', 'sent']))
@@ -137,6 +141,7 @@ class PurchaseOrder extends Task
         $this->validate(['id' => 'required|integer']);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('purchase_orders', 'edit');
         $po         = $this->findPO((int)$input['id'], $businessId);
 
         if ($po->status === 'received')
@@ -158,6 +163,7 @@ class PurchaseOrder extends Task
 
         $businessId = $this->requireBusiness();
         $this->requireRole(['owner', 'admin']);
+        $this->requirePermission('purchase_orders', 'delete');
         $po         = $this->findPO((int)$input['id'], $businessId);
 
         if ($po->status !== 'draft')

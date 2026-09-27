@@ -22,6 +22,7 @@ class Quote extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('quotes', 'create');
         $this->validateItems($input['items'] ?? []);
 
         $supplyType = $this->resolveSupplyType($businessId, (int)$input['client_id'], $input);
@@ -74,6 +75,7 @@ class Quote extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('quotes', 'edit');
         $quote      = $this->findQuote((int)$input['id'], $businessId);
 
         if ($quote->status !== 'draft')
@@ -115,6 +117,7 @@ class Quote extends Task
         $this->validate(['id' => 'required|integer']);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('quotes', 'edit');
         $quote      = $this->findQuote((int)$input['id'], $businessId);
 
         DB::statement(
@@ -132,6 +135,7 @@ class Quote extends Task
         $this->validate(['id' => 'required|integer']);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('quotes', 'edit');
         $quote      = $this->findQuote((int)$input['id'], $businessId);
 
         DB::statement(
@@ -147,6 +151,7 @@ class Quote extends Task
         $this->validate(['id' => 'required|integer']);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('quotes', 'edit');
         $quote      = $this->findQuote((int)$input['id'], $businessId);
 
         DB::statement(
@@ -167,6 +172,7 @@ class Quote extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('quotes', 'edit');
         $quote      = $this->findQuote((int)$input['id'], $businessId);
 
         if (in_array($quote->status, ['converted', 'declined']))
@@ -228,6 +234,7 @@ class Quote extends Task
 
         $businessId = $this->requireBusiness();
         $this->requireRole(['owner', 'admin']);
+        $this->requirePermission('quotes', 'delete');
         $quote      = $this->findQuote((int)$input['id'], $businessId);
 
         if ($quote->status !== 'draft')

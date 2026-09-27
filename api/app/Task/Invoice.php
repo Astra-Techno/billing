@@ -25,6 +25,7 @@ class Invoice extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('invoices', 'create');
         $locationId = (int)($input['location_id'] ?? InventoryStock::defaultLocation($businessId));
         $this->validateItems($input['items'] ?? []);
 
@@ -108,6 +109,7 @@ class Invoice extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('invoices', 'edit');
         $invoice    = $this->findInvoice((int)$input['id'], $businessId);
 
         if ($invoice->status !== 'draft')
@@ -160,6 +162,7 @@ class Invoice extends Task
         $this->validate(['id' => 'required|integer']);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('invoices', 'edit');
         $invoice    = $this->findInvoice((int)$input['id'], $businessId);
 
         if (in_array($invoice->status, ['cancelled','paid'], true))
@@ -187,6 +190,7 @@ class Invoice extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('invoices', 'edit');
         $invoice    = $this->findInvoice((int)$input['id'], $businessId);
 
         if ($invoice->status === 'cancelled')
@@ -240,6 +244,7 @@ class Invoice extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('invoices', 'edit');
         $ids = array_values(array_filter(array_map('intval', (array)$input['ids'])));
         if (empty($ids)) $this->fail('No invoices selected.');
 
@@ -285,6 +290,7 @@ class Invoice extends Task
         $this->validate(['ids' => 'required']);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('invoices', 'edit');
         $ids = array_values(array_filter(array_map('intval', (array)$input['ids'])));
         if (empty($ids)) $this->fail('No invoices selected.');
 
@@ -315,6 +321,7 @@ class Invoice extends Task
 
         $businessId = $this->requireBusiness();
         $this->requireRole(['owner', 'admin']);
+        $this->requirePermission('invoices', 'edit');
         $invoice    = $this->findInvoice((int)$input['id'], $businessId);
 
         if ($invoice->status === 'cancelled') $this->fail('Already cancelled.');
@@ -354,6 +361,7 @@ class Invoice extends Task
 
         $businessId = $this->requireBusiness();
         $this->requireRole(['owner', 'admin']);
+        $this->requirePermission('invoices', 'delete');
         $invoice    = $this->findInvoice((int)$input['id'], $businessId);
 
         if ($invoice->status !== 'draft')
@@ -401,6 +409,7 @@ class Invoice extends Task
         $this->validate(['id' => 'required|integer']);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('invoices', 'create');
         $original   = $this->findInvoice((int)$input['id'], $businessId);
 
         $today   = date('Y-m-d');
@@ -483,6 +492,7 @@ class Invoice extends Task
         $this->validate(['id' => 'required|integer']);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('invoices', 'create');
         $template   = $this->findInvoice((int)$input['id'], $businessId);
 
         if (!$template->is_recurring) $this->fail('This is not a recurring invoice.');

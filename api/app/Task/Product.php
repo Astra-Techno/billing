@@ -17,6 +17,7 @@ class Product extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('products', 'create');
 
         $exists = DB::selectOne(
             "SELECT id FROM products WHERE business_id = ? AND LOWER(name) = LOWER(?) AND active = 1 LIMIT 1",
@@ -31,6 +32,7 @@ class Product extends Task
             'track_stock' => ($input['type'] === 'product' && !empty($input['track_stock'])) ? 1 : 0,
             'name'        => trim($input['name']),
             'description' => $input['description'] ?? null,
+            'pos_category'=> trim((string)($input['pos_category'] ?? '')) ?: null,
             'hsn_sac'     => $input['hsn_sac']     ?? null,
             'unit'        => $input['unit']         ?? 'Nos',
             'price'       => (float)$input['price'],
@@ -69,6 +71,7 @@ class Product extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('products', 'edit');
         $product    = $this->findProduct((int)$input['id'], $businessId);
 
         $product->fill([
@@ -76,6 +79,7 @@ class Product extends Task
             'track_stock' => (($input['type'] ?? $product->type) === 'product' && !empty($input['track_stock'])) ? 1 : 0,
             'name'        => trim($input['name']),
             'description' => $input['description'] ?? $product->description,
+            'pos_category'=> array_key_exists('pos_category', $input) ? (trim((string)$input['pos_category']) ?: null) : $product->pos_category,
             'hsn_sac'     => $input['hsn_sac']     ?? $product->hsn_sac,
             'unit'        => $input['unit']         ?? $product->unit,
             'price'       => (float)$input['price'],
@@ -102,6 +106,7 @@ class Product extends Task
 
         $businessId = $this->requireBusiness();
         $this->requireRole(['owner', 'admin']);
+        $this->requirePermission('products', 'delete');
         $product    = $this->findProduct((int)$input['id'], $businessId);
 
         $product->setAttribute('active', 0);
@@ -115,6 +120,7 @@ class Product extends Task
         $this->validate(['csv' => 'required|string']);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('products', 'create');
 
         $csv = trim($input['csv']);
         $lines = preg_split('/\r?\n/', $csv);

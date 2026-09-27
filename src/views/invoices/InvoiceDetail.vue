@@ -130,7 +130,7 @@ async function deleteInvoice() {
 }
 
 const canDeleteInvoice = computed(() =>
-  invoice.value?.status === 'draft' && can('delete')
+  invoice.value?.status === 'draft' && can('invoices.delete')
 )
 
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
@@ -399,7 +399,7 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
         </button>
         <span class="text-base font-semibold">Invoice Preview</span>
       </div>
-      <RouterLink :to="`/invoices/${invoice.id}/edit`" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 text-white">
+      <RouterLink v-if="can('invoices.edit')" :to="`/invoices/${invoice.id}/edit`" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 text-white">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
       </RouterLink>
     </div>
@@ -497,7 +497,7 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
               DC print
             </button>
 
-            <RouterLink :to="`/invoices/${invoice.id}/edit`" class="inv-detail-btn inv-detail-btn--ghost" @click="closeActionMenus">
+            <RouterLink v-if="can('invoices.edit')" :to="`/invoices/${invoice.id}/edit`" class="inv-detail-btn inv-detail-btn--ghost" @click="closeActionMenus">
               <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
               Edit
             </RouterLink>
@@ -806,7 +806,7 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
       <button @click="shareWhatsApp" class="w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center hover:bg-white/20 transition active:scale-95" title="Share via WhatsApp">
         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.137.565 4.147 1.554 5.887L0 24l6.305-1.524A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.375l-.359-.214-3.735.902.948-3.632-.234-.373A9.818 9.818 0 1112 21.818z"/></svg>
       </button>
-      <RouterLink :to="`/invoices/${invoice.id}/edit`" class="w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center hover:bg-white/20 transition active:scale-95" title="Edit Invoice">
+      <RouterLink v-if="can('invoices.edit')" :to="`/invoices/${invoice.id}/edit`" class="w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center hover:bg-white/20 transition active:scale-95" title="Edit Invoice">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
       </RouterLink>
       <button v-if="canDeleteInvoice" @click="showDeleteModal = true" class="w-10 h-10 rounded-full bg-red-500/80 text-white flex items-center justify-center hover:bg-red-500 transition active:scale-95" title="Delete Invoice">

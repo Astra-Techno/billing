@@ -22,6 +22,7 @@ class Payroll extends Task
         ]);
 
         $businessId   = $this->requireBusiness();
+        $this->requirePermission('payroll', 'create');
         $month        = (int)$input['month'];
         $year         = (int)$input['year'];
         $workingDays  = (int)($input['working_days'] ?? 26);
@@ -109,6 +110,7 @@ class Payroll extends Task
         $this->validate(['id' => 'required|integer']);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('payroll', 'edit');
         $run        = $this->findRun((int)$input['id'], $businessId);
 
         if ($run->status !== 'draft') {
@@ -148,6 +150,7 @@ class Payroll extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('payroll', 'edit');
         $run        = $this->findRun((int)$input['id'], $businessId);
 
         if ($run->status !== 'draft') {
@@ -207,6 +210,7 @@ class Payroll extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('payroll', 'edit');
         $month      = (int)$input['month'];
         $year       = (int)$input['year'];
 

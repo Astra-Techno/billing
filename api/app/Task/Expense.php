@@ -20,6 +20,7 @@ class Expense extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('expenses', 'create');
         $total      = (float)$input['total_amount'];
         $gstAmt     = (float)($input['gst_amount'] ?? 0);
         $amount     = round($total - $gstAmt, 2);
@@ -55,6 +56,7 @@ class Expense extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('expenses', 'edit');
         $expense    = $this->findExpense((int)$input['id'], $businessId);
 
         $total  = (float)$input['total_amount'];
@@ -85,6 +87,7 @@ class Expense extends Task
 
         $businessId = $this->requireBusiness();
         $this->requireRole(['owner', 'admin']);
+        $this->requirePermission('expenses', 'delete');
         $expense    = $this->findExpense((int)$input['id'], $businessId);
 
         // Log the deletion for audit trail
@@ -117,6 +120,7 @@ class Expense extends Task
         $this->validate(['name' => 'required|string|min_length:2']);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('expenses', 'create');
 
         $cat = ExpenseCategory::create([
             'business_id' => $businessId,
@@ -133,6 +137,7 @@ class Expense extends Task
 
         $businessId = $this->requireBusiness();
         $this->requireRole(['owner', 'admin']);
+        $this->requirePermission('expenses', 'delete');
         $cat        = ExpenseCategory::find((int)$input['id']);
 
         if (!$cat || (int)$cat->business_id !== $businessId) $this->fail('Category not found.', 404);

@@ -19,12 +19,36 @@ export const PAGE_PERMISSIONS = [
   { key: 'payroll',          label: 'Payroll' },
 ]
 
+// Modules that support create/edit/delete actions (others are view-only)
+export const ACTION_MODULES = [
+  'invoices', 'quotes', 'expenses', 'clients', 'products',
+  'credit_notes', 'purchase_orders', 'delivery_challans',
+  'inventory', 'timesheets', 'payroll',
+]
+
+// Actions that can be granted per module
+export const ACTIONS = [
+  { key: 'create', label: 'Create' },
+  { key: 'edit',   label: 'Edit' },
+  { key: 'delete', label: 'Delete' },
+]
+
 // Actions that only owner/admin can perform regardless of custom permissions
-const ADMIN_ONLY = ['delete', 'cancel', 'settings', 'team']
+const ADMIN_ONLY = ['settings', 'team']
 
 export function useRole() {
   const auth = useAuthStore()
 
+  /**
+   * Check if current user can perform an action.
+   *
+   * Usage:
+   *   can('invoices')        → view access to invoices page
+   *   can('invoices.create') → can create new invoices
+   *   can('invoices.edit')   → can edit existing invoices
+   *   can('invoices.delete') → can delete invoices
+   *   can('settings')        → admin-only
+   */
   function can(action) {
     const role = auth.role
 
@@ -34,12 +58,15 @@ export function useRole() {
     // Admin-only actions
     if (ADMIN_ONLY.includes(action)) return false
 
-    // If custom permissions are set, check them
+    // If no custom permissions set, default to dashboard view only
     const perms = auth.permissions
-    if (perms) return perms.includes(action)
+    if (!perms) return action === 'dashboard'
 
-    // Fallback: no custom permissions = dashboard + invoices only
-    return ['dashboard', 'invoices'].includes(action)
+    // Dotted permission (e.g., 'invoices.edit') — check exact match
+    if (action.includes('.')) return perms.includes(action)
+
+    // Simple module key = view access (page-level)
+    return perms.includes(action)
   }
 
   return { role: auth.role, can }

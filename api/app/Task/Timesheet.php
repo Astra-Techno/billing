@@ -19,6 +19,7 @@ class Timesheet extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('timesheets', 'create');
 
         // Staff can only log time for today
         if (!in_array($this->getRole(), ['owner', 'admin']) && $input['work_date'] !== date('Y-m-d')) {
@@ -55,6 +56,7 @@ class Timesheet extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('timesheets', 'edit');
         $entry = $this->findEntry((int)$input['id'], $businessId);
         $role = $this->getRole();
 
@@ -92,6 +94,7 @@ class Timesheet extends Task
         $this->validate(['id' => 'required|integer']);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('timesheets', 'delete');
         $entry = $this->findEntry((int)$input['id'], $businessId);
 
         // Staff can delete own pending entries for today only; owner/admin can delete any
@@ -117,6 +120,7 @@ class Timesheet extends Task
         $this->validate(['id' => 'required|integer']);
         $businessId = $this->requireBusiness();
         $this->requireRole(['owner', 'admin']);
+        $this->requirePermission('timesheets', 'edit');
 
         $entry = $this->findEntry((int)$input['id'], $businessId);
         $entry->fill([
@@ -134,6 +138,7 @@ class Timesheet extends Task
         $this->validate(['id' => 'required|integer']);
         $businessId = $this->requireBusiness();
         $this->requireRole(['owner', 'admin']);
+        $this->requirePermission('timesheets', 'edit');
 
         $entry = $this->findEntry((int)$input['id'], $businessId);
         $entry->fill([
@@ -153,6 +158,7 @@ class Timesheet extends Task
         $this->validate(['ids' => 'required']);
         $businessId = $this->requireBusiness();
         $this->requireRole(['owner', 'admin']);
+        $this->requirePermission('timesheets', 'edit');
 
         $ids = is_array($input['ids']) ? $input['ids'] : explode(',', $input['ids']);
         $ids = array_filter(array_map('intval', $ids));

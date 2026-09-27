@@ -8,6 +8,7 @@ import { statusBadge, statusLabel } from '../../utils/invoice'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { useTour } from '../../composables/useTour'
 import { useListRefresh } from '../../composables/useListRefresh'
+import { useRole } from '../../composables/useRole'
 
 const { startTour, isTourSeen } = useTour('invoice-list', [
   { target: '[data-tour="inv-tabs"]', title: 'Filter by Status', text: 'Quickly switch between All, Draft, Awaiting Payment, and Overdue invoices.' },
@@ -16,6 +17,7 @@ const { startTour, isTourSeen } = useTour('invoice-list', [
   { target: '[data-tour="inv-select"]', title: 'Bulk Actions', text: 'Toggle select mode to mark multiple invoices as paid or sent at once.' },
 ])
 
+const { can } = useRole()
 const route       = useRoute()
 const router      = useRouter()
 const invoices    = ref([])
@@ -271,7 +273,7 @@ const activeDateLabel = () => {
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 </button>
                 <!-- New Invoice -->
-                <button @click="router.push('/invoices/new')" data-tour="inv-new" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center text-gray-600 transition-all">
+                <button v-if="can('invoices.create')" @click="router.push('/invoices/new')" data-tour="inv-new" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center text-gray-600 transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                 </button>
             </div>

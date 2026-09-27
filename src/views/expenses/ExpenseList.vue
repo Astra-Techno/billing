@@ -7,6 +7,7 @@ import { inr } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
 import { useTour } from '../../composables/useTour'
 import { useListRefresh } from '../../composables/useListRefresh'
+import { useRole } from '../../composables/useRole'
 
 const { startTour, isTourSeen } = useTour('expense-list', [
   { target: '[data-tour="exp-categories"]', title: 'Category Tabs', text: 'Filter expenses by category. All your expense categories appear here.' },
@@ -14,6 +15,7 @@ const { startTour, isTourSeen } = useTour('expense-list', [
   { target: '[data-tour="exp-add"]', title: 'Add Expense', text: 'Record a new business expense with vendor, category, and GST details.' },
 ])
 
+const { can } = useRole()
 const router       = useRouter()
 const route        = useRoute()
 const expenses     = ref([])
@@ -130,7 +132,7 @@ useListRefresh(() => {
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 </button>
                 <!-- New Expense -->
-                <button @click="openAdd" data-tour="exp-add" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center text-gray-600 transition-all">
+                <button v-if="can('expenses.create')" @click="openAdd" data-tour="exp-add" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center text-gray-600 transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                 </button>
             </div>

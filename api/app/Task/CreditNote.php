@@ -24,6 +24,7 @@ class CreditNote extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('credit_notes', 'create');
         $items      = $input['items'] ?? [];
 
         if (empty($items)) $this->fail('At least one item is required.');
@@ -76,6 +77,7 @@ class CreditNote extends Task
         $this->validate(['id' => 'required|integer']);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('credit_notes', 'edit');
         $cn         = CreditNoteTable::find((int)$input['id']);
 
         if (!$cn || (int)$cn->business_id !== $businessId) $this->fail('Credit note not found.', 404);
@@ -100,6 +102,7 @@ class CreditNote extends Task
         $this->validate(['id' => 'required|integer']);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('credit_notes', 'edit');
         $cn         = CreditNoteTable::find((int)$input['id']);
 
         if (!$cn || (int)$cn->business_id !== $businessId) $this->fail('Credit note not found.', 404);

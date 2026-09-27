@@ -6,6 +6,7 @@ import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 import { useTour } from '../../composables/useTour'
 import { useListRefresh } from '../../composables/useListRefresh'
+import { useRole } from '../../composables/useRole'
 
 const { startTour, isTourSeen } = useTour('client-list', [
   { target: '[data-tour="client-search"]', title: 'Search Customers', text: 'Type a name or mobile number to quickly find a customer.' },
@@ -13,6 +14,7 @@ const { startTour, isTourSeen } = useTour('client-list', [
   { target: '[data-tour="client-list"]', title: 'Customer List', text: 'Tap any customer to view their details, invoices, and outstanding balance.' },
 ])
 
+const { can } = useRole()
 const router  = useRouter()
 const clients = ref([])
 const loading = ref(true)
@@ -57,7 +59,7 @@ const avatarColor  = (name) => avatarColors[(name?.charCodeAt(0) || 0) % avatarC
             <div class="flex gap-2">
                 <!-- Search Toggle (Using inline expansion for clients) -->
                 <!-- New Customer -->
-                <button @click="router.push('/clients/new')" data-tour="client-add" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center text-gray-600 transition-all">
+                <button v-if="can('clients.create')" @click="router.push('/clients/new')" data-tour="client-add" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center text-gray-600 transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                 </button>
             </div>

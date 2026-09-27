@@ -105,6 +105,49 @@ class Task extends ClassObject
             $this->fail('Insufficient permissions.', 403);
     }
 
+    /**
+     * Check granular permission for accountant/staff roles.
+     * Owner and admin always pass. For others, checks the permissions JSON.
+     *
+     * Usage:
+     *   $this->requirePermission('invoices');           // view
+     *   $this->requirePermission('invoices', 'create');
+     *   $this->requirePermission('invoices', 'edit');
+     *   $this->requirePermission('invoices', 'delete');
+     */
+    protected function requirePermission(string $module, string $action = 'view'): void
+    {
+        $role = $this->userRole();
+        if (in_array($role, ['owner', 'admin'], true)) return;
+
+        $perms = $this->userPermissions();
+
+        // Check view (page-level) access
+        if (!in_array($module, $perms, true))
+            $this->fail('You do not have access to this module.', 403);
+
+        // Check action-level access
+        if ($action !== 'view') {
+            $key = "{$module}.{$action}";
+            if (!in_array($key, $perms, true))
+                $this->fail('You do not have permission to perform this action.', 403);
+        }
+    }
+
+    protected function userPermissions(): array
+    {
+        if (!$this->user) return [];
+        $businessId = $this->businessId();
+        if (!$businessId) return [];
+
+        $row = DB::selectOne(
+            "SELECT permissions FROM business_users WHERE business_id = ? AND user_id = ? AND active = 1 LIMIT 1",
+            [$businessId, $this->userId()]
+        );
+
+        return $row && $row->permissions ? json_decode($row->permissions, true) : [];
+    }
+
     protected function validate(array $rules, array $messages = []): void
     {
         $validator = Validator::make($this->input, $rules, $messages);

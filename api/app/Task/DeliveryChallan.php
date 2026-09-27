@@ -22,6 +22,7 @@ class DeliveryChallan extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('delivery_challans', 'create');
         $number     = Sequence::generate($businessId, 'dc');
 
         $dc = DCTable::create([
@@ -55,6 +56,7 @@ class DeliveryChallan extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('delivery_challans', 'edit');
         $dc = DCTable::find((int)$input['id']);
 
         if (!$dc || $dc->business_id != $businessId)
@@ -85,6 +87,7 @@ class DeliveryChallan extends Task
         $this->validate(['id' => 'required|integer']);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('delivery_challans', 'delete');
         $dc = DCTable::find((int)$input['id']);
 
         if (!$dc || $dc->business_id != $businessId)

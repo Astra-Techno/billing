@@ -6,6 +6,7 @@ import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 import { useTour } from '../../composables/useTour'
 import { useListRefresh } from '../../composables/useListRefresh'
+import { useRole } from '../../composables/useRole'
 
 const { startTour, isTourSeen } = useTour('product-list', [
   { target: '[data-tour="prod-search"]', title: 'Search Items', text: 'Search by name, HSN/SAC, SKU, or price. Filter by type using the dropdown.' },
@@ -13,6 +14,7 @@ const { startTour, isTourSeen } = useTour('product-list', [
   { target: '[data-tour="prod-list"]', title: 'Your Items', text: 'Tap any item to edit its name, price, or tax rate.' },
 ])
 
+const { can } = useRole()
 const router      = useRouter()
 const route       = useRoute()
 const products    = ref([])
@@ -168,7 +170,7 @@ useListRefresh(() => {
             </h2>
             <div class="flex gap-1.5">
                 <!-- Import -->
-                <button @click="showImportModal = true" title="Import CSV" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center text-gray-600 transition-all">
+                <button v-if="can('products.create')" @click="showImportModal = true" title="Import CSV" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center text-gray-600 transition-all">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
                 </button>
                 <!-- Export -->
@@ -176,7 +178,7 @@ useListRefresh(() => {
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 14l5-5 5 5M12 9v12"/></svg>
                 </button>
                 <!-- New Product -->
-                <button @click="openAdd" data-tour="prod-add" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center text-gray-600 transition-all">
+                <button v-if="can('products.create')" @click="openAdd" data-tour="prod-add" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center text-gray-600 transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                 </button>
             </div>
@@ -310,7 +312,7 @@ useListRefresh(() => {
     </div>
 
     <!-- Delete confirm -->
-    <div v-if="deleteTarget" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
+    <div v-if="deleteTarget && can('products.delete')" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
       <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 space-y-4 border border-gray-100 animate-fade-in-up">
         <h3 class="font-bold text-[16px] text-gray-900 tracking-tight">Delete "{{ deleteTarget.name }}"?</h3>
         <p class="text-[13px] text-gray-500">This cannot be undone. Any bills using this item will keep their data.</p>

@@ -5,7 +5,7 @@ import { canUseWebSerial, sendWebSerial, testReceiptBytes } from '../../utils/th
 import HelpIcon from '../../components/HelpIcon.vue'
 import { useBusinessStore } from '../../stores/business'
 import { useAuthStore } from '../../stores/auth'
-import { useRole, PAGE_PERMISSIONS } from '../../composables/useRole'
+import { useRole, PAGE_PERMISSIONS, ACTION_MODULES, ACTIONS } from '../../composables/useRole'
 import { useTour } from '../../composables/useTour'
 
 const { startTour, isTourSeen } = useTour('settings', [
@@ -107,6 +107,9 @@ const creatingStaff = ref(false)
 const roleChanging  = ref(null)
 const removing      = ref(null)
 const removeTarget  = ref(null)
+const permEditTarget = ref(null)  // member being edited
+const permEditPerms  = ref([])    // working copy of permissions
+const permSaving     = ref(false)
 
 const ROLE_LABELS = { owner: 'Owner', admin: 'Admin', accountant: 'Accountant', staff: 'Staff' }
 const ROLE_COLORS = {
@@ -135,9 +138,58 @@ function onRoleChange() {
 }
 
 function openStaffModal() {
-  staffForm.value = { name: '', email: '', password: '', role: 'staff', permissions: ['dashboard', 'invoices', 'clients', 'products'] }
+  staffForm.value = { name: '', email: '', password: '', role: 'staff', permissions: ['dashboard', 'invoices'] }
   teamError.value = ''
   staffModal.value = true
+}
+
+function openPermEditor(member) {
+  permEditTarget.value = member
+  permEditPerms.value  = [...(member.permissions || [])]
+  teamError.value = ''
+}
+
+async function savePermissions() {
+  if (!permEditTarget.value) return
+  permSaving.value = true
+  teamError.value = ''
+  try {
+    await task('Staff', 'updateRole', {
+      user_id:     permEditTarget.value.id,
+      role:        permEditTarget.value.role,
+      permissions: permEditPerms.value,
+    })
+    permEditTarget.value = null
+    await loadTeam()
+  } catch (e) {
+    teamError.value = e.response?.data?.message || 'Failed to save permissions.'
+  }
+  permSaving.value = false
+}
+
+function togglePerm(arr, key) {
+  const idx = arr.indexOf(key)
+  if (idx >= 0) {
+    arr.splice(idx, 1)
+    // If unchecking a view perm, also remove its action perms
+    if (!key.includes('.')) {
+      const prefix = key + '.'
+      for (let i = arr.length - 1; i >= 0; i--) {
+        if (arr[i].startsWith(prefix)) arr.splice(i, 1)
+      }
+    }
+  } else {
+    arr.push(key)
+    // If checking an action perm, auto-check view perm
+    if (key.includes('.')) {
+      const base = key.split('.')[0]
+      if (!arr.includes(base)) arr.push(base)
+    }
+  }
+}
+
+function hasAction(module) {
+  return ACTION_MODULES.includes(module)
 }
 
 async function createStaff() {
@@ -154,10 +206,11 @@ async function createStaff() {
   creatingStaff.value = false
 }
 
-async function changeRole(userId, newRole) {
-  roleChanging.value = userId
+async function changeRole(member, newRole) {
+  roleChanging.value = member.id
   try {
-    await task('Staff', 'updateRole', { user_id: userId, role: newRole })
+    const perms = newRole === 'admin' ? [] : (member.permissions || [])
+    await task('Staff', 'updateRole', { user_id: member.id, role: newRole, permissions: perms })
     await loadTeam()
   } catch (e) {
     teamError.value = e.response?.data?.message || 'Failed to update role.'
@@ -1246,7 +1299,7 @@ async function saveInvoice() {
 
         <!-- Members List -->
         <div class="card border-0 overflow-hidden">
-          <div v-if="teamLoading" class="p-8 text-center text-gray-400 text-sm">Loading…</div>
+          <div v-if="teamLoading" class="p-8 text-center text-gray-400 text-sm">Loading...</div>
           <div v-else class="divide-y divide-gray-50">
             <div v-for="m in teamMembers" :key="m.id" class="flex items-center gap-4 px-5 py-4">
               <div class="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center shrink-0 text-primary-700 font-extrabold text-sm">
@@ -1256,20 +1309,28 @@ async function saveInvoice() {
                 <p class="font-bold text-gray-900 text-sm truncate">{{ m.name }}</p>
                 <p class="text-xs text-gray-500 truncate">{{ m.email }}</p>
               </div>
-              <!-- Role selector (owner can't be changed) -->
+              <!-- Role badge / selector -->
               <span v-if="m.role === 'owner'"
                 class="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider"
                 :class="ROLE_COLORS[m.role]">
                 {{ ROLE_LABELS[m.role] }}
               </span>
-              <select v-else-if="can('team')" :value="m.role"
-                :disabled="roleChanging === m.id"
-                @change="changeRole(m.id, $event.target.value)"
-                class="text-xs font-bold rounded-xl border border-gray-100 px-2 py-1.5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-300 cursor-pointer">
-                <option value="admin">Admin</option>
-                <option value="accountant">Accountant</option>
-                <option value="staff">Staff</option>
-              </select>
+              <template v-else-if="can('team')">
+                <select :value="m.role"
+                  :disabled="roleChanging === m.id"
+                  @change="changeRole(m, $event.target.value)"
+                  class="text-xs font-bold rounded-xl border border-gray-100 px-2 py-1.5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-300 cursor-pointer">
+                  <option value="admin">Admin</option>
+                  <option value="accountant">Accountant</option>
+                  <option value="staff">Staff</option>
+                </select>
+                <!-- Permissions button (not for admin — they have full access) -->
+                <button v-if="m.role !== 'admin'" @click="openPermEditor(m)"
+                  class="text-[10px] font-bold text-primary-600 hover:text-primary-700 bg-primary-50 hover:bg-primary-100 px-2.5 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                  title="Edit permissions">
+                  Permissions
+                </button>
+              </template>
               <span v-else class="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider" :class="ROLE_COLORS[m.role]">
                 {{ ROLE_LABELS[m.role] }}
               </span>
@@ -1288,17 +1349,17 @@ async function saveInvoice() {
         <div class="card card-body bg-gray-50 border-gray-100">
           <p class="text-xs font-bold text-gray-600 mb-3">Role Guide</p>
           <div class="space-y-2 text-xs text-gray-600">
-            <div class="flex items-start gap-2"><span class="font-bold text-violet-700 w-20 shrink-0">Owner</span><span>Full access. Cannot be removed or changed.</span></div>
+            <div class="flex items-start gap-2"><span class="font-bold text-violet-700 w-20 shrink-0">Owner</span><span>Full access to everything. Cannot be removed or changed.</span></div>
             <div class="flex items-start gap-2"><span class="font-bold text-blue-700 w-20 shrink-0">Admin</span><span>Full access. Can manage staff. Cannot delete business.</span></div>
-            <div class="flex items-start gap-2"><span class="font-bold text-amber-700 w-20 shrink-0">Accountant</span><span>Custom page access. Cannot delete records or manage settings.</span></div>
-            <div class="flex items-start gap-2"><span class="font-bold text-gray-600 w-20 shrink-0">Staff</span><span>Custom page access. Cannot delete records or manage settings.</span></div>
+            <div class="flex items-start gap-2"><span class="font-bold text-amber-700 w-20 shrink-0">Accountant</span><span>Custom permissions. Owner configures which pages and actions are allowed.</span></div>
+            <div class="flex items-start gap-2"><span class="font-bold text-gray-600 w-20 shrink-0">Staff</span><span>Custom permissions. Owner configures which pages and actions are allowed.</span></div>
           </div>
         </div>
       </div>
 
       <!-- Create Staff Modal -->
       <div v-if="staffModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] flex flex-col overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden">
           <div class="px-6 pt-5 pb-3 border-b border-gray-100">
             <h3 class="text-lg font-extrabold text-gray-900">Add Staff Member</h3>
           </div>
@@ -1311,7 +1372,7 @@ async function saveInvoice() {
               <div class="col-span-2 sm:col-span-1">
                 <label class="form-label">Role</label>
                 <select v-model="staffForm.role" class="form-input" @change="onRoleChange">
-                  <option value="admin">Admin — full access</option>
+                  <option value="admin">Admin - full access</option>
                   <option value="accountant">Accountant</option>
                   <option value="staff">Staff</option>
                 </select>
@@ -1325,15 +1386,43 @@ async function saveInvoice() {
               <label class="form-label">Password</label>
               <input v-model="staffForm.password" type="text" class="form-input" placeholder="Min 6 characters" />
             </div>
+            <!-- Permission matrix for non-admin roles -->
             <div v-if="staffForm.role !== 'admin'">
-              <label class="form-label mb-2">Page Access</label>
-              <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 bg-gray-50 rounded-xl p-3">
-                <label v-for="p in PAGE_PERMISSIONS" :key="p.key"
-                  class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white cursor-pointer text-xs transition">
-                  <input type="checkbox" :value="p.key" v-model="staffForm.permissions"
-                    class="w-3.5 h-3.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-                  <span class="text-gray-700">{{ p.label }}</span>
-                </label>
+              <label class="form-label mb-2">Permissions</label>
+              <div class="bg-gray-50 rounded-xl p-3 overflow-x-auto">
+                <table class="w-full text-xs">
+                  <thead>
+                    <tr class="text-gray-500">
+                      <th class="text-left py-1.5 pr-3 font-semibold">Module</th>
+                      <th class="text-center py-1.5 px-2 font-semibold w-14">View</th>
+                      <th class="text-center py-1.5 px-2 font-semibold w-14">Create</th>
+                      <th class="text-center py-1.5 px-2 font-semibold w-14">Edit</th>
+                      <th class="text-center py-1.5 px-2 font-semibold w-14">Delete</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="p in PAGE_PERMISSIONS" :key="p.key" class="border-t border-gray-100/80 hover:bg-white">
+                      <td class="py-1.5 pr-3 text-gray-700 font-medium">{{ p.label }}</td>
+                      <td class="text-center py-1.5 px-2">
+                        <input type="checkbox" :checked="staffForm.permissions.includes(p.key)"
+                          @change="togglePerm(staffForm.permissions, p.key)"
+                          class="w-3.5 h-3.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer" />
+                      </td>
+                      <template v-if="hasAction(p.key)">
+                        <td v-for="a in ACTIONS" :key="a.key" class="text-center py-1.5 px-2">
+                          <input type="checkbox"
+                            :checked="staffForm.permissions.includes(p.key + '.' + a.key)"
+                            :disabled="!staffForm.permissions.includes(p.key)"
+                            @change="togglePerm(staffForm.permissions, p.key + '.' + a.key)"
+                            class="w-3.5 h-3.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer disabled:opacity-30" />
+                        </td>
+                      </template>
+                      <template v-else>
+                        <td colspan="3" class="text-center py-1.5 px-2 text-gray-300 text-[10px]">-</td>
+                      </template>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
             <div v-if="teamError" class="text-sm text-danger-600 bg-danger-50 rounded-lg px-3 py-2">{{ teamError }}</div>
@@ -1341,7 +1430,61 @@ async function saveInvoice() {
           <div class="px-6 py-4 border-t border-gray-100 flex gap-3">
             <button @click="staffModal = false" class="btn bg-gray-100 text-gray-700 hover:bg-gray-200 flex-1 border-0">Cancel</button>
             <button @click="createStaff" :disabled="creatingStaff || !staffForm.name || !staffForm.email || !staffForm.password" class="btn btn-primary flex-1">
-              {{ creatingStaff ? 'Creating…' : 'Create Account' }}
+              {{ creatingStaff ? 'Creating...' : 'Create Account' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Permissions Modal -->
+      <div v-if="permEditTarget" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden">
+          <div class="px-6 pt-5 pb-3 border-b border-gray-100">
+            <h3 class="text-lg font-extrabold text-gray-900">Permissions - {{ permEditTarget.name }}</h3>
+            <p class="text-xs text-gray-500 mt-1">{{ permEditTarget.email }} · {{ ROLE_LABELS[permEditTarget.role] }}</p>
+          </div>
+          <div class="px-6 py-4 overflow-y-auto flex-1">
+            <div class="bg-gray-50 rounded-xl p-3 overflow-x-auto">
+              <table class="w-full text-xs">
+                <thead>
+                  <tr class="text-gray-500">
+                    <th class="text-left py-1.5 pr-3 font-semibold">Module</th>
+                    <th class="text-center py-1.5 px-2 font-semibold w-14">View</th>
+                    <th class="text-center py-1.5 px-2 font-semibold w-14">Create</th>
+                    <th class="text-center py-1.5 px-2 font-semibold w-14">Edit</th>
+                    <th class="text-center py-1.5 px-2 font-semibold w-14">Delete</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="p in PAGE_PERMISSIONS" :key="p.key" class="border-t border-gray-100/80 hover:bg-white">
+                    <td class="py-1.5 pr-3 text-gray-700 font-medium">{{ p.label }}</td>
+                    <td class="text-center py-1.5 px-2">
+                      <input type="checkbox" :checked="permEditPerms.includes(p.key)"
+                        @change="togglePerm(permEditPerms, p.key)"
+                        class="w-3.5 h-3.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer" />
+                    </td>
+                    <template v-if="hasAction(p.key)">
+                      <td v-for="a in ACTIONS" :key="a.key" class="text-center py-1.5 px-2">
+                        <input type="checkbox"
+                          :checked="permEditPerms.includes(p.key + '.' + a.key)"
+                          :disabled="!permEditPerms.includes(p.key)"
+                          @change="togglePerm(permEditPerms, p.key + '.' + a.key)"
+                          class="w-3.5 h-3.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer disabled:opacity-30" />
+                      </td>
+                    </template>
+                    <template v-else>
+                      <td colspan="3" class="text-center py-1.5 px-2 text-gray-300 text-[10px]">-</td>
+                    </template>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div v-if="teamError" class="text-sm text-danger-600 bg-danger-50 rounded-lg px-3 py-2 mt-3">{{ teamError }}</div>
+          </div>
+          <div class="px-6 py-4 border-t border-gray-100 flex gap-3">
+            <button @click="permEditTarget = null" class="btn bg-gray-100 text-gray-700 hover:bg-gray-200 flex-1 border-0">Cancel</button>
+            <button @click="savePermissions" :disabled="permSaving" class="btn btn-primary flex-1">
+              {{ permSaving ? 'Saving...' : 'Save Permissions' }}
             </button>
           </div>
         </div>
@@ -1349,14 +1492,13 @@ async function saveInvoice() {
 
       <!-- Remove confirmation -->
       <div v-if="removeTarget" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-[2rem] shadow-xl max-w-sm w-full p-6 space-y-4 text-center">
-          <div class="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto text-2xl">🗑</div>
+        <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4 text-center">
           <h3 class="text-lg font-extrabold text-gray-900">Remove Member?</h3>
           <p class="text-sm text-gray-500">They will lose access to this business immediately.</p>
           <div class="flex gap-3 pt-2">
             <button @click="removeTarget = null" class="btn bg-gray-100 text-gray-700 hover:bg-gray-200 flex-1 border-0" :disabled="!!removing">Cancel</button>
             <button @click="confirmRemove" class="btn bg-danger-600 text-white hover:bg-danger-700 flex-1 border-0" :disabled="!!removing">
-              {{ removing ? 'Removing…' : 'Remove' }}
+              {{ removing ? 'Removing...' : 'Remove' }}
             </button>
           </div>
         </div>

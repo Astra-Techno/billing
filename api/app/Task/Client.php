@@ -19,6 +19,7 @@ class Client extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('clients', 'create');
 
         // GSTIN validation if provided
         if (!empty($input['gstin'])) {
@@ -79,6 +80,7 @@ class Client extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('clients', 'edit');
         $client     = $this->findClient((int)$input['id'], $businessId);
 
         if (!empty($input['gstin'])) {
@@ -120,6 +122,7 @@ class Client extends Task
 
         $businessId = $this->requireBusiness();
         $this->requireRole(['owner', 'admin']);
+        $this->requirePermission('clients', 'delete');
         $client     = $this->findClient((int)$input['id'], $businessId);
 
         // Check for open invoices
@@ -161,6 +164,7 @@ class Client extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('clients', 'edit');
         $client     = $this->findClient((int)$input['client_id'], $businessId);
 
         // If marking as primary, clear existing primary
@@ -199,6 +203,7 @@ class Client extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('clients', 'edit');
         $contact    = $this->findContact((int)$input['id'], $businessId);
 
         if (!empty($input['is_primary'])) {
@@ -232,6 +237,7 @@ class Client extends Task
 
         $businessId = $this->requireBusiness();
         $this->requireRole(['owner', 'admin']);
+        $this->requirePermission('clients', 'delete');
         $contact    = $this->findContact((int)$input['id'], $businessId);
 
         DB::statement("DELETE FROM client_contacts WHERE id = ?", [$contact->id]);
@@ -246,6 +252,7 @@ class Client extends Task
         $this->validate(['id' => 'required|integer']);
 
         $businessId = $this->requireBusiness();
+        $this->requirePermission('clients', 'edit');
         $client     = $this->findClient((int)$input['id'], $businessId);
 
         $token = bin2hex(random_bytes(24));
