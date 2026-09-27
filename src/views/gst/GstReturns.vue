@@ -411,7 +411,7 @@ useListRefresh(load)
 </script>
 
 <template>
-  <div class="flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar bg-surface-dim print:overflow-visible">
+  <div class="gpay-screen bg-surface-dim print:overflow-visible">
 
     <!-- Mobile page title -->
     <div class="lg:hidden px-4 pt-4 shrink-0 print:hidden">

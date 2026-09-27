@@ -192,7 +192,8 @@ useListRefresh(() => {
 </script>
 
 <template>
-  <div class="space-y-5">
+  <div class="gpay-screen">
+  <div class="max-w-5xl mx-auto w-full px-4 py-4 lg:px-6 lg:py-6 space-y-5">
     <h1 class="page-title flex items-center gap-2">Reports <HelpIcon section="reports" />
       <button @click="startTour()" class="text-[10px] font-bold text-primary-500 hover:text-primary-700 ml-1" title="Take a tour">Tour</button>
     </h1>
@@ -416,5 +417,6 @@ useListRefresh(() => {
         </div>
       </div>
     </template>
+  </div>
   </div>
 </template>

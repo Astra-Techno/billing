@@ -281,7 +281,7 @@ function exportPdf() {
 </script>
 
 <template>
-  <div class="gpay-screen px-4 py-4 max-w-6xl lg:mx-auto pb-24 px-4 sm:px-6">
+  <div class="gpay-screen"><div class="max-w-5xl mx-auto w-full px-4 py-4 lg:px-6 lg:py-6 pb-24">
 
     <!-- Premium Hero Section -->
     <div class="relative bg-gradient-to-br from-primary-600 to-primary-800 rounded-[2.5rem] p-8 sm:p-12 text-white mb-10 overflow-hidden shadow-gpay mt-4">
@@ -1413,5 +1413,6 @@ function exportPdf() {
 
       </div>
     </div>
+  </div>
   </div>
 </template>

@@ -39,9 +39,9 @@ async function logout() {
 </script>
 
 <template>
-  <div class="gpay-screen lg:flex lg:flex-row lg:gap-8 lg:p-8 lg:max-w-5xl lg:mx-auto pb-8">
+  <div class="gpay-screen"><div class="max-w-5xl mx-auto w-full px-4 py-4 lg:px-6 lg:py-6 lg:flex lg:flex-row lg:gap-8 pb-8">
 
-    <div class="px-4 pt-5 lg:w-80 shrink-0">
+    <div class="lg:w-80 shrink-0">
       <h1 class="page-title flex items-center gap-2 lg:hidden">Account <HelpIcon section="menu" class="w-4 h-4 opacity-60" /></h1>
 
       <div class="mt-4 lg:mt-0 card-premium p-5 relative overflow-hidden">
@@ -106,5 +106,6 @@ async function logout() {
         </button>
       </div>
     </div>
+  </div>
   </div>
 </template>
