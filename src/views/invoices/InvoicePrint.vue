@@ -19,38 +19,8 @@ const qrDataUrl = ref('')
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
 const isAndroidBluetooth = /Android/i.test(navigator.userAgent) && route.query.bluetooth === '1'
 
-const printing = ref(false)
-async function triggerPrint() {
-  // For thermal receipts, use browser print (no headers/footers issue on receipt printers)
-  if (isReceipt.value) { window.print(); return }
-  // For A4/A3: generate server PDF and print via iframe — no browser headers/footers
-  printing.value = true
-  try {
-    const base = import.meta.env.VITE_API_URL || '/api'
-    const modeParam = route.query.mode ? `?mode=${route.query.mode}` : ''
-    const url = `${base}/invoice/${invoice.value.id}/pdf${modeParam}`
-    const res = await fetch(url, {
-      headers: { 'Authorization': 'Bearer ' + useAuthStore().token }
-    })
-    if (!res.ok) throw new Error('PDF generation failed')
-    const blob = await res.blob()
-    const blobUrl = URL.createObjectURL(blob)
-    const iframe = document.createElement('iframe')
-    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px'
-    iframe.src = blobUrl
-    document.body.appendChild(iframe)
-    iframe.onload = () => {
-      setTimeout(() => {
-        iframe.contentWindow.print()
-        setTimeout(() => { document.body.removeChild(iframe); URL.revokeObjectURL(blobUrl) }, 60000)
-      }, 500)
-    }
-  } catch {
-    // Fallback to browser print if PDF fails
-    window.print()
-  } finally {
-    printing.value = false
-  }
+function triggerPrint() {
+  window.print()
 }
 function goBack() { router.back() }
 
@@ -825,7 +795,7 @@ onMounted(async () => {
     </div>
     <div v-if="!loading && !error && invoice" class="print-actions no-print">
       <button @click="goBack" class="print-action-btn">Back</button>
-      <button @click="triggerPrint" :disabled="printing" class="print-action-btn print-action-primary">{{ printing ? 'Preparing…' : 'Print' }}</button>
+      <button @click="triggerPrint" class="print-action-btn print-action-primary">Print</button>
       <button @click="downloadPdf" class="print-action-btn">PDF</button>
     </div>
   </div>
