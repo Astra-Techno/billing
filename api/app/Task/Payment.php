@@ -35,6 +35,8 @@ class Payment extends Task
         if ($invoice->status === 'cancelled') $this->fail('Cannot record payment on a cancelled invoice.');
         if ($invoice->status === 'paid') $this->fail('Invoice is already fully paid.');
 
+        $number = Sequence::finalizeInvoice((int)$invoice->id, $businessId);
+
         $amountDue = (float)$invoice->amount_due;
         if ($amount > $amountDue) {
             $this->fail("Payment amount (₹{$amount}) exceeds outstanding balance (₹{$amountDue}).");
@@ -73,6 +75,7 @@ class Payment extends Task
             'amount_paid' => $newPaid,
             'amount_due'  => $newDue,
             'status'      => $status,
+            'number'      => $number,
         ], 'Payment recorded.');
     }
 

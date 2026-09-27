@@ -115,7 +115,9 @@ try {
   const stockOverview = await command('Inventory','overview',{})
   await command('Inventory','adjust',{product_id:stockProduct.product_id,location_id:stockOverview.defaultId,kind:'opening',quantity:5,unit_cost:15,note:'Opening stock test'})
   const stockInvoice = await command('Invoice','create',{client_id:clientId,location_id:stockOverview.defaultId,issue_date:'2026-09-14',due_date:'2026-09-30',items:[{product_id:stockProduct.product_id,description:'Stock Test Packet',unit:'Packet',quantity:2,unit_price:25,gst_rate:0}]})
+  assert.equal(stockInvoice.number,null,'Draft must not consume an invoice number by default')
   await command('Invoice','markSent',{id:stockInvoice.invoice_id})
+  assert.match((await (await request(`item/Invoice?id=${stockInvoice.invoice_id}`)).json()).data.number,/^INV\//,'Finalized invoice must receive an official number')
   let afterSale = await command('Inventory','overview',{})
   assert.equal(Number(afterSale.stock.find(s=>Number(s.product_id)===Number(stockProduct.product_id)).quantity),3)
   await command('Invoice','cancel',{id:stockInvoice.invoice_id})
@@ -123,9 +125,11 @@ try {
   assert.equal(Number(afterSale.stock.find(s=>Number(s.product_id)===Number(stockProduct.product_id)).quantity),5)
   const invoice = await command('Invoice','create',{ client_id:clientId, issue_date:'2026-09-14', due_date:'2026-09-30', discount_type:'percent', discount_value:10, items:[{ description:'Offline item', quantity:2, unit_price:100, gst_rate:18 }] })
   assert.equal(Number(invoice.total),212)
+  assert.equal(invoice.number,null,'Draft must stay unnumbered until finalized')
   const lines = (await (await request(`list/Invoice:items?invoice_id=${invoice.invoice_id}`)).json()).data
   assert.equal(Number(lines[0].taxable_amt),180); assert.equal(Number(lines[0].cgst_amt)+Number(lines[0].sgst_amt),32.4)
   await command('Payment','record',{ invoice_id:invoice.invoice_id, amount:50, method:'cash', payment_date:'2026-09-14' })
+  assert.match((await (await request(`item/Invoice?id=${invoice.invoice_id}`)).json()).data.number,/^INV\//,'Payment must finalize the invoice number')
   const logo = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aS1cAAAAASUVORK5CYII='
   const uploaded = await command('Business','uploadLogo',{ logo })
   assert.equal((await fetch(base+uploaded.logo)).status,200)

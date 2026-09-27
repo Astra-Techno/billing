@@ -111,6 +111,9 @@ class Business extends Task
             'pincode'         => $input['pincode']         ?? $business->pincode,
             'invoice_prefix'  => strtoupper($input['invoice_prefix'] ?? $business->invoice_prefix),
             'quote_prefix'    => strtoupper($input['quote_prefix']   ?? $business->quote_prefix),
+            'draft_invoice_number_enabled' => array_key_exists('draft_invoice_number_enabled', $input)
+                ? (!empty($input['draft_invoice_number_enabled']) ? 1 : 0)
+                : (int)($business->draft_invoice_number_enabled ?? 0),
             'invoice_terms'   => $input['invoice_terms']  ?? $business->invoice_terms,
             'invoice_notes'   => $input['invoice_notes']  ?? $business->invoice_notes,
             'date_format'     => $input['date_format']    ?? $business->date_format,

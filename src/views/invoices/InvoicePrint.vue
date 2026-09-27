@@ -200,7 +200,7 @@ onMounted(async () => {
       </header>
       <div class="receipt-rule"></div>
       <p class="receipt-title">{{ invoiceTitle }}</p>
-      <div class="receipt-pair"><span>No.</span><strong>{{ invoice.number }}</strong></div>
+      <div class="receipt-pair"><span>No.</span><strong>{{ invoice.number || 'DRAFT' }}</strong></div>
       <div class="receipt-pair"><span>Date</span><span>{{ fmtDateShort(invoice.issue_date) }}</span></div>
       <div v-if="!isDC" class="receipt-pair"><span>Due</span><span>{{ fmtDateShort(invoice.due_date) }}</span></div>
       <div class="receipt-rule"></div>
@@ -237,7 +237,7 @@ onMounted(async () => {
       <!-- Title row -->
       <div class="flex items-center justify-between mb-4 pb-3 border-b-2 border-gray-800">
         <p class="text-2xl font-black text-blue-800 uppercase tracking-widest">{{ invoiceTitle }}</p>
-        <p class="text-base font-bold text-gray-700">{{ invoice.number }}</p>
+        <p class="text-base font-bold text-gray-700">{{ invoice.number || 'DRAFT' }}</p>
       </div>
 
       <!-- Business info -->
@@ -264,7 +264,7 @@ onMounted(async () => {
         <div>
           <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{{ isDC ? 'Challan Details' : 'Invoice Details' }}</p>
           <table class="text-xs w-full">
-            <tr><td class="text-gray-400 pb-1 pr-3">{{ isDC ? 'Ref Invoice' : 'Invoice No' }}</td><td class="font-semibold text-gray-800">{{ invoice.number }}</td></tr>
+            <tr><td class="text-gray-400 pb-1 pr-3">{{ isDC ? 'Ref Invoice' : 'Invoice No' }}</td><td class="font-semibold text-gray-800">{{ invoice.number || 'DRAFT' }}</td></tr>
             <tr><td class="text-gray-400 pb-1 pr-3">{{ isDC ? 'Challan Date' : 'Invoice Date' }}</td><td class="font-medium text-gray-700">{{ fmtDateShort(invoice.issue_date) }}</td></tr>
             <tr v-if="!isDC"><td class="text-gray-400 pb-1 pr-3">Due Date</td><td class="font-medium text-gray-700">{{ fmtDateShort(invoice.due_date) }}</td></tr>
             <tr><td class="text-gray-400 pr-3">Place of Supply</td><td class="font-medium text-gray-700">{{ invoice.place_of_supply_name || invoice.supply_type }}</td></tr>
@@ -379,7 +379,7 @@ onMounted(async () => {
       <div style="background: linear-gradient(135deg, #1a5fd4, #3b7ded); padding: 20px 24px; border-radius: 8px 8px 0 0; margin: -20px -20px 0 -20px; color: white; display: flex; justify-content: space-between; align-items: center;">
         <div>
           <p style="font-size: 22px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;">{{ invoiceTitle }}</p>
-          <p style="font-size: 12px; opacity: 0.8; margin-top: 2px;">{{ invoice.number }}</p>
+          <p style="font-size: 12px; opacity: 0.8; margin-top: 2px;">{{ invoice.number || 'DRAFT' }}</p>
         </div>
         <div style="text-align: right;">
           <img v-if="business?.logo" :src="business.logo" style="width: 48px; height: 48px; object-fit: contain; border-radius: 8px; border: 2px solid rgba(255,255,255,0.3);" alt="logo" />
@@ -534,7 +534,7 @@ onMounted(async () => {
         </div>
         <div style="text-align: right;">
           <p style="font-size: 28px; font-weight: 300; color: #111827; letter-spacing: -0.02em; text-transform: uppercase;">{{ invoiceTitle }}</p>
-          <p style="font-size: 12px; color: #9ca3af; margin-top: 4px; font-family: monospace;">{{ invoice.number }}</p>
+          <p style="font-size: 12px; color: #9ca3af; margin-top: 4px; font-family: monospace;">{{ invoice.number || 'DRAFT' }}</p>
         </div>
       </div>
 
@@ -691,7 +691,7 @@ onMounted(async () => {
           </td>
           <td style="padding: 10px 12px; vertical-align: top; border-bottom: 1px solid #000;">
             <table style="width: 100%; font-size: 12px;">
-              <tr><td style="padding: 3px 0; font-weight: 600;">Invoice No</td><td style="padding: 3px 0;">: {{ invoice.number }}</td></tr>
+              <tr><td style="padding: 3px 0; font-weight: 600;">Invoice No</td><td style="padding: 3px 0;">: {{ invoice.number || 'DRAFT' }}</td></tr>
               <tr><td style="padding: 3px 0; font-weight: 600;">Date</td><td style="padding: 3px 0;">: {{ fmtDateShort(invoice.issue_date) }}</td></tr>
               <tr v-if="!isDC"><td style="padding: 3px 0; font-weight: 600;">Due Dt</td><td style="padding: 3px 0;">: {{ fmtDateShort(invoice.due_date) }}</td></tr>
               <tr><td style="padding: 3px 0; font-weight: 600;">Supply</td><td style="padding: 3px 0;">: {{ invoice.place_of_supply_name || invoice.supply_type }}</td></tr>

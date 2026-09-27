@@ -29,7 +29,7 @@ class Sequence extends Task
 
         $type       = $input['type'];
         $businessId = (int)$input['business_id'];
-        $fy         = self::currentFinancialYear();
+        $fy         = !empty($input['financial_year']) ? (string)$input['financial_year'] : self::currentFinancialYear();
 
         // Get business prefix setting
         $business = DB::selectOne(
@@ -121,13 +121,33 @@ class Sequence extends Task
 
     // ── Static helper (used by other Tasks directly) ──────────────────────────
 
-    public static function generate(int $businessId, string $type): string
+    public static function generate(int $businessId, string $type, ?string $financialYear = null): string
     {
         $result = static::run('Sequence.next', [
             'type'        => $type,
             'business_id' => $businessId,
+            'financial_year' => $financialYear,
         ]);
         return $result['data']['number'];
+    }
+
+    /** Assign an official number once, while the invoice row is locked. */
+    public static function finalizeInvoice(int $invoiceId, int $businessId): string
+    {
+        $invoice = DB::selectOne(
+            "SELECT id, number, issue_date FROM invoices WHERE id = ? AND business_id = ? FOR UPDATE",
+            [$invoiceId, $businessId]
+        );
+        if (!$invoice) throw new \RuntimeException('Invoice not found.');
+        if (!empty($invoice->number)) return $invoice->number;
+
+        $fy = self::financialYearForDate((string)$invoice->issue_date);
+        $number = self::generate($businessId, 'invoice', $fy);
+        DB::statement(
+            "UPDATE invoices SET number = ?, financial_year = ? WHERE id = ? AND business_id = ? AND number IS NULL",
+            [$number, $fy, $invoiceId, $businessId]
+        );
+        return $number;
     }
 
     // ── Utility ───────────────────────────────────────────────────────────────
@@ -144,6 +164,16 @@ class Sequence extends Task
             return $year . '-' . substr((string)($year + 1), 2);
         }
         return ($year - 1) . '-' . substr((string)$year, 2);
+    }
+
+    public static function financialYearForDate(string $date): string
+    {
+        $time = strtotime($date) ?: time();
+        $month = (int)date('n', $time);
+        $year = (int)date('Y', $time);
+        return $month >= 4
+            ? $year . '-' . substr((string)($year + 1), 2)
+            : ($year - 1) . '-' . substr((string)$year, 2);
     }
 
     /**

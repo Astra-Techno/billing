@@ -262,7 +262,7 @@ async function genUpiQr() {
 }
 
 const invoiceForm = ref({
-  invoice_prefix: 'INV', quote_prefix: 'QTE', invoice_notes: '', invoice_terms: '',
+  invoice_prefix: 'INV', quote_prefix: 'QTE', draft_invoice_number_enabled: false, invoice_notes: '', invoice_terms: '',
 })
 
 // Tax Rates
@@ -412,6 +412,7 @@ onMounted(async () => {
 
     invoiceForm.value.invoice_prefix = biz.invoice_prefix || 'INV'
     invoiceForm.value.quote_prefix   = biz.quote_prefix   || 'QTE'
+    invoiceForm.value.draft_invoice_number_enabled = !!+biz.draft_invoice_number_enabled
     invoiceForm.value.invoice_notes  = biz.invoice_notes  || ''
     invoiceForm.value.invoice_terms  = biz.invoice_terms  || ''
 
@@ -549,6 +550,7 @@ async function saveInvoice() {
       mobile:         businessForm.value.mobile,
       invoice_prefix: invoiceForm.value.invoice_prefix,
       quote_prefix:   invoiceForm.value.quote_prefix,
+      draft_invoice_number_enabled: invoiceForm.value.draft_invoice_number_enabled,
       invoice_notes:  invoiceForm.value.invoice_notes,
       invoice_terms:  invoiceForm.value.invoice_terms,
     })
@@ -694,6 +696,10 @@ async function saveInvoice() {
             <input v-model="businessForm.website" type="url" class="form-input" placeholder="https://yourbusiness.com" />
           </div>
         </div>
+        <label class="flex items-start justify-between gap-4 rounded-xl border border-gray-200 p-4 cursor-pointer">
+          <span><span class="block text-sm font-semibold text-gray-800">Assign bill number to draft invoices</span><span class="block text-xs text-gray-500 mt-1">Off is recommended. Drafts will show “Number pending” and receive the next official number only when sent or paid.</span></span>
+          <input v-model="invoiceForm.draft_invoice_number_enabled" type="checkbox" class="mt-1 h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+        </label>
         <h3 class="text-sm font-semibold text-gray-700 pt-2">Business Address <span class="text-gray-400 font-normal">(printed on bills)</span></h3>
         <div>
           <label class="form-label">Street / Shop Number</label>

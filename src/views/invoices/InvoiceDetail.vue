@@ -434,7 +434,7 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
         <div class="px-5 sm:px-6 py-5 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
           <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-center gap-2 mb-2">
-              <span class="text-xs font-medium text-gray-500 tracking-wide">{{ invoice.number }}</span>
+              <span class="text-xs font-medium text-gray-500 tracking-wide">{{ invoice.number || 'DRAFT · Number pending' }}</span>
               <span :class="statusBadge(invoice.status)" class="px-2 py-0.5 text-[11px] font-semibold rounded-md">{{ statusLabel(invoice.status) }}</span>
             </div>
             <RouterLink v-if="invoice.client_id" :to="`/clients/${invoice.client_id}`"
@@ -536,7 +536,7 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0">
             <div class="flex items-center gap-2 mb-1">
-              <span class="text-xs text-gray-500">{{ invoice.number }}</span>
+              <span class="text-xs text-gray-500">{{ invoice.number || 'DRAFT · Number pending' }}</span>
               <span :class="statusBadge(invoice.status)" class="px-2 py-0.5 text-[11px] font-semibold rounded-md">{{ statusLabel(invoice.status) }}</span>
             </div>
             <p class="font-semibold text-gray-900 truncate">{{ invoice.client_name }}</p>
@@ -587,7 +587,7 @@ onUnmounted(() => document.removeEventListener('click', closeActionMenus))
           <div class="flex items-start justify-between gap-4 mb-5">
             <div>
               <p class="text-lg font-bold text-gray-900 tracking-tight">{{ invoiceTitle }}</p>
-              <p class="text-sm text-gray-500 mt-0.5">{{ invoice.number }}</p>
+              <p class="text-sm text-gray-500 mt-0.5">{{ invoice.number || 'DRAFT · Number pending' }}</p>
             </div>
             <img v-if="business?.logo" :src="business.logo" class="w-14 h-14 object-contain rounded-lg border border-gray-100 shrink-0" alt="logo" />
           </div>

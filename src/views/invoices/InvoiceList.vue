@@ -379,7 +379,7 @@ const activeDateLabel = () => {
                         </span>
                     </div>
                     <div class="flex justify-between items-center mt-1.5">
-                        <span class="text-[12px] font-semibold text-gray-400">{{ inv.number }} • {{ fmtDateShort(inv.issue_date) }}</span>
+                        <span class="text-[12px] font-semibold text-gray-400">{{ inv.number || 'Number pending' }} • {{ fmtDateShort(inv.issue_date) }}</span>
                         
                         <span class="text-[10px] font-bold px-2 py-0.5 rounded-[5px] tracking-wider flex items-center border"
                               :class="{

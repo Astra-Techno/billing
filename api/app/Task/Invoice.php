@@ -32,9 +32,9 @@ class Invoice extends Task
         // client_id is optional — retail/walk-in invoices
         $supplyType = $this->resolveSupplyType($businessId, $clientId, $input);
 
-        // Generate invoice number
-        $number = Sequence::generate($businessId, 'invoice');
-        $fy     = Sequence::currentFinancialYear();
+        $fy = Sequence::financialYearForDate((string)$input['issue_date']);
+        $draftNumberEnabled = (int)(DB::selectOne('SELECT draft_invoice_number_enabled FROM businesses WHERE id = ?', [$businessId])->draft_invoice_number_enabled ?? 0);
+        $number = $draftNumberEnabled ? Sequence::generate($businessId, 'invoice', $fy) : null;
 
         // Calculate totals
         $discountType  = $input['discount_type']  ?? 'percent';
@@ -163,13 +163,15 @@ class Invoice extends Task
         if (in_array($invoice->status, ['cancelled','paid'], true))
             $this->fail('Cannot send a cancelled or fully paid invoice.');
 
+        $number = Sequence::finalizeInvoice((int)$invoice->id, $businessId);
+
         DB::statement(
             "UPDATE invoices SET status = 'sent', sent_at = NOW() WHERE id = ?",
             [$invoice->id]
         );
         InventoryStock::postDocument($businessId, (int)($invoice->location_id ?: InventoryStock::defaultLocation($businessId)), 'invoice', (int)$invoice->id, 'invoice_items', 'invoice_id', 'sale', -1, $this->userId());
 
-        return $this->success(['invoice_id' => $invoice->id], 'Invoice marked as sent.');
+        return $this->success(['invoice_id' => $invoice->id, 'number' => $number], 'Invoice marked as sent.');
     }
 
     // ── Record payment (shortcut — full payment) ──────────────────────────────
@@ -189,6 +191,8 @@ class Invoice extends Task
             $this->fail('Cannot mark a cancelled invoice as paid.');
         if ($invoice->status === 'paid')
             $this->fail('Invoice is already fully paid.');
+
+        $number = Sequence::finalizeInvoice((int)$invoice->id, $businessId);
 
         $amountDue = (float)$invoice->amount_due;
 
@@ -220,7 +224,7 @@ class Invoice extends Task
         );
         InventoryStock::postDocument($businessId, (int)($invoice->location_id ?: InventoryStock::defaultLocation($businessId)), 'invoice', (int)$invoice->id, 'invoice_items', 'invoice_id', 'sale', -1, $this->userId());
 
-        return $this->success(['invoice_id' => $invoice->id], 'Invoice marked as paid.');
+        return $this->success(['invoice_id' => $invoice->id, 'number' => $number], 'Invoice marked as paid.');
     }
 
     // ── Bulk mark as paid ─────────────────────────────────────────────────────
@@ -250,6 +254,7 @@ class Invoice extends Task
         if (empty($invoices)) $this->fail('No eligible invoices (all already paid or cancelled).');
 
         foreach ($invoices as $inv) {
+            Sequence::finalizeInvoice((int)$inv->id, $businessId);
             $fullInvoice = $this->findInvoice((int)$inv->id, $businessId);
             InventoryStock::postDocument($businessId, (int)($fullInvoice->location_id ?: InventoryStock::defaultLocation($businessId)), 'invoice', (int)$fullInvoice->id, 'invoice_items', 'invoice_id', 'sale', -1, $this->userId());
             DB::statement(
@@ -284,7 +289,10 @@ class Invoice extends Task
         $ph = implode(',', array_fill(0, count($ids), '?'));
 
         $stockInvoices = DB::select("SELECT id, location_id FROM invoices WHERE id IN ($ph) AND business_id = ? AND status NOT IN ('cancelled','paid')", [...$ids, $businessId]);
-        foreach ($stockInvoices as $stockInvoice) InventoryStock::postDocument($businessId, (int)($stockInvoice->location_id ?: InventoryStock::defaultLocation($businessId)), 'invoice', (int)$stockInvoice->id, 'invoice_items', 'invoice_id', 'sale', -1, $this->userId());
+        foreach ($stockInvoices as $stockInvoice) {
+            Sequence::finalizeInvoice((int)$stockInvoice->id, $businessId);
+            InventoryStock::postDocument($businessId, (int)($stockInvoice->location_id ?: InventoryStock::defaultLocation($businessId)), 'invoice', (int)$stockInvoice->id, 'invoice_items', 'invoice_id', 'sale', -1, $this->userId());
+        }
 
         DB::statement(
             "UPDATE invoices
@@ -393,9 +401,10 @@ class Invoice extends Task
         $businessId = $this->requireBusiness();
         $original   = $this->findInvoice((int)$input['id'], $businessId);
 
-        $number  = Sequence::generate($businessId, 'invoice');
-        $fy      = Sequence::currentFinancialYear();
         $today   = date('Y-m-d');
+        $fy      = Sequence::financialYearForDate($today);
+        $draftNumberEnabled = (int)(DB::selectOne('SELECT draft_invoice_number_enabled FROM businesses WHERE id = ?', [$businessId])->draft_invoice_number_enabled ?? 0);
+        $number  = $draftNumberEnabled ? Sequence::generate($businessId, 'invoice', $fy) : null;
 
         // Clone invoice
         $newInvoice = InvoiceTable::create([

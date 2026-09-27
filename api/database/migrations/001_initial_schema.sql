@@ -408,7 +408,7 @@ CREATE TABLE IF NOT EXISTS `quotes` (
     `business_id`     BIGINT UNSIGNED NOT NULL,
     `created_by`      BIGINT UNSIGNED NOT NULL,
     `client_id`       BIGINT UNSIGNED NOT NULL,
-    `number`          VARCHAR(50)     NOT NULL,
+    `number`          VARCHAR(50)     DEFAULT NULL COMMENT 'Assigned only when invoice is finalized',
     `type`            ENUM('quote','proforma') NOT NULL DEFAULT 'quote',
     `status`          ENUM('draft','sent','accepted','declined','expired','converted') NOT NULL DEFAULT 'draft',
     `issue_date`      DATE            NOT NULL,
