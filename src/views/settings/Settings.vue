@@ -18,6 +18,26 @@ const bizStore  = useBusinessStore()
 const authStore = useAuthStore()
 const { can }   = useRole()
 const desktopMode = !!window.__BILLING_DESKTOP__
+
+// Stock settings
+const stockMode = ref('none')
+const stockAdvanced = ref(false)
+const stockSaving = ref(false)
+async function loadStockSettings() {
+  try {
+    const res = await task('Inventory', 'overview', {})
+    stockMode.value = res.data?.data?.settings?.inventory_mode || 'none'
+    stockAdvanced.value = !!+(res.data?.data?.settings?.inventory_advanced || 0)
+  } catch {}
+}
+async function saveStockSettings() {
+  stockSaving.value = true
+  try {
+    await task('Inventory', 'saveSettings', { mode: stockMode.value, advanced: stockAdvanced.value })
+    flash('Stock settings saved.')
+  } catch (e) { error.value = e.response?.data?.message || 'Could not save stock settings.' }
+  stockSaving.value = false
+}
 const webSerialAvailable = !desktopMode && canUseWebSerial()
 const printerTestBusy = ref(false)
 const printerTestMessage = ref('')
@@ -402,6 +422,7 @@ onMounted(async () => {
     bizSlug.value     = biz.slug || ''
     bizStore.setLogo(biz.logo || '')  // sync TopBar avatar
     await bizStore.loadFeatures()
+    await loadStockSettings()
   } catch {}
   loading.value = false
   setTimeout(() => { if (!isTourSeen()) startTour() }, 800)
@@ -855,6 +876,37 @@ async function saveInvoice() {
             {{ saving ? 'Saving…' : 'Save Features' }}
           </button>
         </div>
+      </div>
+
+      <!-- Stock Settings -->
+      <div class="card card-body !p-5 space-y-4 mt-4">
+        <div>
+          <h3 class="text-sm font-bold text-ink dark:text-white">Stock Management</h3>
+          <p class="text-xs text-google-muted mt-0.5">Choose how stock works for this business</p>
+        </div>
+        <label v-for="m in [
+          { id: 'none', name: 'Billing only', desc: 'Do not reduce or check stock. Best for services or shops maintaining stock elsewhere.' },
+          { id: 'warn', name: 'Show stock', desc: 'Maintain stock and warn the cashier, but allow a sale when stock is short.' },
+          { id: 'strict', name: 'Control stock', desc: 'Maintain stock and stop billing above the available quantity.' },
+        ]" :key="m.id" class="flex cursor-pointer gap-3 rounded-xl border-2 p-4 transition-all"
+          :class="stockMode === m.id ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-slate-600'">
+          <input v-model="stockMode" type="radio" :value="m.id" class="mt-0.5" />
+          <div>
+            <p class="text-sm font-bold text-gray-800 dark:text-slate-200">{{ m.name }}</p>
+            <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{{ m.desc }}</p>
+          </div>
+        </label>
+        <label class="flex gap-3 rounded-xl border-2 p-4 transition-all cursor-pointer"
+          :class="stockAdvanced ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-slate-600'">
+          <input v-model="stockAdvanced" type="checkbox" class="mt-0.5" />
+          <div>
+            <p class="text-sm font-bold text-gray-800 dark:text-slate-200">Show advanced trade fields</p>
+            <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Batch, expiry and serial / IMEI fields for medical, food and electronics shops.</p>
+          </div>
+        </label>
+        <button @click="saveStockSettings" :disabled="stockSaving" class="btn-primary btn-sm">
+          {{ stockSaving ? 'Saving…' : 'Save Stock Settings' }}
+        </button>
       </div>
     </template>
 
