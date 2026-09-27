@@ -216,6 +216,20 @@ if (!is_dir($srcFrontend)) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// STEP 4b — Self-update deploy.php from repo (so migration logic stays current)
+// ─────────────────────────────────────────────────────────────────────────────
+$repoDeployPhp = $repoRoot . '/deploy.php';
+if (is_file($repoDeployPhp)) {
+    $live = BASE_DIR . '/deploy.php';
+    $old  = md5_file($live);
+    $new  = md5_file($repoDeployPhp);
+    if ($old !== $new) {
+        copy($repoDeployPhp, $live);
+        log_step('✔', 'deploy.php updated from repo', 'ok');
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // STEP 5 — Run DB migrations
 // ─────────────────────────────────────────────────────────────────────────────
 log_step('🗄', 'Running database migrations…');
