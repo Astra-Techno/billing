@@ -95,6 +95,7 @@ class Admin extends Task
             (SELECT COUNT(*) FROM desktop_licenses WHERE status='active') active,
             (SELECT COUNT(*) FROM desktop_licenses WHERE status='suspended') suspended,
             (SELECT COUNT(*) FROM desktop_licenses WHERE status='revoked') revoked,
+            (SELECT COUNT(DISTINCT user_id) FROM desktop_licenses WHERE user_id IS NOT NULL) accounts,
             (SELECT COUNT(*) FROM desktop_licenses WHERE status='active' AND expires_at BETWEEN NOW() AND DATE_ADD(NOW(),INTERVAL 30 DAY)) expiring"));
     }
 
@@ -109,7 +110,10 @@ class Admin extends Task
     public function desktopLicenses(array $input): array
     {
         $this->requireSuperAdmin(); $crypto = new DesktopLicenseCrypto();
-        $rows=DB::select("SELECT l.*,a.name approved_by_name,r.name revoked_by_name FROM desktop_licenses l LEFT JOIN users a ON a.id=l.approved_by LEFT JOIN users r ON r.id=l.revoked_by ORDER BY l.created_at DESC LIMIT 500");
+        $rows=DB::select("SELECT l.*,a.name approved_by_name,r.name revoked_by_name,
+            (SELECT COUNT(*) FROM desktop_licenses x WHERE x.user_id=l.user_id AND x.status='active') active_device_count,
+            (SELECT COUNT(*) FROM desktop_licenses x WHERE x.user_id=l.user_id) total_device_count
+            FROM desktop_licenses l LEFT JOIN users a ON a.id=l.approved_by LEFT JOIN users r ON r.id=l.revoked_by ORDER BY l.created_at DESC LIMIT 500");
         return $this->success(array_map(function($row) use($crypto) { $row->customer=$crypto->decrypt($row->encrypted_customer); $row->device=$crypto->decrypt($row->encrypted_device); unset($row->encrypted_customer,$row->encrypted_device,$row->license_document,$row->device_hmac); if(isset($row->device['device_id'])) $row->device['device_id']=substr($row->device['device_id'],0,12).'…'; return $row; },$rows));
     }
 

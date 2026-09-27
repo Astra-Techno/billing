@@ -2,9 +2,18 @@
 import { computed, onMounted, ref } from 'vue'
 import { task } from '../../api'
 
-const tab=ref('requests'), requests=ref([]), licenses=ref([]), stats=ref({}), loading=ref(true), busy=ref(null), error=ref('')
+const tab=ref('accounts'), requests=ref([]), licenses=ref([]), stats=ref({}), loading=ref(true), busy=ref(null), error=ref('')
 const approveModal=ref(null), approveYears=ref(1), expandedLicense=ref(null)
 const pending=computed(()=>requests.value.filter(r=>r.status==='pending'))
+const deviceAccounts=computed(()=>{
+  const grouped=new Map()
+  for(const license of licenses.value){
+    const key=license.user_id||license.customer?.user?.email||`licence-${license.id}`
+    if(!grouped.has(key))grouped.set(key,{key,user:license.customer?.user||{},company:license.customer?.company||{},devices:[]})
+    grouped.get(key).devices.push(license)
+  }
+  return [...grouped.values()].sort((a,b)=>b.devices.filter(d=>d.status==='active').length-a.devices.filter(d=>d.status==='active').length)
+})
 onMounted(load)
 async function load(){ loading.value=true;error.value='';try{const [s,r,l]=await Promise.all([task('Admin','desktopLicenseStats'),task('Admin','desktopActivationRequests'),task('Admin','desktopLicenses')]);stats.value=s.data.data||{};requests.value=r.data.data||[];licenses.value=l.data.data||[]}catch(e){error.value=e.response?.data?.message||'Could not load desktop licences.'}finally{loading.value=false}}
 function showApproveModal(row){approveModal.value=row;approveYears.value=1}
@@ -27,12 +36,29 @@ const badge={pending:'bg-amber-100 text-amber-700',approved:'bg-blue-100 text-bl
     <button class="ml-auto px-3 py-2 rounded-lg border text-xs font-semibold bg-white" @click="load">Refresh</button>
   </div>
   <div class="p-4 lg:p-6 overflow-y-auto flex-1">
-    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-5">
-      <div v-for="(label,key) in {pending:'Pending',active:'Active',expiring:'Expiring',suspended:'Suspended',revoked:'Revoked'}" :key="key" class="bg-white rounded-xl border p-4"><p class="text-xs text-gray-500">{{label}}</p><p class="text-2xl font-bold mt-1">{{stats[key]||0}}</p></div>
+    <div class="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-5">
+      <div v-for="(label,key) in {accounts:'Customers',pending:'Pending',active:'Active devices',expiring:'Expiring',suspended:'Suspended',revoked:'Deactivated'}" :key="key" class="bg-white rounded-xl border p-4"><p class="text-xs text-gray-500">{{label}}</p><p class="text-2xl font-bold mt-1">{{stats[key]||0}}</p></div>
     </div>
     <p v-if="error" role="alert" class="mb-4 bg-red-50 border border-red-100 text-red-700 rounded-xl px-4 py-3 text-sm">{{error}}</p>
-    <div class="flex gap-2 mb-4"><button v-for="item in [{k:'requests',n:`Requests (${pending.length})`},{k:'licenses',n:`Licences (${licenses.length})`}]" :key="item.k" @click="tab=item.k" class="px-4 py-2 rounded-lg text-sm font-semibold" :class="tab===item.k?'bg-indigo-600 text-white':'bg-white border text-gray-600'">{{item.n}}</button></div>
+    <div class="flex gap-2 mb-4 flex-wrap"><button v-for="item in [{k:'accounts',n:`Devices by customer (${deviceAccounts.length})`},{k:'requests',n:`Requests (${pending.length})`},{k:'licenses',n:`All licences (${licenses.length})`}]" :key="item.k" @click="tab=item.k" class="px-4 py-2 rounded-lg text-sm font-semibold" :class="tab===item.k?'bg-indigo-600 text-white':'bg-white border text-gray-600'">{{item.n}}</button></div>
     <div v-if="loading" class="bg-white rounded-xl border p-8 text-center text-gray-400">Loading…</div>
+
+    <!-- Devices grouped by customer -->
+    <div v-else-if="tab==='accounts'" class="space-y-3">
+      <div v-if="!deviceAccounts.length" class="bg-white rounded-xl border p-8 text-center text-gray-400">No registered devices</div>
+      <div v-for="account in deviceAccounts" :key="account.key" class="bg-white rounded-xl border overflow-hidden">
+        <div class="p-4 border-b bg-gray-50 flex flex-col sm:flex-row sm:items-center gap-2">
+          <div class="flex-1"><p class="font-semibold text-gray-900">{{account.company?.name||account.user?.name||'Customer'}}</p><p class="text-xs text-gray-500">{{account.user?.name}} · {{account.user?.email}}<template v-if="account.user?.mobile"> · {{account.user.mobile}}</template></p></div>
+          <div class="flex gap-2"><span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">{{account.devices.filter(d=>d.status==='active').length}} active</span><span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-700">{{account.devices.length}} total</span></div>
+        </div>
+        <div class="divide-y">
+          <div v-for="row in account.devices" :key="row.id" class="p-4 flex flex-col lg:flex-row lg:items-center gap-3">
+            <div class="flex-1 min-w-0"><div class="flex items-center gap-2"><p class="font-medium text-gray-900">{{row.device?.device?.pc_name||'Unknown PC'}}</p><span class="text-[11px] px-2 py-0.5 rounded-full font-semibold" :class="badge[row.status]">{{row.status}}</span></div><p class="text-xs text-gray-500 mt-1">{{row.device?.device?.windows_version||'Windows version unavailable'}} · {{row.device?.device?.windows_user||'User unavailable'}}</p><p class="text-xs text-gray-400 mt-1">Device: {{row.device?.device_id||'—'}} · Last checked: {{date(row.last_cloud_contact_at||row.issued_at)}}</p></div>
+            <div class="flex gap-2"><button v-if="row.status!=='active'" :disabled="busy==='l'+row.id" @click="setStatus(row,'active')" class="px-3 py-2 rounded-lg bg-green-50 text-green-700 text-sm font-semibold">Activate</button><button v-if="row.status==='active'" :disabled="busy==='l'+row.id" @click="setStatus(row,'suspended')" class="px-3 py-2 rounded-lg bg-red-50 text-red-700 text-sm font-semibold">Deactivate device</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Requests tab -->
     <div v-else-if="tab==='requests'" class="space-y-3">
