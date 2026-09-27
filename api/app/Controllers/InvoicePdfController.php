@@ -352,7 +352,9 @@ class InvoicePdfController
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: DejaVu Sans, sans-serif; background: white; color: #111827; font-size: 12px; }
   .page { max-width: 780px; margin: 0 auto; padding: 20px; background: white; }
-  table { width: 100%; border-collapse: collapse; }
+  table { width: 100%; border-collapse: collapse; page-break-inside: auto; }
+  thead { display: table-header-group; }
+  tr { page-break-inside: avoid; page-break-after: auto; }
   td, th { vertical-align: top; }
 </style>
 </head>
