@@ -97,11 +97,41 @@ function onFormShortcut(e) {
   }
 }
 
-onMounted(() => document.addEventListener('keydown', onFormShortcut, true))
+// Barcode scanner: detects rapid keystrokes ending with Enter
+let barcodeBuffer = '', barcodeTimer = null
+function onBarcodeKey(e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return
+  if (e.key === 'Enter' && barcodeBuffer.length >= 4) {
+    e.preventDefault()
+    const code = barcodeBuffer; barcodeBuffer = ''
+    const p = products.value.find(x => x.barcode === code || x.sku === code)
+    if (p) {
+      const existingIdx = form.value.items.findIndex(it => it.product_id == p.id)
+      if (existingIdx !== -1) {
+        form.value.items[existingIdx].quantity = (parseFloat(form.value.items[existingIdx].quantity) || 0) + 1
+        checkStockWarning(existingIdx)
+      } else {
+        const blankIdx = form.value.items.findIndex(it => !it.description?.trim())
+        const idx = blankIdx !== -1 ? blankIdx : (form.value.items.push(blankItem()) - 1)
+        pickProduct(idx, p.id)
+        form.value.items[idx].product_id = p.id
+        checkStockWarning(idx)
+        ensureTrailingEmptyRow()
+      }
+    }
+    return
+  }
+  if (e.key.length === 1) { barcodeBuffer += e.key; clearTimeout(barcodeTimer); barcodeTimer = setTimeout(() => { barcodeBuffer = '' }, 80) }
+  else { barcodeBuffer = '' }
+}
+
+onMounted(() => { document.addEventListener('keydown', onFormShortcut, true); document.addEventListener('keydown', onBarcodeKey) })
 onUnmounted(() => {
   document.removeEventListener('keydown', onFormShortcut, true)
+  document.removeEventListener('keydown', onBarcodeKey)
   clearTimeout(productDebounceTimer)
   clearTimeout(productBlurTimer)
+  clearTimeout(barcodeTimer)
 })
 
 // shallowRef: large display-only arrays — no need for deep reactivity on each item's properties
@@ -111,6 +141,7 @@ const taxRates     = shallowRef([])
 const states       = shallowRef([])
 const stockLocations = shallowRef([])
 const inventoryMode = ref('none')
+const stockWarnings = ref({}) // { lineIndex: 'Only 4 packets available in Main Shop.' }
 const loading      = ref(false)
 const dataLoading  = ref(true)
 const clientSearch = ref('')
@@ -276,6 +307,7 @@ function selectProduct(i, p) {
   }
   pickProduct(i, p.id)
   form.value.items[i].product_id = p.id
+  checkStockWarning(i)
   closeProductSearch()
   ensureTrailingEmptyRow({ focus: false })
   if (window.innerWidth < 1024) {
@@ -623,6 +655,25 @@ function lineTotal(it) {
   return (base - disc) * (1 + parseFloat(it.gst_rate||0)/100)
 }
 
+function checkStockWarning(i) {
+  const it = form.value.items[i]
+  if (!it?.product_id || inventoryMode.value === 'none') { delete stockWarnings.value[i]; return }
+  const p = products.value.find(x => x.id == it.product_id)
+  if (!p || !+p.track_stock) { delete stockWarnings.value[i]; return }
+  const qty = parseFloat(it.quantity) || 0
+  const avail = parseFloat(p.available_stock) || 0
+  // Sum qty used by other lines for same product
+  const otherQty = form.value.items.reduce((s, x, idx) => idx !== i && x.product_id == it.product_id ? s + (parseFloat(x.quantity) || 0) : s, 0)
+  const effective = avail - otherQty
+  if (qty > effective) {
+    const loc = stockLocations.value.find(l => l.id == form.value.location_id)?.name || 'this shop'
+    stockWarnings.value[i] = `Only ${Math.max(0, effective)} ${p.unit || 'units'} available in ${loc}.`
+    if (inventoryMode.value === 'strict') it.quantity = Math.max(0, effective)
+  } else {
+    delete stockWarnings.value[i]
+  }
+}
+
 function lineTaxAmount(it) {
   const qty = parseFloat(it.quantity || 0)
   const price = parseFloat(it.unit_price || 0)
@@ -780,7 +831,7 @@ async function submit() {
                         <!-- Qty + Unit chip -->
                         <div class="chip-qty">
                           <input v-model="it.quantity" type="number" :data-line-qty="i" :min="qtyStep(it.unit)" :step="qtyStep(it.unit)" @keydown.tab="onQuantityTab(i, $event)"
-                            class="w-12 text-center tabular-nums" />
+                            @input="checkStockWarning(i)" class="w-12 text-center tabular-nums" />
                           <span class="text-gray-300 select-none">×</span>
                           <select v-model="it.unit" class="max-w-[52px]">
                             <option v-for="u in units" :key="u">{{ u }}</option>
@@ -812,6 +863,7 @@ async function submit() {
                     <!-- Right: amount + delete -->
                     <div class="flex flex-col items-end gap-2 shrink-0 min-w-[72px]">
                       <span class="text-sm font-bold text-gray-800 tabular-nums">{{ inr(lineTotal(it)) }}</span>
+                      <p v-if="stockWarnings[i]" class="text-[10px] font-semibold" :class="inventoryMode === 'strict' ? 'text-red-600' : 'text-amber-600'">{{ stockWarnings[i] }}</p>
                       <button v-if="form.items.length > 1" type="button" @click="removeItem(i)"
                         class="opacity-0 group-hover:opacity-100 w-7 h-7 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="Remove">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
@@ -878,7 +930,7 @@ async function submit() {
                     <!-- Mobile chips for qty/price/discount/gst -->
                     <div class="item-chips">
                       <div class="chip-qty">
-                        <input v-model="it.quantity" type="number" :min="qtyStep(it.unit)" :step="qtyStep(it.unit)" class="w-12 text-center tabular-nums" />
+                        <input v-model="it.quantity" type="number" :min="qtyStep(it.unit)" :step="qtyStep(it.unit)" @input="checkStockWarning(i)" class="w-12 text-center tabular-nums" />
                         <span class="text-gray-300 select-none">×</span>
                         <select v-model="it.unit" class="max-w-[52px]">
                           <option v-for="u in units" :key="u">{{ u }}</option>
@@ -901,6 +953,7 @@ async function submit() {
                         </select>
                       </div>
                     </div>
+                    <p v-if="stockWarnings[i]" class="text-xs font-semibold" :class="inventoryMode === 'strict' ? 'text-red-600' : 'text-amber-600'">{{ stockWarnings[i] }}</p>
                     <div class="flex items-center justify-between pt-2 border-t border-gray-100/50">
                       <span class="text-sm font-extrabold text-primary-600">{{ inr(lineTotal(it)) }}</span>
                       <button v-if="form.items.length > 1" type="button" @click="removeItem(i)" class="text-xs text-red-500 font-bold hover:underline">Remove Item</button>
