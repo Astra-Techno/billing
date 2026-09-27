@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { statusBadge, statusLabel, calcLine, calcInvoice } from './invoice'
+import { statusBadge, statusLabel, invoiceTypeLabel, calcLine, calcInvoice } from './invoice'
 
 describe('statusBadge()', () => {
   it('maps draft to badge-gray', () => {
@@ -37,6 +37,18 @@ describe('statusLabel()', () => {
   })
   it('returns the raw status for unknown values', () => {
     expect(statusLabel('custom')).toBe('custom')
+  })
+})
+
+describe('invoiceTypeLabel()', () => {
+  it.each([
+    ['tax_invoice', 'Tax Invoice'],
+    ['bill_of_supply', 'Bill of Supply'],
+    ['retail', 'Retail Invoice'],
+    ['export', 'Export Invoice'],
+    ['proforma', 'Proforma Invoice'],
+  ])('prints %s as %s', (type, label) => {
+    expect(invoiceTypeLabel(type)).toBe(label)
   })
 })
 

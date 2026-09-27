@@ -123,7 +123,7 @@ try {
   await command('Invoice','cancel',{id:stockInvoice.invoice_id})
   afterSale = await command('Inventory','overview',{})
   assert.equal(Number(afterSale.stock.find(s=>Number(s.product_id)===Number(stockProduct.product_id)).quantity),5)
-  const invoice = await command('Invoice','create',{ client_id:clientId, issue_date:'2026-09-14', due_date:'2026-09-30', discount_type:'percent', discount_value:10, items:[{ description:'Offline item', quantity:2, unit_price:100, gst_rate:18 }] })
+  const invoice = await command('Invoice','create',{ client_id:clientId, invoice_type:'proforma', issue_date:'2026-09-14', due_date:'2026-09-30', discount_type:'percent', discount_value:10, items:[{ description:'Offline item', quantity:2, unit_price:100, gst_rate:18 }] })
   assert.equal(Number(invoice.total),212)
   assert.equal(invoice.number,null,'Draft must stay unnumbered until finalized')
   const lines = (await (await request(`list/Invoice:items?invoice_id=${invoice.invoice_id}`)).json()).data
@@ -191,6 +191,7 @@ try {
   await page.locator('.receipt-doc').waitFor({timeout:10000}).catch(async e => { throw new Error(`${e.message}\nPrint page: ${await page.locator('body').innerText()}`) })
   assert.equal(await page.locator('.receipt-item').count(),1)
   assert.match(await page.locator('.receipt-doc').innerText(),/Offline item/)
+  assert.match(await page.locator('.receipt-doc').innerText(),/PROFORMA INVOICE/i,'Printed heading must match the selected bill type')
   const receiptWidth = await page.evaluate(() => {
     const page = document.querySelector('.print-page')
     const receipt = document.querySelector('.receipt-doc')

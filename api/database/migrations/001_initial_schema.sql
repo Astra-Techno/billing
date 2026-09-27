@@ -481,7 +481,7 @@ CREATE TABLE IF NOT EXISTS `invoices` (
     `client_id`       BIGINT UNSIGNED NOT NULL,
     `quote_id`        BIGINT UNSIGNED DEFAULT NULL,
     `number`          VARCHAR(50)     NOT NULL,
-    `invoice_type`    ENUM('tax_invoice','bill_of_supply','export','retail') NOT NULL DEFAULT 'tax_invoice'
+    `invoice_type`    ENUM('tax_invoice','bill_of_supply','export','retail','proforma') NOT NULL DEFAULT 'tax_invoice'
                           COMMENT 'tax_invoice=GST registered, bill_of_supply=unregistered/exempt',
     `status`          ENUM('draft','sent','partial','paid','overdue','cancelled') NOT NULL DEFAULT 'draft',
     `issue_date`      DATE            NOT NULL,

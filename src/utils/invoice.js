@@ -23,6 +23,17 @@ export function statusLabel(status) {
   return map[status] || status
 }
 
+export function invoiceTypeLabel(type) {
+  const map = {
+    tax_invoice: 'Tax Invoice',
+    bill_of_supply: 'Bill of Supply',
+    retail: 'Retail Invoice',
+    export: 'Export Invoice',
+    proforma: 'Proforma Invoice',
+  }
+  return map[type] || 'Invoice'
+}
+
 // Calculate line total with GST
 export function calcLine(item, supplyType = 'intra') {
   const qty     = parseFloat(item.quantity  || 0)

@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import api, { item, list, task } from '../../api'
 import { inr } from '../../utils/currency'
 import { fmtDateShort, today } from '../../utils/date'
-import { statusBadge, statusLabel } from '../../utils/invoice'
+import { statusBadge, statusLabel, invoiceTypeLabel } from '../../utils/invoice'
 import { useRole } from '../../composables/useRole'
 import { useAuthStore } from '../../stores/auth'
 import QRCode from 'qrcode'
@@ -239,8 +239,7 @@ async function downloadPdf(mode = '') {
 }
 
 const invoiceTitle = computed(() => {
-  const map = { tax_invoice: 'Tax Invoice', bill_of_supply: 'Bill of Supply', retail: 'Retail Invoice', export: 'Export Invoice', proforma: 'Proforma Invoice' }
-  return map[invoice.value?.invoice_type] || 'Tax Invoice'
+  return invoiceTypeLabel(invoice.value?.invoice_type)
 })
 
 const isGst = computed(() => invoice.value?.invoice_type !== 'bill_of_supply')

@@ -5,6 +5,7 @@ import api, { item, list } from '../../api'
 import { useAuthStore } from '../../stores/auth'
 import { inr } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
+import { invoiceTypeLabel } from '../../utils/invoice'
 import QRCode from 'qrcode'
 
 const route    = useRoute()
@@ -95,8 +96,7 @@ const isProforma = computed(() => mode.value === 'proforma')
 const invoiceTitle = computed(() => {
   if (isDC.value) return 'Delivery Challan'
   if (isProforma.value) return 'Proforma Invoice'
-  const map = { tax_invoice: 'Tax Invoice', bill_of_supply: 'Bill of Supply', retail: 'Retail Invoice', export: 'Export Invoice', proforma: 'Proforma Invoice' }
-  return map[invoice.value?.invoice_type] || 'Tax Invoice'
+  return invoiceTypeLabel(invoice.value?.invoice_type)
 })
 
 const isGst = computed(() => !isDC.value && invoice.value?.invoice_type !== 'bill_of_supply')

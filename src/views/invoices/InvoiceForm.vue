@@ -1192,6 +1192,7 @@ async function submit() {
                 <option value="tax_invoice">Tax Invoice (with GST)</option>
                 <option value="bill_of_supply">Bill of Supply</option>
                 <option value="retail">Retail Invoice</option>
+                <option value="export">Export Invoice</option>
                 <option value="proforma">Proforma Invoice</option>
               </select>
               <label>Bill Type</label>

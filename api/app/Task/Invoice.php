@@ -21,6 +21,7 @@ class Invoice extends Task
             'issue_date'   => 'required|date',
             'due_date'     => 'required|date',
             'items'        => 'required',
+            'invoice_type' => 'in:tax_invoice,bill_of_supply,export,retail,proforma',
         ]);
 
         $businessId = $this->requireBusiness();
@@ -103,6 +104,7 @@ class Invoice extends Task
             'id'        => 'required|integer',
             'client_id' => 'nullable|integer',
             'items'     => 'required',
+            'invoice_type' => 'in:tax_invoice,bill_of_supply,export,retail,proforma',
         ]);
 
         $businessId = $this->requireBusiness();
