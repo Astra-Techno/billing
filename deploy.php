@@ -316,7 +316,6 @@ function runMigrations(): array {
 
         $pdo = new PDO("mysql:host={$host};port={$port};dbname={$db};charset=utf8mb4", $user, $pass, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => true,
         ]);
 
         $pdo->exec("CREATE TABLE IF NOT EXISTS _migrations (
@@ -353,7 +352,14 @@ function runMigrations(): array {
             // implicit commit, leaving PDO's transaction state stale and causing
             // a secondary exception on rollBack(). Run statements directly instead.
             try {
-                foreach ($statements as $stmt) { $pdo->exec($stmt); }
+                foreach ($statements as $stmt) {
+                    try { $pdo->exec($stmt); }
+                    catch (PDOException $se) {
+                        // Ignore "already exists" errors so migrations are idempotent
+                        $code = (int)$se->errorInfo[1];
+                        if (!in_array($code, [1060, 1061, 1050, 1068, 1826], true)) throw $se;
+                    }
+                }
                 $pdo->prepare("INSERT INTO _migrations (filename) VALUES (?)")->execute([$name]);
                 $log[] = ['status' => 'done', 'name' => $name];
             } catch (PDOException $e) {
