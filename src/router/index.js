@@ -62,6 +62,7 @@ const routes = [
           { path: ':id/edit',name: 'ProductEdit',  component: () => import('../views/products/ProductForm.vue') },
         ]
       },
+      { path: 'inventory', name: 'Inventory', component: () => import('../views/inventory/Inventory.vue'), meta: { permission: 'inventory' } },
       {
         path: 'credit-notes',     name: 'CreditNotes',  component: () => import('../views/credit-notes/CreditNoteList.vue'), meta: { permission: 'credit_notes' },
         children: [
@@ -120,6 +121,7 @@ const ROUTE_PERMISSIONS = {
   quotes:           ['owner', 'admin', 'accountant'],
   expenses:         ['owner', 'admin', 'accountant'],
   products:         ['owner', 'admin', 'accountant', 'staff'],
+  inventory:        ['owner', 'admin', 'accountant', 'staff'],
   payments:         ['owner', 'admin', 'accountant'],
   reports:          ['owner', 'admin', 'accountant'],
   gst:              ['owner', 'admin', 'accountant'],

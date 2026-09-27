@@ -158,9 +158,11 @@ describe('calcInvoice()', () => {
       { quantity: 2, unit_price: 1000, discount_pct: 10, gst_rate: 18 },
     ]
     const result = calcInvoice(discountedItems, 'intra', 'percent', 10)
-    expect(result.discount).toBe(200) // 2000 * 10%
-    expect(result.subtotal).toBe(1800)
-    expect(result.tax).toBe(324)
+    expect(result.itemDiscountTotal).toBe(200)
+    expect(result.invoiceDiscount).toBe(180) // 10% after the line discount
+    expect(result.discount).toBe(380)
+    expect(result.subtotal).toBe(1620)
+    expect(result.tax).toBe(291.6)
   })
 
   it('roundOff non-zero when raw total has fraction', () => {

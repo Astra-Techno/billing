@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { item, task, all } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
+import InfoTip from '../../components/InfoTip.vue'
 import { useToast } from '../../composables/useToast'
 import { useFormKeys } from '../../composables/useFormKeys'
 
@@ -21,7 +22,7 @@ const saved    = ref(false)
 const isEdit = route.params.id && route.params.id !== 'new'
 const productId = isEdit ? route.params.id : null
 
-const units = ['Nos', 'Kg', 'Ltr', 'Hrs', 'Pcs', 'Mtr', 'Box', 'Set', 'Pair', 'Month', 'Year']
+const units = ['Nos', 'Pcs', 'Packet', 'Box', 'Bag', 'Dozen', 'Kg', 'Gram', 'Ltr', 'Ml', 'Mtr', 'Feet', 'Set', 'Pair', 'Hrs', 'Month', 'Year']
 
 const form = ref({
   type: 'service',
@@ -30,6 +31,9 @@ const form = ref({
   hsn_sac: '',
   unit: 'Nos',
   price: '',
+  purchase_price: '', mrp: '', reorder_level: 0, track_stock: false,
+  sku: '', barcode: '', base_unit: 'Nos', conversion_factor: 1,
+  batch_tracking: false, expiry_tracking: false, serial_tracking: false,
   tax_rate_id: '',
   is_active: true,
 })
@@ -51,6 +55,10 @@ async function load() {
           hsn_sac:     p.hsn_sac     || '',
           unit:        p.unit        || 'Nos',
           price:       p.price,
+          purchase_price: p.purchase_price || '', mrp: p.mrp || '', reorder_level: p.reorder_level || 0,
+          track_stock: !!+p.track_stock, sku: p.sku || '', barcode: p.barcode || '',
+          base_unit: p.base_unit || p.unit || 'Nos', conversion_factor: p.conversion_factor || 1,
+          batch_tracking: !!+p.batch_tracking, expiry_tracking: !!+p.expiry_tracking, serial_tracking: !!+p.serial_tracking,
           tax_rate_id: p.tax_rate_id || '',
           is_active:   p.is_active !== false,
         }
@@ -181,6 +189,10 @@ onMounted(load)
           <!-- Inventory details -->
           <div class="inv-card p-5 space-y-4">
             <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider mb-2">Inventory Details</h2>
+            <label v-if="form.type === 'product'" class="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50 p-3">
+              <input v-model="form.track_stock" type="checkbox" class="mt-1" />
+              <span><span class="flex items-center gap-2 text-sm font-semibold">Maintain stock for this item? <InfoTip text="Turn this on for physical goods. Leave it off for services, labour, delivery charges and items whose stock you do not want to maintain." /></span><span class="text-xs text-gray-500">Shows available quantity during billing.</span></span>
+            </label>
             
             <div>
               <label class="inv-label">Unit of Measure</label>
@@ -193,6 +205,13 @@ onMounted(load)
               <label class="inv-label">HSN / SAC Code</label>
               <input v-model="form.hsn_sac" type="text" class="inv-input mt-1 !bg-white" placeholder="e.g. 998313" />
             </div>
+            <template v-if="form.type === 'product' && form.track_stock">
+              <div class="grid grid-cols-2 gap-3"><div><label class="inv-label">Purchase Price (₹)</label><input v-model="form.purchase_price" type="number" step="0.01" class="inv-input mt-1 !bg-white" /></div><div><label class="inv-label">MRP (₹)</label><input v-model="form.mrp" type="number" step="0.01" class="inv-input mt-1 !bg-white" /></div></div>
+              <div><label class="inv-label flex items-center gap-2">Low Stock Alert <InfoTip text="The app highlights this item when current stock reaches this quantity." /></label><input v-model="form.reorder_level" type="number" step="0.001" class="inv-input mt-1 !bg-white" /></div>
+              <div class="grid grid-cols-2 gap-3"><div><label class="inv-label">SKU / Item Code</label><input v-model="form.sku" class="inv-input mt-1 !bg-white" /></div><div><label class="inv-label">Barcode</label><input v-model="form.barcode" class="inv-input mt-1 !bg-white" /></div></div>
+              <div class="rounded-xl border p-3"><div class="flex items-center gap-2 text-xs font-bold uppercase text-gray-600">Purchase unit conversion <InfoTip text="Example: if you purchase one Box containing 12 Pieces, keep billing unit as Pcs, choose Box here and enter 12." /></div><div class="mt-2 grid grid-cols-2 gap-3"><select v-model="form.base_unit" class="inv-select !bg-white"><option v-for="u in units" :key="u">{{u}}</option></select><input v-model="form.conversion_factor" type="number" min="0.0001" step="0.0001" class="inv-input !bg-white" placeholder="1 purchase unit = ?" /></div></div>
+              <div class="rounded-xl border p-3 space-y-2"><p class="flex items-center gap-2 text-xs font-bold uppercase text-gray-600">Optional trade controls <InfoTip text="Use these only when your trade needs them: batch and expiry for pharmacy/food; serial or IMEI for electronics." /></p><label class="flex gap-2 text-sm"><input v-model="form.batch_tracking" type="checkbox"/> Batch / lot number</label><label class="flex gap-2 text-sm"><input v-model="form.expiry_tracking" type="checkbox"/> Expiry date</label><label class="flex gap-2 text-sm"><input v-model="form.serial_tracking" type="checkbox"/> Serial / IMEI number</label></div>
+            </template>
           </div>
 
           <!-- Status toggle -->

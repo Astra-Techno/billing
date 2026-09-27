@@ -8,6 +8,7 @@ export const PAGE_PERMISSIONS = [
   { key: 'expenses',         label: 'Expenses' },
   { key: 'clients',          label: 'Clients' },
   { key: 'products',         label: 'Products' },
+  { key: 'inventory',        label: 'Stock' },
   { key: 'payments',         label: 'Payments' },
   { key: 'reports',          label: 'Reports' },
   { key: 'gst',              label: 'GST Returns' },

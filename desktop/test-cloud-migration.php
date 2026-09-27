@@ -51,7 +51,7 @@ try {
     App\Core\Auth::setUser((object)['id'=>1,'is_super_admin'=>1]); App\Core\Auth::setBusinessId(null);
     $listed = App\Base\Task::run('Admin.desktopActivationRequests', []);
     if (($listed['data'][0]->company['name'] ?? '') !== 'Licence Shop') throw new RuntimeException('Admin could not decrypt the activation request.');
-    App\Base\Task::run('Admin.approveDesktopActivation', ['request_id'=>$requestRow->id]);
+    App\Base\Task::run('Admin.approveDesktopActivation', ['request_id'=>$requestRow->id,'years'=>1]);
     App\Core\Auth::setUser(null);
     $issued = App\Base\Task::run('DesktopLicense.status', ['request_id'=>$request['data']['request_id'],'request_secret'=>$request['data']['request_secret']]);
     if (($issued['data']['license_status'] ?? '') !== 'active' || empty($issued['data']['license_document'])) throw new RuntimeException('Approved signed licence was not returned.');

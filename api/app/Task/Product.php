@@ -28,13 +28,23 @@ class Product extends Task
         $product = ProductTable::create([
             'business_id' => $businessId,
             'type'        => $input['type'],
+            'track_stock' => ($input['type'] === 'product' && !empty($input['track_stock'])) ? 1 : 0,
             'name'        => trim($input['name']),
             'description' => $input['description'] ?? null,
             'hsn_sac'     => $input['hsn_sac']     ?? null,
             'unit'        => $input['unit']         ?? 'Nos',
             'price'       => (float)$input['price'],
+            'purchase_price' => (float)($input['purchase_price'] ?? 0),
+            'mrp'         => ($input['mrp'] ?? '') !== '' ? (float)$input['mrp'] : null,
+            'reorder_level' => (float)($input['reorder_level'] ?? 0),
             'tax_rate_id' => !empty($input['tax_rate_id']) ? (int)$input['tax_rate_id'] : null,
             'sku'         => $input['sku']          ?? null,
+            'barcode'     => $input['barcode']      ?? null,
+            'base_unit'   => $input['base_unit']    ?? ($input['unit'] ?? 'Nos'),
+            'conversion_factor' => max(0.0001, (float)($input['conversion_factor'] ?? 1)),
+            'batch_tracking' => !empty($input['batch_tracking']) ? 1 : 0,
+            'expiry_tracking' => !empty($input['expiry_tracking']) ? 1 : 0,
+            'serial_tracking' => !empty($input['serial_tracking']) ? 1 : 0,
             'active'      => 1,
         ]);
 
@@ -63,13 +73,23 @@ class Product extends Task
 
         $product->fill([
             'type'        => $input['type']        ?? $product->type,
+            'track_stock' => (($input['type'] ?? $product->type) === 'product' && !empty($input['track_stock'])) ? 1 : 0,
             'name'        => trim($input['name']),
             'description' => $input['description'] ?? $product->description,
             'hsn_sac'     => $input['hsn_sac']     ?? $product->hsn_sac,
             'unit'        => $input['unit']         ?? $product->unit,
             'price'       => (float)$input['price'],
+            'purchase_price' => (float)($input['purchase_price'] ?? $product->purchase_price ?? 0),
+            'mrp'         => ($input['mrp'] ?? '') !== '' ? (float)$input['mrp'] : null,
+            'reorder_level' => (float)($input['reorder_level'] ?? $product->reorder_level ?? 0),
             'tax_rate_id' => !empty($input['tax_rate_id']) ? (int)$input['tax_rate_id'] : $product->tax_rate_id,
             'sku'         => $input['sku']          ?? $product->sku,
+            'barcode'     => $input['barcode']      ?? $product->barcode,
+            'base_unit'   => $input['base_unit']    ?? $product->base_unit ?? $product->unit,
+            'conversion_factor' => max(0.0001, (float)($input['conversion_factor'] ?? $product->conversion_factor ?? 1)),
+            'batch_tracking' => !empty($input['batch_tracking']) ? 1 : 0,
+            'expiry_tracking' => !empty($input['expiry_tracking']) ? 1 : 0,
+            'serial_tracking' => !empty($input['serial_tracking']) ? 1 : 0,
         ]);
         $product->save();
 

@@ -109,6 +109,8 @@ const clients      = shallowRef([])
 const products     = shallowRef([])
 const taxRates     = shallowRef([])
 const states       = shallowRef([])
+const stockLocations = shallowRef([])
+const inventoryMode = ref('none')
 const loading      = ref(false)
 const dataLoading  = ref(true)
 const clientSearch = ref('')
@@ -350,6 +352,7 @@ const blankItem = () => ({
 
 const form = ref({
   client_id:       route.query.client || route.query.client_id || '',
+  location_id:     '',
   invoice_type:    'tax_invoice',
   issue_date:      today(),
   due_date:        addDays(today(), 30),
@@ -391,6 +394,7 @@ const selectedClient = computed(() => clients.value.find(c => c.id == form.value
 
 function applySourceInvoice(inv) {
   form.value.client_id       = inv.client_id
+  form.value.location_id     = inv.location_id || form.value.location_id
   form.value.invoice_type    = inv.invoice_type
   form.value.place_of_supply = inv.place_of_supply || businessStore.stateId || ''
   form.value.notes          = inv.notes  || ''
@@ -425,11 +429,14 @@ function applySourceInvoice(inv) {
 
 onMounted(async () => {
   try {
-  const [cRes, pRes, tRes, sRes, bizRes] = await Promise.all([all('Client'), all('Product'), all('TaxRate'), all('IndianState'), item('Business')])
+  const [cRes, pRes, tRes, sRes, bizRes, stockRes] = await Promise.all([all('Client'), all('Product'), all('TaxRate'), all('IndianState'), item('Business'), task('Inventory','overview')])
   clients.value  = cRes.data?.data  || []
   products.value = pRes.data?.data  || []
   taxRates.value = tRes.data?.data  || []
   states.value   = sRes.data?.data  || []
+  stockLocations.value = (stockRes.data?.data?.locations || []).filter(x => +x.active)
+  inventoryMode.value = stockRes.data?.data?.settings?.inventory_mode || 'none'
+  form.value.location_id = stockRes.data?.data?.defaultId || ''
   const bizStateId = bizRes.data?.data?.state_id
   businessName.value = bizRes.data?.data?.name || ''
   if (bizStateId) businessStore.setStateId(bizStateId)
@@ -748,7 +755,7 @@ async function submit() {
                               @mousedown.prevent="selectProduct(i, p)" @mouseenter="productHighlight = pi"
                               :class="['w-full flex items-center justify-between px-3 py-2 transition text-left text-xs', pi === productHighlight ? 'bg-blue-50 pd-active' : 'hover:bg-gray-50']">
                               <span class="font-medium text-gray-800 truncate">{{ p.name }}<span v-if="p.sku" class="text-gray-400 font-normal ml-1">({{ p.sku }})</span></span>
-                              <span class="text-gray-400 tabular-nums shrink-0 ml-2">{{ inr(p.price) }}</span>
+                              <span class="text-right shrink-0 ml-2"><span class="block text-gray-500 tabular-nums">{{ inr(p.price) }}</span><span v-if="+p.track_stock" class="block text-[10px] font-semibold" :class="+p.available_stock<=0?'text-red-600':(+p.available_stock<=+p.reorder_level?'text-amber-600':'text-green-600')">Stock: {{+p.available_stock}} {{p.unit}}</span></span>
                             </button>
                           </div>
                           <div v-if="showProductInlineCreate" class="border-t border-gray-100 p-3 space-y-2 bg-gray-50/50">
@@ -849,7 +856,7 @@ async function submit() {
                             @mousedown.prevent="selectProduct(i, p)" @touchend.prevent="selectProduct(i, p)"
                             class="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 active:bg-primary-50 text-left text-sm touch-manipulation">
                             <span class="font-medium text-gray-800 truncate">{{ p.name }}<span v-if="p.sku" class="text-gray-400 font-normal ml-1">({{ p.sku }})</span></span>
-                            <span class="text-gray-400 text-xs tabular-nums shrink-0 ml-2">{{ inr(p.price) }}</span>
+                            <span class="text-right shrink-0 ml-2"><span class="block text-gray-500 text-xs tabular-nums">{{ inr(p.price) }}</span><span v-if="+p.track_stock" class="block text-[10px] font-semibold" :class="+p.available_stock<=0?'text-red-600':(+p.available_stock<=+p.reorder_level?'text-amber-600':'text-green-600')">Stock: {{+p.available_stock}} {{p.unit}}</span></span>
                           </button>
                         </div>
                         <div v-if="showProductInlineCreate" class="rounded-xl border border-gray-200 p-3 space-y-2 bg-white">
@@ -965,6 +972,7 @@ async function submit() {
                 <input v-model="form.issue_date" type="date" class="inv-input text-sm !bg-white" />
                 <input v-model="form.due_date" type="date" class="inv-input text-sm !bg-white" />
               </div>
+              <label v-if="inventoryMode !== 'none' && stockLocations.length > 1" class="text-xs font-semibold text-gray-600">Sale from Shop / Godown<select v-model="form.location_id" class="inv-select mt-1 w-full !bg-white"><option v-for="l in stockLocations" :key="l.id" :value="l.id">{{l.name}}</option></select></label>
             </div>
           </details>
 
@@ -1123,6 +1131,10 @@ async function submit() {
                 <option v-for="s in states" :key="s.id" :value="s.id">{{ s.name }}</option>
               </select>
               <label>Place of Supply *</label>
+            </div>
+            <div v-if="inventoryMode !== 'none' && stockLocations.length > 1" class="fi">
+              <select v-model="form.location_id"><option v-for="l in stockLocations" :key="l.id" :value="l.id">{{l.name}}</option></select>
+              <label>Sale from Shop / Godown</label>
             </div>
 
             <div class="grid grid-cols-2 gap-3">

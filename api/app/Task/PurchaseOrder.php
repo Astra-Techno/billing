@@ -4,6 +4,7 @@ namespace App\Task;
 
 use App\Base\Task;
 use App\Core\DB;
+use App\Core\InventoryStock;
 use App\Tables\PurchaseOrder as POTable;
 use App\Tables\PurchaseOrderItem;
 
@@ -22,6 +23,7 @@ class PurchaseOrder extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $locationId = (int)($input['location_id'] ?? InventoryStock::defaultLocation($businessId));
         $this->validateItems($input['items'] ?? []);
 
         $totals = $this->calculateTotals($input['items']);
@@ -29,6 +31,7 @@ class PurchaseOrder extends Task
 
         $po = POTable::create([
             'business_id'   => $businessId,
+            'location_id'   => $locationId,
             'created_by'    => $this->userId(),
             'supplier_id'   => (int)$input['supplier_id'],
             'number'        => $number,
@@ -122,6 +125,7 @@ class PurchaseOrder extends Task
             "UPDATE purchase_orders SET status = 'received' WHERE id = ?",
             [$po->id]
         );
+        InventoryStock::postDocument($businessId, (int)($po->location_id ?: InventoryStock::defaultLocation($businessId)), 'purchase_order', (int)$po->id, 'purchase_order_items', 'po_id', 'purchase', 1, $this->userId());
 
         return $this->success(null, 'Purchase order marked as received.');
     }

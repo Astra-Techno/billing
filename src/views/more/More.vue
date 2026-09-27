@@ -19,6 +19,7 @@ const bizSlug = computed(() => {
 const allNavRaw = [
   { name: 'Customers',       to: '/clients',           perm: 'clients',          icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 4 4 0 016 0z', tint: 'from-primary-500 to-primary-700' },
   { name: 'Products',        to: '/products',          perm: 'products',         icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', tint: 'from-violet-500 to-purple-600' },
+  { name: 'Stock',           to: '/inventory',         perm: 'inventory',        icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', tint: 'from-emerald-500 to-green-600' },
   { name: 'Credit Notes',    to: '/credit-notes',      perm: 'credit_notes',     icon: 'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z', tint: 'from-rose-500 to-pink-600' },
   { name: 'Purchase Orders', to: '/purchase-orders',   perm: 'purchase_orders',  icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', tint: 'from-amber-500 to-orange-600' },
   { name: 'Delivery Challan',to: '/delivery-challans', perm: 'delivery_challans',icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4', tint: 'from-cyan-500 to-blue-600' },

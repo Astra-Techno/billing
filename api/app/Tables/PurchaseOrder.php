@@ -9,7 +9,7 @@ class PurchaseOrder extends Table
     protected string $table      = 'purchase_orders';
     protected string $primaryKey = 'id';
     protected array  $fillable   = [
-        'business_id', 'created_by', 'supplier_id',
+        'business_id', 'location_id', 'created_by', 'supplier_id',
         'number', 'status',
         'order_date', 'expected_date',
         'subtotal', 'tax_total', 'total',

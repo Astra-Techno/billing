@@ -4,6 +4,7 @@ namespace App\Task;
 
 use App\Base\Task;
 use App\Core\DB;
+use App\Core\InventoryStock;
 use App\Tables\Invoice as InvoiceTable;
 use App\Tables\InvoiceItem;
 
@@ -23,6 +24,7 @@ class Invoice extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $locationId = (int)($input['location_id'] ?? InventoryStock::defaultLocation($businessId));
         $this->validateItems($input['items'] ?? []);
 
         // Determine supply type (intra-state = CGST+SGST, inter-state = IGST)
@@ -41,6 +43,7 @@ class Invoice extends Task
 
         $invoice = InvoiceTable::create([
             'business_id'   => $businessId,
+            'location_id'   => $locationId,
             'created_by'    => $this->userId(),
             'client_id'     => $clientId,
             'quote_id'      => !empty($input['quote_id']) ? (int)$input['quote_id'] : null,
@@ -164,6 +167,7 @@ class Invoice extends Task
             "UPDATE invoices SET status = 'sent', sent_at = NOW() WHERE id = ?",
             [$invoice->id]
         );
+        InventoryStock::postDocument($businessId, (int)($invoice->location_id ?: InventoryStock::defaultLocation($businessId)), 'invoice', (int)$invoice->id, 'invoice_items', 'invoice_id', 'sale', -1, $this->userId());
 
         return $this->success(['invoice_id' => $invoice->id], 'Invoice marked as sent.');
     }
@@ -214,6 +218,7 @@ class Invoice extends Task
              WHERE id = ?",
             [$invoice->id]
         );
+        InventoryStock::postDocument($businessId, (int)($invoice->location_id ?: InventoryStock::defaultLocation($businessId)), 'invoice', (int)$invoice->id, 'invoice_items', 'invoice_id', 'sale', -1, $this->userId());
 
         return $this->success(['invoice_id' => $invoice->id], 'Invoice marked as paid.');
     }
@@ -245,6 +250,8 @@ class Invoice extends Task
         if (empty($invoices)) $this->fail('No eligible invoices (all already paid or cancelled).');
 
         foreach ($invoices as $inv) {
+            $fullInvoice = $this->findInvoice((int)$inv->id, $businessId);
+            InventoryStock::postDocument($businessId, (int)($fullInvoice->location_id ?: InventoryStock::defaultLocation($businessId)), 'invoice', (int)$fullInvoice->id, 'invoice_items', 'invoice_id', 'sale', -1, $this->userId());
             DB::statement(
                 "INSERT INTO payments
                  (business_id, invoice_id, client_id, recorded_by, amount, method, payment_date, created_at, updated_at)
@@ -276,6 +283,9 @@ class Invoice extends Task
 
         $ph = implode(',', array_fill(0, count($ids), '?'));
 
+        $stockInvoices = DB::select("SELECT id, location_id FROM invoices WHERE id IN ($ph) AND business_id = ? AND status NOT IN ('cancelled','paid')", [...$ids, $businessId]);
+        foreach ($stockInvoices as $stockInvoice) InventoryStock::postDocument($businessId, (int)($stockInvoice->location_id ?: InventoryStock::defaultLocation($businessId)), 'invoice', (int)$stockInvoice->id, 'invoice_items', 'invoice_id', 'sale', -1, $this->userId());
+
         DB::statement(
             "UPDATE invoices
              SET status = 'sent', sent_at = COALESCE(sent_at, NOW())
@@ -304,6 +314,7 @@ class Invoice extends Task
             "UPDATE invoices SET status = 'cancelled' WHERE id = ?",
             [$invoice->id]
         );
+        InventoryStock::reverseDocument($businessId, 'invoice', (int)$invoice->id, $this->userId());
 
         DB::statement(
             "INSERT INTO audit_log (business_id, user_id, action, entity_type, entity_id, snapshot, note)

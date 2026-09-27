@@ -4,6 +4,7 @@ namespace App\Task;
 
 use App\Base\Task;
 use App\Core\DB;
+use App\Core\InventoryStock;
 use App\Tables\CreditNote as CreditNoteTable;
 use App\Tables\CreditNoteItem;
 
@@ -84,6 +85,10 @@ class CreditNote extends Task
             "UPDATE credit_notes SET status = 'issued' WHERE id = ?",
             [$cn->id]
         );
+        if ($cn->reason === 'return') {
+            $invoice = DB::selectOne('SELECT location_id FROM invoices WHERE id = ?', [$cn->invoice_id]);
+            InventoryStock::postDocument($businessId, (int)($invoice->location_id ?: InventoryStock::defaultLocation($businessId)), 'credit_note', (int)$cn->id, 'credit_note_items', 'credit_note_id', 'sale_return', 1, $this->userId());
+        }
 
         return $this->success(['number' => $cn->number], 'Credit note issued.');
     }

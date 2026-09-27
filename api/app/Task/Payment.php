@@ -4,6 +4,7 @@ namespace App\Task;
 
 use App\Base\Task;
 use App\Core\DB;
+use App\Core\InventoryStock;
 use App\Tables\Payment as PaymentTable;
 
 class Payment extends Task
@@ -65,6 +66,7 @@ class Payment extends Task
              WHERE id = ?",
             [$newPaid, $newDue, $status, $invoice->id]
         );
+        InventoryStock::postDocument($businessId, (int)($invoice->location_id ?: InventoryStock::defaultLocation($businessId)), 'invoice', (int)$invoice->id, 'invoice_items', 'invoice_id', 'sale', -1, $this->userId());
 
         return $this->success([
             'payment_id'  => $payment->id,

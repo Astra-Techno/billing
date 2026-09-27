@@ -100,7 +100,7 @@ try {
     localStorage.setItem('businesses', JSON.stringify(businesses.map(({ role, permissions, ...business }) => business)))
   })
   await page.reload()
-  for (const menu of ['Clients','Quotes','Expenses','Products','Reports','Settings']) {
+  for (const menu of ['Clients','Quotes','Expenses','Products','Stock','Reports','Settings']) {
     await page.getByRole('link',{name:menu,exact:true}).waitFor()
   }
   await page.goto(base+'/settings')
@@ -110,6 +110,17 @@ try {
   await request('register', { ...credentials }, 403)
   const customer = await command('Client','create',{ name:'Offline Customer', type:'individual', state_id:26 })
   const clientId = customer.client_id
+  await command('Inventory','saveSettings',{mode:'strict',advanced:true})
+  const stockProduct = await command('Product','create',{type:'product',name:'Stock Test Packet',price:25,purchase_price:15,unit:'Packet',track_stock:true,reorder_level:2})
+  const stockOverview = await command('Inventory','overview',{})
+  await command('Inventory','adjust',{product_id:stockProduct.product_id,location_id:stockOverview.defaultId,kind:'opening',quantity:5,unit_cost:15,note:'Opening stock test'})
+  const stockInvoice = await command('Invoice','create',{client_id:clientId,location_id:stockOverview.defaultId,issue_date:'2026-09-14',due_date:'2026-09-30',items:[{product_id:stockProduct.product_id,description:'Stock Test Packet',unit:'Packet',quantity:2,unit_price:25,gst_rate:0}]})
+  await command('Invoice','markSent',{id:stockInvoice.invoice_id})
+  let afterSale = await command('Inventory','overview',{})
+  assert.equal(Number(afterSale.stock.find(s=>Number(s.product_id)===Number(stockProduct.product_id)).quantity),3)
+  await command('Invoice','cancel',{id:stockInvoice.invoice_id})
+  afterSale = await command('Inventory','overview',{})
+  assert.equal(Number(afterSale.stock.find(s=>Number(s.product_id)===Number(stockProduct.product_id)).quantity),5)
   const invoice = await command('Invoice','create',{ client_id:clientId, issue_date:'2026-09-14', due_date:'2026-09-30', discount_type:'percent', discount_value:10, items:[{ description:'Offline item', quantity:2, unit_price:100, gst_rate:18 }] })
   assert.equal(Number(invoice.total),212)
   const lines = (await (await request(`list/Invoice:items?invoice_id=${invoice.invoice_id}`)).json()).data
