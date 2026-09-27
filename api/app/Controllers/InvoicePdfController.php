@@ -107,7 +107,7 @@ class InvoicePdfController
 
         $pdfContent = $dompdf->output();
         $prefix     = $mode === 'dc' ? 'DC-' : ($mode === 'proforma' ? 'PROFORMA-' : '');
-        $filename   = $prefix . preg_replace('/[^a-zA-Z0-9\-_]/', '-', $inv['number'] ?? 'invoice') . '.pdf';
+        $filename   = $prefix . preg_replace('/[^a-zA-Z0-9\-_]/', '-', $inv['number'] ?? 'invoice') . '_' . date('d-m-Y_H-i') . '.pdf';
 
         return [$pdfContent, $filename];
     }

@@ -62,7 +62,8 @@ async function downloadPdf() {
     })
     if (!res.ok) throw new Error('PDF failed')
     const blob = await res.blob()
-    const pdfFile = new File([blob], `invoice-${invoice.value.number || invoice.value.id}.pdf`, { type: 'application/pdf' })
+    const now = new Date(), dd = String(now.getDate()).padStart(2,'0'), mm = String(now.getMonth()+1).padStart(2,'0'), yy = now.getFullYear(), hh = String(now.getHours()).padStart(2,'0'), mi = String(now.getMinutes()).padStart(2,'0')
+    const pdfFile = new File([blob], `${(invoice.value.number || 'invoice-' + invoice.value.id).replace(/[/\\]/g, '-')}_${dd}-${mm}-${yy}_${hh}-${mi}.pdf`, { type: 'application/pdf' })
     if (isMobile && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
       await navigator.share({ files: [pdfFile], title: `Invoice ${invoice.value.number || ''}` })
       return
@@ -151,6 +152,13 @@ onMounted(async () => {
     invoice.value  = invRes.data?.data
     items.value    = itmRes.data?.data || []
     business.value = bizRes.data?.data || null
+
+    if (invoice.value?.number) {
+      const now = new Date()
+      const dd = String(now.getDate()).padStart(2,'0'), mm = String(now.getMonth()+1).padStart(2,'0'), yy = now.getFullYear()
+      const hh = String(now.getHours()).padStart(2,'0'), mi = String(now.getMinutes()).padStart(2,'0')
+      document.title = `${invoice.value.number}_${dd}-${mm}-${yy}_${hh}-${mi}`
+    }
 
     if (business.value?.upi_id && invoice.value) {
       const due = parseFloat(invoice.value.amount_due || 0)

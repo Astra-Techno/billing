@@ -62,6 +62,12 @@ async function load() {
     business.value = bizRes.data?.data  || null
     ewb.value      = ewbRes?.data?.data?.[0] || null
     if (invoice.value) payForm.value.amount = invoice.value.amount_due
+    if (invoice.value?.number) {
+      const now = new Date()
+      const dd = String(now.getDate()).padStart(2,'0'), mm = String(now.getMonth()+1).padStart(2,'0'), yy = now.getFullYear()
+      const hh = String(now.getHours()).padStart(2,'0'), mi = String(now.getMinutes()).padStart(2,'0')
+      document.title = `${invoice.value.number}_${dd}-${mm}-${yy}_${hh}-${mi}`
+    }
 
     // Generate UPI QR for collect payment card
     const upiId = business.value?.upi_id
@@ -207,7 +213,8 @@ async function downloadPdf(mode = '') {
     })
     if (!res.ok) throw new Error('PDF fetch failed')
     const blob = await res.blob()
-    const pdfFile = new File([blob], `invoice-${invoice.value.number || invoice.value.id}.pdf`, { type: 'application/pdf' })
+    const now = new Date(), dd = String(now.getDate()).padStart(2,'0'), mm = String(now.getMonth()+1).padStart(2,'0'), yy = now.getFullYear(), hh = String(now.getHours()).padStart(2,'0'), mi = String(now.getMinutes()).padStart(2,'0')
+    const pdfFile = new File([blob], `${(invoice.value.number || 'invoice-' + invoice.value.id).replace(/[/\\]/g, '-')}_${dd}-${mm}-${yy}_${hh}-${mi}.pdf`, { type: 'application/pdf' })
 
     // Use Web Share API on mobile if available (best UX for mobile)
     if (isMobile && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
