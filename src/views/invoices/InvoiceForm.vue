@@ -297,8 +297,8 @@ function closeProductSearch() {
 function selectProduct(i, p) {
   const duplicateIndex = form.value.items.findIndex((item, index) => index !== i && item.product_id == p.id)
   if (duplicateIndex !== -1) {
-    const existing = form.value.items[duplicateIndex]
-    existing.quantity = (parseFloat(existing.quantity) || 0) + (parseFloat(form.value.items[i]?.quantity) || 1)
+    const confirmed = window.confirm('This product is already in the list. If you want to add the item again, click OK.')
+    if (!confirmed) return
     form.value.items.splice(i, 1)
     const targetIndex = duplicateIndex > i ? duplicateIndex - 1 : duplicateIndex
     closeProductSearch()
