@@ -72,7 +72,25 @@ async function run(method, payload, ok) {
   busy.value = false
 }
 
-const saveLocation = () => run('saveLocation', place.value, 'Shop / Godown saved.')
+const blankPlace = () => ({ name: '', type: 'shop', address: '', is_default: false, active: true })
+
+async function saveLocation() {
+  await run('saveLocation', place.value, 'Shop / Godown saved.')
+  if (!error.value) place.value = blankPlace()
+}
+
+function editLocation(l) {
+  place.value = { id: l.id, name: l.name, type: l.type, address: l.address || '', is_default: !!+l.is_default, active: !!+l.active }
+}
+
+function cancelEdit() {
+  place.value = blankPlace()
+}
+
+async function deleteLocation(l) {
+  if (!confirm(`Delete "${l.name}"? This cannot be undone.`)) return
+  await run('deleteLocation', { id: l.id }, 'Location deleted.')
+}
 
 function saveAdjustment() {
   const payload = { ...adjust.value, serial_numbers: adjust.value.serial_numbers.split(/[,\n]/).map(x => x.trim()).filter(Boolean) }
@@ -310,10 +328,10 @@ onMounted(load)
     <!-- ━━ Shops / Godowns ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <section v-if="tab === 'places'" class="grid gap-5 lg:grid-cols-2">
 
-      <!-- Add location form -->
+      <!-- Add / Edit location form -->
       <div class="card card-body space-y-4">
         <div class="flex items-center gap-2">
-          <h2 class="text-base font-bold text-gray-900">Add Shop / Godown</h2>
+          <h2 class="text-base font-bold text-gray-900">{{ place.id ? 'Edit' : 'Add' }} Shop / Godown</h2>
           <InfoTip text="Single-shop users need only Main Shop. Add a godown or branch only when stock is physically stored there." />
         </div>
         <input v-model="place.name" class="form-input" placeholder="Example: Main Shop, Central Godown" />
@@ -323,11 +341,18 @@ onMounted(load)
           <option value="damaged">Damaged / Returns Store</option>
         </select>
         <textarea v-model="place.address" class="form-input" placeholder="Address (optional)"></textarea>
-        <label class="flex items-center gap-2 text-sm text-gray-700">
+        <label v-if="!place.id" class="flex items-center gap-2 text-sm text-gray-700">
           <input v-model="place.is_default" type="checkbox" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
           Use as default billing location
         </label>
-        <button @click="saveLocation" class="btn-primary">Save Location</button>
+        <label v-if="place.id" class="flex items-center gap-2 text-sm text-gray-700">
+          <input v-model="place.active" type="checkbox" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+          Active
+        </label>
+        <div class="flex gap-2">
+          <button @click="saveLocation" class="btn-primary">{{ place.id ? 'Update' : 'Save' }} Location</button>
+          <button v-if="place.id" @click="cancelEdit" class="btn-secondary">Cancel</button>
+        </div>
       </div>
 
       <!-- Location list -->
@@ -342,9 +367,13 @@ onMounted(load)
               <span v-if="+l.is_default"> · Default</span>
             </p>
           </div>
-          <span class="badge" :class="+l.active ? 'badge-green' : 'badge-gray'">
-            {{ +l.active ? 'Active' : 'Inactive' }}
-          </span>
+          <div class="flex items-center gap-2">
+            <span class="badge" :class="+l.active ? 'badge-green' : 'badge-gray'">
+              {{ +l.active ? 'Active' : 'Inactive' }}
+            </span>
+            <button @click="editLocation(l)" class="text-primary-600 hover:text-primary-800 text-xs font-medium">Edit</button>
+            <button v-if="!+l.is_default" @click="deleteLocation(l)" class="text-red-500 hover:text-red-700 text-xs font-medium">Delete</button>
+          </div>
         </div>
       </div>
     </section>

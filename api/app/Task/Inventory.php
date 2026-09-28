@@ -67,6 +67,19 @@ class Inventory extends Task
         return $this->success(null, 'Shop / Godown saved.');
     }
 
+    public function deleteLocation(array $input): array
+    {
+        $businessId = $this->requireBusiness(); $this->requireRole(['owner','admin']);
+        $id = (int)($input['id'] ?? 0); if (!$id) $this->fail('Location ID is required.');
+        $loc = DB::selectOne('SELECT * FROM inventory_locations WHERE id=? AND business_id=?', [$id, $businessId]);
+        if (!$loc) $this->fail('Location not found.');
+        if (+($loc->is_default ?? 0)) $this->fail('Cannot delete the default location. Set another location as default first.');
+        $hasStock = DB::selectOne('SELECT 1 FROM stock_balances WHERE location_id=? AND quantity != 0 LIMIT 1', [$id]);
+        if ($hasStock) $this->fail('Cannot delete a location that has stock. Move or adjust stock to zero first.');
+        DB::statement('DELETE FROM inventory_locations WHERE id=? AND business_id=?', [$id, $businessId]);
+        return $this->success(null, 'Location deleted.');
+    }
+
     public function adjust(array $input): array
     {
         $businessId=$this->requireBusiness(); $this->requireRole(['owner','admin','accountant']);
