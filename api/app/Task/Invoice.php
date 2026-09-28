@@ -364,25 +364,15 @@ class Invoice extends Task
         $this->requirePermission('invoices', 'delete');
         $invoice    = $this->findInvoice((int)$input['id'], $businessId);
 
-        if ($invoice->status !== 'draft')
-            $this->fail('Only draft invoices can be deleted.');
-
-        if ((float)$invoice->amount_paid > 0)
-            $this->fail('Cannot delete — payments exist on this invoice.');
-
-        $payments = (int)(DB::selectOne(
-            "SELECT COUNT(*) AS c FROM payments WHERE invoice_id = ?",
-            [$invoice->id]
-        )->c ?? 0);
-        if ($payments > 0)
-            $this->fail('Cannot delete — payments exist on this invoice.');
-
         $creditNotes = (int)(DB::selectOne(
             "SELECT COUNT(*) AS c FROM credit_notes WHERE invoice_id = ?",
             [$invoice->id]
         )->c ?? 0);
         if ($creditNotes > 0)
             $this->fail('Cannot delete — credit notes exist for this invoice.');
+
+        // Delete associated payments first
+        DB::statement("DELETE FROM payments WHERE invoice_id = ?", [$invoice->id]);
 
         if (!$invoice->delete())
             $this->fail('Could not delete invoice.');
