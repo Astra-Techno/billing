@@ -360,7 +360,7 @@ class Invoice extends Task
         $this->validate(['id' => 'required|integer']);
 
         $businessId = $this->requireBusiness();
-        $this->requireRole(['owner', 'admin']);
+        $this->requireRole(['owner']);
         $this->requirePermission('invoices', 'delete');
         $invoice    = $this->findInvoice((int)$input['id'], $businessId);
 
