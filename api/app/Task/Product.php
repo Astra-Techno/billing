@@ -4,6 +4,7 @@ namespace App\Task;
 
 use App\Base\Task;
 use App\Core\DB;
+use App\Core\InventoryStock;
 use App\Tables\Product as ProductTable;
 
 class Product extends Task
@@ -126,6 +127,8 @@ class Product extends Task
         $businessId = $this->requireBusiness();
         $this->requirePermission('products', 'create');
 
+        $locationId = !empty($input['location_id']) ? (int)$input['location_id'] : 0;
+
         $csv = trim($input['csv']);
         $lines = preg_split('/\r?\n/', $csv);
         if (count($lines) < 2)
@@ -145,6 +148,8 @@ class Product extends Task
             'price'       => ['price', 'rate', 'amount'],
             'tax_rate'    => ['tax rate %', 'tax rate', 'gst %', 'gst', 'tax %', 'tax'],
             'description' => ['description', 'desc'],
+            'stock'       => ['stock', 'opening stock', 'qty', 'quantity'],
+            'shop_price'  => ['shop price', 'shop_price', 'location price', 'branch price'],
         ];
 
         $colIndex = [];
@@ -169,7 +174,7 @@ class Product extends Task
         }
 
         $created = 0;
-        $skipped = 0;
+        $updated = 0;
         $errors  = [];
 
         foreach ($lines as $lineNum => $line) {
@@ -182,25 +187,14 @@ class Product extends Task
             $name = isset($colIndex['name']) ? trim($cols[$colIndex['name']] ?? '') : '';
             if ($name === '') {
                 $errors[] = ['row' => $row, 'message' => 'Name is empty'];
-                $skipped++;
                 continue;
             }
 
-            $type = isset($colIndex['type']) ? strtolower(trim($cols[$colIndex['type']] ?? '')) : 'product';
+            $type  = isset($colIndex['type']) ? strtolower(trim($cols[$colIndex['type']] ?? '')) : 'product';
             if (!in_array($type, ['product', 'service'])) $type = 'product';
-
             $price = isset($colIndex['price']) ? (float)($cols[$colIndex['price']] ?? 0) : 0;
-
-            // Check duplicate
-            $exists = DB::selectOne(
-                "SELECT id FROM products WHERE business_id = ? AND LOWER(name) = LOWER(?) AND active = 1 LIMIT 1",
-                [$businessId, $name]
-            );
-            if ($exists) {
-                $errors[] = ['row' => $row, 'message' => "\"$name\" already exists"];
-                $skipped++;
-                continue;
-            }
+            $stock = isset($colIndex['stock']) ? (float)($cols[$colIndex['stock']] ?? 0) : 0;
+            $shopPrice = isset($colIndex['shop_price']) ? trim($cols[$colIndex['shop_price']] ?? '') : '';
 
             // Match tax rate
             $taxRateId = null;
@@ -212,30 +206,85 @@ class Product extends Task
             }
 
             try {
-                ProductTable::create([
-                    'business_id' => $businessId,
-                    'type'        => $type,
-                    'name'        => $name,
-                    'description' => isset($colIndex['description']) ? trim($cols[$colIndex['description']] ?? '') ?: null : null,
-                    'hsn_sac'     => isset($colIndex['hsn_sac']) ? trim($cols[$colIndex['hsn_sac']] ?? '') ?: null : null,
-                    'unit'        => isset($colIndex['unit']) ? trim($cols[$colIndex['unit']] ?? '') ?: 'Nos' : 'Nos',
-                    'price'       => $price,
-                    'tax_rate_id' => $taxRateId,
-                    'sku'         => isset($colIndex['sku']) ? trim($cols[$colIndex['sku']] ?? '') ?: null : null,
-                    'active'      => 1,
-                ]);
-                $created++;
+                // Upsert: find existing or create
+                $existing = DB::selectOne(
+                    "SELECT id, track_stock FROM products WHERE business_id = ? AND LOWER(name) = LOWER(?) AND active = 1 LIMIT 1",
+                    [$businessId, $name]
+                );
+
+                if ($existing) {
+                    // Update existing product
+                    $productId = (int)$existing->id;
+                    $updateData = ['price' => $price];
+                    if (isset($colIndex['unit']))        $updateData['unit']        = trim($cols[$colIndex['unit']] ?? '') ?: 'Nos';
+                    if (isset($colIndex['hsn_sac']))     $updateData['hsn_sac']     = trim($cols[$colIndex['hsn_sac']] ?? '') ?: null;
+                    if (isset($colIndex['sku']))          $updateData['sku']         = trim($cols[$colIndex['sku']] ?? '') ?: null;
+                    if (isset($colIndex['description']))  $updateData['description'] = trim($cols[$colIndex['description']] ?? '') ?: null;
+                    if ($taxRateId !== null)               $updateData['tax_rate_id'] = $taxRateId;
+                    if ($stock > 0 && !$existing->track_stock) $updateData['track_stock'] = 1;
+
+                    $sets = []; $vals = [];
+                    foreach ($updateData as $col => $val) { $sets[] = "$col = ?"; $vals[] = $val; }
+                    $vals[] = $productId;
+                    DB::statement('UPDATE products SET ' . implode(', ', $sets) . ' WHERE id = ?', $vals);
+                    $updated++;
+                } else {
+                    // Create new product
+                    $trackStock = ($type === 'product' && $stock > 0) ? 1 : 0;
+                    $product = ProductTable::create([
+                        'business_id' => $businessId,
+                        'type'        => $type,
+                        'track_stock' => $trackStock,
+                        'name'        => $name,
+                        'description' => isset($colIndex['description']) ? trim($cols[$colIndex['description']] ?? '') ?: null : null,
+                        'hsn_sac'     => isset($colIndex['hsn_sac']) ? trim($cols[$colIndex['hsn_sac']] ?? '') ?: null : null,
+                        'unit'        => isset($colIndex['unit']) ? trim($cols[$colIndex['unit']] ?? '') ?: 'Nos' : 'Nos',
+                        'price'       => $price,
+                        'tax_rate_id' => $taxRateId,
+                        'sku'         => isset($colIndex['sku']) ? trim($cols[$colIndex['sku']] ?? '') ?: null : null,
+                        'active'      => 1,
+                    ]);
+                    $productId = (int)$product->id;
+                    $created++;
+                }
+
+                // Assign to shop + set shop price
+                if ($locationId) {
+                    $shopPriceVal = ($shopPrice !== '') ? (float)$shopPrice : null;
+                    DB::statement(
+                        'INSERT INTO product_locations (product_id, location_id, price) VALUES (?, ?, ?)
+                         ON DUPLICATE KEY UPDATE price = VALUES(price)',
+                        [$productId, $locationId, $shopPriceVal]
+                    );
+
+                    // Opening stock
+                    if ($stock > 0) {
+                        // Enable track_stock if not already
+                        DB::statement('UPDATE products SET track_stock = 1 WHERE id = ? AND track_stock = 0', [$productId]);
+                        try {
+                            InventoryStock::move($businessId, $locationId, $productId, $stock, 'opening', 'import', null, $this->userId(), [
+                                'note' => 'CSV import opening stock',
+                            ]);
+                        } catch (\Throwable $e) {
+                            $errors[] = ['row' => $row, 'message' => "Stock: {$e->getMessage()}"];
+                        }
+                    }
+                }
             } catch (\Throwable $e) {
                 $errors[] = ['row' => $row, 'message' => "Failed: {$e->getMessage()}"];
-                $skipped++;
             }
         }
 
+        $msg = [];
+        if ($created) $msg[] = "$created created";
+        if ($updated) $msg[] = "$updated updated";
+        if (!$msg)    $msg[] = "No products imported";
+
         return $this->success([
             'created' => $created,
-            'skipped' => $skipped,
+            'updated' => $updated,
             'errors'  => $errors,
-        ], "$created product(s) imported.");
+        ], implode(', ', $msg) . '.');
     }
 
     public function loadForm(array $input): array

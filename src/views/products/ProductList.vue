@@ -104,11 +104,25 @@ const importFile      = ref(null)
 const importing       = ref(false)
 const importResult    = ref(null)
 const importError     = ref('')
+const importLocations = ref([])
+const importLocationId = ref('')
+
+async function openImportModal() {
+  showImportModal.value = true
+  try {
+    const res = await task('Product', 'loadForm', {})
+    importLocations.value = res.data?.data?.locations || []
+    if (!importLocationId.value && importLocations.value.length) {
+      const def = importLocations.value.find(l => +l.is_default)
+      importLocationId.value = def ? def.id : importLocations.value[0].id
+    }
+  } catch { /* locations optional */ }
+}
 
 function downloadTemplate() {
-  const headers = 'Type,Name,HSN/SAC,SKU,Unit,Price,Tax Rate %,Description'
-  const sample1 = 'product,Widget A,1234,SKU-001,Nos,100.00,18,Sample product'
-  const sample2 = 'service,Consulting,9954,,Hrs,500.00,18,Hourly consulting'
+  const headers = 'Type,Name,HSN/SAC,SKU,Unit,Price,Tax Rate %,Description,Stock,Shop Price'
+  const sample1 = 'product,Widget A,1234,SKU-001,Nos,100.00,18,Sample product,50,'
+  const sample2 = 'service,Consulting,9954,,Hrs,500.00,18,Hourly consulting,,'
   const blob = new Blob([headers + '\n' + sample1 + '\n' + sample2 + '\n'], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
@@ -131,7 +145,9 @@ async function doImport() {
   importError.value = ''
   try {
     const text = await importFile.value.text()
-    const { data } = await task('Product', 'import', { csv: text })
+    const payload = { csv: text }
+    if (importLocationId.value) payload.location_id = importLocationId.value
+    const { data } = await task('Product', 'import', payload)
     if (!data.success) { importError.value = data.message; importing.value = false; return }
     importResult.value = data.data
     await load()
@@ -146,6 +162,7 @@ function closeImportModal() {
   importFile.value = null
   importResult.value = null
   importError.value = ''
+  importLocationId.value = ''
 }
 
 useListRefresh(() => {
@@ -170,7 +187,7 @@ useListRefresh(() => {
             </h2>
             <div class="flex gap-1.5">
                 <!-- Import -->
-                <button v-if="can('products.create')" @click="showImportModal = true" title="Import CSV" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center text-gray-600 transition-all">
+                <button v-if="can('products.create')" @click="openImportModal()" title="Import CSV" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center text-gray-600 transition-all">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
                 </button>
                 <!-- Export -->
@@ -281,8 +298,19 @@ useListRefresh(() => {
         <h3 class="font-bold text-[16px] text-gray-900 tracking-tight">Import Products from CSV</h3>
 
         <div v-if="!importResult" class="space-y-3">
-          <p class="text-[12px] text-gray-500">Upload a CSV file with columns: <span class="font-mono text-gray-700">Type, Name, HSN/SAC, SKU, Unit, Price, Tax Rate %, Description</span></p>
+          <p class="text-[12px] text-gray-500">CSV columns: <span class="font-mono text-gray-700">Type, Name, HSN/SAC, SKU, Unit, Price, Tax Rate %, Description, Stock, Shop Price</span></p>
+          <p class="text-[11px] text-gray-400">Existing products will be updated. New products will be created.</p>
           <button @click="downloadTemplate" class="text-[12px] font-bold text-primary-500 hover:text-primary-700 underline underline-offset-2">Download sample template</button>
+
+          <div v-if="importLocations.length" class="space-y-1">
+            <label class="text-[12px] font-bold text-gray-700">Import to Shop / Godown</label>
+            <select v-model="importLocationId" class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+              <option value="">No shop (skip stock & shop price)</option>
+              <option v-for="loc in importLocations" :key="loc.id" :value="loc.id">
+                {{ loc.name }}{{ +loc.is_default ? ' (Default)' : '' }}
+              </option>
+            </select>
+          </div>
 
           <div class="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center">
             <input type="file" accept=".csv,text/csv" @change="onFileChange" class="text-xs w-full file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-primary-50 file:text-primary-600 hover:file:bg-primary-100 cursor-pointer" />
@@ -301,7 +329,10 @@ useListRefresh(() => {
         <div v-else class="space-y-3">
           <div class="bg-green-50 border border-green-200 rounded-xl p-3 text-[12px] text-green-800">
             <p class="font-bold">Import complete</p>
-            <p class="mt-1">Created: <span class="font-bold">{{ importResult.created }}</span> &nbsp; Skipped: <span class="font-bold">{{ importResult.skipped }}</span></p>
+            <p class="mt-1">
+              Created: <span class="font-bold">{{ importResult.created }}</span>
+              &nbsp; Updated: <span class="font-bold">{{ importResult.updated }}</span>
+            </p>
           </div>
           <ul v-if="importResult.errors?.length" class="text-[11px] text-red-600 space-y-0.5 max-h-32 overflow-y-auto">
             <li v-for="(err, i) in importResult.errors" :key="i">Row {{ err.row }}: {{ err.message }}</li>
