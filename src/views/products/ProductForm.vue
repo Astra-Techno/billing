@@ -24,6 +24,9 @@ const productId = isEdit ? route.params.id : null
 
 const units = ['Nos', 'Pcs', 'Packet', 'Box', 'Bag', 'Dozen', 'Kg', 'Gram', 'Ltr', 'Ml', 'Mtr', 'Feet', 'Set', 'Pair', 'Hrs', 'Month', 'Year']
 
+const locations = ref([])
+const productLocations = ref([]) // [{ location_id, price, stock }]
+
 const form = ref({
   type: 'service',
   name: '',
@@ -41,8 +44,13 @@ const form = ref({
 async function load() {
   loading.value = true
   try {
-    const tRes = await all('TaxRate')
+    const [tRes, fRes] = await Promise.all([
+      all('TaxRate'),
+      task('Product', 'loadForm', isEdit ? { id: productId } : {}),
+    ])
     taxRates.value = tRes.data?.data || []
+    const formData = fRes.data?.data || {}
+    locations.value = formData.locations || []
 
     if (isEdit) {
       const pRes = await item('Product', { id: productId })
@@ -62,6 +70,11 @@ async function load() {
           tax_rate_id: p.tax_rate_id || '',
           is_active:   p.is_active !== false,
         }
+        productLocations.value = (formData.product_locations || []).map(pl => ({
+          location_id: +pl.location_id,
+          price: pl.price !== null && pl.price !== undefined ? pl.price : '',
+          stock: +pl.stock || 0,
+        }))
       }
     }
   } catch (err) {
@@ -70,19 +83,53 @@ async function load() {
   loading.value = false
 }
 
+function isLocationAssigned(locId) {
+  return productLocations.value.some(pl => pl.location_id === +locId)
+}
+
+function toggleLocation(locId) {
+  const idx = productLocations.value.findIndex(pl => pl.location_id === +locId)
+  if (idx >= 0) {
+    productLocations.value.splice(idx, 1)
+  } else {
+    productLocations.value.push({ location_id: +locId, price: '', stock: 0 })
+  }
+  saved.value = false
+}
+
+function getLocationPrice(locId) {
+  const pl = productLocations.value.find(pl => pl.location_id === +locId)
+  return pl ? pl.price : ''
+}
+
+function setLocationPrice(locId, val) {
+  const pl = productLocations.value.find(pl => pl.location_id === +locId)
+  if (pl) pl.price = val
+  saved.value = false
+}
+
+function getLocationStock(locId) {
+  const pl = productLocations.value.find(pl => pl.location_id === +locId)
+  return pl ? pl.stock : 0
+}
+
 async function save() {
   error.value = ''
   if (!form.value.name) return (error.value = 'Product name is required.')
   
   saving.value = true
+  const locPayload = productLocations.value.map(pl => ({
+    location_id: pl.location_id,
+    price: pl.price !== '' ? pl.price : null,
+  }))
   try {
     if (isEdit) {
-      await task('Product', 'update', { ...form.value, id: productId })
+      await task('Product', 'update', { ...form.value, id: productId, locations: locPayload })
       emit('refresh')
       toast.success('Item updated successfully')
       saved.value = true
     } else {
-      const res = await task('Product', 'create', form.value)
+      const res = await task('Product', 'create', { ...form.value, locations: locPayload })
       emit('refresh')
       toast.success('Item added successfully')
       const newId = res.data?.data?.product_id
@@ -212,6 +259,44 @@ onMounted(load)
               <div class="rounded-xl border p-3"><div class="flex items-center gap-2 text-xs font-bold uppercase text-gray-600">Purchase unit conversion <InfoTip text="Example: if you purchase one Box containing 12 Pieces, keep billing unit as Pcs, choose Box here and enter 12." /></div><div class="mt-2 grid grid-cols-2 gap-3"><select v-model="form.base_unit" class="inv-select !bg-white"><option v-for="u in units" :key="u">{{u}}</option></select><input v-model="form.conversion_factor" type="number" min="0.0001" step="0.0001" class="inv-input !bg-white" placeholder="1 purchase unit = ?" /></div></div>
               <div class="rounded-xl border p-3 space-y-2"><p class="flex items-center gap-2 text-xs font-bold uppercase text-gray-600">Optional trade controls <InfoTip text="Use these only when your trade needs them: batch and expiry for pharmacy/food; serial or IMEI for electronics." /></p><label class="flex gap-2 text-sm"><input v-model="form.batch_tracking" type="checkbox"/> Batch / lot number</label><label class="flex gap-2 text-sm"><input v-model="form.expiry_tracking" type="checkbox"/> Expiry date</label><label class="flex gap-2 text-sm"><input v-model="form.serial_tracking" type="checkbox"/> Serial / IMEI number</label></div>
             </template>
+          </div>
+
+          <!-- Shop / Godown assignment -->
+          <div v-if="locations.length && form.type === 'product'" class="inv-card p-5 space-y-3">
+            <div class="flex items-center gap-2">
+              <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider">Shops / Godowns</h2>
+              <InfoTip text="Assign this product to shops where it is sold. You can set a shop-specific price override." />
+            </div>
+            <div v-for="loc in locations" :key="loc.id" class="rounded-xl border p-3 space-y-2"
+              :class="isLocationAssigned(loc.id) ? 'border-primary-200 bg-primary-50/30' : 'border-gray-100'">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" :checked="isLocationAssigned(loc.id)" @change="toggleLocation(loc.id)"
+                  class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                <span class="text-sm font-semibold text-gray-900">{{ loc.name }}</span>
+                <span class="text-[10px] text-gray-400 capitalize">{{ loc.type }}</span>
+                <span v-if="+loc.is_default" class="text-[10px] text-primary-600 font-medium">Default</span>
+              </label>
+              <template v-if="isLocationAssigned(loc.id)">
+                <div class="flex items-center gap-3 pl-6">
+                  <div class="flex-1">
+                    <label class="text-[11px] text-gray-500">Price override</label>
+                    <div class="relative mt-0.5">
+                      <span class="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">₹</span>
+                      <input type="number" min="0" step="0.01" :value="getLocationPrice(loc.id)"
+                        @input="setLocationPrice(loc.id, $event.target.value)"
+                        class="inv-input !py-1.5 !text-sm pl-6 !bg-white" placeholder="Default price" />
+                    </div>
+                  </div>
+                  <div v-if="isEdit" class="text-right">
+                    <p class="text-[11px] text-gray-500">Stock</p>
+                    <p class="text-sm font-bold" :class="getLocationStock(loc.id) > 0 ? 'text-green-600' : 'text-gray-400'">
+                      {{ getLocationStock(loc.id) }}
+                    </p>
+                  </div>
+                </div>
+              </template>
+            </div>
+            <p v-if="!locations.length" class="text-xs text-gray-400">No shops configured. Add shops in Stock &gt; Shops / Godowns.</p>
           </div>
 
           <!-- Status toggle -->

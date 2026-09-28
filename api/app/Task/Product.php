@@ -50,6 +50,8 @@ class Product extends Task
             'active'      => 1,
         ]);
 
+        $this->syncLocations((int)$product->id, $businessId, $input['locations'] ?? []);
+
         return $this->success([
             'product_id'  => $product->id,
             'id'          => $product->id,
@@ -96,6 +98,8 @@ class Product extends Task
             'serial_tracking' => !empty($input['serial_tracking']) ? 1 : 0,
         ]);
         $product->save();
+
+        $this->syncLocations((int)$input['id'], $businessId, $input['locations'] ?? []);
 
         return $this->success(null, 'Product updated.');
     }
@@ -232,6 +236,54 @@ class Product extends Task
             'skipped' => $skipped,
             'errors'  => $errors,
         ], "$created product(s) imported.");
+    }
+
+    public function loadForm(array $input): array
+    {
+        $businessId = $this->requireBusiness();
+        $this->requirePermission('products', 'view');
+
+        $locations = DB::select(
+            'SELECT id, name, type, is_default, active FROM inventory_locations WHERE business_id = ? AND active = 1 ORDER BY is_default DESC, name',
+            [$businessId]
+        );
+
+        $result = ['locations' => $locations];
+
+        if (!empty($input['id'])) {
+            $productId = (int)$input['id'];
+            $result['product_locations'] = DB::select(
+                'SELECT pl.location_id, pl.price, COALESCE(sb.quantity, 0) AS stock
+                 FROM product_locations pl
+                 LEFT JOIN stock_balances sb ON sb.product_id = pl.product_id AND sb.location_id = pl.location_id AND sb.business_id = ?
+                 WHERE pl.product_id = ?',
+                [$businessId, $productId]
+            );
+        }
+
+        return $this->success($result);
+    }
+
+    private function syncLocations(int $productId, int $businessId, array $locations): void
+    {
+        // locations = [{ location_id: 1, price: null }, { location_id: 2, price: 250 }, ...]
+        DB::statement('DELETE FROM product_locations WHERE product_id = ?', [$productId]);
+
+        // Validate location_ids belong to this business
+        if (empty($locations)) return;
+        $validIds = array_map(fn($r) => (int)$r->id, DB::select(
+            'SELECT id FROM inventory_locations WHERE business_id = ? AND active = 1', [$businessId]
+        ));
+
+        foreach ($locations as $loc) {
+            $locId = (int)($loc['location_id'] ?? 0);
+            if (!$locId || !in_array($locId, $validIds, true)) continue;
+            $price = isset($loc['price']) && $loc['price'] !== '' && $loc['price'] !== null ? (float)$loc['price'] : null;
+            DB::statement(
+                'INSERT INTO product_locations (product_id, location_id, price) VALUES (?, ?, ?)',
+                [$productId, $locId, $price]
+            );
+        }
     }
 
     private function findProduct(int $id, int $businessId): object
