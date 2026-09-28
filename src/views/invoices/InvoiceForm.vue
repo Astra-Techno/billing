@@ -643,7 +643,7 @@ function pickProduct(i, productId) {
   it.unit_price  = p.price
   it.hsn_sac     = p.hsn_sac || ''
   const tr = taxRates.value.find(t => t.id == p.tax_rate_id)
-  if (tr) it.gst_rate = parseFloat(tr.rate)
+  it.gst_rate = tr ? parseFloat(tr.rate) : 0
 }
 
 // Tab from GST on last row → add next line and focus its description
