@@ -118,6 +118,9 @@ async function cancelInvoice() {
 }
 
 async function deleteInvoice() {
+  if (invoice.value?.status === 'paid' || parseFloat(invoice.value?.amount_paid) > 0) {
+    if (!confirm('This invoice has payments recorded. Deleting will remove all payment records. Are you sure?')) return
+  }
   deleting.value = true
   try {
     await task('Invoice', 'delete', { id: invoice.value.id })
