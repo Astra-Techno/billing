@@ -100,7 +100,7 @@ try {
     localStorage.setItem('businesses', JSON.stringify(businesses.map(({ role, permissions, ...business }) => business)))
   })
   await page.reload()
-  for (const menu of ['Clients','Quotes','Expenses','Products','Stock','Reports','Settings']) {
+  for (const menu of ['POS Counter','Clients','Quotes','Expenses','Products','Stock','Reports','Settings']) {
     await page.getByRole('link',{name:menu,exact:true}).waitFor()
   }
   await page.goto(base+'/settings')
@@ -114,6 +114,10 @@ try {
   const stockProduct = await command('Product','create',{type:'product',name:'Stock Test Packet',price:25,purchase_price:15,unit:'Packet',track_stock:true,reorder_level:2})
   const stockOverview = await command('Inventory','overview',{})
   await command('Inventory','adjust',{product_id:stockProduct.product_id,location_id:stockOverview.defaultId,kind:'opening',quantity:5,unit_cost:15,note:'Opening stock test'})
+  await page.goto(base+'/pos')
+  await page.getByRole('heading',{name:'New counter sale',exact:true}).waitFor()
+  await page.getByRole('button',{name:/Stock Test Packet/}).waitFor()
+  await page.goto(base+'/')
   const stockInvoice = await command('Invoice','create',{client_id:clientId,location_id:stockOverview.defaultId,issue_date:'2026-09-14',due_date:'2026-09-30',items:[{product_id:stockProduct.product_id,description:'Stock Test Packet',unit:'Packet',quantity:2,unit_price:25,gst_rate:0}]})
   assert.equal(stockInvoice.number,null,'Draft must not consume an invoice number by default')
   await command('Invoice','markSent',{id:stockInvoice.invoice_id})

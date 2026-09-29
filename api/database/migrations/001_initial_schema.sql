@@ -313,7 +313,6 @@ CREATE TABLE IF NOT EXISTS `products` (
     `type`         ENUM('product','service') NOT NULL DEFAULT 'service',
     `name`         VARCHAR(255)    NOT NULL,
     `description`  TEXT            DEFAULT NULL,
-    `pos_category` VARCHAR(100)    DEFAULT NULL COMMENT 'Simple cashier-facing POS category',
     `hsn_sac`      VARCHAR(10)     DEFAULT NULL COMMENT 'HSN code (goods) or SAC code (services)',
     `unit`         VARCHAR(20)     DEFAULT 'Nos' COMMENT 'Nos, Kg, Ltr, Hrs, Pcs, Mtr...',
     `price`        DECIMAL(15,2)   NOT NULL DEFAULT 0.00,

@@ -6,6 +6,7 @@ require dirname(__DIR__) . '/api/vendor/autoload.php';
 $home = $argv[1] ?? '';
 $migration = dirname(__DIR__) . '/api/database/migrations/019_cloud_desktop_licensing.sql';
 $documentMigration = dirname(__DIR__) . '/api/database/migrations/020_cloud_desktop_license_document.sql';
+$trialMigration = dirname(__DIR__) . '/api/database/migrations/027_cloud_desktop_trial.sql';
 $state = json_decode((string)file_get_contents($home . '/state.json'), true, 512, JSON_THROW_ON_ERROR);
 $active = $state['database'];
 $test = 'billing_cloud_license_test_' . bin2hex(random_bytes(4));
@@ -30,6 +31,7 @@ try {
     $pdo->exec("USE `{$test}`");
     $pdo->exec((string)file_get_contents($migration));
     $pdo->exec((string)file_get_contents($documentMigration));
+    $pdo->exec((string)file_get_contents($trialMigration));
     foreach (['desktop_activation_requests', 'desktop_licenses', 'desktop_license_events'] as $table) {
         $stmt = $pdo->prepare('SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = ? AND table_name = ?');
         $stmt->execute([$test, $table]);

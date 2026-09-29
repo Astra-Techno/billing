@@ -15,6 +15,7 @@ const routes = [
     meta: { auth: true },
     children: [
       { path: '',          name: 'Dashboard',     component: () => import('../views/dashboard/Dashboard.vue') },
+      { path: 'pos',       name: 'POS',           component: () => import('../views/pos/PosCounter.vue'), meta: { permission: 'invoices', action: 'create' } },
       {
         path: 'clients',   name: 'Clients',       component: () => import('../views/clients/ClientList.vue'), meta: { permission: 'clients' },
         children: [

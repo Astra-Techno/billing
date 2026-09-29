@@ -31,6 +31,7 @@ const form = ref({
   type: 'service',
   name: '',
   description: '',
+  pos_category: '',
   hsn_sac: '',
   unit: 'Nos',
   price: '',
@@ -60,6 +61,7 @@ async function load() {
           type:        p.type        || 'service',
           name:        p.name,
           description: p.description || '',
+          pos_category: p.pos_category || '',
           hsn_sac:     p.hsn_sac     || '',
           unit:        p.unit        || 'Nos',
           price:       p.price,
@@ -204,6 +206,12 @@ onMounted(load)
             <div>
               <label class="inv-label">Description <span class="text-gray-400 font-normal">(optional)</span></label>
               <input v-model="form.description" type="text" class="inv-input !bg-white" placeholder="Short note about this item" />
+            </div>
+
+            <div>
+              <label class="inv-label flex items-center gap-1.5">POS Category <InfoTip text="Used only to group product buttons on the POS counter. It is not shown on invoices or printed bills." /></label>
+              <input v-model="form.pos_category" type="text" class="inv-input !bg-white" placeholder="e.g. Grocery, Snacks, Beverages" />
+              <p class="text-xs text-gray-400 mt-1">Visible only on the POS screen.</p>
             </div>
           </div>
 

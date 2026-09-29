@@ -17,6 +17,7 @@ const bizSlug = computed(() => {
 })
 
 const allNavRaw = [
+  { name: 'POS Counter',      to: '/pos',               perm: 'invoices.create',  icon: 'M3 3h18v14H3V3zm4 18h10m-5-4v4M7 8h4m-4 4h2m6-4h2m-2 4h2', tint: 'from-indigo-500 to-violet-600' },
   { name: 'Customers',       to: '/clients',           perm: 'clients',          icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 4 4 0 016 0z', tint: 'from-primary-500 to-primary-700' },
   { name: 'Products',        to: '/products',          perm: 'products',         icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', tint: 'from-violet-500 to-purple-600' },
   { name: 'Stock',           to: '/inventory',         perm: 'inventory',        icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', tint: 'from-emerald-500 to-green-600' },

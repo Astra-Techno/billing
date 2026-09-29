@@ -148,6 +148,7 @@ class Product extends Task
             'price'       => ['price', 'rate', 'amount'],
             'tax_rate'    => ['tax rate %', 'tax rate', 'gst %', 'gst', 'tax %', 'tax'],
             'description' => ['description', 'desc'],
+            'pos_category'=> ['pos category', 'pos_category', 'category'],
             'stock'       => ['stock', 'opening stock', 'qty', 'quantity'],
             'shop_price'  => ['shop price', 'shop_price', 'location price', 'branch price'],
         ];
@@ -220,6 +221,7 @@ class Product extends Task
                     if (isset($colIndex['hsn_sac']))     $updateData['hsn_sac']     = trim($cols[$colIndex['hsn_sac']] ?? '') ?: null;
                     if (isset($colIndex['sku']))          $updateData['sku']         = trim($cols[$colIndex['sku']] ?? '') ?: null;
                     if (isset($colIndex['description']))  $updateData['description'] = trim($cols[$colIndex['description']] ?? '') ?: null;
+                    if (isset($colIndex['pos_category'])) $updateData['pos_category'] = trim($cols[$colIndex['pos_category']] ?? '') ?: null;
                     if ($taxRateId !== null)               $updateData['tax_rate_id'] = $taxRateId;
                     if ($stock > 0 && !$existing->track_stock) $updateData['track_stock'] = 1;
 
@@ -237,6 +239,7 @@ class Product extends Task
                         'track_stock' => $trackStock,
                         'name'        => $name,
                         'description' => isset($colIndex['description']) ? trim($cols[$colIndex['description']] ?? '') ?: null : null,
+                        'pos_category'=> isset($colIndex['pos_category']) ? trim($cols[$colIndex['pos_category']] ?? '') ?: null : null,
                         'hsn_sac'     => isset($colIndex['hsn_sac']) ? trim($cols[$colIndex['hsn_sac']] ?? '') ?: null : null,
                         'unit'        => isset($colIndex['unit']) ? trim($cols[$colIndex['unit']] ?? '') ?: 'Nos' : 'Nos',
                         'price'       => $price,

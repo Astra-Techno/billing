@@ -2,22 +2,25 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
+import { useRole } from '../../composables/useRole'
 import AdminMobileNav from './AdminMobileNav.vue'
 
 const route = useRoute()
 const auth  = useAuthStore()
+const { can } = useRole()
 const isActive = (to) => to === '/' ? route.path === '/' : route.path.startsWith(to)
 
-const items = [
+const allItems = [
   { to: '/',        label: 'Home',   icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+  { to: '/pos',      label: 'POS',    permission: 'invoices.create', icon: 'M3 3h18v14H3V3zm4 18h10m-5-4v4M7 8h4m-4 4h2m6-4h2m-2 4h2' },
   { to: '/invoices',label: 'Bills',  icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-  { to: '/quotes',  label: 'Quotes', icon: 'M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2' },
   { to: '/expenses', label: 'Expenses', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' },
   { to: '/more',    label: 'More',   icon: 'M4 6h16M4 12h16M4 18h16' },
 ]
+const items = computed(() => allItems.filter(item => !item.permission || can(item.permission)))
 
 const showNavbar = computed(() => {
-  return ['Dashboard', 'Invoices', 'Quotes', 'Expenses', 'Products', 'Inventory', 'CreditNotes', 'PurchaseOrders', 'DeliveryChallans', 'GstReturns', 'Reports', 'Settings', 'Help', 'More', 'Clients', 'Payroll', 'StaffNew', 'StaffEdit', 'PayrollRun'].includes(route.name)
+  return ['Dashboard', 'POS', 'Invoices', 'Quotes', 'Expenses', 'Products', 'Inventory', 'CreditNotes', 'PurchaseOrders', 'DeliveryChallans', 'GstReturns', 'Reports', 'Settings', 'Help', 'More', 'Clients', 'Payroll', 'StaffNew', 'StaffEdit', 'PayrollRun'].includes(route.name)
 })
 
 const showAdminNav = computed(() =>
