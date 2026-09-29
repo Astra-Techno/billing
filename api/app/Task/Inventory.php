@@ -43,7 +43,9 @@ class Inventory extends Task
             foreach ($movements as &$m) { $m->unit_cost = null; }
         }
 
-        return $this->success(compact('settings','defaultId','locations','stock','summary','movements','transfers'));
+        $productLocations = DB::select("SELECT product_id, location_id FROM product_locations WHERE product_id IN (SELECT id FROM products WHERE business_id = ? AND active = 1)", [$businessId]);
+
+        return $this->success(compact('settings','defaultId','locations','stock','summary','movements','transfers','productLocations'));
     }
 
     public function saveSettings(array $input): array
