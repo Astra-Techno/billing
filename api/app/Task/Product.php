@@ -338,6 +338,33 @@ class Product extends Task
         }
     }
 
+    public function generateBarcode(array $input): array
+    {
+        $businessId = $this->requireBusiness();
+        $this->requirePermission('products', 'create');
+        // Generate a unique EAN-13 barcode: 200 (in-store prefix) + business(4) + seq(5) + check
+        $prefix = '200' . str_pad((string)($businessId % 10000), 4, '0', STR_PAD_LEFT);
+        $maxAttempts = 100;
+        for ($i = 0; $i < $maxAttempts; $i++) {
+            $seq = str_pad((string)random_int(0, 99999), 5, '0', STR_PAD_LEFT);
+            $partial = $prefix . $seq;
+            $check = $this->ean13Check($partial);
+            $barcode = $partial . $check;
+            $exists = DB::selectOne("SELECT 1 FROM products WHERE barcode = ? LIMIT 1", [$barcode]);
+            if (!$exists) return $this->success(['barcode' => $barcode]);
+        }
+        $this->fail('Could not generate a unique barcode. Please try again.');
+    }
+
+    private function ean13Check(string $digits): int
+    {
+        $sum = 0;
+        for ($i = 0; $i < 12; $i++) {
+            $sum += (int)$digits[$i] * ($i % 2 === 0 ? 1 : 3);
+        }
+        return (10 - ($sum % 10)) % 10;
+    }
+
     private function findProduct(int $id, int $businessId): object
     {
         $product = ProductTable::find($id);

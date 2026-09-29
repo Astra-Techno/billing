@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { all, item, task } from '../../api'
 import { inr } from '../../utils/currency'
 import { today } from '../../utils/date'
@@ -10,6 +10,8 @@ const cart=ref([]), category=ref('All'), search=ref(''), clientSearch=ref(''), s
 const customerName=ref(''), customerPhone=ref(''), note=ref(''), paymentMethod=ref('cash'), locationId=ref(null)
 const loading=ref(true), paying=ref(false), error=ref(''), success=ref(''), printAfterPay=ref(true)
 const searchInput=ref(null)
+const scanning=ref(false), scannerReady=ref(false), lastScanCode=ref('')
+let html5QrCode=null
 
 const categories=computed(()=>['All',...new Set(products.value.map(p=>p.pos_category||'Others'))])
 const locationProducts=computed(()=>{const lid=locationId.value;if(!lid||!productLocations.value.length)return products.value;const assigned=new Set(productLocations.value.filter(pl=>Number(pl.location_id)===Number(lid)).map(pl=>Number(pl.product_id)));const hasAnyAssignment=new Set(productLocations.value.map(pl=>Number(pl.product_id)));return products.value.filter(p=>assigned.has(Number(p.id))||!hasAnyAssignment.has(Number(p.id)))})
@@ -31,6 +33,32 @@ function chooseClient(client){selectedClient.value=client;clientSearch.value=cli
 function onLocationChange(){if(cart.value.length){const invalid=cart.value.filter(l=>!locationProducts.value.some(p=>p.id===l.product.id));if(invalid.length){cart.value=cart.value.filter(l=>locationProducts.value.some(p=>p.id===l.product.id));error.value=`${invalid.length} item(s) removed — not available at this shop.`}}category.value='All'}
 function clearCart(){if(cart.value.length&&!confirm('Clear all items from the current sale?'))return;cart.value=[];error.value='';success.value='';nextTick(()=>searchInput.value?.focus())}
 function resetSale(){cart.value=[];clientSearch.value='';selectedClient.value=null;customerName.value='';customerPhone.value='';note.value='';paymentMethod.value='cash';search.value='';category.value='All';nextTick(()=>searchInput.value?.focus())}
+
+async function openScanner(){
+  scanning.value=true; scannerReady.value=false; error.value=''
+  const {Html5Qrcode}=await import('html5-qrcode')
+  await nextTick()
+  html5QrCode=new Html5Qrcode('pos-scanner-view')
+  try{
+    await html5QrCode.start({facingMode:'environment'},{fps:10,qrbox:{width:280,height:160},aspectRatio:1.6,disableFlip:false},onScanSuccess,()=>{})
+    scannerReady.value=true
+  }catch(e){
+    scanning.value=false
+    error.value=e?.message?.includes('NotAllowed')||e?.name==='NotAllowedError'?'Camera permission denied. Please allow camera access and try again.':'Could not start camera. Check that no other app is using it.'
+  }
+}
+function onScanSuccess(code){
+  if(code===lastScanCode.value)return
+  lastScanCode.value=code
+  const product=products.value.find(p=>[p.barcode,p.sku].some(v=>String(v||'').toLowerCase()===code.toLowerCase()))
+  if(product){add(product);success.value=`Scanned: ${product.name}`;setTimeout(()=>{lastScanCode.value=''},1500)}
+  else{error.value=`No product found for barcode "${code}".`;setTimeout(()=>{lastScanCode.value=''},2000)}
+}
+async function closeScanner(){
+  if(html5QrCode){try{await html5QrCode.stop()}catch{};try{html5QrCode.clear()}catch{};html5QrCode=null}
+  scanning.value=false;scannerReady.value=false;lastScanCode.value=''
+}
+onUnmounted(()=>{if(html5QrCode){try{html5QrCode.stop()}catch{};html5QrCode=null}})
 
 async function checkout(){
   error.value='';success.value=''
@@ -62,7 +90,7 @@ onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Cli
   <p v-if="error" class="pos-alert error">{{error}}</p><p v-if="success" class="pos-alert success">{{success}}</p>
   <div class="pos-layout">
     <section class="pos-catalog">
-      <div class="pos-search"><span>⌕</span><input ref="searchInput" v-model="search" placeholder="Search product, SKU or scan barcode" title="Type a product name, SKU or barcode. Press Enter to add the first match." @keydown.enter.prevent="addExactSearch" /></div>
+      <div class="pos-search"><span>⌕</span><input ref="searchInput" v-model="search" placeholder="Search product, SKU or scan barcode" title="Type a product name, SKU or barcode. Press Enter to add the first match." @keydown.enter.prevent="addExactSearch" /><button class="scan-btn" title="Scan barcode with camera" @click="openScanner"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M5 21H3a2 2 0 01-2-2v-2m5-4h8m-4-4v8"/></svg></button></div>
       <div class="pos-categories"><button v-for="c in categories" :key="c" :class="{active:category===c}" @click="category=c">{{c==='All'?'All items':c}}</button></div>
       <div v-if="loading" class="pos-empty">Loading products…</div>
       <div v-else class="pos-products">
@@ -83,6 +111,18 @@ onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Cli
         <footer class="pos-footer"><div><strong>{{inr(totals.total)}}</strong><small>GST incl.</small></div><button :disabled="paying||!cart.length" @click="checkout">{{paying?'Processing…':`Pay ${inr(totals.total)}`}} →</button></footer>
       </div>
     </aside>
+  </div>
+  <!-- Camera scanner modal -->
+  <div v-if="scanning" class="scan-overlay" @click.self="closeScanner">
+    <div class="scan-modal">
+      <div class="scan-header">
+        <h3>Scan Barcode</h3>
+        <button @click="closeScanner" class="scan-close">&times;</button>
+      </div>
+      <div id="pos-scanner-view"></div>
+      <p v-if="!scannerReady" class="scan-loading">Starting camera…</p>
+      <p class="scan-hint">Point your camera at a barcode. Product will be added automatically.</p>
+    </div>
   </div>
 </main>
 </template>
@@ -140,6 +180,18 @@ onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Cli
 .pos-alert{padding:8px 12px;border-radius:9px;margin-bottom:8px;font-size:12px;font-weight:600;flex-shrink:0}
 .pos-alert.error{background:#fef2f2;color:#b91c1c}
 .pos-alert.success{background:#ecfdf5;color:#047857}
+.scan-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;color:#4f46e5;background:transparent;border:none;cursor:pointer;flex-shrink:0;transition:.15s}
+.scan-btn:hover{background:#eef2ff}
+.scan-overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:20px}
+.scan-modal{background:#fff;border-radius:16px;width:100%;max-width:420px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.scan-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #e5e7eb}
+.scan-header h3{font-size:15px;font-weight:700;color:#111827}
+.scan-close{width:32px;height:32px;border-radius:8px;border:none;background:#f3f4f6;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6b7280}
+.scan-close:hover{background:#e5e7eb}
+#pos-scanner-view{width:100%;min-height:240px;background:#000}
+#pos-scanner-view video{width:100%!important;border-radius:0!important}
+.scan-loading{text-align:center;padding:12px;font-size:13px;color:#6b7280}
+.scan-hint{text-align:center;padding:12px 16px;font-size:12px;color:#94a3b8;border-top:1px solid #f1f5f9}
 @media(max-width:1023px){.pos-page{padding:8px 8px 80px}.pos-layout{grid-template-columns:1fr}.pos-cart{position:static}.pos-products{grid-template-columns:repeat(3,minmax(0,1fr))}.pos-footer{position:sticky;bottom:72px;z-index:20}.pos-lines{max-height:none}}
 @media(max-width:430px){.pos-product{min-height:110px;padding:8px}.pos-products{grid-template-columns:repeat(2,minmax(0,1fr))}.pos-footer button{min-width:120px;padding:10px 8px}}
 </style>

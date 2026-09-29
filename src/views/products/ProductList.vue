@@ -166,6 +166,30 @@ function closeImportModal() {
   importLocationId.value = ''
 }
 
+// ── Bulk barcode print ────────────────────────────────────────────────────
+async function printBarcodes() {
+  const rows = filteredProducts().filter(p => p.barcode)
+  if (!rows.length) return
+  const JsBarcode = (await import('jsbarcode')).default
+  const labels = rows.map(p => {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    try {
+      JsBarcode(svg, p.barcode, {
+        format: p.barcode.length === 13 ? 'EAN13' : p.barcode.length === 8 ? 'EAN8' : 'CODE128',
+        width: 1.8, height: 40, displayValue: true, fontSize: 10, margin: 2,
+      })
+    } catch { return '' }
+    return `<div class="label"><p class="name">${p.name}</p>${svg.outerHTML}<p class="price">₹${parseFloat(p.price||0).toFixed(2)}</p></div>`
+  }).filter(Boolean)
+  if (!labels.length) return
+  const w = window.open('', '_blank')
+  if (!w) return
+  w.document.write(`<!DOCTYPE html><html><head><title>Barcode Labels</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:sans-serif;padding:4mm}.grid{display:flex;flex-wrap:wrap;gap:2mm}.label{width:48mm;border:0.5px dashed #ccc;padding:2mm;text-align:center;page-break-inside:avoid}.name{font-size:8px;font-weight:700;margin-bottom:1mm;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.price{font-size:9px;font-weight:700;margin-top:1mm}svg{max-width:100%;height:auto}@media print{.label{border-color:#eee}}</style></head><body><div class="grid">${labels.join('')}</div></body></html>`)
+  w.document.close()
+  w.onafterprint = () => w.close()
+  setTimeout(() => w.print(), 400)
+}
+
 useListRefresh(() => {
   load().then(() => {
     setTimeout(() => { if (!isTourSeen()) startTour() }, 800)
@@ -187,6 +211,10 @@ useListRefresh(() => {
               <button @click="startTour()" class="text-[10px] font-bold text-primary-500 hover:text-primary-700 ml-1" title="Take a tour">Tour</button>
             </h2>
             <div class="flex gap-1.5">
+                <!-- Print Barcodes -->
+                <button @click="printBarcodes" title="Print barcode labels" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center text-gray-600 transition-all">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M5 21H3a2 2 0 01-2-2v-2m5-4h8m-4-4v8"/></svg>
+                </button>
                 <!-- Import -->
                 <button v-if="can('products.create')" @click="openImportModal()" title="Import CSV" class="w-7 h-7 bg-white border border-gray-200/80 shadow-sm hover:shadow hover:border-gray-300 rounded-lg flex items-center justify-center text-gray-600 transition-all">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>

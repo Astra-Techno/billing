@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { item, task, all } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
@@ -83,6 +83,7 @@ async function load() {
     error.value = 'Failed to load details.'
   }
   loading.value = false
+  if (form.value.barcode) nextTick(renderBarcode)
 }
 
 function isLocationAssigned(locId) {
@@ -145,6 +146,48 @@ async function save() {
 }
 
 onMounted(load)
+
+// ── Barcode generation & preview ─────────────────────────────────────────
+const barcodePreview = ref(null)
+const generatingBarcode = ref(false)
+
+async function generateBarcode() {
+  generatingBarcode.value = true
+  try {
+    const res = await task('Product', 'generateBarcode', {})
+    form.value.barcode = res.data?.data?.barcode || ''
+    saved.value = false
+  } catch (e) {
+    error.value = e.response?.data?.message || 'Could not generate barcode.'
+  } finally {
+    generatingBarcode.value = false
+  }
+}
+
+async function renderBarcode() {
+  const code = form.value.barcode?.trim()
+  if (!code || !barcodePreview.value) return
+  try {
+    const JsBarcode = (await import('jsbarcode')).default
+    JsBarcode(barcodePreview.value, code, {
+      format: code.length === 13 ? 'EAN13' : code.length === 8 ? 'EAN8' : 'CODE128',
+      width: 2, height: 50, displayValue: true, fontSize: 12, margin: 4,
+    })
+  } catch { /* invalid barcode format — ignore */ }
+}
+
+watch(() => form.value.barcode, () => nextTick(renderBarcode))
+
+function printBarcode() {
+  if (!form.value.barcode) return
+  const svg = barcodePreview.value?.outerHTML || ''
+  const w = window.open('', '_blank')
+  if (!w) return
+  w.document.write(`<!DOCTYPE html><html><head><title>Barcode — ${form.value.name}</title><style>body{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif}svg{max-width:90vw}p{margin:4px 0;font-size:12px;font-weight:700}@media print{body{margin:0;padding:8mm}}</style></head><body><p>${form.value.name}</p>${svg}<p>${form.value.sku || ''}</p></body></html>`)
+  w.document.close()
+  w.onafterprint = () => w.close()
+  setTimeout(() => w.print(), 300)
+}
 </script>
 
 <template>
@@ -263,7 +306,14 @@ onMounted(load)
             <template v-if="form.type === 'product' && form.track_stock">
               <div class="grid grid-cols-2 gap-3"><div><label class="inv-label">Purchase Price (₹)</label><input v-model="form.purchase_price" type="number" step="0.01" class="inv-input mt-1 !bg-white" /></div><div><label class="inv-label">MRP (₹)</label><input v-model="form.mrp" type="number" step="0.01" class="inv-input mt-1 !bg-white" /></div></div>
               <div><label class="inv-label flex items-center gap-2">Low Stock Alert <InfoTip text="The app highlights this item when current stock reaches this quantity." /></label><input v-model="form.reorder_level" type="number" step="0.001" class="inv-input mt-1 !bg-white" /></div>
-              <div class="grid grid-cols-2 gap-3"><div><label class="inv-label">SKU / Item Code</label><input v-model="form.sku" class="inv-input mt-1 !bg-white" /></div><div><label class="inv-label">Barcode</label><input v-model="form.barcode" class="inv-input mt-1 !bg-white" /></div></div>
+              <div class="grid grid-cols-2 gap-3"><div><label class="inv-label">SKU / Item Code</label><input v-model="form.sku" class="inv-input mt-1 !bg-white" /></div><div><label class="inv-label">Barcode</label><div class="flex gap-1.5 mt-1"><input v-model="form.barcode" class="inv-input !bg-white flex-1 min-w-0" placeholder="Scan or generate" /><button type="button" @click="generateBarcode" :disabled="generatingBarcode" class="shrink-0 px-2.5 py-1.5 bg-primary-50 hover:bg-primary-100 text-primary-700 text-[11px] font-bold rounded-lg border border-primary-200 transition-colors disabled:opacity-50" title="Auto-generate EAN-13 barcode">{{ generatingBarcode ? '…' : 'Generate' }}</button></div></div></div>
+              <div v-if="form.barcode?.trim()" class="rounded-xl border border-gray-100 bg-gray-50 p-3 flex items-center justify-between gap-3">
+                <svg ref="barcodePreview" class="max-w-[200px]"></svg>
+                <button type="button" @click="printBarcode" class="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold text-gray-700 transition-colors" title="Print barcode label">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                  Print
+                </button>
+              </div>
               <div class="rounded-xl border p-3"><div class="flex items-center gap-2 text-xs font-bold uppercase text-gray-600">Purchase unit conversion <InfoTip text="Example: if you purchase one Box containing 12 Pieces, keep billing unit as Pcs, choose Box here and enter 12." /></div><div class="mt-2 grid grid-cols-2 gap-3"><select v-model="form.base_unit" class="inv-select !bg-white"><option v-for="u in units" :key="u">{{u}}</option></select><input v-model="form.conversion_factor" type="number" min="0.0001" step="0.0001" class="inv-input !bg-white" placeholder="1 purchase unit = ?" /></div></div>
               <div class="rounded-xl border p-3 space-y-2"><p class="flex items-center gap-2 text-xs font-bold uppercase text-gray-600">Optional trade controls <InfoTip text="Use these only when your trade needs them: batch and expiry for pharmacy/food; serial or IMEI for electronics." /></p><label class="flex gap-2 text-sm"><input v-model="form.batch_tracking" type="checkbox"/> Batch / lot number</label><label class="flex gap-2 text-sm"><input v-model="form.expiry_tracking" type="checkbox"/> Expiry date</label><label class="flex gap-2 text-sm"><input v-model="form.serial_tracking" type="checkbox"/> Serial / IMEI number</label></div>
             </template>
