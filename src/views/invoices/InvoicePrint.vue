@@ -72,6 +72,16 @@ const invoiceTitle = computed(() => {
 const isGst = computed(() => !isDC.value && invoice.value?.invoice_type !== 'bill_of_supply')
 const hasItemDiscount = computed(() => items.value.some(it => parseFloat(it.discount_pct || 0) > 0))
 
+// Collect distinct GST rates for display in totals (e.g. "CGST @9%")
+const gstRates = computed(() => {
+  const rates = [...new Set(items.value.map(it => parseFloat(it.gst_rate || 0)).filter(r => r > 0))]
+  if (rates.length === 1) return { single: true, rate: rates[0], half: rates[0] / 2 }
+  return { single: false, rate: 0, half: 0 }
+})
+function cgstLabel() { return gstRates.value.single ? `CGST @${gstRates.value.half}%` : 'CGST' }
+function sgstLabel() { return gstRates.value.single ? `SGST @${gstRates.value.half}%` : 'SGST' }
+function igstLabel() { return gstRates.value.single ? `IGST @${gstRates.value.rate}%` : 'IGST' }
+
 function itemTaxable(it) {
   return parseFloat(it.quantity || 0) * parseFloat(it.unit_price || 0) * (1 - parseFloat(it.discount_pct || 0) / 100)
 }
@@ -188,11 +198,11 @@ onMounted(async () => {
       <template v-else>
         <div class="receipt-pair"><span>Subtotal</span><span>{{ inr(afterItemDiscount) }}</span></div>
         <div v-if="invoiceDiscountOnly > 0" class="receipt-pair"><span>Discount</span><span>-{{ inr(invoiceDiscountOnly) }}</span></div>
-        <div v-if="Number(invoice.cgst_total)" class="receipt-pair"><span>CGST</span><span>{{ inr(invoice.cgst_total) }}</span></div>
-        <div v-if="Number(invoice.sgst_total)" class="receipt-pair"><span>SGST</span><span>{{ inr(invoice.sgst_total) }}</span></div>
-        <div v-if="Number(invoice.igst_total)" class="receipt-pair"><span>IGST</span><span>{{ inr(invoice.igst_total) }}</span></div>
+        <div v-if="Number(invoice.cgst_total)" class="receipt-pair"><span>{{ cgstLabel() }}</span><span>{{ inr(invoice.cgst_total) }}</span></div>
+        <div v-if="Number(invoice.sgst_total)" class="receipt-pair"><span>{{ sgstLabel() }}</span><span>{{ inr(invoice.sgst_total) }}</span></div>
+        <div v-if="Number(invoice.igst_total)" class="receipt-pair"><span>{{ igstLabel() }}</span><span>{{ inr(invoice.igst_total) }}</span></div>
         <div class="receipt-rule"></div>
-        <div class="receipt-pair receipt-total"><strong>Total</strong><strong>{{ inr(invoice.total) }}</strong></div>
+        <div class="receipt-pair receipt-total"><strong>NET Amount</strong><strong>{{ inr(invoice.total) }}</strong></div>
         <div v-if="Number(invoice.amount_paid)" class="receipt-pair"><span>Paid</span><span>{{ inr(invoice.amount_paid) }}</span></div>
         <div v-if="Number(invoice.amount_due)" class="receipt-pair"><strong>Balance Due</strong><strong>{{ inr(invoice.amount_due) }}</strong></div>
       </template>
@@ -212,7 +222,7 @@ onMounted(async () => {
 
       <!-- Business info -->
       <div class="flex items-start gap-3 mb-4 pb-3 border-b border-gray-200">
-        <img v-if="business?.logo" :src="business.logo" class="w-12 h-12 object-contain rounded-lg border border-gray-100 shrink-0" alt="logo" />
+        <img v-if="business?.logo" :src="business.logo" style="width: 56px; height: 56px; object-fit: contain; border-radius: 8px; border: 1px solid #f3f4f6; flex-shrink: 0;" alt="logo" />
         <div>
           <p class="text-base font-bold text-gray-900">{{ business?.name || invoice.business_name }}</p>
           <p v-if="business?.address_line1" class="text-xs text-gray-500">{{ business.address_line1 }}<span v-if="business.address_line2">, {{ business.address_line2 }}</span></p>
@@ -296,10 +306,10 @@ onMounted(async () => {
         <div class="w-52 space-y-1 text-xs">
           <div class="flex justify-between text-gray-600"><span>Subtotal</span><span>{{ inr(afterItemDiscount) }}</span></div>
           <div v-if="invoiceDiscountOnly > 0" class="flex justify-between text-green-700"><span>Discount</span><span>-{{ inr(invoiceDiscountOnly) }}</span></div>
-          <div v-if="invoice.cgst_total > 0" class="flex justify-between text-gray-600"><span>CGST</span><span>{{ inr(invoice.cgst_total) }}</span></div>
-          <div v-if="invoice.sgst_total > 0" class="flex justify-between text-gray-600"><span>SGST</span><span>{{ inr(invoice.sgst_total) }}</span></div>
-          <div v-if="invoice.igst_total > 0" class="flex justify-between text-gray-600"><span>IGST</span><span>{{ inr(invoice.igst_total) }}</span></div>
-          <div class="flex justify-between font-bold text-sm text-gray-900 border-t border-gray-300 pt-1"><span>Total</span><span>{{ inr(invoice.total) }}</span></div>
+          <div v-if="invoice.cgst_total > 0" class="flex justify-between text-gray-600"><span>{{ cgstLabel() }}</span><span>{{ inr(invoice.cgst_total) }}</span></div>
+          <div v-if="invoice.sgst_total > 0" class="flex justify-between text-gray-600"><span>{{ sgstLabel() }}</span><span>{{ inr(invoice.sgst_total) }}</span></div>
+          <div v-if="invoice.igst_total > 0" class="flex justify-between text-gray-600"><span>{{ igstLabel() }}</span><span>{{ inr(invoice.igst_total) }}</span></div>
+          <div class="flex justify-between font-bold text-sm text-gray-900 border-t border-gray-300 pt-1"><span>NET Amount</span><span>{{ inr(invoice.total) }}</span></div>
           <div v-if="invoice.amount_paid > 0" class="flex justify-between text-green-700"><span>Paid</span><span>{{ inr(invoice.amount_paid) }}</span></div>
           <div v-if="invoice.amount_due > 0" class="flex justify-between font-bold text-red-600 border-t border-gray-300 pt-1"><span>Balance Due</span><span>{{ inr(invoice.amount_due) }}</span></div>
         </div>
@@ -442,10 +452,10 @@ onMounted(async () => {
         <div style="width: 220px;">
           <div style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563;"><span>Subtotal</span><span>{{ inr(afterItemDiscount) }}</span></div>
           <div v-if="invoiceDiscountOnly > 0" style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #15803d;"><span>Discount</span><span>-{{ inr(invoiceDiscountOnly) }}</span></div>
-          <div v-if="invoice.cgst_total > 0" style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563;"><span>CGST</span><span>{{ inr(invoice.cgst_total) }}</span></div>
-          <div v-if="invoice.sgst_total > 0" style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563;"><span>SGST</span><span>{{ inr(invoice.sgst_total) }}</span></div>
-          <div v-if="invoice.igst_total > 0" style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563;"><span>IGST</span><span>{{ inr(invoice.igst_total) }}</span></div>
-          <div style="display: flex; justify-content: space-between; padding: 8px 12px; margin-top: 4px; font-size: 14px; font-weight: 700; color: white; background: linear-gradient(135deg, #1a5fd4, #3b7ded); border-radius: 6px;"><span>Total</span><span>{{ inr(invoice.total) }}</span></div>
+          <div v-if="invoice.cgst_total > 0" style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563;"><span>{{ cgstLabel() }}</span><span>{{ inr(invoice.cgst_total) }}</span></div>
+          <div v-if="invoice.sgst_total > 0" style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563;"><span>{{ sgstLabel() }}</span><span>{{ inr(invoice.sgst_total) }}</span></div>
+          <div v-if="invoice.igst_total > 0" style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563;"><span>{{ igstLabel() }}</span><span>{{ inr(invoice.igst_total) }}</span></div>
+          <div style="display: flex; justify-content: space-between; padding: 8px 12px; margin-top: 4px; font-size: 14px; font-weight: 700; color: white; background: linear-gradient(135deg, #1a5fd4, #3b7ded); border-radius: 6px;"><span>NET Amount</span><span>{{ inr(invoice.total) }}</span></div>
           <div v-if="invoice.amount_paid > 0" style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #15803d; margin-top: 4px;"><span>Paid</span><span>{{ inr(invoice.amount_paid) }}</span></div>
           <div v-if="invoice.amount_due > 0" style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; font-weight: 700; color: #dc2626; border-top: 1px solid #e5e7eb; margin-top: 4px;"><span>Balance Due</span><span>{{ inr(invoice.amount_due) }}</span></div>
         </div>
@@ -573,10 +583,10 @@ onMounted(async () => {
         <div style="width: 200px; border-top: 2px solid #111827; padding-top: 8px;">
           <div style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280;"><span>Subtotal</span><span>{{ inr(afterItemDiscount) }}</span></div>
           <div v-if="invoiceDiscountOnly > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #15803d;"><span>Discount</span><span>-{{ inr(invoiceDiscountOnly) }}</span></div>
-          <div v-if="invoice.cgst_total > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280;"><span>CGST</span><span>{{ inr(invoice.cgst_total) }}</span></div>
-          <div v-if="invoice.sgst_total > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280;"><span>SGST</span><span>{{ inr(invoice.sgst_total) }}</span></div>
-          <div v-if="invoice.igst_total > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280;"><span>IGST</span><span>{{ inr(invoice.igst_total) }}</span></div>
-          <div style="display: flex; justify-content: space-between; padding: 8px 0 4px; font-size: 18px; font-weight: 700; color: #111827; border-top: 2px solid #111827; margin-top: 4px;"><span>Total</span><span>{{ inr(invoice.total) }}</span></div>
+          <div v-if="invoice.cgst_total > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280;"><span>{{ cgstLabel() }}</span><span>{{ inr(invoice.cgst_total) }}</span></div>
+          <div v-if="invoice.sgst_total > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280;"><span>{{ sgstLabel() }}</span><span>{{ inr(invoice.sgst_total) }}</span></div>
+          <div v-if="invoice.igst_total > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280;"><span>{{ igstLabel() }}</span><span>{{ inr(invoice.igst_total) }}</span></div>
+          <div style="display: flex; justify-content: space-between; padding: 8px 0 4px; font-size: 18px; font-weight: 700; color: #111827; border-top: 2px solid #111827; margin-top: 4px;"><span>NET Amount</span><span>{{ inr(invoice.total) }}</span></div>
           <div v-if="invoice.amount_paid > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #15803d;"><span>Paid</span><span>{{ inr(invoice.amount_paid) }}</span></div>
           <div v-if="invoice.amount_due > 0" style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 14px; font-weight: 700; color: #dc2626;"><span>Balance Due</span><span>{{ inr(invoice.amount_due) }}</span></div>
         </div>
@@ -625,10 +635,10 @@ onMounted(async () => {
       <!-- Company Header -->
       <table class="trad-full" style="border-bottom: 2px solid #000;">
         <tr>
-          <td style="text-align: center; padding: 12px 16px;">
-            <div style="display: flex; align-items: center; justify-content: center; gap: 16px;">
-              <img v-if="business?.logo" :src="business.logo" style="width: 60px; height: 60px; object-fit: contain;" alt="logo" />
-              <div>
+          <td style="padding: 12px 16px;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+              <img v-if="business?.logo" :src="business.logo" style="width: 64px; height: 64px; object-fit: contain; flex-shrink: 0;" alt="logo" />
+              <div style="flex: 1; text-align: center;">
                 <p style="font-size: 24px; font-weight: 900; font-style: italic; color: #000; letter-spacing: 0.02em;">{{ business?.name || invoice.business_name }}</p>
                 <p v-if="business?.address_line1" style="font-size: 11px; color: #333;">{{ business.address_line1 }}<span v-if="business.address_line2">, {{ business.address_line2 }}</span></p>
                 <p v-if="business?.city" style="font-size: 11px; color: #333;">{{ [business?.city, business?.state_name, business?.pincode].filter(Boolean).join(' - ') }}<span v-if="business?.state_name"> {{ business.state_name }} Dt.</span></p>
@@ -717,9 +727,9 @@ onMounted(async () => {
             <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
               <tr style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">Total</td><td style="padding: 4px 12px; text-align: right; font-weight: 600;">{{ inr(afterItemDiscount) }}</td></tr>
               <tr v-if="invoiceDiscountOnly > 0" style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">Discount</td><td style="padding: 4px 12px; text-align: right;">-{{ inr(invoiceDiscountOnly) }}</td></tr>
-              <tr v-if="invoice.sgst_total > 0" style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">SGST</td><td style="padding: 4px 12px; text-align: right;">{{ inr(invoice.sgst_total) }}</td></tr>
-              <tr v-if="invoice.cgst_total > 0" style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">CGST</td><td style="padding: 4px 12px; text-align: right;">{{ inr(invoice.cgst_total) }}</td></tr>
-              <tr v-if="invoice.igst_total > 0" style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">IGST</td><td style="padding: 4px 12px; text-align: right;">{{ inr(invoice.igst_total) }}</td></tr>
+              <tr v-if="invoice.sgst_total > 0" style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">{{ sgstLabel() }}</td><td style="padding: 4px 12px; text-align: right;">{{ inr(invoice.sgst_total) }}</td></tr>
+              <tr v-if="invoice.cgst_total > 0" style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">{{ cgstLabel() }}</td><td style="padding: 4px 12px; text-align: right;">{{ inr(invoice.cgst_total) }}</td></tr>
+              <tr v-if="invoice.igst_total > 0" style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">{{ igstLabel() }}</td><td style="padding: 4px 12px; text-align: right;">{{ inr(invoice.igst_total) }}</td></tr>
               <tr style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">Round-off</td><td style="padding: 4px 12px; text-align: right;">{{ inr(Math.round(parseFloat(invoice.total||0)) - parseFloat(invoice.total||0)) }}</td></tr>
             </table>
           </td>
