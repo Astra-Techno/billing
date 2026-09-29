@@ -54,7 +54,7 @@ const userInitials = computed(() =>
 </script>
 
 <template>
-  <header class="hidden lg:flex h-[60px] bg-white border-b border-gray-200 items-center justify-between px-6 shrink-0 z-50">
+  <header v-if="route.name !== 'POS'" class="hidden lg:flex h-[60px] bg-white border-b border-gray-200 items-center justify-between px-6 shrink-0 z-50">
 
     <!-- Page title -->
     <h1 class="text-[15px] font-semibold text-gray-900">{{ pageTitle }}</h1>

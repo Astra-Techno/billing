@@ -59,7 +59,6 @@ onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Cli
 
 <template>
 <main class="pos-page">
-  <header class="pos-head"><h1>POS Counter</h1><div class="pos-open"><i></i> Open</div></header>
   <p v-if="error" class="pos-alert error">{{error}}</p><p v-if="success" class="pos-alert success">{{success}}</p>
   <div class="pos-layout">
     <section class="pos-catalog">
@@ -74,21 +73,73 @@ onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Cli
     <aside class="pos-cart">
       <div v-if="locations.length>1" class="pos-shop-bar"><select v-model="locationId" @change="onLocationChange"><option v-for="l in locations" :key="l.id" :value="l.id">{{l.name}}</option></select></div>
       <div class="pos-cart-head"><div><p>CURRENT SALE</p><h2>{{itemCount}} {{itemCount===1?'item':'items'}}</h2></div><button v-if="cart.length" @click="clearCart">Clear Cart</button></div>
-      <div class="pos-lines"><div v-if="!cart.length" class="pos-empty"><strong>Cart is empty</strong><small>Choose products from the left.</small></div><article v-for="line in cart" :key="line.product.id"><div><strong>{{line.product.name}}</strong><small>{{inr(price(line.product))}} × {{line.quantity}}</small></div><div class="pos-step"><button title="Reduce quantity" @click="change(line,-1)">−</button><b>{{line.quantity}}</b><button title="Increase quantity" @click="change(line,1)">+</button></div><strong>{{inr(price(line.product)*line.quantity)}}</strong></article></div>
-      <div class="pos-details">
-        <label>Customer <small>(optional for walk-in)</small></label>
-        <div class="relative"><input v-model="clientSearch" placeholder="Search saved customer" @input="selectedClient=null" /><div v-if="customerMatches.length&&!selectedClient" class="pos-dropdown"><button v-for="c in customerMatches" :key="c.id" @click="chooseClient(c)">{{c.name}} <small>{{c.mobile}}</small></button></div></div>
-        <div class="two"><input v-model="customerName" placeholder="Customer name" /><input v-model="customerPhone" inputmode="tel" placeholder="Mobile number" /></div>
-        <input v-model="note" placeholder="Sale / kitchen note" />
+      <div class="pos-lines"><div v-if="!cart.length" class="pos-empty"><strong>Cart is empty</strong><small>Tap products from the left.</small></div><article v-for="line in cart" :key="line.product.id"><div><strong>{{line.product.name}}</strong><small>{{inr(price(line.product))}} × {{line.quantity}}</small></div><div class="pos-step"><button title="Reduce quantity" @click="change(line,-1)">−</button><b>{{line.quantity}}</b><button title="Increase quantity" @click="change(line,1)">+</button></div><strong>{{inr(price(line.product)*line.quantity)}}</strong></article></div>
+      <div class="pos-bottom">
+        <div class="pos-details-row"><input v-model="customerName" placeholder="Customer name" /><input v-model="customerPhone" inputmode="tel" placeholder="Mobile" /><input v-model="note" placeholder="Note" /></div>
+        <div class="pos-pay-row">
+          <div class="pos-methods"><button v-for="m in ['cash','upi','card']" :key="m" :class="{active:paymentMethod===m}" @click="paymentMethod=m">{{m.toUpperCase()}}</button></div>
+          <label class="print"><input v-model="printAfterPay" type="checkbox" /> Print</label>
+        </div>
+        <footer class="pos-footer"><div><strong>{{inr(totals.total)}}</strong><small>GST incl.</small></div><button :disabled="paying||!cart.length" @click="checkout">{{paying?'Processing…':`Pay ${inr(totals.total)}`}} →</button></footer>
       </div>
-      <div class="pos-payment"><label>Payment method</label><div><button v-for="m in ['cash','upi','card']" :key="m" :class="{active:paymentMethod===m}" @click="paymentMethod=m">{{m.toUpperCase()}}</button></div><label class="print"><input v-model="printAfterPay" type="checkbox" /> Print bill after payment</label></div>
-      <footer class="pos-footer"><div><span>Total payable</span><strong>{{inr(totals.total)}}</strong><small>GST included · Paid now</small></div><button :disabled="paying||!cart.length" @click="checkout">{{paying?'Processing…':`Pay ${inr(totals.total)}`}} →</button></footer>
     </aside>
   </div>
 </main>
 </template>
 
 <style scoped>
-.pos-page{min-height:100%;background:#f5f7fb;padding:10px 14px}.pos-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.pos-cart-head p{font-size:11px;font-weight:800;letter-spacing:.16em;color:#6366f1}.pos-head h1{font-size:16px;font-weight:800;color:#111827}.pos-open{background:#ecfdf5;color:#047857;padding:5px 10px;border-radius:999px;font-size:11px;font-weight:700}.pos-open i{display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;margin-right:4px}.pos-layout{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:10px;align-items:start}.pos-catalog,.pos-cart{background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 4px 16px rgba(15,23,42,.04)}.pos-catalog{padding:10px}.pos-search{display:flex;align-items:center;gap:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:0 12px}.pos-search input{width:100%;padding:10px 0;outline:none;background:transparent;font-size:13px}.pos-categories{display:flex;gap:6px;overflow:auto;padding:8px 0}.pos-categories button,.pos-payment button{white-space:nowrap;border:1px solid #e5e7eb;border-radius:999px;padding:6px 12px;font-size:11px;font-weight:700;color:#64748b}.pos-categories button.active,.pos-payment button.active{background:#4f46e5;color:#fff;border-color:#4f46e5}.pos-products{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}.pos-product{position:relative;text-align:left;border:1px solid #e5e7eb;border-radius:12px;padding:10px;min-height:125px;transition:.15s}.pos-product:hover,.pos-product.selected{border-color:#818cf8;background:#f5f3ff;transform:translateY(-1px)}.pos-product.disabled{opacity:.5}.pos-product>span{display:flex;width:32px;height:32px;border-radius:9px;align-items:center;justify-content:center;background:#eef2ff;color:#4f46e5;font-weight:800;font-size:13px}.pos-product strong,.pos-product small,.pos-product b{display:block}.pos-product strong{margin-top:6px;color:#111827;font-size:12px;line-height:1.3}.pos-product small{font-size:10px;color:#94a3b8;margin:2px 0 5px}.pos-product b{color:#4f46e5;font-size:13px}.pos-product em{position:absolute;right:8px;top:8px;background:#4f46e5;color:white;border-radius:999px;min-width:22px;height:22px;text-align:center;line-height:22px;font-style:normal;font-size:10px;font-weight:800}.pos-cart{position:sticky;top:8px;overflow:hidden}.pos-shop-bar{padding:8px 12px;background:#f0f0ff;border-bottom:1px solid #e0e0f0}.pos-shop-bar select{width:100%;border:1px solid #c7d2fe;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;color:#4338ca;background:#fff;cursor:pointer}.pos-cart-head{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #eee}.pos-cart-head p{margin-bottom:-2px}.pos-cart-head h2{font-size:16px;font-weight:800}.pos-cart-head button{color:#dc2626;font-size:11px;font-weight:700}.pos-lines{max-height:240px;overflow:auto}.pos-lines article{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #f1f5f9}.pos-lines article strong{font-size:12px}.pos-lines article small{display:block;font-size:10px;color:#94a3b8}.pos-step{display:flex;align-items:center;gap:7px}.pos-step button{width:24px;height:24px;border-radius:7px;background:#eef2ff;color:#4f46e5;font-weight:800;font-size:13px}.pos-step b{font-size:13px}.pos-details,.pos-payment{padding:10px 12px;border-top:1px solid #eee;display:grid;gap:7px}.pos-details label,.pos-payment>label:first-child{font-size:11px;font-weight:800;color:#475569}.pos-details input,.pos-details select{width:100%;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:12px}.two{display:grid;grid-template-columns:1fr 1fr;gap:6px}.pos-dropdown{position:absolute;z-index:10;top:100%;left:0;right:0;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 8px 20px #0002}.pos-dropdown button{display:flex;justify-content:space-between;width:100%;padding:8px 10px;text-align:left;font-size:11px}.pos-payment>div{display:flex;gap:6px}.print{display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b}.pos-footer{padding:10px 12px;background:#111827;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:10px}.pos-footer span,.pos-footer small{display:block;color:#94a3b8;font-size:10px}.pos-footer strong{font-size:20px}.pos-footer button{background:#6366f1;border-radius:10px;padding:11px 14px;font-weight:800;font-size:13px;min-width:150px}.pos-footer button:disabled{opacity:.5}.pos-empty{text-align:center;color:#94a3b8;padding:20px 10px;font-size:13px}.pos-empty strong,.pos-empty small{display:block}.pos-alert{padding:8px 12px;border-radius:9px;margin-bottom:8px;font-size:12px;font-weight:600}.pos-alert.error{background:#fef2f2;color:#b91c1c}.pos-alert.success{background:#ecfdf5;color:#047857}
-@media(max-width:1023px){.pos-page{padding:8px 8px 80px}.pos-open{display:none}.pos-layout{grid-template-columns:1fr}.pos-cart{position:static}.pos-products{grid-template-columns:repeat(3,minmax(0,1fr))}.pos-footer{position:sticky;bottom:72px;z-index:20}.pos-lines{max-height:none}}@media(max-width:430px){.pos-product{min-height:110px;padding:8px}.pos-products{grid-template-columns:repeat(2,minmax(0,1fr))}.two{grid-template-columns:1fr}.pos-footer button{min-width:120px;padding:10px 8px}}
+.pos-page{height:100%;background:#f5f7fb;padding:10px 14px;display:flex;flex-direction:column}
+.pos-cart-head p{font-size:11px;font-weight:800;letter-spacing:.16em;color:#6366f1}
+.pos-layout{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:10px;flex:1;min-height:0}
+.pos-catalog,.pos-cart{background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 4px 16px rgba(15,23,42,.04)}
+.pos-catalog{padding:10px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.pos-search{display:flex;align-items:center;gap:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:0 12px;flex-shrink:0}
+.pos-search input{width:100%;padding:10px 0;outline:none;background:transparent;font-size:13px}
+.pos-categories{display:flex;gap:6px;overflow:auto;padding:8px 0;flex-shrink:0}
+.pos-categories button{white-space:nowrap;border:1px solid #e5e7eb;border-radius:999px;padding:6px 12px;font-size:11px;font-weight:700;color:#64748b}
+.pos-categories button.active{background:#4f46e5;color:#fff;border-color:#4f46e5}
+.pos-products{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;overflow-y:auto;flex:1;min-height:0;align-content:start}
+.pos-product{position:relative;text-align:left;border:1px solid #e5e7eb;border-radius:12px;padding:10px;min-height:125px;transition:.15s}
+.pos-product:hover,.pos-product.selected{border-color:#818cf8;background:#f5f3ff;transform:translateY(-1px)}
+.pos-product.disabled{opacity:.5}
+.pos-product>span{display:flex;width:32px;height:32px;border-radius:9px;align-items:center;justify-content:center;background:#eef2ff;color:#4f46e5;font-weight:800;font-size:13px}
+.pos-product strong,.pos-product small,.pos-product b{display:block}
+.pos-product strong{margin-top:6px;color:#111827;font-size:12px;line-height:1.3}
+.pos-product small{font-size:10px;color:#94a3b8;margin:2px 0 5px}
+.pos-product b{color:#4f46e5;font-size:13px}
+.pos-product em{position:absolute;right:8px;top:8px;background:#4f46e5;color:white;border-radius:999px;min-width:22px;height:22px;text-align:center;line-height:22px;font-style:normal;font-size:10px;font-weight:800}
+.pos-cart{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.pos-shop-bar{padding:8px 12px;background:#f0f0ff;border-bottom:1px solid #e0e0f0;flex-shrink:0}
+.pos-shop-bar select{width:100%;border:1px solid #c7d2fe;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;color:#4338ca;background:#fff;cursor:pointer}
+.pos-cart-head{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #eee;flex-shrink:0}
+.pos-cart-head p{margin-bottom:-2px}
+.pos-cart-head h2{font-size:16px;font-weight:800}
+.pos-cart-head button{color:#dc2626;font-size:11px;font-weight:700}
+.pos-lines{flex:1;overflow-y:auto;min-height:0}
+.pos-lines article{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #f1f5f9}
+.pos-lines article strong{font-size:12px}
+.pos-lines article small{display:block;font-size:10px;color:#94a3b8}
+.pos-step{display:flex;align-items:center;gap:7px}
+.pos-step button{width:24px;height:24px;border-radius:7px;background:#eef2ff;color:#4f46e5;font-weight:800;font-size:13px}
+.pos-step b{font-size:13px}
+.pos-bottom{flex-shrink:0;border-top:1px solid #e5e7eb}
+.pos-details-row{display:flex;gap:6px;padding:8px 12px}
+.pos-details-row input{flex:1;min-width:0;border:1px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:12px}
+.pos-pay-row{display:flex;align-items:center;justify-content:space-between;padding:4px 12px 8px}
+.pos-methods{display:flex;gap:5px}
+.pos-methods button{border:1px solid #e5e7eb;border-radius:999px;padding:5px 12px;font-size:11px;font-weight:700;color:#64748b}
+.pos-methods button.active{background:#4f46e5;color:#fff;border-color:#4f46e5}
+.print{display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b}
+.pos-footer{padding:10px 12px;background:#111827;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:10px;border-radius:0 0 14px 14px}
+.pos-footer small{display:block;color:#94a3b8;font-size:10px}
+.pos-footer strong{font-size:20px}
+.pos-footer button{background:#6366f1;border-radius:10px;padding:11px 14px;font-weight:800;font-size:13px;min-width:150px}
+.pos-footer button:disabled{opacity:.5}
+.pos-empty{text-align:center;color:#94a3b8;padding:20px 10px;font-size:13px}
+.pos-empty strong,.pos-empty small{display:block}
+.pos-alert{padding:8px 12px;border-radius:9px;margin-bottom:8px;font-size:12px;font-weight:600;flex-shrink:0}
+.pos-alert.error{background:#fef2f2;color:#b91c1c}
+.pos-alert.success{background:#ecfdf5;color:#047857}
+@media(max-width:1023px){.pos-page{padding:8px 8px 80px}.pos-layout{grid-template-columns:1fr}.pos-cart{position:static}.pos-products{grid-template-columns:repeat(3,minmax(0,1fr))}.pos-footer{position:sticky;bottom:72px;z-index:20}.pos-lines{max-height:none}}
+@media(max-width:430px){.pos-product{min-height:110px;padding:8px}.pos-products{grid-template-columns:repeat(2,minmax(0,1fr))}.pos-footer button{min-width:120px;padding:10px 8px}}
 </style>
