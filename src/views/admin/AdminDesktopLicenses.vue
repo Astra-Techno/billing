@@ -16,7 +16,7 @@ const deviceAccounts=computed(()=>{
 })
 onMounted(load)
 async function load(){ loading.value=true;error.value='';try{const [s,r,l]=await Promise.all([task('Admin','desktopLicenseStats'),task('Admin','desktopActivationRequests'),task('Admin','desktopLicenses')]);stats.value=s.data.data||{};requests.value=r.data.data||[];licenses.value=l.data.data||[]}catch(e){error.value=e.response?.data?.message||'Could not load desktop licences.'}finally{loading.value=false}}
-function showApproveModal(row){approveModal.value=row;approveYears.value=1}
+function showApproveModal(row){approveModal.value=row;approveYears.value=row.requested_years||1}
 async function confirmApprove(){const row=approveModal.value;if(!row)return;busy.value='r'+row.id;error.value='';try{await task('Admin','approveDesktopActivation',{request_id:row.id,edition:'offline-single-pc',years:approveYears.value});approveModal.value=null;await load()}catch(e){error.value=e.response?.data?.message||'Approval failed.'}finally{busy.value=null}}
 async function reject(row){const reason=window.prompt('Reason for rejecting this activation request:');if(!reason)return;busy.value='r'+row.id;try{await task('Admin','rejectDesktopActivation',{request_id:row.id,reason});await load()}catch(e){error.value=e.response?.data?.message||'Rejection failed.'}finally{busy.value=null}}
 async function setStatus(row,status){let reason='';if(status!=='active'){reason=window.prompt(`Reason for ${status}:`)||'';if(!reason)return}if(!window.confirm(`${status==='active'?'Reactivate':'Set'} licence ${row.license_uuid} ${status}?`))return;busy.value='l'+row.id;try{await task('Admin','setDesktopLicenseStatus',{license_id:row.id,status,reason});await load()}catch(e){error.value=e.response?.data?.message||'Licence update failed.'}finally{busy.value=null}}
@@ -36,8 +36,8 @@ const badge={pending:'bg-amber-100 text-amber-700',approved:'bg-blue-100 text-bl
     <button class="ml-auto px-3 py-2 rounded-lg border text-xs font-semibold bg-white" @click="load">Refresh</button>
   </div>
   <div class="p-4 lg:p-6 overflow-y-auto flex-1">
-    <div class="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-5">
-      <div v-for="(label,key) in {accounts:'Customers',pending:'Pending',active:'Active devices',expiring:'Expiring',suspended:'Suspended',revoked:'Deactivated'}" :key="key" class="bg-white rounded-xl border p-4"><p class="text-xs text-gray-500">{{label}}</p><p class="text-2xl font-bold mt-1">{{stats[key]||0}}</p></div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+      <div v-for="(label,key) in {accounts:'Customers',pending_activation:'Pending Activation',active:'Active Devices',active_trials:'Active Trials',expiring:'Expiring Soon',suspended:'Suspended',revoked:'Deactivated'}" :key="key" class="bg-white rounded-xl border p-4"><p class="text-xs text-gray-500">{{label}}</p><p class="text-2xl font-bold mt-1">{{stats[key]||0}}</p></div>
     </div>
     <p v-if="error" role="alert" class="mb-4 bg-red-50 border border-red-100 text-red-700 rounded-xl px-4 py-3 text-sm">{{error}}</p>
     <div class="flex gap-2 mb-4 flex-wrap"><button v-for="item in [{k:'accounts',n:`Devices by customer (${deviceAccounts.length})`},{k:'requests',n:`Requests (${pending.length})`},{k:'licenses',n:`All licences (${licenses.length})`}]" :key="item.k" @click="tab=item.k" class="px-4 py-2 rounded-lg text-sm font-semibold" :class="tab===item.k?'bg-indigo-600 text-white':'bg-white border text-gray-600'">{{item.n}}</button></div>
@@ -65,7 +65,7 @@ const badge={pending:'bg-amber-100 text-amber-700',approved:'bg-blue-100 text-bl
       <div v-if="!requests.length" class="bg-white rounded-xl border p-8 text-center text-gray-400">No activation requests</div>
       <div v-for="row in requests" :key="row.id" class="bg-white rounded-xl border p-4 flex flex-col lg:flex-row lg:items-center gap-4">
         <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2"><p class="font-semibold text-gray-900">{{row.company?.name||'Unnamed company'}}</p><span class="text-[11px] px-2 py-0.5 rounded-full font-semibold" :class="badge[row.status]">{{row.status}}</span></div>
+          <div class="flex items-center gap-2"><p class="font-semibold text-gray-900">{{row.company?.name||'Unnamed company'}}</p><span class="text-[11px] px-2 py-0.5 rounded-full font-semibold" :class="badge[row.status]">{{row.status}}</span><span class="text-[11px] px-2 py-0.5 rounded-full font-semibold" :class="row.type==='trial'?'bg-purple-100 text-purple-700':'bg-indigo-100 text-indigo-700'">{{row.type==='trial'?'Trial':'Activation'}}</span><span v-if="row.requested_years" class="text-[11px] px-2 py-0.5 rounded-full font-semibold bg-blue-50 text-blue-600">{{row.requested_years}} {{row.requested_years===1?'year':'years'}} requested</span></div>
           <p class="text-sm text-gray-600">{{row.user?.name}} · {{row.user?.email}}<template v-if="row.user?.mobile"> · {{row.user.mobile}}</template></p>
           <p v-if="row.company?.mobile || row.company?.gstin" class="text-sm text-gray-500"><template v-if="row.company?.mobile">Mobile: {{row.company.mobile}}</template><template v-if="row.company?.gstin"> · GSTIN: {{row.company.gstin}}</template></p>
           <p class="text-xs text-gray-400 mt-1">{{row.device?.pc_name}} · {{row.device?.windows_version}} · {{row.device_id}} · {{date(row.created_at)}}</p>
@@ -84,6 +84,7 @@ const badge={pending:'bg-amber-100 text-amber-700',approved:'bg-blue-100 text-bl
             <div class="flex items-center gap-2 flex-wrap">
               <p class="font-semibold text-gray-900">{{row.customer?.company?.name||'Unnamed company'}}</p>
               <span class="text-[11px] px-2 py-0.5 rounded-full font-semibold" :class="badge[row.status]">{{row.status}}</span>
+              <span v-if="row.license_type==='trial'" class="text-[11px] px-2 py-0.5 rounded-full font-semibold bg-purple-100 text-purple-700">Trial</span>
               <template v-if="row.expires_at">
                 <span v-if="daysLeft(row)!==null && daysLeft(row)<=0" class="text-[11px] px-2 py-0.5 rounded-full font-semibold bg-red-100 text-red-700">Expired</span>
                 <span v-else-if="daysLeft(row)!==null && daysLeft(row)<=90" class="text-[11px] px-2 py-0.5 rounded-full font-semibold bg-amber-100 text-amber-700">{{daysLeft(row)}} days left</span>

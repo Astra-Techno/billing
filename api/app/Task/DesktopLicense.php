@@ -19,12 +19,16 @@ class DesktopLicense extends Task
     public function localStatus(array $input): array { $this->localOnly();return $this->success(DesktopLicenseLocal::status()); }
     public function localRequest(array $input): array {
         $this->localOnly();$businessId=$this->requireBusiness();$this->requireRole(['owner','admin']);$home=DesktopBackup::home();
+        $type = in_array($input['type'] ?? '', ['trial','activation'], true) ? $input['type'] : 'activation';
+        $requestedYears = $type === 'activation' && !empty($input['requested_years']) ? max(1, min(5, (int)$input['requested_years'])) : null;
         $deviceResult=DesktopLicenseLocal::run(['device']);$device=json_decode($deviceResult['output'],true,512,JSON_THROW_ON_ERROR);
         $user=DB::selectOne('SELECT name,email,mobile FROM users WHERE id=?',[$this->userId()]);$company=DB::selectOne('SELECT name,email,mobile,gstin,business_type FROM businesses WHERE id=?',[$businessId]);
-        $response=$this->localPost('request',['device_id'=>$device['device_id'],'device'=>$device,'user'=>(array)$user,'company'=>(array)$company,'app_version'=>'1.0.0']);
+        $payload = ['device_id'=>$device['device_id'],'device'=>$device,'user'=>(array)$user,'company'=>(array)$company,'app_version'=>'1.0.0','type'=>$type];
+        if ($requestedYears) $payload['requested_years'] = $requestedYears;
+        $response=$this->localPost('request',$payload);
         if(empty($response['success']))$this->fail($response['message']??'Cloud activation request failed.',502);$request=$response['data'];
         $plain=$home.'/cache/activation-request.json';file_put_contents($plain,json_encode($request,JSON_THROW_ON_ERROR),LOCK_EX);try{DesktopLicenseLocal::run(['protect',$plain,$home.'/activation-request.dat']);}finally{@unlink($plain);}
-        return $this->success(['status'=>'pending','expires_in'=>$request['expires_in']??600]);
+        return $this->success(['status'=>$type === 'trial' ? 'trial_started' : 'pending','type'=>$type,'expires_in'=>$request['expires_in']??600]);
     }
     public function localPoll(array $input): array {
         $this->localOnly();$this->requireBusiness();$home=DesktopBackup::home();$protected=$home.'/activation-request.dat';
@@ -37,6 +41,14 @@ class DesktopLicense extends Task
         $this->localOnly();$this->requireBusiness();$home=DesktopBackup::home();$local=DesktopLicenseLocal::status();if(empty($local['active']))return $this->success($local);
         try{$response=$this->localPost('refresh',['license_id'=>$local['license_id'],'device_id'=>$local['device']['device_id']]);if(empty($response['success']))return $this->success($local);$temp=$home.'/cache/license-refresh.json';file_put_contents($temp,json_encode($response,JSON_THROW_ON_ERROR),LOCK_EX);try{DesktopLicenseLocal::run(['install',$temp,$home]);}finally{@unlink($temp);}return $this->success(DesktopLicenseLocal::status());}catch(\Throwable){return $this->success($local,'Offline licence remains valid.');}
     }
+    private function licenseEvent2(?int $licenseId, ?int $requestId, string $action, array $metadata): void
+    {
+        $crypto = new DesktopLicenseCrypto();
+        DB::statement('INSERT INTO desktop_license_events (license_id,activation_request_id,action,encrypted_metadata,ip_address,user_agent,created_at) VALUES (?,?,?,?,?,?,NOW())', [
+            $licenseId, $requestId, $action, $crypto->encrypt($metadata), $_SERVER['REMOTE_ADDR'] ?? null, substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 500)
+        ]);
+    }
+
     private function cloudOnly(): void
     {
         if (($_ENV['DESKTOP_MODE'] ?? '') === 'true') $this->fail('Cloud activation endpoint is unavailable locally.', 403);
@@ -58,6 +70,8 @@ class DesktopLicense extends Task
     {
         $this->cloudOnly();
         $this->validate(['device_id'=>'required|string|min_length:32', 'user'=>'required|array', 'company'=>'required|array', 'device'=>'required|array']);
+        $type = in_array($input['type'] ?? '', ['trial','activation'], true) ? $input['type'] : 'activation';
+        $requestedYears = $type === 'activation' && !empty($input['requested_years']) ? max(1, min(5, (int)$input['requested_years'])) : null;
         $crypto = new DesktopLicenseCrypto();
         $requestUuid = $this->uuid(); $secret = bin2hex(random_bytes(32));
         $email = strtolower(trim((string)($input['user']['email'] ?? '')));
@@ -66,14 +80,52 @@ class DesktopLicense extends Task
         $deviceHmac = $crypto->deviceHmac($input['device_id']);
         $recent=DB::selectOne('SELECT COUNT(*) total FROM desktop_activation_requests WHERE device_hmac=? AND created_at>DATE_SUB(NOW(),INTERVAL 1 HOUR)',[$deviceHmac]);
         if((int)($recent->total??0)>=5)$this->fail('Too many activation requests. Try again later.',429);
+
+        // Only one trial per device
+        if ($type === 'trial') {
+            $existingTrial = DB::selectOne("SELECT id FROM desktop_licenses WHERE device_hmac=? AND license_type='trial'", [$deviceHmac]);
+            if ($existingTrial) $this->fail('A free trial has already been used on this device. Please request a full licence.', 422);
+        }
+
         DB::statement("UPDATE desktop_activation_requests SET status='expired' WHERE device_hmac=? AND status='pending'", [$deviceHmac]);
-        DB::statement("INSERT INTO desktop_activation_requests (request_uuid,request_secret_hash,user_id,business_id,device_hmac,encrypted_payload,status,expires_at,created_at,updated_at) VALUES (?,?,?,?,?,?,'pending',DATE_ADD(NOW(),INTERVAL 10 MINUTE),NOW(),NOW())", [
-            $requestUuid, hash('sha256',$secret), $user?->id, $business?->id, $deviceHmac,
-            $crypto->encrypt(['user'=>$input['user'],'company'=>$input['company'],'device'=>$input['device'],'device_id'=>$input['device_id'],'app_version'=>$input['app_version'] ?? null])
+        DB::statement("INSERT INTO desktop_activation_requests (request_uuid,request_secret_hash,user_id,business_id,device_hmac,type,requested_years,encrypted_payload,status,expires_at,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,DATE_ADD(NOW(),INTERVAL 10 MINUTE),NOW(),NOW())", [
+            $requestUuid, hash('sha256',$secret), $user?->id, $business?->id, $deviceHmac, $type, $requestedYears,
+            $crypto->encrypt(['user'=>$input['user'],'company'=>$input['company'],'device'=>$input['device'],'device_id'=>$input['device_id'],'app_version'=>$input['app_version'] ?? null]),
+            $type === 'trial' ? 'approved' : 'pending'
         ]);
-        $id = (int)DB::lastInsertId();
-        DB::statement("INSERT INTO desktop_license_events (activation_request_id,action,encrypted_metadata,ip_address,user_agent,created_at) VALUES (?,'requested',?,?,?,NOW())", [$id,$crypto->encrypt(['source'=>'desktop']),$_SERVER['REMOTE_ADDR'] ?? null,substr($_SERVER['HTTP_USER_AGENT'] ?? '',0,500)]);
-        return $this->success(['request_id'=>$requestUuid,'request_secret'=>$secret,'expires_in'=>600,'approval_url'=>'https://billing.cloudkart24.com/admin/desktop-licenses?request='.$requestUuid]);
+        $requestId = (int)DB::lastInsertId();
+        DB::statement("INSERT INTO desktop_license_events (activation_request_id,action,encrypted_metadata,ip_address,user_agent,created_at) VALUES (?,'requested',?,?,?,NOW())", [$requestId,$crypto->encrypt(['source'=>'desktop','type'=>$type]),$_SERVER['REMOTE_ADDR'] ?? null,substr($_SERVER['HTTP_USER_AGENT'] ?? '',0,500)]);
+
+        // Auto-approve trial: create 30-day licence immediately
+        if ($type === 'trial') {
+            $payload = ['user'=>$input['user'],'company'=>$input['company'],'device'=>$input['device'],'device_id'=>$input['device_id']];
+            $licenseUuid = $this->uuid();
+            $expires = date('Y-m-d 23:59:59', strtotime('+30 days'));
+            $claims = ['license_id'=>$licenseUuid,'device_id'=>$input['device_id'],'customer'=>$input['user'],'company'=>$input['company'],'edition'=>'trial','status'=>'active','issued_at'=>time(),'expires_at'=>strtotime($expires),'max_version'=>null];
+            $document = $crypto->sign($claims);
+            DB::statement("INSERT INTO desktop_licenses (license_uuid,activation_request_id,user_id,business_id,device_hmac,encrypted_customer,encrypted_device,status,edition,license_type,issued_at,expires_at,license_document_hash,license_document,approved_by,created_at,updated_at) VALUES (?,?,?,?,?,?,?,'active','trial','trial',NOW(),?,?,?,NULL,NOW(),NOW())", [
+                $licenseUuid, $requestId, $user?->id, $business?->id, $deviceHmac,
+                $crypto->encrypt(['user'=>$input['user'],'company'=>$input['company']]),
+                $crypto->encrypt(['device'=>$input['device'],'device_id'=>$input['device_id'],'app_version'=>$input['app_version']??null]),
+                $expires, hash('sha256',$document), $document
+            ]);
+            $licenseId = (int)DB::lastInsertId();
+            DB::statement("UPDATE desktop_activation_requests SET status='consumed',approved_at=NOW(),consumed_at=NOW() WHERE id=?", [$requestId]);
+            $this->licenseEvent2($licenseId, $requestId, 'trial_started', ['edition'=>'trial','expires_at'=>$expires]);
+
+            // Send admin notification
+            $adminIds = DB::select("SELECT id FROM users WHERE is_super_admin = 1 AND active = 1");
+            foreach ($adminIds as $admin) {
+                DB::statement("INSERT INTO notifications (business_id,user_id,type,title,message,data,created_at) VALUES (NULL,?,?,?,?,?,NOW())", [
+                    $admin->id, 'desktop_trial',
+                    'New trial started: ' . trim($input['company']['name'] ?? $input['user']['name'] ?? 'Unknown'),
+                    trim($input['user']['name'] ?? '') . ' (' . ($email ?: 'no email') . ') started a 30-day free trial.',
+                    json_encode(['request_id'=>$requestId,'device_hmac'=>substr($deviceHmac,0,12)])
+                ]);
+            }
+        }
+
+        return $this->success(['request_id'=>$requestUuid,'request_secret'=>$secret,'expires_in'=>600,'type'=>$type]);
     }
 
     public function status(array $input): array

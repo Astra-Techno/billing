@@ -13,7 +13,7 @@ class Product extends Sql
             ->from('products p')
             ->left('tax_rates t ON t.id = p.tax_rate_id')
             ->left('(SELECT business_id, product_id, SUM(quantity-reserved_quantity) available_stock FROM stock_balances GROUP BY business_id, product_id) sb ON sb.business_id=p.business_id AND sb.product_id=p.id')
-            ->select('list', 'p.id, p.name, p.type, p.hsn_sac, p.unit, p.price, p.purchase_price, p.mrp, p.tax_rate_id, p.sku, p.barcode, p.track_stock, p.reorder_level, COALESCE(sb.available_stock,0) AS available_stock, t.rate AS gst_rate')
+            ->select('list', 'p.id, p.name, p.type, p.pos_category, p.hsn_sac, p.unit, p.price, p.purchase_price, p.mrp, p.tax_rate_id, p.sku, p.barcode, p.track_stock, p.reorder_level, COALESCE(sb.available_stock,0) AS available_stock, t.rate AS gst_rate')
             ->filter('p.business_id = {business_id}')
             ->filter('p.active = 1')
             ->order('p.name', 'asc');
@@ -24,7 +24,7 @@ class Product extends Sql
         return (new Query('Product.list'))
             ->from('products p')
             ->left('tax_rates t ON t.id = p.tax_rate_id')
-            ->select('list',    'p.id, p.type, p.name, p.hsn_sac, p.unit, p.price, p.sku, p.active, t.name AS tax_name, t.rate AS gst_rate')
+            ->select('list',    'p.id, p.type, p.name, p.pos_category, p.hsn_sac, p.unit, p.price, p.sku, p.active, t.name AS tax_name, t.rate AS gst_rate')
             ->select('total',   'COUNT(*) AS total')
             ->select('options', 'p.id, p.name, p.type, p.hsn_sac, p.unit, p.price, p.tax_rate_id, t.rate AS gst_rate, t.cgst_rate, t.sgst_rate, t.igst_rate')
             ->filter('p.business_id = {business_id}')

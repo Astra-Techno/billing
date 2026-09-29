@@ -92,7 +92,9 @@ class Admin extends Task
         $this->requireSuperAdmin();
         return $this->success((array)DB::selectOne("SELECT
             (SELECT COUNT(*) FROM desktop_activation_requests WHERE status='pending' AND expires_at>NOW()) pending,
+            (SELECT COUNT(*) FROM desktop_activation_requests WHERE type='activation' AND status='pending' AND expires_at>NOW()) pending_activation,
             (SELECT COUNT(*) FROM desktop_licenses WHERE status='active') active,
+            (SELECT COUNT(*) FROM desktop_licenses WHERE status='active' AND license_type='trial') active_trials,
             (SELECT COUNT(*) FROM desktop_licenses WHERE status='suspended') suspended,
             (SELECT COUNT(*) FROM desktop_licenses WHERE status='revoked') revoked,
             (SELECT COUNT(DISTINCT user_id) FROM desktop_licenses WHERE user_id IS NOT NULL) accounts,
@@ -104,7 +106,7 @@ class Admin extends Task
         $this->requireSuperAdmin(); $crypto = new DesktopLicenseCrypto();
         DB::statement("UPDATE desktop_activation_requests SET status='expired' WHERE status='pending' AND expires_at<NOW()");
         $rows = DB::select("SELECT r.*,u.name cloud_user_name,b.name cloud_business_name,a.name approved_by_name FROM desktop_activation_requests r LEFT JOIN users u ON u.id=r.user_id LEFT JOIN businesses b ON b.id=r.business_id LEFT JOIN users a ON a.id=r.approved_by ORDER BY (r.status='pending') DESC,r.created_at DESC LIMIT 250");
-        return $this->success(array_map(function($row) use ($crypto) { $payload=$crypto->decrypt($row->encrypted_payload); unset($row->encrypted_payload,$row->request_secret_hash); $row->user=$payload['user']??[]; $row->company=$payload['company']??[]; $row->device=$payload['device']??[]; $row->device_id=substr($payload['device_id']??'',0,12).'…'; return $row; },$rows));
+        return $this->success(array_map(function($row) use ($crypto) { $payload=$crypto->decrypt($row->encrypted_payload); unset($row->encrypted_payload,$row->request_secret_hash); $row->user=$payload['user']??[]; $row->company=$payload['company']??[]; $row->device=$payload['device']??[]; $row->device_id=substr($payload['device_id']??'',0,12).'…'; $row->type=$row->type??'activation'; $row->requested_years=$row->requested_years?(int)$row->requested_years:null; return $row; },$rows));
     }
 
     public function desktopLicenses(array $input): array
@@ -114,7 +116,7 @@ class Admin extends Task
             (SELECT COUNT(*) FROM desktop_licenses x WHERE x.user_id=l.user_id AND x.status='active') active_device_count,
             (SELECT COUNT(*) FROM desktop_licenses x WHERE x.user_id=l.user_id) total_device_count
             FROM desktop_licenses l LEFT JOIN users a ON a.id=l.approved_by LEFT JOIN users r ON r.id=l.revoked_by ORDER BY l.created_at DESC LIMIT 500");
-        return $this->success(array_map(function($row) use($crypto) { $row->customer=$crypto->decrypt($row->encrypted_customer); $row->device=$crypto->decrypt($row->encrypted_device); unset($row->encrypted_customer,$row->encrypted_device,$row->license_document,$row->device_hmac); if(isset($row->device['device_id'])) $row->device['device_id']=substr($row->device['device_id'],0,12).'…'; return $row; },$rows));
+        return $this->success(array_map(function($row) use($crypto) { $row->customer=$crypto->decrypt($row->encrypted_customer); $row->device=$crypto->decrypt($row->encrypted_device); unset($row->encrypted_customer,$row->encrypted_device,$row->license_document,$row->device_hmac); if(isset($row->device['device_id'])) $row->device['device_id']=substr($row->device['device_id'],0,12).'…'; $row->license_type=$row->license_type??'paid'; return $row; },$rows));
     }
 
     public function approveDesktopActivation(array $input): array
