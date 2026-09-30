@@ -118,8 +118,16 @@ function getLocationStock(locId) {
 
 async function save() {
   error.value = ''
-  if (!form.value.name) return (error.value = 'Product name is required.')
-  
+  const errors = []
+  if (!form.value.name?.trim()) errors.push('Item name is required.')
+  if (form.value.name?.trim() && form.value.name.trim().length < 2) errors.push('Item name must be at least 2 characters.')
+  if (form.value.price === '' || form.value.price === null || form.value.price === undefined) errors.push('Selling price is required.')
+  if (errors.length) {
+    error.value = errors.join(' ')
+    toast.error(error.value)
+    return
+  }
+
   saving.value = true
   const locPayload = productLocations.value.map(pl => ({
     location_id: pl.location_id,
@@ -140,6 +148,7 @@ async function save() {
     }
   } catch (e) {
     error.value = e.response?.data?.message || 'Could not save. Please try again.'
+    toast.error(error.value)
   } finally {
     saving.value = false
   }
