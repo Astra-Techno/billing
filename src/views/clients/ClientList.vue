@@ -1,11 +1,10 @@
 <script setup>
-import { ref } from 'vue'
+import { watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { list } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 import { useTour } from '../../composables/useTour'
-import { useListRefresh } from '../../composables/useListRefresh'
+import { usePagedList } from '../../composables/usePagedList'
 import { useRole } from '../../composables/useRole'
 
 const { startTour, isTourSeen } = useTour('client-list', [
@@ -16,29 +15,17 @@ const { startTour, isTourSeen } = useTour('client-list', [
 
 const { can } = useRole()
 const router  = useRouter()
-const clients = ref([])
-const loading = ref(true)
-const search  = ref('')
-let timer = null
 
-async function load() {
-  loading.value = true
-  try {
-    const p = {}
-    if (search.value) p['filter.search'] = `%${search.value}%`
-    const { data } = await list('Client', p)
-    clients.value = data.data || []
-  } catch {}
-  loading.value = false
-}
-
-function onSearch() { clearTimeout(timer); timer = setTimeout(load, 350) }
-
-useListRefresh(() => {
-  load().then(() => {
-    setTimeout(() => { if (!isTourSeen()) startTour() }, 800)
+const { items: clients, loading, loadingMore, total, hasMore, search, onSearch, loadMore, reload } =
+  usePagedList('Client', {
+    scrollContainer: '#client-scroll',
+    listRouteName: 'Clients',
   })
-}, { listRouteName: 'Clients' })
+
+// Start tour after first load
+const unwatch = watch(loading, (v) => {
+  if (!v) { setTimeout(() => { if (!isTourSeen()) startTour() }, 800); unwatch() }
+})
 
 const avatarColors = ['bg-blue-100 text-blue-700', 'bg-emerald-100 text-emerald-700', 'bg-purple-100 text-purple-700', 'bg-amber-100 text-amber-700', 'bg-pink-100 text-pink-700', 'bg-teal-100 text-teal-700']
 const avatarColor  = (name) => avatarColors[(name?.charCodeAt(0) || 0) % avatarColors.length]
@@ -67,14 +54,14 @@ const avatarColor  = (name) => avatarColors[(name?.charCodeAt(0) || 0) % avatarC
 
         <!-- Search -->
         <div class="mb-2 space-y-2 animate-fade-in-up">
-            <input v-model="search" @input="onSearch" type="text"
+            <input v-model="search" @input="onSearch(search)" type="text"
               class="gpay-list-search" data-tour="client-search"
               placeholder="Search name, company, mobile, GSTIN..." />
         </div>
       </div>
 
       <!-- Scrollable List -->
-      <div class="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 custom-scrollbar min-h-0" data-tour="client-list">
+      <div id="client-scroll" class="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 custom-scrollbar min-h-0" data-tour="client-list">
 
           <div v-if="loading" class="space-y-1.5">
             <div v-for="i in 6" :key="i" class="p-4 rounded-xl border border-gray-100 bg-white/40 animate-pulse flex items-center gap-3">
@@ -125,13 +112,26 @@ const avatarColor  = (name) => avatarColors[(name?.charCodeAt(0) || 0) % avatarC
                 </div>
             </div>
           </div>
+
+          <!-- Pagination footer -->
+          <div v-if="loadingMore" class="py-3 text-center">
+            <span class="text-xs text-gray-400 animate-pulse">Loading more...</span>
+          </div>
+          <div v-else-if="!loading && clients.length && hasMore" class="py-3 text-center">
+            <button @click="loadMore" class="text-xs text-primary-600 hover:text-primary-700 font-semibold">
+              Load more ({{ clients.length }} of {{ total }})
+            </button>
+          </div>
+          <div v-else-if="!loading && clients.length && !hasMore" class="py-3 text-center">
+            <span class="text-[11px] text-gray-400">Showing all {{ total }}</span>
+          </div>
       </div>
     </div>
 
     <!-- Right Pane: Detail/Form wrapper -->
     <div v-if="$route.name !== 'Clients'" id="c3-right-view" class="split-pane-right relative z-20">
       <router-view v-slot="{ Component }">
-        <component :is="Component" :key="$route.fullPath" @refresh="load" />
+        <component :is="Component" :key="$route.fullPath" @refresh="reload" />
       </router-view>
     </div>
   </div>

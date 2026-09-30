@@ -1,13 +1,13 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { list, task } from '../../api'
+import { task } from '../../api'
 import { inr } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
 import { statusBadge, statusLabel } from '../../utils/invoice'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { useTour } from '../../composables/useTour'
-import { useListRefresh } from '../../composables/useListRefresh'
+import { usePagedList } from '../../composables/usePagedList'
 import { useRole } from '../../composables/useRole'
 
 const { startTour, isTourSeen } = useTour('invoice-list', [
@@ -20,8 +20,6 @@ const { startTour, isTourSeen } = useTour('invoice-list', [
 const { can } = useRole()
 const route       = useRoute()
 const router      = useRouter()
-const invoices    = ref([])
-const loading     = ref(true)
 const showFilters = ref(false)
 
 // Persistent left panel collapse
@@ -74,7 +72,7 @@ async function doBulkMarkPaid() {
     bulkPayModal.value = false
     selected.value     = new Set()
     selectMode.value   = false
-    load()
+    reload()
   } catch (e) {
     bulkError.value  = e.response?.data?.message || 'Something went wrong.'
     bulkPaying.value = false
@@ -90,7 +88,7 @@ async function doBulkMarkSent() {
     await task('Invoice', 'bulkMarkSent', { ids: [...selected.value] })
     selected.value   = new Set()
     selectMode.value = false
-    load()
+    reload()
   } catch {}
   bulkSending.value = false
 }
@@ -130,7 +128,6 @@ function exportCsv() {
 
 // ── Date presets ───────────────────────────────────────────────────────────────
 const filter       = ref({ status: '', search: '', from_date: '', to_date: '', preset: '', client_id: '', client_name: '' })
-let timer          = null
 
 const presets = [
   { label: 'Today',        value: 'today' },
@@ -166,7 +163,7 @@ function applyPreset(p) {
     filter.value.from_date = fmt(new Date(now.getFullYear(), 0, 1))
     filter.value.to_date   = fmt(now)
   }
-  load()
+  reload()
 }
 
 function clearDate() {
@@ -174,54 +171,54 @@ function clearDate() {
   filter.value.from_date = ''
   filter.value.to_date   = ''
   showFilters.value      = false
-  load()
+  reload()
 }
 
-// ── Load invoices ──────────────────────────────────────────────────────────────
+// ── Load invoices (server-side paged) ─────────────────────────────────────────
 function clearClientFilter() {
   filter.value.client_id   = ''
   filter.value.client_name = ''
-  load()
+  reload()
 }
 
-async function load() {
-  loading.value  = true
-  selected.value = new Set()
-  try {
-    const p = { sort_by: 'i.created_at', sort_order: 'desc', limit: 200 }
+// Initialise filter from route query before usePagedList fires its onMounted load
+if (route.query.status)      filter.value.status      = route.query.status
+if (route.query.client_id)   filter.value.client_id   = route.query.client_id
+if (route.query.client_name) filter.value.client_name = route.query.client_name
+
+const {
+  items: invoices, loading, loadingMore, total, hasMore,
+  onSearch: pagedSearch, loadMore, reload,
+} = usePagedList('Invoice', {
+  limit: 50,
+  scrollContainer: '#invoice-scroll',
+  listRouteName: 'Invoices',
+  params: () => {
+    const p = { sort_by: 'i.created_at', sort_order: 'desc' }
     if (filter.value.status)    p['filter.status']    = filter.value.status
-    if (filter.value.search)    p['filter.search']    = `%${filter.value.search}%`
     if (filter.value.from_date) p['filter.from_date'] = filter.value.from_date
     if (filter.value.to_date)   p['filter.to_date']   = filter.value.to_date
     if (filter.value.client_id) p['filter.client_id'] = filter.value.client_id
-    const { data } = await list('Invoice', p)
-    invoices.value = data.data || []
-  } catch {}
-  loading.value = false
-}
+    return p
+  },
+})
 
-function onSearch() { clearTimeout(timer); timer = setTimeout(load, 350) }
+// Wire search input through the composable's debounced handler
+function onSearch() { pagedSearch(filter.value.search) }
 
 function onRowClick(inv) {
   if (selectMode.value) { toggleRow(inv.id); return }
   router.push(`/invoices/${inv.id}`)
 }
 
+// Tour trigger after first load
 onMounted(() => {
-  if (route.query.status)      filter.value.status      = route.query.status
-  if (route.query.client_id)   filter.value.client_id   = route.query.client_id
-  if (route.query.client_name) filter.value.client_name = route.query.client_name
+  setTimeout(() => { if (!isTourSeen()) startTour() }, 800)
 })
-
-useListRefresh(() => {
-  load().then(() => {
-    setTimeout(() => { if (!isTourSeen()) startTour() }, 800)
-  })
-}, { listRouteName: 'Invoices' })
 
 watch(() => route.query.status, val => {
   filter.value.status = val || ''
-  load()
+  reload()
 })
 
 const tabs = [
@@ -286,9 +283,9 @@ const activeDateLabel = () => {
               placeholder="Search no., customer, mobile, amount..." />
             
             <div class="flex gap-2 items-center">
-              <input v-model="filter.from_date" type="date" class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-[11px] font-semibold rounded-lg px-2 py-1.5 focus:border-primary-500 transition-all" @change="load()" />
+              <input v-model="filter.from_date" type="date" class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-[11px] font-semibold rounded-lg px-2 py-1.5 focus:border-primary-500 transition-all" @change="reload()" />
               <span class="text-gray-400 text-[10px] font-bold uppercase">to</span>
-              <input v-model="filter.to_date" type="date" class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-[11px] font-semibold rounded-lg px-2 py-1.5 focus:border-primary-500 transition-all" @change="load()" />
+              <input v-model="filter.to_date" type="date" class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-[11px] font-semibold rounded-lg px-2 py-1.5 focus:border-primary-500 transition-all" @change="reload()" />
             </div>
         </div>
 
@@ -304,7 +301,7 @@ const activeDateLabel = () => {
         <!-- Tabs -->
         <div data-tour="inv-tabs" class="flex gap-1 bg-gray-100/80 p-1 rounded-[10px] ring-1 ring-inset ring-gray-200/50 overflow-x-auto hide-scrollbar">
             <button v-for="t in tabs.slice(0, 4)" :key="t.value"
-              @click="filter.status = t.value; load()"
+              @click="filter.status = t.value; reload()"
               class="flex-1 text-[11px] font-semibold rounded-md py-1.5 transition-all whitespace-nowrap px-2"
               :class="filter.status === t.value ? 'bg-white shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-700'">
               {{ t.label }}
@@ -325,7 +322,7 @@ const activeDateLabel = () => {
       </div>
 
       <!-- Scrollable List -->
-      <div class="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 custom-scrollbar min-h-0">
+      <div id="invoice-scroll" class="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 custom-scrollbar min-h-0">
           
           <div v-if="loading" class="space-y-0">
             <div v-for="i in 5" :key="i" class="flex items-center gap-3 px-4 py-4 border-b border-google-divider/40">
@@ -397,6 +394,15 @@ const activeDateLabel = () => {
                 </div>
             </div>
           </div>
+
+          <!-- Load more / pagination footer -->
+          <div v-if="!loading && invoices.length > 0" class="py-3 text-center">
+            <button v-if="hasMore" @click="loadMore" :disabled="loadingMore"
+              class="text-[11px] font-bold text-primary-600 hover:text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-100 rounded-lg px-4 py-1.5 transition-colors disabled:opacity-60">
+              {{ loadingMore ? 'Loading...' : `Load more (${invoices.length} of ${total})` }}
+            </button>
+            <span v-else class="text-[11px] font-semibold text-gray-400">Showing all {{ total }} items</span>
+          </div>
       </div>
 
       <!-- Bulk Action Bar Overlay -->
@@ -430,7 +436,7 @@ const activeDateLabel = () => {
         </svg>
       </button>
       <router-view v-slot="{ Component }">
-        <component :is="Component" :key="$route.fullPath" @refresh="load" />
+        <component :is="Component" :key="$route.fullPath" @refresh="reload" />
       </router-view>
     </div>
   </div>

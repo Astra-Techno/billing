@@ -1,22 +1,34 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { list } from '../../api'
 import { inr } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
 import HelpIcon from '../../components/HelpIcon.vue'
-import { useListRefresh } from '../../composables/useListRefresh'
+import { usePagedList } from '../../composables/usePagedList'
 import { useRole } from '../../composables/useRole'
 
 const { can } = useRole()
 const route       = useRoute()
 const router      = useRouter()
-const quotes      = ref([])
-const loading     = ref(true)
 const showFilters = ref(false)
 
-const filter = ref({ status: '', search: '', from_date: '', to_date: '', preset: '', client_id: '', client_name: '' })
-let timer = null
+const filter = ref({ status: '', from_date: '', to_date: '', preset: '', client_id: '', client_name: '' })
+
+const { items: quotes, loading, loadingMore, total, hasMore, search, onSearch, loadMore, reload } = usePagedList('Quote', {
+  limit: 50,
+  params: () => {
+    const p = { sort_by: 'q.created_at', sort_order: 'desc' }
+    if (filter.value.status)    p['filter.status']    = filter.value.status
+    if (filter.value.from_date) p['filter.from_date'] = filter.value.from_date
+    if (filter.value.to_date)   p['filter.to_date']   = filter.value.to_date
+    if (filter.value.client_id) p['filter.client_id'] = filter.value.client_id
+    return p
+  },
+  listRouteName: 'Quotes',
+  scrollContainer: '#quote-scroll',
+})
+
+async function load() { await reload() }
 
 // ── Date presets ──────────────────────────────────────────────────────────────
 const presets = [
@@ -53,12 +65,12 @@ function applyPreset(p) {
     filter.value.from_date = fmt(new Date(now.getFullYear(), 0, 1))
     filter.value.to_date = fmt(now)
   }
-  load()
+  reload()
 }
 
 function clearDate() {
   filter.value.preset = ''; filter.value.from_date = ''; filter.value.to_date = ''
-  showFilters.value = false; load()
+  showFilters.value = false; reload()
 }
 
 const activeDateLabel = () => {
@@ -69,25 +81,8 @@ const activeDateLabel = () => {
 
 // ── Load ──────────────────────────────────────────────────────────────────────
 function clearClientFilter() {
-  filter.value.client_id = ''; filter.value.client_name = ''; load()
+  filter.value.client_id = ''; filter.value.client_name = ''; reload()
 }
-
-async function load() {
-  loading.value = true
-  try {
-    const p = { sort_by: 'q.created_at', sort_order: 'desc' }
-    if (filter.value.status)    p['filter.status']    = filter.value.status
-    if (filter.value.search)    p['filter.search']    = `%${filter.value.search}%`
-    if (filter.value.from_date) p['filter.from_date'] = filter.value.from_date
-    if (filter.value.to_date)   p['filter.to_date']   = filter.value.to_date
-    if (filter.value.client_id) p['filter.client_id'] = filter.value.client_id
-    const { data } = await list('Quote', p)
-    quotes.value = data.data || []
-  } catch {}
-  loading.value = false
-}
-
-function onSearch() { clearTimeout(timer); timer = setTimeout(load, 350) }
 
 function onQuoteClick(q) {
   router.push('/quotes/' + q.id)
@@ -97,8 +92,6 @@ onMounted(() => {
   if (route.query.client_id)   filter.value.client_id   = route.query.client_id
   if (route.query.client_name) filter.value.client_name = route.query.client_name
 })
-
-useListRefresh(load, { listRouteName: 'Quotes' })
 
 const tabs = [
   { label: 'All',       value: '' },
@@ -140,14 +133,14 @@ const avatarColor  = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarCol
 
         <!-- Search / Filter Expansion -->
         <div v-show="showFilters" class="mb-4 space-y-2 animate-fade-in-up">
-            <input v-model="filter.search" @input="onSearch" type="text"
+            <input :value="search" @input="onSearch($event.target.value)" type="text"
               class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-xs font-semibold rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 block px-3 py-2 transition-all"
               placeholder="Search no., customer, mobile, amount..." />
             
             <div class="flex gap-2 items-center">
-              <input v-model="filter.from_date" type="date" class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-[11px] font-semibold rounded-lg px-2 py-1.5 focus:border-primary-500 transition-all" @change="filter.preset = ''; load()" />
+              <input v-model="filter.from_date" type="date" class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-[11px] font-semibold rounded-lg px-2 py-1.5 focus:border-primary-500 transition-all" @change="filter.preset = ''; reload()" />
               <span class="text-gray-400 text-[10px] font-bold uppercase">to</span>
-              <input v-model="filter.to_date" type="date" class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-[11px] font-semibold rounded-lg px-2 py-1.5 focus:border-primary-500 transition-all" @change="filter.preset = ''; load()" />
+              <input v-model="filter.to_date" type="date" class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-[11px] font-semibold rounded-lg px-2 py-1.5 focus:border-primary-500 transition-all" @change="filter.preset = ''; reload()" />
             </div>
         </div>
 
@@ -163,7 +156,7 @@ const avatarColor  = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarCol
         <!-- Status Tabs -->
         <div class="flex gap-1 bg-gray-100/80 p-1 rounded-[10px] ring-1 ring-inset ring-gray-200/50 overflow-x-auto hide-scrollbar">
             <button v-for="t in tabs.slice(0, 4)" :key="t.value"
-              @click="filter.status = t.value; load()"
+              @click="filter.status = t.value; reload()"
               class="flex-1 text-[11px] font-semibold rounded-md py-1.5 transition-all whitespace-nowrap px-2"
               :class="filter.status === t.value ? 'bg-white shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-700'">
               {{ t.label }}
@@ -172,7 +165,7 @@ const avatarColor  = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarCol
       </div>
 
       <!-- Scrollable List -->
-      <div class="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 custom-scrollbar min-h-0">
+      <div id="quote-scroll" class="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 custom-scrollbar min-h-0">
           
           <div v-if="loading" class="space-y-1.5">
             <div v-for="i in 6" :key="i" class="p-4 rounded-xl border border-gray-100 bg-white/40 animate-pulse flex justify-between">
@@ -230,6 +223,15 @@ const avatarColor  = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarCol
                 </div>
             </div>
           </div>
+
+          <!-- Load more / total info -->
+          <div v-if="!loading && quotes.length" class="py-3 text-center">
+            <button v-if="hasMore" @click="loadMore" :disabled="loadingMore"
+              class="px-4 py-2 text-xs font-bold text-primary-600 hover:text-primary-700 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors disabled:opacity-50">
+              {{ loadingMore ? 'Loading…' : `Load more (${quotes.length} of ${total})` }}
+            </button>
+            <p v-else class="text-[11px] text-gray-400 font-medium">Showing all {{ total }} quotations</p>
+          </div>
       </div>
     </div>
 
@@ -239,7 +241,7 @@ const avatarColor  = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarCol
       <div class="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-multiply" style="background-image: url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E');"></div>
       
       <router-view v-slot="{ Component }">
-        <component :is="Component" :key="$route.fullPath" @refresh="load" />
+        <component :is="Component" :key="$route.fullPath" @refresh="reload" />
       </router-view>
     </div>
   </div>

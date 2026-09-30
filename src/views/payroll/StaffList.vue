@@ -1,33 +1,29 @@
 <script setup>
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { list, task } from '../../api'
+import { task } from '../../api'
 import { inr } from '../../utils/currency'
-import { useListRefresh } from '../../composables/useListRefresh'
+import { usePagedList } from '../../composables/usePagedList'
 
 const route  = useRoute()
 const router = useRouter()
 
-const staff   = ref([])
-const loading = ref(true)
 const search  = ref('')
 const deleting = ref(null)
 
-async function load() {
-  loading.value = true
-  try {
-    const { data } = await list('StaffMember')
-    staff.value = data.data || []
-  } catch {}
-  loading.value = false
-}
+const { items: staff, loading, loadingMore, total, hasMore, reload } =
+  usePagedList('StaffMember', {
+    limit: 50,
+    scrollContainer: '#staff-scroll',
+    listRouteName: 'Payroll',
+  })
 
 async function deleteStaff(id) {
   if (!confirm('Delete this staff member?')) return
   deleting.value = id
   try {
     await task('StaffMember', 'delete', { id })
-    await load()
+    await reload()
   } catch {}
   deleting.value = null
 }
@@ -40,8 +36,6 @@ const filtered = () => {
     s.role?.toLowerCase().includes(q)
   )
 }
-
-useListRefresh(load, { listRouteName: 'Payroll' })
 </script>
 
 <template>
@@ -84,7 +78,7 @@ useListRefresh(load, { listRouteName: 'Payroll' })
       </div>
 
       <!-- Scrollable List -->
-      <div class="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 custom-scrollbar min-h-0">
+      <div id="staff-scroll" class="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 custom-scrollbar min-h-0">
 
         <div v-if="loading" class="space-y-1.5">
           <div v-for="i in 5" :key="i"
@@ -153,13 +147,20 @@ useListRefresh(load, { listRouteName: 'Payroll' })
             </button>
           </div>
         </div>
+
+        <!-- Load more / Showing all -->
+        <div v-if="!loading && staff.length" class="text-center py-3">
+          <div v-if="loadingMore" class="text-[11px] text-gray-400 font-semibold">Loading more...</div>
+          <div v-else-if="hasMore" class="text-[11px] text-gray-400 font-semibold">Showing {{ staff.length }} of {{ total }} — scroll for more</div>
+          <div v-else class="text-[11px] text-gray-400 font-semibold">Showing all {{ staff.length }}</div>
+        </div>
       </div>
     </div>
 
     <!-- Right Pane: Child route -->
     <div v-if="$route.name !== 'Payroll'" class="split-pane-right relative z-20">
       <router-view v-slot="{ Component }">
-        <component :is="Component" :key="$route.fullPath" @refresh="load" />
+        <component :is="Component" :key="$route.fullPath" @refresh="reload" />
       </router-view>
     </div>
 

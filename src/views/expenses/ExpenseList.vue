@@ -1,12 +1,12 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { list, task, all } from '../../api'
+import { task, all } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
 import { useTour } from '../../composables/useTour'
-import { useListRefresh } from '../../composables/useListRefresh'
+import { usePagedList } from '../../composables/usePagedList'
 import { useRole } from '../../composables/useRole'
 
 const { startTour, isTourSeen } = useTour('expense-list', [
@@ -18,15 +18,25 @@ const { startTour, isTourSeen } = useTour('expense-list', [
 const { can } = useRole()
 const router       = useRouter()
 const route        = useRoute()
-const expenses     = ref([])
 const categories   = ref([])
-const loading      = ref(true)
 const deleteTarget = ref(null)
 const deleting     = ref(false)
-const searchQ      = ref('')
 const catFilter    = ref('')
 const showFilters = ref(false)
 const filter = ref({ preset: '', from_date: '', to_date: '' })
+
+const { items: expenses, loading, loadingMore, total, hasMore, search: searchQ, onSearch, loadMore, reload } =
+  usePagedList('Expense', {
+    limit: 50,
+    scrollContainer: '#expense-scroll',
+    listRouteName: 'Expenses',
+    params: () => {
+      const p = { sort_by: 'e.expense_date', sort_order: 'desc' }
+      if (filter.value.from_date) p['filter.from_date'] = filter.value.from_date
+      if (filter.value.to_date)   p['filter.to_date']   = filter.value.to_date
+      return p
+    },
+  })
 
 // ── Date presets ──────────────────────────────────────────────────────────────
 const presets = [
@@ -47,36 +57,27 @@ function applyPreset(p) {
   else if (p === 'last_month') { filter.value.from_date = fmt(new Date(now.getFullYear(), now.getMonth() - 1, 1)); filter.value.to_date = fmt(new Date(now.getFullYear(), now.getMonth(), 0)) }
   else if (p === 'quarter') { const q = Math.floor(now.getMonth() / 3); filter.value.from_date = fmt(new Date(now.getFullYear(), q * 3, 1)); filter.value.to_date = fmt(now) }
   else if (p === 'year') { filter.value.from_date = fmt(new Date(now.getFullYear(), 0, 1)); filter.value.to_date = fmt(now) }
-  load()
+  reload()
 }
-function clearDate() { filter.value.preset = ''; filter.value.from_date = ''; filter.value.to_date = ''; showFilters.value = false; load() }
+function clearDate() { filter.value.preset = ''; filter.value.from_date = ''; filter.value.to_date = ''; showFilters.value = false; reload() }
 const activeDateLabel = () => {
   if (filter.value.preset) return presets.find(p => p.value === filter.value.preset)?.label
   if (filter.value.from_date && filter.value.to_date) return `${filter.value.from_date} → ${filter.value.to_date}`
   return null
 }
 
-// ── Load ──────────────────────────────────────────────────────────────────────
-async function load() {
-  loading.value = true
+// ── Load categories separately ───────────────────────────────────────────────
+onMounted(async () => {
   try {
-    const p = { sort_by: 'e.expense_date', sort_order: 'desc' }
-    if (filter.value.from_date) p['filter.from_date'] = filter.value.from_date
-    if (filter.value.to_date)   p['filter.to_date']   = filter.value.to_date
-    const [eRes, cRes] = await Promise.all([list('Expense', p), all('ExpenseCategory')])
-    expenses.value   = eRes.data?.data || []
+    const cRes = await all('ExpenseCategory')
     categories.value = cRes.data?.data || []
   } catch {}
-  loading.value = false
-}
+  setTimeout(() => { if (!isTourSeen()) startTour() }, 800)
+})
 
 const filteredExpenses = () => {
   let e = expenses.value
   if (catFilter.value) e = e.filter(x => x.category_id == catFilter.value)
-  if (searchQ.value) {
-    const q = searchQ.value.toLowerCase()
-    e = e.filter(x => x.description?.toLowerCase().includes(q) || x.vendor_name?.toLowerCase().includes(q) || x.category_name?.toLowerCase().includes(q) || x.reference?.toLowerCase().includes(q) || String(x.amount).includes(q))
-  }
   return e
 }
 
@@ -93,7 +94,7 @@ async function confirmDelete() {
   try {
     await task('Expense', 'delete', { id: deleteTarget.value.id })
     deleteTarget.value = null
-    await load()
+    await reload()
   } catch { deleteTarget.value = null }
   finally { deleting.value = false }
 }
@@ -106,11 +107,6 @@ const methodColors = {
 }
 const methodLabel = m => ({ cash: 'Cash', upi: 'UPI', neft: 'NEFT', cheque: 'Cheque', card: 'Card', other: 'Other' }[m] || m)
 
-useListRefresh(() => {
-  load().then(() => {
-    setTimeout(() => { if (!isTourSeen()) startTour() }, 800)
-  })
-}, { listRouteName: 'Expenses' })
 </script>
 
 <template>
@@ -140,14 +136,14 @@ useListRefresh(() => {
 
         <!-- Search / Filter Expansion -->
         <div v-show="showFilters" class="mb-4 space-y-2 animate-fade-in-up">
-            <input v-model="searchQ" type="text"
+            <input :value="searchQ" @input="onSearch($event.target.value)" type="text"
               class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-xs font-semibold rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 block px-3 py-2 transition-all"
               placeholder="Search vendor, description, amount..." />
             
             <div class="flex gap-2 items-center">
-              <input v-model="filter.from_date" type="date" class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-[11px] font-semibold rounded-lg px-2 py-1.5 focus:border-primary-500 transition-all" @change="filter.preset = ''; load()" />
+              <input v-model="filter.from_date" type="date" class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-[11px] font-semibold rounded-lg px-2 py-1.5 focus:border-primary-500 transition-all" @change="filter.preset = ''; reload()" />
               <span class="text-gray-400 text-[10px] font-bold uppercase">to</span>
-              <input v-model="filter.to_date" type="date" class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-[11px] font-semibold rounded-lg px-2 py-1.5 focus:border-primary-500 transition-all" @change="filter.preset = ''; load()" />
+              <input v-model="filter.to_date" type="date" class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-[11px] font-semibold rounded-lg px-2 py-1.5 focus:border-primary-500 transition-all" @change="filter.preset = ''; reload()" />
             </div>
         </div>
 
@@ -168,7 +164,7 @@ useListRefresh(() => {
       </div>
 
       <!-- Scrollable List -->
-      <div class="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 custom-scrollbar min-h-0" data-tour="exp-list">
+      <div id="expense-scroll" class="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 custom-scrollbar min-h-0" data-tour="exp-list">
 
           <div v-if="loading" class="space-y-1.5">
             <div v-for="i in 6" :key="i" class="p-4 rounded-xl border border-gray-100 bg-white/40 animate-pulse flex justify-between">
@@ -228,6 +224,13 @@ useListRefresh(() => {
                 </div>
             </div>
           </div>
+
+          <!-- Load more / Showing all -->
+          <div v-if="!loading && expenses.length" class="text-center py-3">
+            <div v-if="loadingMore" class="text-[11px] text-gray-400 font-semibold">Loading more...</div>
+            <div v-else-if="hasMore" class="text-[11px] text-gray-400 font-semibold">Showing {{ expenses.length }} of {{ total }} — scroll for more</div>
+            <div v-else class="text-[11px] text-gray-400 font-semibold">Showing all {{ expenses.length }}</div>
+          </div>
       </div>
     </div>
 
@@ -237,7 +240,7 @@ useListRefresh(() => {
       <div class="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-multiply" style="background-image: url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E');"></div>
       
       <router-view v-slot="{ Component }">
-        <component :is="Component" :key="$route.fullPath" @refresh="load" />
+        <component :is="Component" :key="$route.fullPath" @refresh="reload" />
       </router-view>
     </div>
 

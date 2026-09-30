@@ -1,11 +1,11 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { list, task, all } from '../../api'
+import { task, all } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 import { useTour } from '../../composables/useTour'
-import { useListRefresh } from '../../composables/useListRefresh'
+import { usePagedList } from '../../composables/usePagedList'
 import { useRole } from '../../composables/useRole'
 
 const { startTour, isTourSeen } = useTour('product-list', [
@@ -17,33 +17,32 @@ const { startTour, isTourSeen } = useTour('product-list', [
 const { can } = useRole()
 const router      = useRouter()
 const route       = useRoute()
-const products    = ref([])
 const taxRates    = ref([])
-const loading     = ref(true)
 const deleteTarget = ref(null)
 const deleting    = ref(false)
-const searchQ     = ref('')
 const typeFilter  = ref('')
 
-async function load() {
-  loading.value = true
-  try {
-    const [pRes, tRes] = await Promise.all([list('Product'), all('TaxRate')])
-    products.value = pRes.data?.data || []
-    taxRates.value = tRes.data?.data || []
-  } catch {}
-  loading.value = false
-}
+const { items: products, loading, loadingMore, total, hasMore, search, onSearch, loadMore, reload } = usePagedList('Product', {
+  limit: 50,
+  params: () => {
+    const p = { 'filter.active': 1, sort_by: 'p.name', sort_order: 'asc' }
+    if (typeFilter.value) p['filter.type'] = typeFilter.value
+    return p
+  },
+  listRouteName: 'Products',
+  scrollContainer: '#product-scroll',
+})
 
-const filteredProducts = () => {
-  let p = products.value
-  if (typeFilter.value) p = p.filter(x => x.type === typeFilter.value)
-  if (searchQ.value) {
-    const q = searchQ.value.toLowerCase()
-    p = p.filter(x => x.name?.toLowerCase().includes(q) || x.hsn_sac?.includes(q) || x.sku?.toLowerCase().includes(q) || String(x.price).includes(q))
-  }
-  return p
-}
+onMounted(async () => {
+  try { taxRates.value = (await all('TaxRate')).data?.data || [] } catch {}
+  setTimeout(() => { if (!isTourSeen()) startTour() }, 800)
+})
+
+watch(typeFilter, () => reload())
+
+async function load() { await reload() }
+
+const filteredProducts = () => products.value
 
 function openAdd() {
   router.push('/products/new')
@@ -190,11 +189,6 @@ async function printBarcodes() {
   setTimeout(() => w.print(), 400)
 }
 
-useListRefresh(() => {
-  load().then(() => {
-    setTimeout(() => { if (!isTourSeen()) startTour() }, 800)
-  })
-}, { listRouteName: 'Products' })
 </script>
 
 <template>
@@ -233,7 +227,7 @@ useListRefresh(() => {
         <!-- Search & Filter -->
         <div class="mb-2 space-y-2 animate-fade-in-up">
             <div class="flex gap-2">
-                <input v-model="searchQ" type="text" data-tour="prod-search"
+                <input :value="search" @input="onSearch($event.target.value)" type="text" data-tour="prod-search"
                   class="flex-1 bg-white border border-gray-200 shadow-sm text-gray-900 text-xs font-semibold rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 block px-3 py-2 transition-all min-w-0"
                   placeholder="Search name, HSN, SKU, price..." />
                   
@@ -250,7 +244,7 @@ useListRefresh(() => {
       </div>
 
       <!-- Scrollable List -->
-      <div class="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 custom-scrollbar min-h-0" data-tour="prod-list">
+      <div id="product-scroll" class="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 custom-scrollbar min-h-0" data-tour="prod-list">
 
           <div v-if="loading" class="space-y-1.5">
             <div v-for="i in 6" :key="i" class="p-4 rounded-xl border border-gray-100 bg-white/40 animate-pulse flex justify-between items-center gap-3">
@@ -312,6 +306,15 @@ useListRefresh(() => {
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 </button>
             </div>
+          </div>
+
+          <!-- Load more / total info -->
+          <div v-if="!loading && products.length" class="py-3 text-center">
+            <button v-if="hasMore" @click="loadMore" :disabled="loadingMore"
+              class="px-4 py-2 text-xs font-bold text-primary-600 hover:text-primary-700 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors disabled:opacity-50">
+              {{ loadingMore ? 'Loading…' : `Load more (${products.length} of ${total})` }}
+            </button>
+            <p v-else class="text-[11px] text-gray-400 font-medium">Showing all {{ total }} items</p>
           </div>
       </div>
     </div>

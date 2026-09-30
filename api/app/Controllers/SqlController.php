@@ -15,12 +15,29 @@ class SqlController
         $input = array_merge(RequestHolder::all(), ['select_type' => 'list']);
         $limit = (int)($input['limit'] ?? 0);
         if ($limit <= 0) {
-            $input['limit'] = 200;
+            $input['limit'] = 50;
         } elseif ($limit > 1000) {
             $input['limit'] = 1000;
         }
-        $sql   = (new Sql())->load($name, $input);
-        return $this->json($response, ['success' => true, 'data' => $sql->assocList()]);
+        if (!isset($input['page']) || (int)$input['page'] < 1) {
+            $input['page'] = 1;
+        }
+        $sql  = (new Sql())->load($name, $input);
+        $data = $sql->assocList();
+
+        // Also fetch total count (same filters, no limit)
+        $totalInput = array_merge(RequestHolder::all(), ['select_type' => 'total']);
+        $totalSql   = (new Sql())->load($name, $totalInput);
+        $totalRow   = $totalSql->assoc();
+        $total      = (int)($totalRow['total'] ?? count($data));
+
+        return $this->json($response, [
+            'success' => true,
+            'data'    => $data,
+            'total'   => $total,
+            'limit'   => (int)$input['limit'],
+            'page'    => (int)$input['page'],
+        ]);
     }
 
     public function all(Request $request, Response $response, array $args): Response

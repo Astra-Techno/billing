@@ -1,21 +1,17 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { list } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
-import { useListRefresh } from '../../composables/useListRefresh'
+import { usePagedList } from '../../composables/usePagedList'
 import { useRole } from '../../composables/useRole'
 
 const { can } = useRole()
 const router      = useRouter()
 const route       = useRoute()
-const orders      = ref([])
-const loading     = ref(true)
 const showFilters = ref(false)
-const filter      = ref({ status: '', search: '' })
-let timer = null
+const filter      = ref({ status: '' })
 
 const tabs = [
   { label: 'All',      value: '' },
@@ -30,20 +26,18 @@ const statusLabel = s => ({ draft: 'Draft', sent: 'Sent', received: 'Received', 
 const avatarColors = ['bg-blue-100 text-blue-700', 'bg-emerald-100 text-emerald-700', 'bg-purple-100 text-purple-700', 'bg-amber-100 text-amber-700', 'bg-pink-100 text-pink-700']
 const avatarColor  = name => avatarColors[(name?.charCodeAt(0) || 0) % avatarColors.length]
 
-async function load() {
-  loading.value = true
-  try {
+const { items: orders, loading, loadingMore, total, hasMore, search, onSearch, loadMore, reload } = usePagedList('PurchaseOrder', {
+  limit: 50,
+  params: () => {
     const p = { sort_by: 'po.created_at', sort_order: 'desc' }
     if (filter.value.status) p['filter.status'] = filter.value.status
-    if (filter.value.search) p['filter.search'] = `%${filter.value.search}%`
-    const { data } = await list('PurchaseOrder', p)
-    orders.value = data.data || []
-  } catch {}
-  loading.value = false
-}
+    return p
+  },
+  listRouteName: 'PurchaseOrders',
+  scrollContainer: '#po-scroll',
+})
 
-function onSearch() { clearTimeout(timer); timer = setTimeout(load, 350) }
-useListRefresh(load, { listRouteName: 'PurchaseOrders' })
+async function load() { await reload() }
 </script>
 
 <template>
@@ -71,7 +65,7 @@ useListRefresh(load, { listRouteName: 'PurchaseOrders' })
 
         <!-- Search -->
         <div v-show="showFilters" class="mb-3 animate-fade-in-up">
-          <input v-model="filter.search" @input="onSearch" type="text"
+          <input :value="search" @input="onSearch($event.target.value)" type="text"
             class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-xs font-semibold rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 block px-3 py-2 transition-all"
             placeholder="Search no., supplier, mobile, amount…" />
         </div>
@@ -79,7 +73,7 @@ useListRefresh(load, { listRouteName: 'PurchaseOrders' })
         <!-- Status Tabs -->
         <div class="flex gap-1 bg-gray-100/80 p-1 rounded-[10px] ring-1 ring-inset ring-gray-200/50 overflow-x-auto hide-scrollbar">
           <button v-for="t in tabs" :key="t.value"
-            @click="filter.status = t.value; load()"
+            @click="filter.status = t.value; reload()"
             class="flex-1 text-[11px] font-semibold rounded-md py-1.5 transition-all whitespace-nowrap px-2"
             :class="filter.status === t.value ? 'bg-white shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-700'">
             {{ t.label }}
@@ -88,7 +82,7 @@ useListRefresh(load, { listRouteName: 'PurchaseOrders' })
       </div>
 
       <!-- Scrollable List -->
-      <div class="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 custom-scrollbar min-h-0">
+      <div id="po-scroll" class="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 custom-scrollbar min-h-0">
 
         <div v-if="loading" class="space-y-1.5">
           <div v-for="i in 5" :key="i" class="p-4 rounded-xl border border-gray-100 bg-white/40 animate-pulse flex justify-between items-center gap-3">
@@ -132,8 +126,13 @@ useListRefresh(load, { listRouteName: 'PurchaseOrders' })
             </div>
           </div>
 
-          <div class="pt-3 pb-1 text-center">
-            <span class="text-[10px] text-gray-400 font-semibold uppercase tracking-widest">{{ orders.length }} order{{ orders.length !== 1 ? 's' : '' }}</span>
+          <!-- Load more / total info -->
+          <div class="py-3 text-center">
+            <button v-if="hasMore" @click="loadMore" :disabled="loadingMore"
+              class="px-4 py-2 text-xs font-bold text-primary-600 hover:text-primary-700 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors disabled:opacity-50">
+              {{ loadingMore ? 'Loading…' : `Load more (${orders.length} of ${total})` }}
+            </button>
+            <p v-else class="text-[11px] text-gray-400 font-medium">Showing all {{ total }} orders</p>
           </div>
         </div>
       </div>
