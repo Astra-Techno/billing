@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { task, item, all } from '../../api'
 import { inr } from '../../utils/currency'
 import { today, addDays } from '../../utils/date'
+import { defaultUnits } from '../../utils/units'
 import { useToast } from '../../composables/useToast'
 import { useFormKeys } from '../../composables/useFormKeys'
 
@@ -175,7 +176,7 @@ onUnmounted(() => document.removeEventListener('keydown', onFormShortcut))
 
 const blankItem = () => ({ description: '', hsn_sac: '', unit: 'Nos', quantity: 1, unit_price: '', gst_rate: 18, product_id: null })
 
-const units    = ['Nos', 'Kg', 'Ltr', 'Hrs', 'Pcs', 'Mtr', 'Box', 'Set', 'Pair']
+const units    = defaultUnits
 const gstRates = [0, 5, 12, 18, 28]
 
 const form = ref({

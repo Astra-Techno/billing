@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { task, item, all, list } from '../../api'
 import { inr } from '../../utils/currency'
 import { today, addDays } from '../../utils/date'
+import { defaultUnits } from '../../utils/units'
 import { calcInvoice } from '../../utils/invoice'
 import { useToast } from '../../composables/useToast'
 import { useBusinessStore } from '../../stores/business'
@@ -194,7 +195,7 @@ const form = ref({
 
 const selectedClient = computed(() => clients.value.find(c => c.id == form.value.client_id))
 
-const units    = ['Nos', 'Kg', 'Ltr', 'Hrs', 'Pcs', 'Mtr', 'Box', 'Set']
+const units    = defaultUnits
 const gstRates = [0, 5, 12, 18, 28]
 const totals   = computed(() => calcInvoice(form.value.items))
 

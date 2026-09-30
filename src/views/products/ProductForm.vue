@@ -6,6 +6,7 @@ import HelpIcon from '../../components/HelpIcon.vue'
 import InfoTip from '../../components/InfoTip.vue'
 import { useToast } from '../../composables/useToast'
 import { useFormKeys } from '../../composables/useFormKeys'
+import { defaultUnits } from '../../utils/units'
 
 const router = useRouter()
 const route  = useRoute()
@@ -22,7 +23,7 @@ const saved    = ref(false)
 const isEdit = route.params.id && route.params.id !== 'new'
 const productId = isEdit ? route.params.id : null
 
-const units = ['Nos', 'Pcs', 'Packet', 'Box', 'Bag', 'Dozen', 'Kg', 'Gram', 'Ltr', 'Ml', 'Mtr', 'Feet', 'Set', 'Pair', 'Hrs', 'Month', 'Year']
+const units = defaultUnits
 
 const locations = ref([])
 const productLocations = ref([]) // [{ location_id, price, stock }]
@@ -303,9 +304,8 @@ function printBarcode() {
             
             <div>
               <label class="inv-label">Unit of Measure</label>
-              <select v-model="form.unit" class="inv-select mt-1 !bg-white">
-                <option v-for="u in units" :key="u">{{ u }}</option>
-              </select>
+              <input v-model="form.unit" list="unit-options" class="inv-input mt-1 !bg-white" placeholder="Type or select" />
+              <datalist id="unit-options"><option v-for="u in units" :key="u" :value="u" /></datalist>
             </div>
 
             <div>
@@ -323,7 +323,7 @@ function printBarcode() {
             <template v-if="form.type === 'product' && form.track_stock">
               <div class="grid grid-cols-2 gap-3"><div><label class="inv-label">Purchase Price (₹)</label><input v-model="form.purchase_price" type="number" step="0.01" class="inv-input mt-1 !bg-white" /></div><div><label class="inv-label">MRP (₹)</label><input v-model="form.mrp" type="number" step="0.01" class="inv-input mt-1 !bg-white" /></div></div>
               <div><label class="inv-label flex items-center gap-2">Low Stock Alert <InfoTip text="The app highlights this item when current stock reaches this quantity." /></label><input v-model="form.reorder_level" type="number" step="0.001" class="inv-input mt-1 !bg-white" /></div>
-              <div class="rounded-xl border p-3"><div class="flex items-center gap-2 text-xs font-bold uppercase text-gray-600">Purchase unit conversion <InfoTip text="Example: if you purchase one Box containing 12 Pieces, keep billing unit as Pcs, choose Box here and enter 12." /></div><div class="mt-2 grid grid-cols-2 gap-3"><select v-model="form.base_unit" class="inv-select !bg-white"><option v-for="u in units" :key="u">{{u}}</option></select><input v-model="form.conversion_factor" type="number" min="0.0001" step="0.0001" class="inv-input !bg-white" placeholder="1 purchase unit = ?" /></div></div>
+              <div class="rounded-xl border p-3"><div class="flex items-center gap-2 text-xs font-bold uppercase text-gray-600">Purchase unit conversion <InfoTip text="Example: if you purchase one Box containing 12 Pieces, keep billing unit as Pcs, choose Box here and enter 12." /></div><div class="mt-2 grid grid-cols-2 gap-3"><input v-model="form.base_unit" list="unit-options" class="inv-input !bg-white" placeholder="Type or select" /><input v-model="form.conversion_factor" type="number" min="0.0001" step="0.0001" class="inv-input !bg-white" placeholder="1 purchase unit = ?" /></div></div>
               <div class="rounded-xl border p-3 space-y-2"><p class="flex items-center gap-2 text-xs font-bold uppercase text-gray-600">Optional trade controls <InfoTip text="Use these only when your trade needs them: batch and expiry for pharmacy/food; serial or IMEI for electronics." /></p><label class="flex gap-2 text-sm"><input v-model="form.batch_tracking" type="checkbox"/> Batch / lot number</label><label class="flex gap-2 text-sm"><input v-model="form.expiry_tracking" type="checkbox"/> Expiry date</label><label class="flex gap-2 text-sm"><input v-model="form.serial_tracking" type="checkbox"/> Serial / IMEI number</label></div>
             </template>
           </div>

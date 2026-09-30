@@ -1,0 +1,7 @@
+export const defaultUnits = [
+  'Nos', 'Pcs', 'Packet', 'Box', 'Bag', 'Bottle', 'Can', 'Carton', 'Tin', 'Dozen',
+  'Kg', 'Gram', 'Ltr', 'Ml',
+  'Mtr', 'Feet', 'Inch', 'Cm', 'Sq.ft', 'Sq.mtr',
+  'Set', 'Pair', 'Roll', 'Bundle', 'Sheet',
+  'Hrs', 'Day', 'Month', 'Year',
+]

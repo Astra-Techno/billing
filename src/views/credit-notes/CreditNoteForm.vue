@@ -5,6 +5,7 @@ import { list, task, item } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 import { today } from '../../utils/date'
+import { defaultUnits } from '../../utils/units'
 import { useToast } from '../../composables/useToast'
 import { useFormKeys } from '../../composables/useFormKeys'
 
@@ -67,7 +68,7 @@ const reasons = [
   { value: 'other',      label: 'Other' },
 ]
 
-const units    = ['Nos', 'Kg', 'Ltr', 'Hrs', 'Pcs', 'Mtr', 'Box', 'Set']
+const units    = defaultUnits
 const gstRates = [0, 5, 12, 18, 28]
 
 const filteredProducts = computed(() => {

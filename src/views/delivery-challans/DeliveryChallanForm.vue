@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { task, item, all } from '../../api'
 import { inr } from '../../utils/currency'
 import { today } from '../../utils/date'
+import { defaultUnits } from '../../utils/units'
 import { useToast } from '../../composables/useToast'
 import { useFormKeys } from '../../composables/useFormKeys'
 
@@ -179,7 +180,7 @@ async function saveNewProduct() {
 
 const blankItem = () => ({ description: '', hsn_sac: '', unit: 'Nos', quantity: 1, product_id: null })
 
-const units = ['Nos', 'Kg', 'Ltr', 'Hrs', 'Pcs', 'Mtr', 'Box', 'Set', 'Pair']
+const units = defaultUnits
 
 const form = ref({
   client_id:    '',

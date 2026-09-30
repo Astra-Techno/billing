@@ -8,6 +8,7 @@ import { inr } from '../../utils/currency'
 import { today, addDays } from '../../utils/date'
 import { calcInvoice } from '../../utils/invoice'
 import { handleLineItemTab } from '../../composables/useFormKeys'
+import { defaultUnits } from '../../utils/units'
 
 const router        = useRouter()
 const route         = useRoute()
@@ -401,7 +402,11 @@ const form = ref({
   items: [blankItem()],
 })
 
-const units        = ['Nos', 'Kg', 'Ltr', 'Hrs', 'Pcs', 'Mtr', 'Box', 'Set', 'Pair']
+const units = computed(() => {
+  const custom = products.value
+    .map(p => p.unit).filter(u => u && !defaultUnits.includes(u))
+  return [...defaultUnits, ...new Set(custom)]
+})
 function qtyStep(unit) {
   if (['Nos', 'Pcs', 'Box', 'Set', 'Pair'].includes(unit)) return 1
   if (unit === 'Hrs') return 0.5
@@ -830,11 +835,13 @@ async function submit() {
                           </div>
                           <div v-if="showProductInlineCreate" class="border-t border-gray-100 p-3 space-y-2 bg-gray-50/50">
                             <p class="text-[11px] font-semibold text-gray-500">No product found — save as new:</p>
+                            <div class="flex gap-1 p-0.5 bg-gray-100 rounded-lg mb-1">
+                              <button type="button" @click="newProduct.type='service'" class="flex-1 py-1 rounded-md text-[11px] font-bold transition-all" :class="newProduct.type==='service'?'bg-white text-primary-700 shadow-sm':'text-gray-500'">Service</button>
+                              <button type="button" @click="newProduct.type='product'" class="flex-1 py-1 rounded-md text-[11px] font-bold transition-all" :class="newProduct.type==='product'?'bg-white text-primary-700 shadow-sm':'text-gray-500'">Product</button>
+                            </div>
                             <div class="grid grid-cols-2 gap-2">
                               <input v-model="newProduct.price" type="number" min="0" step="0.01" class="inv-input w-full text-xs" placeholder="Price (₹) *" />
-                              <select v-model="newProduct.unit" class="inv-select w-full text-xs">
-                                <option v-for="u in units" :key="u">{{ u }}</option>
-                              </select>
+                              <input v-model="newProduct.unit" list="inv-unit-options" class="inv-input w-full text-xs" placeholder="Unit" />
                             </div>
                             <div v-if="addProductError" class="text-[11px] text-red-600 bg-red-50 rounded px-2 py-1">{{ addProductError }}</div>
                             <button type="button" @click="saveNewProduct" :disabled="addingProduct"
@@ -932,11 +939,13 @@ async function submit() {
                         </div>
                         <div v-if="showProductInlineCreate" class="rounded-xl border border-gray-200 p-3 space-y-2 bg-white">
                           <p class="text-xs font-semibold text-gray-500">No product found — save as new:</p>
+                          <div class="flex gap-1 p-0.5 bg-gray-100 rounded-lg mb-1">
+                            <button type="button" @click="newProduct.type='service'" class="flex-1 py-1.5 rounded-md text-xs font-bold transition-all" :class="newProduct.type==='service'?'bg-white text-primary-700 shadow-sm':'text-gray-500'">Service</button>
+                            <button type="button" @click="newProduct.type='product'" class="flex-1 py-1.5 rounded-md text-xs font-bold transition-all" :class="newProduct.type==='product'?'bg-white text-primary-700 shadow-sm':'text-gray-500'">Product</button>
+                          </div>
                           <div class="grid grid-cols-2 gap-2">
                             <input v-model="newProduct.price" type="number" min="0" step="0.01" class="inv-input w-full text-sm !bg-white" placeholder="Price (₹) *" />
-                            <select v-model="newProduct.unit" class="inv-select w-full text-sm !bg-white">
-                              <option v-for="u in units" :key="u">{{ u }}</option>
-                            </select>
+                            <input v-model="newProduct.unit" list="inv-unit-options" class="inv-input w-full text-sm !bg-white" placeholder="Unit" />
                           </div>
                           <div v-if="addProductError" class="text-xs text-red-600 bg-red-50 rounded-lg px-2 py-1.5">{{ addProductError }}</div>
                           <button type="button" @click="saveNewProduct" :disabled="addingProduct"
@@ -1278,4 +1287,5 @@ async function submit() {
       </button>
     </div>
   </div>
+  <datalist id="inv-unit-options"><option v-for="u in units" :key="u" :value="u" /></datalist>
 </template>
