@@ -41,8 +41,8 @@ class Product extends Task
             'mrp'         => ($input['mrp'] ?? '') !== '' ? (float)$input['mrp'] : null,
             'reorder_level' => (float)($input['reorder_level'] ?? 0),
             'tax_rate_id' => !empty($input['tax_rate_id']) ? (int)$input['tax_rate_id'] : null,
-            'sku'         => $input['sku']          ?? null,
-            'barcode'     => $input['barcode']      ?? null,
+            'sku'         => trim((string)($input['sku'] ?? '')) ?: null,
+            'barcode'     => trim((string)($input['barcode'] ?? '')) ?: null,
             'base_unit'   => $input['base_unit']    ?? ($input['unit'] ?? 'Nos'),
             'conversion_factor' => max(0.0001, (float)($input['conversion_factor'] ?? 1)),
             'batch_tracking' => !empty($input['batch_tracking']) ? 1 : 0,
@@ -89,14 +89,16 @@ class Product extends Task
             'purchase_price' => (float)($input['purchase_price'] ?? $product->purchase_price ?? 0),
             'mrp'         => ($input['mrp'] ?? '') !== '' ? (float)$input['mrp'] : null,
             'reorder_level' => (float)($input['reorder_level'] ?? $product->reorder_level ?? 0),
-            'tax_rate_id' => !empty($input['tax_rate_id']) ? (int)$input['tax_rate_id'] : $product->tax_rate_id,
-            'sku'         => $input['sku']          ?? $product->sku,
-            'barcode'     => $input['barcode']      ?? $product->barcode,
+            'tax_rate_id' => !empty($input['tax_rate_id']) ? (int)$input['tax_rate_id']
+                           : (array_key_exists('tax_rate_id', $input) ? null : $product->tax_rate_id),
+            'sku'         => trim((string)($input['sku'] ?? '')) ?: null,
+            'barcode'     => trim((string)($input['barcode'] ?? '')) ?: null,
             'base_unit'   => $input['base_unit']    ?? $product->base_unit ?? $product->unit,
             'conversion_factor' => max(0.0001, (float)($input['conversion_factor'] ?? $product->conversion_factor ?? 1)),
             'batch_tracking' => !empty($input['batch_tracking']) ? 1 : 0,
             'expiry_tracking' => !empty($input['expiry_tracking']) ? 1 : 0,
             'serial_tracking' => !empty($input['serial_tracking']) ? 1 : 0,
+            'active'      => isset($input['is_active']) ? ($input['is_active'] ? 1 : 0) : (int)$product->active,
         ]);
         $product->save();
 
