@@ -336,7 +336,7 @@
     }
   }
   .inv-main    { @apply flex flex-col gap-4; }
-  .inv-sidebar { @apply flex flex-col gap-4; }
+  .inv-sidebar { @apply flex flex-col gap-4 lg:sticky lg:top-4 lg:self-start; }
   .inv-card    { @apply bg-white rounded-gpay-xl border border-google-border shadow-soft overflow-hidden; }
   .inv-shell input[type=number]::-webkit-outer-spin-button,
   .inv-shell input[type=number]::-webkit-inner-spin-button {
