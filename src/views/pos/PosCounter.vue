@@ -197,13 +197,13 @@ onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Cli
   .pos-page{padding:8px 8px 0;overflow:hidden}
   .pos-layout{grid-template-columns:1fr;grid-template-rows:1fr auto;height:100%}
   .pos-catalog{overflow:hidden;min-height:0}
-  .pos-cart{position:fixed;left:0;right:0;bottom:0;z-index:30;border-radius:18px 18px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.12);max-height:55vh;display:flex;flex-direction:column;transition:max-height .25s ease}
+  .pos-cart{position:fixed;left:0;right:0;bottom:64px;z-index:30;border-radius:18px 18px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.12);max-height:50vh;display:flex;flex-direction:column;transition:max-height .25s ease}
   .pos-cart.cart-collapsed .pos-lines,
   .pos-cart.cart-collapsed .pos-details-row,
   .pos-cart.cart-collapsed .pos-pay-row,
   .pos-cart.cart-collapsed .pos-shop-bar{display:none}
   .pos-cart-head{cursor:pointer;-webkit-tap-highlight-color:transparent}
-  .pos-products{grid-template-columns:repeat(3,minmax(0,1fr));padding-bottom:80px}
+  .pos-products{grid-template-columns:repeat(3,minmax(0,1fr));padding-bottom:140px}
   .pos-lines{flex:1;overflow-y:auto;min-height:0;max-height:28vh}
   .pos-footer{border-radius:0;position:static}
 }
