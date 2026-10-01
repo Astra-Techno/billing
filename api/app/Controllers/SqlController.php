@@ -25,11 +25,15 @@ class SqlController
         $sql  = (new Sql())->load($name, $input);
         $data = $sql->assocList();
 
-        // Also fetch total count (same filters, no limit)
-        $totalInput = array_merge(RequestHolder::all(), ['select_type' => 'total']);
-        $totalSql   = (new Sql())->load($name, $totalInput);
-        $totalRow   = $totalSql->assoc();
-        $total      = (int)($totalRow['total'] ?? count($data));
+        // Also fetch total count (same filters, no limit) — skip if SQL has no 'total' select type
+        try {
+            $totalInput = array_merge(RequestHolder::all(), ['select_type' => 'total']);
+            $totalSql   = (new Sql())->load($name, $totalInput);
+            $totalRow   = $totalSql->assoc();
+            $total      = (int)($totalRow['total'] ?? count($data));
+        } catch (\Throwable $e) {
+            $total = count($data);
+        }
 
         return $this->json($response, [
             'success' => true,
