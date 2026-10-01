@@ -9,7 +9,7 @@ const products=ref([]), clients=ref([]), locations=ref([]), stockRows=ref([]), p
 const cart=ref([]), category=ref('All'), search=ref(''), clientSearch=ref(''), selectedClient=ref(null)
 const customerName=ref(''), customerPhone=ref(''), note=ref(''), paymentMethod=ref('cash'), locationId=ref(null)
 const loading=ref(true), paying=ref(false), error=ref(''), success=ref(''), printAfterPay=ref(true)
-const searchInput=ref(null)
+const searchInput=ref(null), cartExpanded=ref(false)
 const scanning=ref(false), scannerReady=ref(false), lastScanCode=ref('')
 let html5QrCode=null
 
@@ -98,9 +98,9 @@ onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Cli
         <p v-if="!visibleProducts.length" class="pos-empty">No matching product found.</p>
       </div>
     </section>
-    <aside class="pos-cart">
+    <aside class="pos-cart" :class="{'cart-collapsed':!cartExpanded && cart.length}">
       <div v-if="locations.length>1" class="pos-shop-bar"><select v-model="locationId" @change="onLocationChange"><option v-for="l in locations" :key="l.id" :value="l.id">{{l.name}}</option></select></div>
-      <div class="pos-cart-head"><div><p>CURRENT SALE</p><h2>{{itemCount}} {{itemCount===1?'item':'items'}}</h2></div><button v-if="cart.length" @click="clearCart">Clear Cart</button></div>
+      <div class="pos-cart-head" @click="cartExpanded=!cartExpanded"><div><p>CURRENT SALE</p><h2>{{itemCount}} {{itemCount===1?'item':'items'}}<span class="cart-toggle lg:hidden">{{cartExpanded?'▾':'▴'}}</span></h2></div><button v-if="cart.length" @click.stop="clearCart">Clear Cart</button></div>
       <div class="pos-lines"><div v-if="!cart.length" class="pos-empty"><strong>Cart is empty</strong><small>Tap products from the left.</small></div><article v-for="line in cart" :key="line.product.id"><div><strong>{{line.product.name}}</strong><small>{{inr(price(line.product))}} × {{line.quantity}}</small></div><div class="pos-step"><button title="Reduce quantity" @click="change(line,-1)">−</button><b>{{line.quantity}}</b><button title="Increase quantity" @click="change(line,1)">+</button></div><strong>{{inr(price(line.product)*line.quantity)}}</strong></article></div>
       <div class="pos-bottom">
         <div class="pos-details-row"><input v-model="customerName" placeholder="Customer name" /><input v-model="customerPhone" inputmode="tel" placeholder="Mobile" /><input v-model="note" placeholder="Note" /></div>
@@ -130,6 +130,7 @@ onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Cli
 <style scoped>
 .pos-page{height:100%;background:#f5f7fb;padding:10px 14px;display:flex;flex-direction:column}
 .pos-cart-head p{font-size:11px;font-weight:800;letter-spacing:.16em;color:#6366f1}
+.cart-toggle{margin-left:6px;font-size:12px;color:#94a3b8}
 .pos-layout{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:10px;flex:1;min-height:0}
 .pos-catalog,.pos-cart{background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 4px 16px rgba(15,23,42,.04)}
 .pos-catalog{padding:10px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
@@ -192,6 +193,19 @@ onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Cli
 #pos-scanner-view video{width:100%!important;border-radius:0!important}
 .scan-loading{text-align:center;padding:12px;font-size:13px;color:#6b7280}
 .scan-hint{text-align:center;padding:12px 16px;font-size:12px;color:#94a3b8;border-top:1px solid #f1f5f9}
-@media(max-width:1023px){.pos-page{padding:8px 8px 80px}.pos-layout{grid-template-columns:1fr}.pos-cart{position:static}.pos-products{grid-template-columns:repeat(3,minmax(0,1fr))}.pos-footer{position:sticky;bottom:72px;z-index:20}.pos-lines{max-height:none}}
+@media(max-width:1023px){
+  .pos-page{padding:8px 8px 0;overflow:hidden}
+  .pos-layout{grid-template-columns:1fr;grid-template-rows:1fr auto;height:100%}
+  .pos-catalog{overflow:hidden;min-height:0}
+  .pos-cart{position:fixed;left:0;right:0;bottom:0;z-index:30;border-radius:18px 18px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.12);max-height:55vh;display:flex;flex-direction:column;transition:max-height .25s ease}
+  .pos-cart.cart-collapsed .pos-lines,
+  .pos-cart.cart-collapsed .pos-details-row,
+  .pos-cart.cart-collapsed .pos-pay-row,
+  .pos-cart.cart-collapsed .pos-shop-bar{display:none}
+  .pos-cart-head{cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .pos-products{grid-template-columns:repeat(3,minmax(0,1fr));padding-bottom:80px}
+  .pos-lines{flex:1;overflow-y:auto;min-height:0;max-height:28vh}
+  .pos-footer{border-radius:0;position:static}
+}
 @media(max-width:430px){.pos-product{min-height:110px;padding:8px}.pos-products{grid-template-columns:repeat(2,minmax(0,1fr))}.pos-footer button{min-width:120px;padding:10px 8px}}
 </style>
