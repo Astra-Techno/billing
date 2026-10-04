@@ -11,6 +11,44 @@ const business   = ref(null)
 const locations  = ref([])       // shops with own GSTIN
 const selGstin   = ref('')       // '' = business GSTIN (all), or a specific location GSTIN
 const loading    = ref(true)
+
+// All unique GSTINs available for filing (business-level + location-level)
+const gstinOptions = computed(() => {
+  const opts = []
+  const seen = new Set()
+  // Business-level GSTIN
+  if (business.value?.gstin) {
+    opts.push({ gstin: business.value.gstin, label: business.value.name || 'Business', type: 'business', shops: [] })
+    seen.add(business.value.gstin)
+  }
+  // Location-level GSTINs (group shops sharing the same GSTIN)
+  for (const loc of locations.value) {
+    if (!loc.gstin) continue
+    if (seen.has(loc.gstin)) {
+      const existing = opts.find(o => o.gstin === loc.gstin)
+      if (existing) existing.shops.push(loc.name)
+      continue
+    }
+    seen.add(loc.gstin)
+    opts.push({ gstin: loc.gstin, label: loc.name, type: 'location', shops: [loc.name] })
+  }
+  return opts
+})
+
+const hasAnyGstin = computed(() => gstinOptions.value.length > 0)
+const multipleGstins = computed(() => gstinOptions.value.length > 1)
+
+// The effective GSTIN for the current filing
+const filingGstin = computed(() => {
+  if (selGstin.value) return selGstin.value
+  if (gstinOptions.value.length === 1) return gstinOptions.value[0].gstin
+  return business.value?.gstin || ''
+})
+// Label for selected GSTIN
+const filingGstinLabel = computed(() => {
+  const opt = gstinOptions.value.find(o => o.gstin === filingGstin.value)
+  return opt ? opt.label : ''
+})
 const fetching   = ref(false)
 const building   = ref(false)
 const fetchError = ref('')
@@ -177,19 +215,29 @@ async function loadSales() {
   try {
     const r = periodRange.value
     const p = {'filter.from_date':r.fromDate,'filter.to_date':r.toDate,limit:2000}
-    // Filter by location GSTIN when a specific shop is selected
-    if (selGstin.value) p['filter.location_gstin'] = selGstin.value
+    // Filter by location GSTIN when a specific location GSTIN is selected
+    const fg = filingGstin.value
+    const fgOpt = gstinOptions.value.find(o => o.gstin === fg)
+    if (fgOpt && fgOpt.type === 'location') {
+      p['filter.location_gstin'] = fg
+    }
     const [paid,partial,sent,overdue] = await Promise.all([
       list('Invoice',{...p,'filter.status':'paid'}),
       list('Invoice',{...p,'filter.status':'partial'}),
       list('Invoice',{...p,'filter.status':'sent'}),
       list('Invoice',{...p,'filter.status':'overdue'}),
     ])
-    const all_inv = [
+    let all_inv = [
       ...(paid.data?.data||[]),...(partial.data?.data||[]),
       ...(sent.data?.data||[]),...(overdue.data?.data||[]),
     ].filter(inv=>inv.invoice_type!=='bill_of_supply')
      .sort((a,b)=>new Date(a.issue_date)-new Date(b.issue_date))
+
+    // When filing under business GSTIN, exclude invoices that have a different location GSTIN
+    if (fgOpt && fgOpt.type === 'business' && multipleGstins.value) {
+      const otherGstins = new Set(gstinOptions.value.filter(o => o.type === 'location').map(o => o.gstin))
+      all_inv = all_inv.filter(inv => !inv.location_gstin || !otherGstins.has(inv.location_gstin))
+    }
 
     const itemRes = await Promise.all(all_inv.map(inv=>list('Invoice:items',{invoice_id:inv.id})))
     const map={}
@@ -284,7 +332,7 @@ async function createFile() {
     const hsnArr=Object.values(hsnMap).map((h,i)=>({num:i+1,...h,qty:r2(h.qty),val:r2(h.val),txval:r2(h.txval),camt:r2(h.camt),samt:r2(h.samt),iamt:r2(h.iamt)}))
 
     const gstr1={
-      gstin:selGstin.value||business.value?.gstin||'',fp:r.fp,version:'GST3.0.4',
+      gstin:filingGstin.value,fp:r.fp,version:'GST3.0.4',
       b2b:Object.entries(b2bMap).map(([ctin,inv])=>({ctin,inv})),
       b2cs:b2csArr,
       b2cl:Object.entries(b2clMap).map(([pos,inv])=>({pos,inv})),
@@ -364,7 +412,7 @@ function generatePdf() {
     <h1>${biz?.name || 'Business'}</h1>
     <p class="sub">GST Return Report</p>
     <div class="meta">
-      <span><b>GSTIN:</b> ${biz?.gstin || 'Not provided'}</span>
+      <span><b>GSTIN:</b> ${filingGstin.value || 'Not provided'}</span>
       <span><b>Period:</b> ${r.label}</span>
       <span><b>Generated:</b> ${new Date().toLocaleDateString('en-IN')}</span>
     </div>
@@ -410,6 +458,10 @@ async function load() {
     // Collect locations that have their own GSTIN
     const allLocs = invRes.data?.data?.locations || []
     locations.value = allLocs.filter(l => l.gstin && l.active)
+    // Auto-select first GSTIN if none selected
+    if (!selGstin.value && gstinOptions.value.length) {
+      selGstin.value = gstinOptions.value[0].gstin
+    }
   } catch{}
   loading.value=false
 }
@@ -465,12 +517,12 @@ useListRefresh(load)
       </div>
 
       <!-- GSTIN missing -->
-      <div v-if="!loading && !business?.gstin"
+      <div v-if="!loading && !hasAnyGstin"
         class="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-5 print:hidden">
         <svg class="w-5 h-5 mt-0.5 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
         <div class="text-sm text-amber-900">
           <p class="font-semibold">Your GSTIN is missing</p>
-          <p class="mt-0.5 text-amber-800">Add it in <RouterLink to="/settings" class="underline font-medium">Settings → GST Details</RouterLink> before filing.</p>
+          <p class="mt-0.5 text-amber-800">Add it in <RouterLink to="/settings" class="underline font-medium">Settings → GST Details</RouterLink> or in <RouterLink to="/inventory" class="underline font-medium">Inventory → Shop settings</RouterLink> before filing.</p>
         </div>
       </div>
 
@@ -479,7 +531,7 @@ useListRefresh(load)
         <h1 class="text-3xl font-black text-gray-900 mb-1">{{ business?.name || 'GST Return Report' }}</h1>
         <p class="text-sm font-semibold text-gray-500 mb-4 tracking-widest uppercase">GST RETURN REPORT</p>
         <div class="flex justify-center gap-8 text-sm text-gray-700">
-          <p><span class="font-semibold text-gray-400">GSTIN:</span> {{ business?.gstin || 'Not provided' }}</p>
+          <p><span class="font-semibold text-gray-400">GSTIN:</span> {{ filingGstin || 'Not provided' }}</p>
           <p><span class="font-semibold text-gray-400">Period:</span> {{ periodRange?.label }}</p>
           <p><span class="font-semibold text-gray-400">Generated:</span> {{ new Date().toLocaleDateString('en-IN') }}</p>
         </div>
@@ -494,16 +546,46 @@ useListRefresh(load)
 
           <div class="card overflow-hidden print:hidden">
 
-            <!-- GSTIN selector (only shown when shops have separate GSTINs) -->
-            <div v-if="locations.length" class="px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-gray-100">
+            <!-- GSTIN selector (shown when multiple GSTINs exist) -->
+            <div v-if="gstinOptions.length > 1" class="px-5 py-4 border-b border-gray-100">
+              <div class="mb-3">
+                <p class="text-sm font-semibold text-gray-900">Filing GSTIN</p>
+                <p class="text-xs text-gray-400 mt-0.5">Each GSTIN files its own return — select which one to generate</p>
+              </div>
+              <div class="grid gap-2">
+                <button v-for="opt in gstinOptions" :key="opt.gstin" type="button"
+                  @click="selGstin = opt.gstin"
+                  class="flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all"
+                  :class="filingGstin === opt.gstin
+                    ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-200'
+                    : 'border-gray-200 hover:border-gray-300'">
+                  <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0"
+                    :class="filingGstin === opt.gstin ? 'border-primary-600' : 'border-gray-300'">
+                    <div v-if="filingGstin === opt.gstin" class="w-2.5 h-2.5 rounded-full bg-primary-600"></div>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-bold text-gray-900 font-mono">{{ opt.gstin }}</p>
+                    <p class="text-xs text-gray-500 truncate">
+                      {{ opt.type === 'business' ? (business?.name || 'Business') : opt.shops.join(', ') }}
+                    </p>
+                  </div>
+                  <span class="text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0"
+                    :class="opt.type === 'business'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'bg-green-100 text-green-700'">
+                    {{ opt.type === 'business' ? 'Business' : opt.shops.length > 1 ? opt.shops.length + ' shops' : 'Shop' }}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Single GSTIN display (when only one exists) -->
+            <div v-else-if="gstinOptions.length === 1" class="px-5 py-4 flex items-center justify-between border-b border-gray-100">
               <div>
                 <p class="text-sm font-semibold text-gray-900">Filing GSTIN</p>
-                <p class="text-xs text-gray-400 mt-0.5">Generate return for a specific shop GSTIN</p>
+                <p class="text-xs text-gray-400 mt-0.5">{{ gstinOptions[0].label }}</p>
               </div>
-              <select v-model="selGstin" class="form-select w-full sm:w-56 py-2 text-sm font-semibold text-gray-800">
-                <option value="">All — {{ business?.gstin || 'Business GSTIN' }}</option>
-                <option v-for="l in locations" :key="l.id" :value="l.gstin">{{ l.gstin }} — {{ l.name }}</option>
-              </select>
+              <span class="text-sm font-bold font-mono text-gray-800">{{ gstinOptions[0].gstin }}</span>
             </div>
 
             <!-- Financial year -->
@@ -618,10 +700,15 @@ useListRefresh(load)
         <!-- Period badge -->
         <div class="flex items-center justify-between print:hidden">
           <div class="flex items-center gap-2">
-            <span class="bg-primary-100 text-primary-700 text-sm font-semibold px-3 py-1 rounded-full">
-              <svg class="w-4 h-4 inline-block text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> {{ periodRange.label }}
-            </span>
-            <span class="text-xs text-gray-400">{{ invoices.length }} bills found</span>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="bg-primary-100 text-primary-700 text-sm font-semibold px-3 py-1 rounded-full">
+                <svg class="w-4 h-4 inline-block text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> {{ periodRange.label }}
+              </span>
+              <span v-if="filingGstin" class="bg-gray-100 text-gray-600 text-xs font-mono font-medium px-2.5 py-1 rounded-full">
+                {{ filingGstin }}
+              </span>
+              <span class="text-xs text-gray-400">{{ invoices.length }} bills found</span>
+            </div>
           </div>
           <button @click="step=1" class="text-xs text-gray-400 hover:text-gray-600 underline">
             Change month
@@ -838,6 +925,7 @@ useListRefresh(load)
           <div>
             <h2 class="text-lg font-bold text-gray-900">Your GST file is ready!</h2>
             <p class="text-sm text-gray-600 mt-1">{{ resultData.period }}</p>
+            <p v-if="filingGstin" class="text-xs font-mono text-gray-500 mt-1">GSTIN: {{ filingGstin }}</p>
           </div>
           <p class="text-xs text-gray-500">The file was downloaded automatically. Check your Downloads folder.</p>
         </div>
