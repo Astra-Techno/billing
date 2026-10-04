@@ -32,7 +32,7 @@ class Invoice extends Task
         // Determine supply type (intra-state = CGST+SGST, inter-state = IGST)
         $clientId = !empty($input['client_id']) ? (int)$input['client_id'] : null;
         // client_id is optional — retail/walk-in invoices
-        $supplyType = $this->resolveSupplyType($businessId, $clientId, $input);
+        $supplyType = $this->resolveSupplyType($businessId, $clientId, $input, $locationId);
 
         $fy = Sequence::financialYearForDate((string)$input['issue_date']);
         $draftNumberEnabled = (int)(DB::selectOne('SELECT draft_invoice_number_enabled FROM businesses WHERE id = ?', [$businessId])->draft_invoice_number_enabled ?? 0);
@@ -43,9 +43,18 @@ class Invoice extends Task
         $discountValue = (float)($input['discount_value'] ?? 0);
         $totals = $this->calculateTotals($input['items'], $supplyType, $discountType, $discountValue);
 
+        // Snapshot location GST identity onto the invoice
+        $locGstin = null; $locStateId = null;
+        if ($locationId) {
+            $loc = DB::selectOne("SELECT gstin, state_id FROM inventory_locations WHERE id = ? AND business_id = ? LIMIT 1", [$locationId, $businessId]);
+            if ($loc) { $locGstin = $loc->gstin ?: null; $locStateId = $loc->state_id ?: null; }
+        }
+
         $invoice = InvoiceTable::create([
             'business_id'   => $businessId,
             'location_id'   => $locationId,
+            'location_gstin'   => $locGstin,
+            'location_state_id'=> $locStateId,
             'created_by'    => $this->userId(),
             'client_id'     => $clientId,
             'quote_id'      => !empty($input['quote_id']) ? (int)$input['quote_id'] : null,
@@ -116,15 +125,25 @@ class Invoice extends Task
             $this->fail('Only draft invoices can be edited. Cancel and duplicate if needed.');
 
         $this->validateItems($input['items'] ?? []);
-        $clientId = !empty($input['client_id']) ? (int)$input['client_id'] : null;
+        $clientId   = !empty($input['client_id']) ? (int)$input['client_id'] : null;
+        $locationId = (int)($input['location_id'] ?? $invoice->location_id ?? 0);
         // client_id is optional — retail/walk-in invoices
-        $supplyType    = $this->resolveSupplyType($businessId, $clientId, $input);
+        $supplyType    = $this->resolveSupplyType($businessId, $clientId, $input, $locationId);
         $discountType  = $input['discount_type']  ?? 'percent';
         $discountValue = (float)($input['discount_value'] ?? 0);
         $totals        = $this->calculateTotals($input['items'], $supplyType, $discountType, $discountValue);
 
+        // Snapshot location GST identity
+        $locGstin = null; $locStateId = null;
+        if ($locationId) {
+            $loc = DB::selectOne("SELECT gstin, state_id FROM inventory_locations WHERE id = ? AND business_id = ? LIMIT 1", [$locationId, $businessId]);
+            if ($loc) { $locGstin = $loc->gstin ?: null; $locStateId = $loc->state_id ?: null; }
+        }
+
         $invoice->fill([
             'client_id'      => $clientId,
+            'location_gstin'    => $locGstin,
+            'location_state_id' => $locStateId,
             'invoice_type'   => $input['invoice_type']    ?? $invoice->invoice_type,
             'issue_date'     => $input['issue_date']      ?? $invoice->issue_date,
             'due_date'       => $input['due_date']        ?? $invoice->due_date,
@@ -579,23 +598,27 @@ class Invoice extends Task
      * Inter-state → IGST
      * Uses business state vs client state.
      */
-    private function resolveSupplyType(int $businessId, ?int $clientId, array $input): string
+    private function resolveSupplyType(int $businessId, ?int $clientId, array $input, int $locationId = 0): string
     {
         // Allow explicit override
         if (!empty($input['supply_type'])) return $input['supply_type'];
 
-        $business = DB::selectOne(
-            "SELECT state_id FROM businesses WHERE id = ? LIMIT 1",
-            [$businessId]
-        );
-        $client = DB::selectOne(
-            "SELECT state_id FROM clients WHERE id = ? LIMIT 1",
-            [$clientId]
-        );
+        // Use location state_id if set, otherwise fall back to business state_id
+        $sellerStateId = null;
+        if ($locationId) {
+            $loc = DB::selectOne("SELECT state_id FROM inventory_locations WHERE id = ? AND business_id = ? LIMIT 1", [$locationId, $businessId]);
+            if ($loc && $loc->state_id) $sellerStateId = $loc->state_id;
+        }
+        if (!$sellerStateId) {
+            $business = DB::selectOne("SELECT state_id FROM businesses WHERE id = ? LIMIT 1", [$businessId]);
+            $sellerStateId = $business->state_id ?? null;
+        }
 
-        if (!$business || !$client) return 'intra';
+        $client = DB::selectOne("SELECT state_id FROM clients WHERE id = ? LIMIT 1", [$clientId]);
 
-        return ($business->state_id == $client->state_id) ? 'intra' : 'inter';
+        if (!$sellerStateId || !$client) return 'intra';
+
+        return ($sellerStateId == $client->state_id) ? 'intra' : 'inter';
     }
 
     /**

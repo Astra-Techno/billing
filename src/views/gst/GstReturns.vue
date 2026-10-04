@@ -1,13 +1,15 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useListRefresh } from '../../composables/useListRefresh'
-import { all, item, list } from '../../api'
+import { all, item, list, task } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
 import { inr } from '../../utils/currency'
 
 // ── Base state ────────────────────────────────────────────────────────────────
 const states     = ref([])
 const business   = ref(null)
+const locations  = ref([])       // shops with own GSTIN
+const selGstin   = ref('')       // '' = business GSTIN (all), or a specific location GSTIN
 const loading    = ref(true)
 const fetching   = ref(false)
 const building   = ref(false)
@@ -175,6 +177,8 @@ async function loadSales() {
   try {
     const r = periodRange.value
     const p = {'filter.from_date':r.fromDate,'filter.to_date':r.toDate,limit:2000}
+    // Filter by location GSTIN when a specific shop is selected
+    if (selGstin.value) p['filter.location_gstin'] = selGstin.value
     const [paid,partial,sent,overdue] = await Promise.all([
       list('Invoice',{...p,'filter.status':'paid'}),
       list('Invoice',{...p,'filter.status':'partial'}),
@@ -280,7 +284,7 @@ async function createFile() {
     const hsnArr=Object.values(hsnMap).map((h,i)=>({num:i+1,...h,qty:r2(h.qty),val:r2(h.val),txval:r2(h.txval),camt:r2(h.camt),samt:r2(h.samt),iamt:r2(h.iamt)}))
 
     const gstr1={
-      gstin:business.value?.gstin||'',fp:r.fp,version:'GST3.0.4',
+      gstin:selGstin.value||business.value?.gstin||'',fp:r.fp,version:'GST3.0.4',
       b2b:Object.entries(b2bMap).map(([ctin,inv])=>({ctin,inv})),
       b2cs:b2csArr,
       b2cl:Object.entries(b2clMap).map(([pos,inv])=>({pos,inv})),
@@ -400,9 +404,12 @@ function startOver() { step.value=1; invoices.value=[]; selectedIds.value=new Se
 async function load() {
   loading.value=true
   try {
-    const [stRes,bizRes]=await Promise.all([all('IndianState'),item('Business')])
+    const [stRes,bizRes,invRes]=await Promise.all([all('IndianState'),item('Business'),task('Inventory','overview')])
     states.value=stRes.data?.data||[]
     business.value=bizRes.data?.data||null
+    // Collect locations that have their own GSTIN
+    const allLocs = invRes.data?.data?.locations || []
+    locations.value = allLocs.filter(l => l.gstin && l.active)
   } catch{}
   loading.value=false
 }
@@ -486,6 +493,19 @@ useListRefresh(load)
         <div v-if="step===1" class="space-y-4">
 
           <div class="card overflow-hidden print:hidden">
+
+            <!-- GSTIN selector (only shown when shops have separate GSTINs) -->
+            <div v-if="locations.length" class="px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-gray-100">
+              <div>
+                <p class="text-sm font-semibold text-gray-900">Filing GSTIN</p>
+                <p class="text-xs text-gray-400 mt-0.5">Generate return for a specific shop GSTIN</p>
+              </div>
+              <select v-model="selGstin" class="form-select w-full sm:w-56 py-2 text-sm font-semibold text-gray-800">
+                <option value="">All — {{ business?.gstin || 'Business GSTIN' }}</option>
+                <option v-for="l in locations" :key="l.id" :value="l.gstin">{{ l.gstin }} — {{ l.name }}</option>
+              </select>
+            </div>
+
             <!-- Financial year -->
             <div class="px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-gray-100">
               <div>

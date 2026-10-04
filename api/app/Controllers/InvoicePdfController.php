@@ -82,8 +82,18 @@ class InvoicePdfController
             [$businessId]
         );
 
+        // Location GST override
+        $loc = null;
+        if ($inv->location_id) {
+            $loc = DB::selectOne(
+                'SELECT il.*, s.name AS state_name FROM inventory_locations il LEFT JOIN indian_states s ON s.id = il.state_id WHERE il.id = ?',
+                [$inv->location_id]
+            );
+        }
+
         $inv   = (array)$inv;
         $biz   = (array)($biz ?? []);
+        $loc   = $loc ? (array)$loc : [];
         $items = array_map(fn($r) => (array)$r, $items);
 
         $html = $this->renderHtml($inv, $items, $biz, $mode);
@@ -212,11 +222,16 @@ class InvoicePdfController
 
         $logoSrc = !empty($biz['logo']) ? ($this->logoBase64($biz['logo']) ?? '') : '';
 
-        // Business info
+        // Business info (location GSTIN/address overrides when set)
         $bizName    = $this->h($biz['name'] ?? '');
-        $bizGstin   = $this->h($biz['gstin'] ?? '');
-        $bizAddr    = implode(', ', array_filter([$biz['address_line1'] ?? '', $biz['address_line2'] ?? '']));
-        $bizCity    = implode(', ', array_filter([$biz['city'] ?? '', $biz['state_name'] ?? '', $biz['pincode'] ?? '']));
+        $bizGstin   = $this->h(!empty($inv['location_gstin']) ? $inv['location_gstin'] : ($biz['gstin'] ?? ''));
+        if (!empty($loc['address'])) {
+            $bizAddr = $this->h($loc['address']);
+            $bizCity = implode(', ', array_filter([$loc['city'] ?? '', $loc['state_name'] ?? '', $loc['pincode'] ?? '']));
+        } else {
+            $bizAddr = implode(', ', array_filter([$biz['address_line1'] ?? '', $biz['address_line2'] ?? '']));
+            $bizCity = implode(', ', array_filter([$biz['city'] ?? '', $biz['state_name'] ?? '', $biz['pincode'] ?? '']));
+        }
         $bizContact = implode(' &middot; ', array_filter([
             $biz['mobile'] ? $this->h($biz['mobile']) : '',
             $biz['email']  ? $this->h($biz['email'])  : '',

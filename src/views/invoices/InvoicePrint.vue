@@ -58,6 +58,15 @@ const paper = computed(() => route.query.paper || localStorage.getItem('invoiceP
 const isReceipt = computed(() => paper.value === 'thermal58' || paper.value === 'thermal80')
 const effectiveTpl = computed(() => tpl.value)
 
+// Effective seller GSTIN / address — location overrides business
+const sellerGstin = computed(() => invoice.value?.location_gstin || business.value?.gstin || '')
+const sellerAddress = computed(() => {
+  if (invoice.value?.location_address) {
+    return [invoice.value.location_address, invoice.value.location_city, invoice.value.location_state_name, invoice.value.location_pincode].filter(Boolean).join(', ')
+  }
+  return [business.value?.address_line1, business.value?.address_line2, business.value?.city, business.value?.state_name, business.value?.pincode].filter(Boolean).join(', ')
+})
+
 // Print modes: normal, dc (delivery challan — no prices), proforma
 const mode = computed(() => route.query.mode || 'normal')
 const isDC = computed(() => mode.value === 'dc')
@@ -174,9 +183,9 @@ onMounted(async () => {
       <header class="receipt-header">
         <img v-if="business?.logo" :src="business.logo" alt="" class="receipt-logo" />
         <h1>{{ business?.name || invoice.business_name }}</h1>
-        <p v-if="business?.address_line1">{{ [business.address_line1, business.address_line2, business.city, business.state_name, business.pincode].filter(Boolean).join(', ') }}</p>
+        <p v-if="invoice.location_address || business?.address_line1">{{ invoice.location_address ? [invoice.location_address, invoice.location_city, invoice.location_state_name, invoice.location_pincode].filter(Boolean).join(', ') : [business.address_line1, business.address_line2, business.city, business.state_name, business.pincode].filter(Boolean).join(', ') }}</p>
         <p v-if="business?.mobile">Tel: {{ business.mobile }}</p>
-        <p v-if="business?.gstin">GSTIN: {{ business.gstin }}</p>
+        <p v-if="invoice.location_gstin || business?.gstin">GSTIN: {{ invoice.location_gstin || business.gstin }}</p>
       </header>
       <div class="receipt-rule"></div>
       <p class="receipt-title">{{ invoiceTitle }}</p>
@@ -228,7 +237,7 @@ onMounted(async () => {
           <p v-if="business?.address_line1" class="text-xs text-gray-500">{{ business.address_line1 }}<span v-if="business.address_line2">, {{ business.address_line2 }}</span></p>
           <p v-if="business?.city" class="text-xs text-gray-500">{{ [business?.city, business?.state_name, business?.pincode].filter(Boolean).join(', ') }}</p>
           <p v-if="business?.mobile || business?.email" class="text-xs text-gray-500">{{ [business?.mobile, business?.email].filter(Boolean).join(' · ') }}</p>
-          <p v-if="business?.gstin || invoice.business_gstin" class="text-xs text-gray-500 font-mono">GSTIN: {{ business?.gstin || invoice.business_gstin }}</p>
+          <p v-if="sellerGstin" class="text-xs text-gray-500 font-mono">GSTIN: {{ sellerGstin }}</p>
         </div>
       </div>
 
@@ -373,7 +382,7 @@ onMounted(async () => {
           <p v-if="business?.address_line1" style="font-size: 11px; color: #6b7280; margin-top: 2px;">{{ business.address_line1 }}<span v-if="business.address_line2">, {{ business.address_line2 }}</span></p>
           <p v-if="business?.city" style="font-size: 11px; color: #6b7280;">{{ [business?.city, business?.state_name, business?.pincode].filter(Boolean).join(', ') }}</p>
           <p v-if="business?.mobile || business?.email" style="font-size: 11px; color: #6b7280;">{{ [business?.mobile, business?.email].filter(Boolean).join(' · ') }}</p>
-          <p v-if="business?.gstin" style="font-size: 11px; color: #6b7280; font-family: monospace;">GSTIN: {{ business.gstin }}</p>
+          <p v-if="sellerGstin" style="font-size: 11px; color: #6b7280; font-family: monospace;">GSTIN: {{ sellerGstin }}</p>
         </div>
         <div style="background: #f8faff; border-radius: 10px; padding: 12px 16px;">
           <p style="font-size: 10px; font-weight: 700; color: #1a5fd4; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">Bill To</p>
@@ -508,9 +517,9 @@ onMounted(async () => {
             <img v-if="business?.logo" :src="business.logo" style="width: 40px; height: 40px; object-fit: contain;" alt="logo" />
             <p style="font-size: 20px; font-weight: 700; color: #111827; letter-spacing: -0.02em;">{{ business?.name || invoice.business_name }}</p>
           </div>
-          <p v-if="business?.address_line1" style="font-size: 11px; color: #9ca3af; margin-top: 4px;">{{ [business.address_line1, business.address_line2, business?.city, business?.state_name, business?.pincode].filter(Boolean).join(', ') }}</p>
+          <p v-if="sellerAddress" style="font-size: 11px; color: #9ca3af; margin-top: 4px;">{{ sellerAddress }}</p>
           <p v-if="business?.mobile || business?.email" style="font-size: 11px; color: #9ca3af;">{{ [business?.mobile, business?.email].filter(Boolean).join(' · ') }}</p>
-          <p v-if="business?.gstin" style="font-size: 11px; color: #9ca3af; font-family: monospace;">GSTIN: {{ business.gstin }}</p>
+          <p v-if="sellerGstin" style="font-size: 11px; color: #9ca3af; font-family: monospace;">GSTIN: {{ sellerGstin }}</p>
         </div>
         <div style="text-align: right;">
           <p style="font-size: 28px; font-weight: 300; color: #111827; letter-spacing: -0.02em; text-transform: uppercase;">{{ invoiceTitle }}</p>
@@ -642,7 +651,7 @@ onMounted(async () => {
                 <p style="font-size: 24px; font-weight: 900; font-style: italic; color: #000; letter-spacing: 0.02em;">{{ business?.name || invoice.business_name }}</p>
                 <p v-if="business?.address_line1" style="font-size: 11px; color: #333;">{{ business.address_line1 }}<span v-if="business.address_line2">, {{ business.address_line2 }}</span></p>
                 <p v-if="business?.city" style="font-size: 11px; color: #333;">{{ [business?.city, business?.state_name, business?.pincode].filter(Boolean).join(' - ') }}<span v-if="business?.state_name"> {{ business.state_name }} Dt.</span></p>
-                <p v-if="business?.gstin || invoice.business_gstin" style="font-size: 12px; font-weight: 700; color: #000;">GST IN : {{ business?.gstin || invoice.business_gstin }}</p>
+                <p v-if="sellerGstin" style="font-size: 12px; font-weight: 700; color: #000;">GST IN : {{ sellerGstin }}</p>
                 <p v-if="business?.mobile || business?.email" style="font-size: 11px; color: #333;">
                   <span v-if="business?.mobile">Phone : {{ business.mobile }}</span>
                   <span v-if="business?.mobile && business?.email"> &nbsp; </span>

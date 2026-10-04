@@ -18,7 +18,7 @@ class Inventory extends Task
         $locationId = (int)($input['location_id'] ?? 0);
         $whereLocation = $locationId ? ' AND l.id = ?' : '';
         $params = $locationId ? [$businessId, $locationId] : [$businessId];
-        $locations = DB::select("SELECT id, name, type, address, is_default, active FROM inventory_locations WHERE business_id = ? ORDER BY active DESC, is_default DESC, name", [$businessId]);
+        $locations = DB::select("SELECT il.id, il.name, il.type, il.address, il.gstin, il.state_id, il.city, il.pincode, il.is_default, il.active, s.name AS state_name FROM inventory_locations il LEFT JOIN indian_states s ON s.id = il.state_id WHERE il.business_id = ? ORDER BY il.active DESC, il.is_default DESC, il.name", [$businessId]);
         $stock = DB::select("SELECT p.id product_id, p.name, p.sku, p.barcode, p.unit, p.purchase_price, p.mrp, p.reorder_level, p.batch_tracking, p.expiry_tracking, p.serial_tracking, l.id location_id, l.name location_name, pl.price location_price, COALESCE(sb.quantity,0) quantity, COALESCE(sb.reserved_quantity,0) reserved_quantity, COALESCE(sb.average_cost,p.purchase_price,0) average_cost, lm.last_moved_at FROM products p CROSS JOIN inventory_locations l LEFT JOIN product_locations pl ON pl.product_id=p.id AND pl.location_id=l.id LEFT JOIN stock_balances sb ON sb.business_id=p.business_id AND sb.product_id=p.id AND sb.location_id=l.id LEFT JOIN (SELECT business_id,product_id,location_id,MAX(occurred_at) last_moved_at FROM stock_movements GROUP BY business_id,product_id,location_id) lm ON lm.business_id=p.business_id AND lm.product_id=p.id AND lm.location_id=l.id WHERE p.business_id=? AND p.active=1 AND p.track_stock=1 AND l.active=1{$whereLocation} ORDER BY p.name,l.name", $params);
         $summary = ['products' => 0, 'low' => 0, 'out' => 0, 'dead' => 0, 'value' => 0.0];
         $seen = []; $deadSeen = [];
@@ -63,8 +63,12 @@ class Inventory extends Task
         $businessId = $this->requireBusiness(); $this->requireRole(['owner','admin']);
         $name = trim($input['name'] ?? ''); if ($name === '') $this->fail('Shop / Godown name is required.');
         $type = in_array($input['type'] ?? '', ['shop','godown','damaged'], true) ? $input['type'] : 'shop';
-        if (!empty($input['id'])) DB::statement('UPDATE inventory_locations SET name=?, type=?, address=?, active=? WHERE id=? AND business_id=?', [$name,$type,$input['address']??null,!empty($input['active'])?1:0,(int)$input['id'],$businessId]);
-        else DB::statement('INSERT INTO inventory_locations (business_id,name,type,address,is_default) VALUES (?,?,?,?,?)', [$businessId,$name,$type,$input['address']??null,!empty($input['is_default'])?1:0]);
+        $gstin   = trim($input['gstin'] ?? '') ?: null;
+        $stateId = !empty($input['state_id']) ? (int)$input['state_id'] : null;
+        $city    = trim($input['city'] ?? '') ?: null;
+        $pincode = trim($input['pincode'] ?? '') ?: null;
+        if (!empty($input['id'])) DB::statement('UPDATE inventory_locations SET name=?, type=?, address=?, gstin=?, state_id=?, city=?, pincode=?, active=? WHERE id=? AND business_id=?', [$name,$type,$input['address']??null,$gstin,$stateId,$city,$pincode,!empty($input['active'])?1:0,(int)$input['id'],$businessId]);
+        else DB::statement('INSERT INTO inventory_locations (business_id,name,type,address,gstin,state_id,city,pincode,is_default) VALUES (?,?,?,?,?,?,?,?,?)', [$businessId,$name,$type,$input['address']??null,$gstin,$stateId,$city,$pincode,!empty($input['is_default'])?1:0]);
         if (!empty($input['is_default'])) { $id = (int)($input['id'] ?? DB::lastInsertId()); DB::statement('UPDATE inventory_locations SET is_default=(id=?) WHERE business_id=?', [$id,$businessId]); }
         return $this->success(null, 'Shop / Godown saved.');
     }

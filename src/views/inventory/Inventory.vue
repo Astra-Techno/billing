@@ -15,7 +15,8 @@ const tab = ref('stock')
 const locationFilter = ref('')
 const settings = ref({ mode: 'none', advanced: false })
 const adjust = ref({ product_id: '', location_id: '', kind: 'purchase', quantity: '', unit_cost: '', batch_no: '', expiry_date: '', serial_numbers: '', note: '' })
-const place = ref({ name: '', type: 'shop', address: '', is_default: false, active: true })
+const place = ref({ name: '', type: 'shop', address: '', gstin: '', state_id: '', city: '', pincode: '', is_default: false, active: true })
+const states = ref([])
 const transfer = ref({ from_location_id: '', to_location_id: '', transfer_date: new Date().toISOString().slice(0, 10), notes: '', items: [{ product_id: '', quantity: '' }] })
 const search = ref('')
 const stockFilter = ref('all')
@@ -72,7 +73,7 @@ async function run(method, payload, ok) {
   busy.value = false
 }
 
-const blankPlace = () => ({ name: '', type: 'shop', address: '', is_default: false, active: true })
+const blankPlace = () => ({ name: '', type: 'shop', address: '', gstin: '', state_id: '', city: '', pincode: '', is_default: false, active: true })
 
 async function saveLocation() {
   await run('saveLocation', place.value, 'Shop / Godown saved.')
@@ -80,7 +81,7 @@ async function saveLocation() {
 }
 
 function editLocation(l) {
-  place.value = { id: l.id, name: l.name, type: l.type, address: l.address || '', is_default: !!+l.is_default, active: !!+l.active }
+  place.value = { id: l.id, name: l.name, type: l.type, address: l.address || '', gstin: l.gstin || '', state_id: l.state_id || '', city: l.city || '', pincode: l.pincode || '', is_default: !!+l.is_default, active: !!+l.active }
 }
 
 function cancelEdit() {
@@ -103,7 +104,10 @@ const saveTransfer = () => run('createTransfer', transfer.value, 'Transfer prepa
 const dispatch = id => run('dispatchTransfer', { id }, 'Stock sent and marked In transit.')
 const receive = id => run('receiveTransfer', { id }, 'Stock received at destination.')
 
-onMounted(load)
+onMounted(async () => {
+  load()
+  try { const r = await all('IndianState'); states.value = r.data?.data || [] } catch {}
+})
 </script>
 
 <template>
@@ -341,6 +345,36 @@ onMounted(load)
           <option value="damaged">Damaged / Returns Store</option>
         </select>
         <textarea v-model="place.address" class="form-input" placeholder="Address (optional)"></textarea>
+
+        <!-- GST Identity (optional — overrides business-level GST for this shop) -->
+        <details class="border border-gray-200 rounded-lg">
+          <summary class="px-3 py-2 text-xs font-bold text-gray-500 cursor-pointer select-none hover:bg-gray-50">GST Settings (optional — for multi-state shops)</summary>
+          <div class="px-3 pb-3 pt-1 space-y-3">
+            <div>
+              <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">GSTIN</label>
+              <input v-model="place.gstin" class="form-input" placeholder="e.g. 27AABCU9603R1ZM" maxlength="15" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">State</label>
+              <select v-model="place.state_id" class="form-input">
+                <option value="">— Use business state —</option>
+                <option v-for="s in states" :key="s.id" :value="s.id">{{ s.name }}</option>
+              </select>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">City</label>
+                <input v-model="place.city" class="form-input" placeholder="City" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Pincode</label>
+                <input v-model="place.pincode" class="form-input" placeholder="Pincode" maxlength="10" />
+              </div>
+            </div>
+            <p class="text-[10px] text-gray-400">Leave blank to use the business-level GST identity on invoices from this shop.</p>
+          </div>
+        </details>
+
         <label v-if="!place.id" class="flex items-center gap-2 text-sm text-gray-700">
           <input v-model="place.is_default" type="checkbox" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
           Use as default billing location
@@ -365,6 +399,8 @@ onMounted(load)
             <p class="text-[11px] text-gray-500 capitalize mt-0.5">
               {{ l.type }}
               <span v-if="+l.is_default"> · Default</span>
+              <span v-if="l.gstin"> · {{ l.gstin }}</span>
+              <span v-if="l.state_name"> · {{ l.state_name }}</span>
             </p>
           </div>
           <div class="flex items-center gap-2">
