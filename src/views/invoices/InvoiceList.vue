@@ -195,7 +195,8 @@ const {
   listRouteName: 'Invoices',
   params: () => {
     const p = { sort_by: 'i.created_at', sort_order: 'desc' }
-    if (filter.value.status)    p['filter.status']    = filter.value.status
+    if (filter.value.status === 'pos')  p['filter.invoice_type'] = 'retail'
+    else if (filter.value.status)       p['filter.status']       = filter.value.status
     if (filter.value.from_date) p['filter.from_date'] = filter.value.from_date
     if (filter.value.to_date)   p['filter.to_date']   = filter.value.to_date
     if (filter.value.client_id) p['filter.client_id'] = filter.value.client_id
@@ -227,6 +228,7 @@ const tabs = [
   { label: 'Awaiting Payment', value: 'sent' },
   { label: 'Overdue',          value: 'overdue' },
   { label: 'Paid',             value: 'paid' },
+  { label: 'POS Sales',        value: 'pos' },
 ]
 
 const METHODS = ['cash','upi','neft','rtgs','imps','cheque','card','netbanking','other']
@@ -300,7 +302,7 @@ const activeDateLabel = () => {
 
         <!-- Tabs -->
         <div data-tour="inv-tabs" class="flex gap-1 bg-gray-100/80 p-1 rounded-[10px] ring-1 ring-inset ring-gray-200/50 overflow-x-auto hide-scrollbar">
-            <button v-for="t in tabs.slice(0, 4)" :key="t.value"
+            <button v-for="t in tabs" :key="t.value"
               @click="filter.status = t.value; reload()"
               class="flex-1 text-[11px] font-semibold rounded-md py-1.5 transition-all whitespace-nowrap px-2"
               :class="filter.status === t.value ? 'bg-white shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-700'">

@@ -1,16 +1,18 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
-import { all, item, task } from '../../api'
+import { all, item, list, task } from '../../api'
 import { inr } from '../../utils/currency'
-import { today } from '../../utils/date'
+import { today, fmtDateShort } from '../../utils/date'
 import { calcInvoice } from '../../utils/invoice'
 
 const products=ref([]), clients=ref([]), locations=ref([]), stockRows=ref([]), productLocations=ref([]), inventoryMode=ref('none')
+const recentSales=ref([]), showRecent=ref(false), recentLoading=ref(false)
 const cart=ref([]), category=ref('All'), search=ref(''), clientSearch=ref(''), selectedClient=ref(null)
 const customerName=ref(''), customerPhone=ref(''), note=ref(''), paymentMethod=ref('cash'), locationId=ref(null)
 const loading=ref(true), paying=ref(false), error=ref(''), success=ref(''), printAfterPay=ref(true)
 const searchInput=ref(null), cartExpanded=ref(false)
 const scanning=ref(false), scannerReady=ref(false), lastScanCode=ref('')
+const printFormat=ref(localStorage.getItem('posPrintFormat')||'thermal58')
 let html5QrCode=null
 
 const categories=computed(()=>['All',...new Set(products.value.map(p=>p.pos_category||'Others'))])
@@ -60,6 +62,24 @@ async function closeScanner(){
 }
 onUnmounted(()=>{if(html5QrCode){try{html5QrCode.stop()}catch{};html5QrCode=null}})
 
+function setPrintFormat(fmt){printFormat.value=fmt;localStorage.setItem('posPrintFormat',fmt)}
+
+async function loadRecentSales(){
+  recentLoading.value=true
+  try{
+    const res=await list('Invoice',{'filter.invoice_type':'retail',sort_by:'i.created_at',sort_order:'desc',limit:20})
+    recentSales.value=res.data?.data||[]
+  }catch{}
+  recentLoading.value=false
+}
+
+function openRecent(){showRecent.value=true;loadRecentSales()}
+
+function reprintSale(inv,format){
+  const paper=format||printFormat.value
+  window.open(`/print/invoice/${inv.id}?paper=${paper}`,'_blank')
+}
+
 async function checkout(){
   error.value='';success.value=''
   if(!cart.value.length){error.value='Add at least one product before payment.';return}
@@ -77,7 +97,7 @@ async function checkout(){
     const paid=await task('Invoice','markPaid',{id:invoiceId,payment_date:today(),method:paymentMethod.value})
     const number=paid.data?.data?.number||''
     success.value=`Sale ${number} completed successfully.`
-    if(printAfterPay.value){const printUrl=`/print/invoice/${invoiceId}?paper=${localStorage.getItem('invoicePaper')||'thermal58'}`;if(printWindow)printWindow.location.href=printUrl;else window.location.assign(printUrl)}
+    if(printAfterPay.value){const printUrl=`/print/invoice/${invoiceId}?paper=${printFormat.value}`;if(printWindow)printWindow.location.href=printUrl;else window.location.assign(printUrl)}
     resetSale()
   }catch(e){printWindow?.close();error.value=e.response?.data?.message||'Could not complete this sale. Please try again.'}finally{paying.value=false}
 }
@@ -90,7 +110,7 @@ onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Cli
   <p v-if="error" class="pos-alert error">{{error}}</p><p v-if="success" class="pos-alert success">{{success}}</p>
   <div class="pos-layout">
     <section class="pos-catalog">
-      <div class="pos-search"><span>⌕</span><input ref="searchInput" v-model="search" placeholder="Search product, SKU or scan barcode" title="Type a product name, SKU or barcode. Press Enter to add the first match." @keydown.enter.prevent="addExactSearch" /><button class="scan-btn" title="Scan barcode with camera" @click="openScanner"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M5 21H3a2 2 0 01-2-2v-2m5-4h8m-4-4v8"/></svg></button></div>
+      <div class="pos-search"><span>⌕</span><input ref="searchInput" v-model="search" placeholder="Search product, SKU or scan barcode" title="Type a product name, SKU or barcode. Press Enter to add the first match." @keydown.enter.prevent="addExactSearch" /><button class="scan-btn" title="Scan barcode with camera" @click="openScanner"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M5 21H3a2 2 0 01-2-2v-2m5-4h8m-4-4v8"/></svg></button><button class="scan-btn" title="Recent sales" @click="openRecent"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></button></div>
       <div class="pos-categories"><button v-for="c in categories" :key="c" :class="{active:category===c}" @click="category=c">{{c==='All'?'All items':c}}</button></div>
       <div v-if="loading" class="pos-empty">Loading products…</div>
       <div v-else class="pos-products">
@@ -106,11 +126,45 @@ onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Cli
         <div class="pos-details-row"><input v-model="customerName" placeholder="Customer name" /><input v-model="customerPhone" inputmode="tel" placeholder="Mobile" /><input v-model="note" placeholder="Note" /></div>
         <div class="pos-pay-row">
           <div class="pos-methods"><button v-for="m in ['cash','upi','card']" :key="m" :class="{active:paymentMethod===m}" @click="paymentMethod=m">{{m.toUpperCase()}}</button></div>
-          <label class="print"><input v-model="printAfterPay" type="checkbox" /> Print</label>
+          <div class="pos-print-opts">
+            <label class="print"><input v-model="printAfterPay" type="checkbox" /> Print</label>
+            <select v-if="printAfterPay" v-model="printFormat" @change="setPrintFormat($event.target.value)" class="print-fmt">
+              <option value="thermal58">58mm</option>
+              <option value="thermal80">80mm</option>
+              <option value="a4">A4</option>
+            </select>
+          </div>
         </div>
         <footer class="pos-footer"><div><strong>{{inr(totals.total)}}</strong><small>GST incl.</small></div><button :disabled="paying||!cart.length" @click="checkout">{{paying?'Processing…':`Pay ${inr(totals.total)}`}} →</button></footer>
       </div>
     </aside>
+  </div>
+  <!-- Recent Sales drawer -->
+  <div v-if="showRecent" class="scan-overlay" @click.self="showRecent=false">
+    <div class="recent-drawer">
+      <div class="scan-header">
+        <h3>Recent POS Sales</h3>
+        <button @click="showRecent=false" class="scan-close">&times;</button>
+      </div>
+      <div v-if="recentLoading" class="pos-empty">Loading sales…</div>
+      <div v-else-if="!recentSales.length" class="pos-empty">No recent sales found.</div>
+      <div v-else class="recent-list">
+        <article v-for="s in recentSales" :key="s.id" class="recent-item">
+          <div class="recent-info">
+            <strong>{{ s.client_name || 'Walk-in Customer' }}</strong>
+            <small>{{ s.number || 'Pending' }} · {{ fmtDateShort(s.issue_date) }}</small>
+          </div>
+          <b>{{ inr(s.total) }}</b>
+          <div class="recent-actions">
+            <button @click="reprintSale(s,'thermal58')" title="Print 58mm receipt">58</button>
+            <button @click="reprintSale(s,'a4')" title="Print A4 invoice">A4</button>
+            <RouterLink :to="'/invoices/'+s.id" class="recent-view" title="View invoice">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            </RouterLink>
+          </div>
+        </article>
+      </div>
+    </div>
   </div>
   <!-- Camera scanner modal -->
   <div v-if="scanning" class="scan-overlay" @click.self="closeScanner">
@@ -193,6 +247,18 @@ onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Cli
 #pos-scanner-view video{width:100%!important;border-radius:0!important}
 .scan-loading{text-align:center;padding:12px;font-size:13px;color:#6b7280}
 .scan-hint{text-align:center;padding:12px 16px;font-size:12px;color:#94a3b8;border-top:1px solid #f1f5f9}
+.pos-print-opts{display:flex;align-items:center;gap:6px}
+.print-fmt{border:1px solid #e2e8f0;border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:#4338ca;background:#f8fafc;cursor:pointer}
+.recent-drawer{background:#fff;border-radius:16px;width:100%;max-width:480px;max-height:80vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3);display:flex;flex-direction:column}
+.recent-list{overflow-y:auto;flex:1;min-height:0}
+.recent-item{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid #f1f5f9}
+.recent-info{flex:1;min-width:0}
+.recent-info strong{display:block;font-size:13px;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.recent-info small{display:block;font-size:11px;color:#94a3b8}
+.recent-item>b{font-size:13px;color:#4f46e5;white-space:nowrap}
+.recent-actions{display:flex;gap:4px;margin-left:6px}
+.recent-actions button,.recent-view{width:30px;height:28px;border-radius:6px;background:#eef2ff;color:#4f46e5;font-weight:800;font-size:10px;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer}
+.recent-actions button:hover,.recent-view:hover{background:#c7d2fe}
 @media(max-width:1023px){
   .pos-page{padding:8px 8px 0;overflow:hidden}
   .pos-layout{grid-template-columns:1fr;grid-template-rows:1fr auto;height:100%}
