@@ -3,6 +3,9 @@ import { useAuthStore } from '../stores/auth'
 import { isChunkLoadError, reloadForStaleChunk } from '../utils/chunkReload'
 
 const routes = [
+  // Public website — accessible without an account
+  { path: '/about', name: 'PublicHome', component: () => import('../views/public/PublicHome.vue') },
+
   // Auth
   { path: '/login',    name: 'Login',    component: () => import('../views/auth/Login.vue'),    meta: { guest: true } },
   { path: '/register', name: 'Register', component: () => import('../views/auth/Register.vue'), meta: { guest: true } },
@@ -133,6 +136,8 @@ router.beforeEach(async (to) => {
     if (!response.ok) throw new Error('Local billing service unavailable.')
     if ((await response.json()).needs_setup) return { name: 'Register' }
   }
+  // The cloud home page is the public website for signed-out visitors.
+  if (!window.__BILLING_DESKTOP__ && to.name === 'Dashboard' && !auth.isLoggedIn) return { name: 'PublicHome' }
   if (to.meta.auth  && !auth.isLoggedIn)                           return { name: 'Login' }
   if (to.meta.guest && auth.isLoggedIn)                            return auth.isSuperAdmin && !auth.businessId ? { name: 'AdminDashboard' } : { name: 'Dashboard' }
   if (to.meta.superAdmin && !auth.isSuperAdmin)                    return { name: 'Dashboard' }
