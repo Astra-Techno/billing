@@ -317,6 +317,14 @@ async function genUpiQr() {
 const invoiceForm = ref({
   invoice_prefix: 'INV', quote_prefix: 'QTE', draft_invoice_number_enabled: false, invoice_notes: '', invoice_terms: '',
 })
+const sequences = ref({
+  invoice:     { prefix: 'INV', next_number: '', padding: 4 },
+  quote:       { prefix: 'QTE', next_number: '', padding: 4 },
+  credit_note: { prefix: 'CN',  next_number: '', padding: 4 },
+  po:          { prefix: 'PO',  next_number: '', padding: 4 },
+  dc:          { prefix: 'DC',  next_number: '', padding: 4 },
+})
+const seqSaving = ref(false)
 
 // Tax Rates
 const taxRates       = ref([])
@@ -477,6 +485,18 @@ onMounted(async () => {
     bizStore.setLogo(biz.logo || '')  // sync TopBar avatar
     await bizStore.loadFeatures()
     await loadStockSettings()
+    // Load current sequences
+    try {
+      const seqRes = await task('Sequence', 'list', {})
+      const data = seqRes.data?.data || {}
+      for (const t of Object.keys(sequences.value)) {
+        if (data[t]) {
+          sequences.value[t].prefix      = data[t].prefix
+          sequences.value[t].next_number = data[t].next_number
+          sequences.value[t].padding     = data[t].padding
+        }
+      }
+    } catch {}
   } catch {}
   loading.value = false
   setTimeout(() => { if (!isTourSeen()) startTour() }, 800)
@@ -611,6 +631,27 @@ async function saveInvoice() {
   } catch (e) {
     error.value = e.response?.data?.message || 'Failed to save.'
   } finally { saving.value = false }
+}
+
+async function saveSequences() {
+  seqSaving.value = true
+  error.value = ''
+  try {
+    const types = Object.keys(sequences.value)
+    for (const t of types) {
+      const s = sequences.value[t]
+      if (!s.next_number && !s.prefix) continue
+      await task('Sequence', 'update', {
+        type: t,
+        prefix: s.prefix,
+        padding: s.padding || 4,
+        ...(s.next_number ? { next_number: parseInt(s.next_number) } : {}),
+      })
+    }
+    flash('Number sequences updated.')
+  } catch (e) {
+    error.value = e.response?.data?.message || 'Failed to save sequences.'
+  } finally { seqSaving.value = false }
 }
 </script>
 
@@ -1166,17 +1207,31 @@ async function saveInvoice() {
           <h2 class="section-title mb-0">Bill Numbering</h2>
           <p class="text-xs text-gray-400 mt-0.5">The short code that appears at the start of every bill or quotation number</p>
         </div>
-        <div class="grid sm:grid-cols-2 gap-4">
-          <div>
-            <label class="form-label">Bill Number Prefix</label>
-            <input v-model="invoiceForm.invoice_prefix" type="text" class="form-input" placeholder="INV" />
-            <p class="text-xs text-gray-400 mt-1">e.g. INV → INV/2024-25/0001</p>
-          </div>
-          <div>
-            <label class="form-label">Quotation Number Prefix</label>
-            <input v-model="invoiceForm.quote_prefix" type="text" class="form-input" placeholder="QTE" />
-            <p class="text-xs text-gray-400 mt-1">e.g. QTE → QTE/2024-25/0001</p>
-          </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-gray-500 border-b">
+                <th class="py-2 pr-3 font-medium">Document</th>
+                <th class="py-2 pr-3 font-medium">Prefix</th>
+                <th class="py-2 pr-3 font-medium">Next Number</th>
+                <th class="py-2 font-medium">Preview</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(label, type) in { invoice: 'Invoice / Bill', quote: 'Quotation', credit_note: 'Credit Note', po: 'Purchase Order', dc: 'Delivery Challan' }" :key="type" class="border-b border-gray-100">
+                <td class="py-2.5 pr-3 text-gray-700">{{ label }}</td>
+                <td class="py-2.5 pr-3"><input v-model="sequences[type].prefix" type="text" class="form-input w-20 text-center uppercase" /></td>
+                <td class="py-2.5 pr-3"><input v-model.number="sequences[type].next_number" type="number" min="1" class="form-input w-24" placeholder="1" /></td>
+                <td class="py-2.5 text-gray-400 text-xs font-mono">{{ sequences[type].prefix }}/{{ new Date().getFullYear() }}-{{ String(new Date().getFullYear()+1).slice(2) }}/{{ String(sequences[type].next_number || 1).padStart(sequences[type].padding || 4, '0') }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-xs text-gray-400">Set "Next Number" to continue from your previous billing software. e.g. if your last bill was #500, set next number to 501.</p>
+        <div>
+          <button @click="saveSequences" :disabled="seqSaving" class="btn-primary w-full sm:w-auto">
+            {{ seqSaving ? 'Saving…' : 'Save Number Settings' }}
+          </button>
         </div>
         <div>
           <h2 class="section-title mb-0 pt-2">Default Message on Bills</h2>

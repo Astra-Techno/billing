@@ -93,30 +93,80 @@ class Sequence extends Task
     public function update(array $input): array
     {
         $this->validate([
-            'type'    => 'required|in:invoice,quote,credit_note,debit_note,po',
+            'type'    => 'required|in:invoice,quote,credit_note,debit_note,po,dc',
             'prefix'  => 'required|string',
             'padding' => 'integer',
         ]);
 
         $businessId = $this->requireBusiness();
         $fy         = self::currentFinancialYear();
+        $nextNumber = !empty($input['next_number']) ? (int)$input['next_number'] : null;
 
-        DB::statement(
-            "INSERT INTO sequences (business_id, type, financial_year, prefix, next_number, padding)
-             VALUES (?, ?, ?, ?, 1, ?)
-             ON DUPLICATE KEY UPDATE
-                prefix  = VALUES(prefix),
-                padding = VALUES(padding)",
-            [
-                $businessId,
-                $input['type'],
-                $fy,
-                strtoupper(trim($input['prefix'])),
-                (int)($input['padding'] ?? 4),
-            ]
-        );
+        if ($nextNumber !== null && $nextNumber < 1) {
+            return $this->error('Next number must be at least 1.');
+        }
+
+        if ($nextNumber !== null) {
+            // Upsert with custom next_number
+            DB::statement(
+                "INSERT INTO sequences (business_id, type, financial_year, prefix, next_number, padding)
+                 VALUES (?, ?, ?, ?, ?, ?)
+                 ON DUPLICATE KEY UPDATE
+                    prefix      = VALUES(prefix),
+                    padding     = VALUES(padding),
+                    next_number = VALUES(next_number)",
+                [
+                    $businessId,
+                    $input['type'],
+                    $fy,
+                    strtoupper(trim($input['prefix'])),
+                    $nextNumber,
+                    (int)($input['padding'] ?? 4),
+                ]
+            );
+        } else {
+            DB::statement(
+                "INSERT INTO sequences (business_id, type, financial_year, prefix, next_number, padding)
+                 VALUES (?, ?, ?, ?, 1, ?)
+                 ON DUPLICATE KEY UPDATE
+                    prefix  = VALUES(prefix),
+                    padding = VALUES(padding)",
+                [
+                    $businessId,
+                    $input['type'],
+                    $fy,
+                    strtoupper(trim($input['prefix'])),
+                    (int)($input['padding'] ?? 4),
+                ]
+            );
+        }
 
         return $this->success(null, 'Sequence settings updated.');
+    }
+
+    /**
+     * List current sequences for all document types in the current FY.
+     */
+    public function list(array $input): array
+    {
+        $businessId = $this->requireBusiness();
+        $fy = self::currentFinancialYear();
+
+        $rows = DB::select(
+            "SELECT type, prefix, next_number, padding FROM sequences WHERE business_id = ? AND financial_year = ?",
+            [$businessId, $fy]
+        );
+
+        $map = [];
+        foreach ($rows as $r) {
+            $map[$r->type] = [
+                'prefix'      => $r->prefix,
+                'next_number' => (int)$r->next_number,
+                'padding'     => (int)$r->padding,
+            ];
+        }
+
+        return $this->success($map);
     }
 
     // ── Static helper (used by other Tasks directly) ──────────────────────────
