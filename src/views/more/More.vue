@@ -22,6 +22,7 @@ const allNavRaw = [
   { name: 'Products',        to: '/products',          perm: 'products',         icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', tint: 'from-violet-500 to-purple-600' },
   { name: 'Stock',           to: '/inventory',         perm: 'inventory',        icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', tint: 'from-emerald-500 to-green-600' },
   { name: 'Credit Notes',    to: '/credit-notes',      perm: 'credit_notes',     icon: 'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z', tint: 'from-rose-500 to-pink-600' },
+  { name: 'Purchases',       to: '/purchases',          perm: 'purchases',        icon: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z', tint: 'from-orange-500 to-red-600' },
   { name: 'Purchase Orders', to: '/purchase-orders',   perm: 'purchase_orders',  icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', tint: 'from-amber-500 to-orange-600' },
   { name: 'Delivery Challan',to: '/delivery-challans', perm: 'delivery_challans',icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4', tint: 'from-cyan-500 to-blue-600' },
   { name: 'Timesheets',      to: '/timesheets',        perm: 'timesheets',       icon: 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z', tint: 'from-teal-500 to-cyan-600' },

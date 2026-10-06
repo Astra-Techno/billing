@@ -83,6 +83,14 @@ const routes = [
         ]
       },
       {
+        path: 'purchases', name: 'Purchases', component: () => import('../views/purchases/PurchaseInvoiceList.vue'), meta: { permission: 'purchases' },
+        children: [
+          { path: 'new',       name: 'PurchaseNew',  component: () => import('../views/purchases/PurchaseInvoiceForm.vue'), meta: { action: 'create' } },
+          { path: ':id/edit',  name: 'PurchaseEdit', component: () => import('../views/purchases/PurchaseInvoiceForm.vue'), meta: { action: 'edit' } },
+          { path: ':id',       name: 'PurchaseView', component: () => import('../views/purchases/PurchaseInvoiceDetail.vue') },
+        ]
+      },
+      {
         path: 'delivery-challans', name: 'DeliveryChallans', component: () => import('../views/delivery-challans/DeliveryChallanList.vue'), meta: { permission: 'delivery_challans' },
         children: [
           { path: 'new',       name: 'DeliveryChallanNew',  component: () => import('../views/delivery-challans/DeliveryChallanForm.vue'), meta: { action: 'create' } },

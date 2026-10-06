@@ -1,0 +1,588 @@
+<script setup>
+import { ref, computed, shallowRef, onMounted, onUnmounted, nextTick } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { task, item, all } from '../../api'
+import { inr } from '../../utils/currency'
+import { today, addDays } from '../../utils/date'
+import { defaultUnits } from '../../utils/units'
+import { useToast } from '../../composables/useToast'
+import { useFormKeys } from '../../composables/useFormKeys'
+
+const router = useRouter()
+const route  = useRoute()
+const emit   = defineEmits(['refresh'])
+
+const toast = useToast()
+useFormKeys({ formId: 'pi-form', autoFocus: false })
+
+const suppliers  = ref([])
+const products   = ref([])
+const stockLocations = shallowRef([])
+const inventoryMode  = ref('none')
+const loading    = ref(false)
+const saved      = ref(false)
+const error      = ref('')
+const supplierSearch = ref('')
+const supplierDropdownOpen = ref(false)
+
+const isEdit = computed(() => !!route.params.id)
+
+const filteredSuppliers = computed(() => {
+  const q = supplierSearch.value.trim().toLowerCase()
+  if (!q) return suppliers.value
+  return suppliers.value.filter(c => c.name?.toLowerCase().includes(q) || c.mobile?.includes(q))
+})
+
+const showInlineSupplierCreate = computed(() =>
+  supplierSearch.value.trim().length >= 2 && filteredSuppliers.value.length === 0
+)
+
+const addingSupplier   = ref(false)
+const addSupplierError = ref('')
+const newSupplier = ref({ name: '', mobile: '', email: '', type: 'business' })
+
+async function saveNewSupplier() {
+  addSupplierError.value = ''
+  if (!newSupplier.value.name) return addSupplierError.value = 'Supplier name is required.'
+  addingSupplier.value = true
+  try {
+    const res = await task('Client', 'create', { ...newSupplier.value, type: 'business' })
+    const resData = res.data?.data
+    const created = { id: resData.client_id, name: newSupplier.value.name, mobile: newSupplier.value.mobile || null, email: newSupplier.value.email || null }
+    suppliers.value.push(created)
+    suppliers.value.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+    form.value.supplier_id = created.id
+    supplierSearch.value = ''
+    supplierDropdownOpen.value = false
+    newSupplier.value = { name: '', mobile: '', email: '', type: 'business' }
+  } catch (e) {
+    addSupplierError.value = e.response?.data?.message || 'Failed to save supplier.'
+  }
+  addingSupplier.value = false
+}
+
+function onSupplierSearchInput() {
+  supplierDropdownOpen.value = true
+  newSupplier.value.name = supplierSearch.value
+  newSupplier.value.mobile = ''
+  newSupplier.value.email = ''
+  addSupplierError.value = ''
+}
+
+// Product autocomplete
+const addingProduct    = ref(false)
+const addProductError  = ref('')
+const productSearchIdx = ref(null)
+const productSearch    = ref('')
+const newProduct = ref({ type: 'service', name: '', price: '', unit: 'Nos', gst_rate: 18 })
+
+const filteredProducts = computed(() => {
+  const idx = productSearchIdx.value
+  const q = idx !== null && form.value.items[idx]
+    ? form.value.items[idx].description?.trim().toLowerCase() || ''
+    : productSearch.value.trim().toLowerCase()
+  if (!q) return products.value.slice(0, 8)
+  return products.value.filter(p => p.name?.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q) || p.hsn_sac?.toLowerCase().includes(q))
+})
+
+const showProductInlineCreate = computed(() => {
+  const idx = productSearchIdx.value
+  const q = idx !== null && form.value.items[idx]
+    ? form.value.items[idx].description?.trim() || ''
+    : productSearch.value.trim()
+  return q.length >= 2 && filteredProducts.value.length === 0
+})
+
+function openProductSearch(i) {
+  productSearchIdx.value = i
+  productSearch.value = form.value.items[i]?.description || ''
+  addProductError.value = ''
+  newProduct.value = { type: 'service', name: form.value.items[i]?.description || '', price: '', unit: 'Nos', gst_rate: 18 }
+}
+function closeProductSearch() { productSearchIdx.value = null; productSearch.value = '' }
+
+function selectProduct(i, p) {
+  pickProduct(i, p.id)
+  form.value.items[i].product_id = p.id
+  closeProductSearch()
+}
+
+async function saveNewProduct() {
+  addProductError.value = ''
+  if (!newProduct.value.name) return addProductError.value = 'Product name is required.'
+  if (!newProduct.value.price) return addProductError.value = 'Price is required.'
+  addingProduct.value = true
+  try {
+    const res = await task('Product', 'create', {
+      type: newProduct.value.type, name: newProduct.value.name,
+      price: parseFloat(newProduct.value.price), unit: newProduct.value.unit, gst_rate: newProduct.value.gst_rate,
+    })
+    const created = res.data?.data
+    products.value.push(created)
+    products.value.sort((a, b) => a.name.localeCompare(b.name))
+    if (productSearchIdx.value !== null) selectProduct(productSearchIdx.value, created)
+    newProduct.value = { type: 'service', name: '', price: '', unit: 'Nos', gst_rate: 18 }
+  } catch (e) {
+    addProductError.value = e.response?.data?.message || 'Failed to save product.'
+  }
+  addingProduct.value = false
+}
+
+// Keyboard shortcuts
+function onFormShortcut(e) {
+  if (e.target.closest('[class*="fixed inset-0"]')) return
+  if (e.altKey && e.key === 'a') { e.preventDefault(); addItem() }
+  if (e.altKey && e.key === 's') {
+    e.preventDefault(); form.value.supplier_id = ''; supplierDropdownOpen.value = true
+    nextTick(() => { const el = document.querySelector('.supplier-search-input'); if (el) el.focus() })
+  }
+  if (e.altKey && e.key === 'n') { e.preventDefault(); const el = document.querySelector('.notes-input'); if (el) el.focus() }
+  if (e.key === 'Escape') { closeProductSearch(); supplierDropdownOpen.value = false }
+}
+onMounted(() => document.addEventListener('keydown', onFormShortcut))
+onUnmounted(() => document.removeEventListener('keydown', onFormShortcut))
+
+const blankItem = () => ({ description: '', hsn_sac: '', unit: 'Nos', quantity: 1, unit_price: '', gst_rate: 18, discount_pct: 0, product_id: null })
+
+const units    = defaultUnits
+const gstRates = [0, 5, 12, 18, 28]
+
+const form = ref({
+  supplier_id:    '',
+  invoice_date:   today(),
+  due_date:       addDays(today(), 30),
+  supplier_inv_no: '',
+  location_id:    '',
+  notes:          '',
+  items:          [blankItem()],
+})
+
+const selectedSupplier = computed(() => suppliers.value.find(s => s.id == form.value.supplier_id))
+
+const totals = computed(() => {
+  let subtotal = 0, tax = 0, discount = 0
+  for (const it of form.value.items) {
+    const gross = parseFloat(it.quantity || 0) * parseFloat(it.unit_price || 0)
+    const disc  = gross * parseFloat(it.discount_pct || 0) / 100
+    const taxable = gross - disc
+    discount += disc
+    subtotal += taxable
+    tax += taxable * parseFloat(it.gst_rate || 0) / 100
+  }
+  const rawTotal = subtotal + tax
+  const rounded  = Math.round(rawTotal)
+  return { subtotal, tax, discount, roundOff: rounded - rawTotal, total: rounded }
+})
+
+function addItem() {
+  form.value.items.push(blankItem())
+  nextTick(() => {
+    const descs = document.querySelectorAll('.line-desc')
+    const last = descs[descs.length - 1]
+    if (last) last.focus()
+  })
+}
+
+function removeItem(i) { if (form.value.items.length > 1) form.value.items.splice(i, 1) }
+
+function lineTotal(it) {
+  const gross = parseFloat(it.quantity || 0) * parseFloat(it.unit_price || 0)
+  const disc  = gross * parseFloat(it.discount_pct || 0) / 100
+  const taxable = gross - disc
+  return taxable * (1 + parseFloat(it.gst_rate || 0) / 100)
+}
+
+function pickProduct(i, productId) {
+  const p = products.value.find(p => p.id == productId)
+  if (!p) return
+  const it = form.value.items[i]
+  it.description = p.name
+  it.unit        = p.unit || 'Nos'
+  it.unit_price  = p.price
+  it.hsn_sac     = p.hsn_sac || ''
+  it.gst_rate    = parseFloat(p.gst_rate || 18)
+}
+
+onMounted(async () => {
+  const [cRes, pRes, stockRes] = await Promise.all([all('Client'), all('Product'), task('Inventory', 'overview')])
+  suppliers.value = cRes.data?.data || []
+  products.value  = pRes.data?.data || []
+  stockLocations.value = (stockRes.data?.data?.locations || []).filter(x => +x.active)
+  inventoryMode.value = stockRes.data?.data?.settings?.inventory_mode || 'none'
+  form.value.location_id = stockRes.data?.data?.defaultId || ''
+
+  if (isEdit.value) {
+    try {
+      const res = await item('PurchaseInvoice', { id: route.params.id })
+      const pi  = res.data?.data
+      if (pi) {
+        form.value.supplier_id    = pi.supplier_id
+        form.value.invoice_date   = pi.invoice_date
+        form.value.due_date       = pi.due_date || ''
+        form.value.supplier_inv_no = pi.supplier_inv_no || ''
+        form.value.location_id    = pi.location_id || form.value.location_id
+        form.value.notes          = pi.notes || ''
+        if (pi.items?.length) {
+          form.value.items = pi.items.map(it => ({
+            description: it.description, hsn_sac: it.hsn_sac || '',
+            unit: it.unit || 'Nos', quantity: it.quantity,
+            unit_price: it.unit_price, gst_rate: parseFloat(it.gst_rate || 0),
+            discount_pct: parseFloat(it.discount_pct || 0),
+            product_id: it.product_id || null,
+          }))
+        }
+      }
+    } catch { error.value = 'Could not load purchase bill data.' }
+  }
+
+  nextTick(() => { setTimeout(() => { const el = document.querySelector('.line-desc'); if (el) el.focus() }, 150) })
+})
+
+async function submit() {
+  error.value = ''
+  if (!form.value.supplier_id) return (error.value = 'Please select a supplier.')
+  if (!form.value.items.some(i => i.description)) return (error.value = 'Please add at least one item.')
+  loading.value = true
+  try {
+    if (isEdit.value) {
+      await task('PurchaseInvoice', 'update', { ...form.value, id: route.params.id })
+      emit('refresh')
+      toast.success('Purchase bill updated.')
+      saved.value = true
+    } else {
+      const res = await task('PurchaseInvoice', 'create', form.value)
+      emit('refresh')
+      toast.success('Purchase bill created.')
+      const newId = res.data?.data?.id
+      router.push(newId ? `/purchases/${newId}` : '/purchases')
+    }
+  } catch (e) {
+    error.value = e.response?.data?.message || 'Failed to save. Please try again.'
+  }
+  loading.value = false
+}
+</script>
+
+<template>
+  <div class="inv-shell">
+
+    <!-- Toolbar -->
+    <div class="inv-toolbar">
+      <div class="flex items-center gap-3 min-w-0">
+        <button type="button" @click="router.push('/purchases')" class="inv-back-btn">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="inv-page-title">{{ isEdit ? 'Edit Purchase Bill' : 'New Purchase Bill' }}</h1>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" @click="router.push('/purchases')" class="inv-btn-secondary hidden sm:inline-flex">Cancel</button>
+        <button type="submit" form="pi-form" class="inv-btn-primary" :disabled="loading" title="Ctrl+Enter">
+          {{ loading ? 'Saving…' : saved ? 'Saved ✓' : isEdit ? 'Save Changes' : 'Create Bill' }} <kbd v-if="!loading" class="ml-1 opacity-60 text-[10px] font-mono">⌃↵</kbd>
+        </button>
+      </div>
+    </div>
+
+    <!-- Keyboard shortcuts hint -->
+    <div class="hidden lg:flex items-center gap-4 px-6 py-1.5 bg-gray-50 border-b border-gray-100 text-[10px] text-gray-400 font-medium">
+      <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded text-[9px] font-mono">Alt+A</kbd> Add item</span>
+      <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded text-[9px] font-mono">Alt+S</kbd> Supplier</span>
+      <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded text-[9px] font-mono">Alt+N</kbd> Notes</span>
+      <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded text-[9px] font-mono">Ctrl+↵</kbd> Save</span>
+      <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded text-[9px] font-mono">Esc</kbd> Close</span>
+    </div>
+
+    <!-- Body -->
+    <div class="inv-body">
+      <form id="pi-form" @submit.prevent="submit" @input="saved = false" class="inv-layout">
+
+        <!-- LEFT: Main content -->
+        <div class="inv-main">
+
+          <!-- Items card -->
+          <div class="inv-card !overflow-visible">
+            <div class="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
+              <h2 class="text-sm font-semibold text-gray-800">Items</h2>
+              <span class="text-xs text-gray-400">{{ form.items.length }} item{{ form.items.length > 1 ? 's' : '' }}</span>
+            </div>
+
+            <!-- Desktop table -->
+            <div class="hidden lg:block">
+              <div class="grid grid-cols-12 gap-3 px-5 py-2.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-gray-50 border-b border-gray-100">
+                <span class="col-span-4">Items</span>
+                <span class="col-span-2 text-center">QTY / Unit</span>
+                <span class="col-span-2 text-right">Rate</span>
+                <span class="col-span-1 text-center">Disc%</span>
+                <span class="col-span-1 text-center">GST%</span>
+                <span class="col-span-2 text-right pr-2">Amount</span>
+              </div>
+              <div class="divide-y divide-gray-100">
+                <div v-for="(it, idx) in form.items" :key="idx" class="grid grid-cols-12 gap-3 px-5 py-4 items-start hover:bg-gray-50/20 transition-colors">
+                  <!-- Description + product search -->
+                  <div class="col-span-4 relative">
+                    <input v-model="it.description" type="text" class="inv-input font-medium !bg-white line-desc" placeholder="Item name or search…" required
+                      @focus="openProductSearch(idx)" @input="productSearch = it.description; newProduct.name = it.description" />
+                    <div v-if="productSearchIdx === idx && it.description?.trim().length >= 1" class="absolute left-0 right-0 top-full mt-1 z-50 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
+                      <div v-if="filteredProducts.length" class="max-h-36 overflow-y-auto divide-y divide-gray-50">
+                        <button v-for="p in filteredProducts" :key="p.id" type="button"
+                          @click="selectProduct(idx, p)"
+                          class="w-full flex items-center justify-between px-3 py-2 hover:bg-gray-50 transition text-left text-xs">
+                          <span class="font-medium text-gray-800 truncate">{{ p.name }}<span v-if="p.sku" class="text-gray-400 font-normal ml-1">({{ p.sku }})</span></span>
+                          <span class="text-gray-400 tabular-nums shrink-0 ml-2">{{ inr(p.price) }}</span>
+                        </button>
+                      </div>
+                      <div v-if="showProductInlineCreate" class="border-t border-gray-100 p-3 space-y-2 bg-gray-50/50">
+                        <p class="text-[11px] font-semibold text-gray-500">No product found — save as new:</p>
+                        <div class="grid grid-cols-2 gap-2">
+                          <input v-model="newProduct.price" type="number" min="0" step="0.01" class="inv-input w-full text-xs" placeholder="Price (₹) *" />
+                          <select v-model="newProduct.unit" class="inv-select w-full text-xs"><option v-for="u in units" :key="u">{{ u }}</option></select>
+                        </div>
+                        <div v-if="addProductError" class="text-[11px] text-red-600 bg-red-50 rounded px-2 py-1">{{ addProductError }}</div>
+                        <button type="button" @click="saveNewProduct" :disabled="addingProduct"
+                          class="w-full py-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold transition">
+                          {{ addingProduct ? 'Creating…' : 'Save as Product' }}
+                        </button>
+                      </div>
+                    </div>
+                    <div v-if="productSearchIdx === idx" class="fixed inset-0 z-40" @click="closeProductSearch"></div>
+                  </div>
+                  <!-- QTY + Unit -->
+                  <div class="col-span-2 space-y-2">
+                    <input v-model="it.quantity" type="number" min="0.01" step="0.01" class="inv-input text-center tabular-nums !bg-white" />
+                    <select v-model="it.unit" class="inv-select text-center text-xs !bg-white"><option v-for="u in units" :key="u">{{ u }}</option></select>
+                  </div>
+                  <!-- Rate -->
+                  <div class="col-span-2">
+                    <div class="relative">
+                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
+                      <input v-model="it.unit_price" type="number" min="0" step="0.01" class="inv-input pl-7 text-right tabular-nums !bg-white" placeholder="0.00" />
+                    </div>
+                  </div>
+                  <!-- Discount % -->
+                  <div class="col-span-1">
+                    <input v-model="it.discount_pct" type="number" min="0" max="100" step="0.01" class="inv-input text-center tabular-nums !bg-white text-xs" placeholder="0" />
+                  </div>
+                  <!-- GST -->
+                  <div class="col-span-1">
+                    <select v-model="it.gst_rate" class="inv-select text-center text-xs !bg-white">
+                      <option v-for="r in gstRates" :key="r" :value="r">{{ r }}%</option>
+                    </select>
+                  </div>
+                  <!-- Amount + remove -->
+                  <div class="col-span-2 flex flex-col items-end justify-between h-[50px] py-1">
+                    <span class="text-sm font-semibold text-gray-800 tabular-nums pr-2">{{ inr(lineTotal(it)) }}</span>
+                    <button v-if="form.items.length > 1" type="button" @click="removeItem(idx)"
+                      class="mr-1 w-7 h-7 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="Remove">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mobile: stacked cards -->
+            <div class="lg:hidden space-y-0 divide-y divide-gray-100">
+              <div v-for="(it, idx) in form.items" :key="idx" class="p-4 space-y-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-gray-400 uppercase tracking-wide">Item {{ idx + 1 }}</span>
+                  <button v-if="form.items.length > 1" @click="removeItem(idx)" class="text-gray-400 hover:text-red-500 p-1 rounded-full transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>
+                <div>
+                  <label class="inv-label">Item Name *</label>
+                  <input v-model="it.description" type="text" class="inv-input w-full !bg-white text-sm" required placeholder="Item name or search…"
+                    @focus="openProductSearch(idx)" @input="productSearch = it.description; newProduct.name = it.description" />
+                  <div v-if="productSearchIdx === idx && it.description?.trim().length >= 1" class="mt-1.5 space-y-1.5">
+                    <div v-if="filteredProducts.length" class="max-h-48 overflow-y-auto overscroll-contain rounded-lg border border-gray-200 divide-y divide-gray-50 bg-white shadow-lg">
+                      <button v-for="p in filteredProducts" :key="p.id" type="button"
+                        @click="selectProduct(idx, p)"
+                        class="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 text-left text-sm touch-manipulation">
+                        <span class="font-medium text-gray-800 truncate">{{ p.name }}<span v-if="p.sku" class="text-gray-400 font-normal ml-1">({{ p.sku }})</span></span>
+                        <span class="text-gray-400 text-xs tabular-nums shrink-0 ml-2">{{ inr(p.price) }}</span>
+                      </button>
+                    </div>
+                    <div v-if="showProductInlineCreate" class="rounded-xl border border-gray-200 p-3 space-y-2 bg-white">
+                      <p class="text-xs font-semibold text-gray-500">No product found — save as new:</p>
+                      <div class="grid grid-cols-2 gap-2">
+                        <input v-model="newProduct.price" type="number" min="0" step="0.01" class="inv-input w-full text-sm !bg-white" placeholder="Price (₹) *" />
+                        <select v-model="newProduct.unit" class="inv-select w-full text-sm !bg-white"><option v-for="u in units" :key="u">{{ u }}</option></select>
+                      </div>
+                      <div v-if="addProductError" class="text-xs text-red-600 bg-red-50 rounded-lg px-2 py-1.5">{{ addProductError }}</div>
+                      <button type="button" @click="saveNewProduct" :disabled="addingProduct"
+                        class="w-full py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold transition">
+                        {{ addingProduct ? 'Creating…' : 'Save as Product' }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div><label class="inv-label">Qty</label><input v-model="it.quantity" type="number" min="0.01" step="0.01" class="inv-input w-full" /></div>
+                  <div><label class="inv-label">Unit</label><select v-model="it.unit" class="inv-select w-full"><option v-for="u in units" :key="u">{{ u }}</option></select></div>
+                  <div><label class="inv-label">Rate (₹)</label><input v-model="it.unit_price" type="number" min="0" step="0.01" class="inv-input w-full" placeholder="0.00" /></div>
+                  <div><label class="inv-label">Disc %</label><input v-model="it.discount_pct" type="number" min="0" max="100" step="0.01" class="inv-input w-full" placeholder="0" /></div>
+                  <div class="col-span-2"><label class="inv-label">GST %</label><select v-model="it.gst_rate" class="inv-select w-full"><option v-for="r in gstRates" :key="r" :value="r">{{ r }}%</option></select></div>
+                </div>
+                <div class="flex justify-between text-sm font-semibold text-gray-700 pt-1">
+                  <span>Line Total</span>
+                  <span>{{ inr(lineTotal(it)) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Add item -->
+            <div class="px-5 py-3 border-t border-gray-100">
+              <button type="button" @click="addItem"
+                class="flex items-center gap-2 text-sm text-primary-600 font-medium hover:text-primary-700 transition">
+                <span class="w-5 h-5 rounded-full border-2 border-primary-300 flex items-center justify-center text-primary-500 text-xs leading-none">+</span>
+                Add item
+              </button>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div class="inv-card p-5 space-y-3">
+            <h2 class="text-sm font-semibold text-gray-700">Notes / Terms</h2>
+            <textarea v-model="form.notes" rows="3" class="inv-textarea w-full notes-input" placeholder="Any notes for this purchase bill…"></textarea>
+          </div>
+
+        </div>
+
+        <!-- RIGHT: Sidebar -->
+        <aside class="inv-sidebar">
+
+          <!-- Supplier -->
+          <div class="inv-card !overflow-visible">
+            <div class="px-5 py-3.5 border-b border-gray-100">
+              <h2 class="text-sm font-semibold text-gray-800">Supplier</h2>
+            </div>
+            <div class="p-4">
+              <div v-if="form.supplier_id" class="flex items-center gap-3 p-3 bg-primary-50 rounded-xl border border-primary-100">
+                <div class="w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center shrink-0">
+                  <span class="text-white text-sm font-bold">{{ selectedSupplier?.name?.charAt(0)?.toUpperCase() }}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold text-gray-900 truncate">{{ selectedSupplier?.name }}</p>
+                  <p class="text-xs text-gray-500 truncate">{{ selectedSupplier?.mobile || selectedSupplier?.email || '—' }}</p>
+                </div>
+                <button type="button" @click="form.supplier_id = ''; supplierSearch = ''; supplierDropdownOpen = true" class="text-xs text-primary-600 font-semibold shrink-0 hover:underline">Change</button>
+              </div>
+
+              <div v-else class="relative">
+                <div class="relative">
+                  <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                  <input v-model="supplierSearch" type="text" placeholder="Type supplier name or mobile…"
+                    class="inv-input w-full pl-9 pr-3 supplier-search-input"
+                    @focus="supplierDropdownOpen = true" @input="onSupplierSearchInput" />
+                </div>
+
+                <div v-if="supplierDropdownOpen" class="absolute left-0 right-0 top-full mt-1 z-50 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
+                  <div v-if="filteredSuppliers.length" class="max-h-48 overflow-y-auto divide-y divide-gray-50">
+                    <button v-for="s in filteredSuppliers" :key="s.id" type="button"
+                      @click="form.supplier_id = s.id; supplierSearch = ''; supplierDropdownOpen = false"
+                      class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition text-left">
+                      <div class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                        <span class="text-xs font-bold text-gray-500">{{ s.name?.charAt(0)?.toUpperCase() }}</span>
+                      </div>
+                      <div class="min-w-0">
+                        <p class="text-sm font-medium text-gray-800 truncate">{{ s.name }}</p>
+                        <p class="text-xs text-gray-400 truncate">{{ s.mobile || s.email || '' }}</p>
+                      </div>
+                    </button>
+                  </div>
+
+                  <div v-if="showInlineSupplierCreate" class="border-t border-gray-100 p-3 space-y-2.5 bg-gray-50/50">
+                    <p class="text-xs font-semibold text-gray-500">No supplier found — create new:</p>
+                    <div><input v-model="newSupplier.name" type="text" class="inv-input w-full text-sm" placeholder="Supplier name *" /></div>
+                    <div class="grid grid-cols-2 gap-2">
+                      <input v-model="newSupplier.mobile" type="tel" class="inv-input w-full text-xs" placeholder="Mobile (optional)" />
+                      <input v-model="newSupplier.email" type="email" class="inv-input w-full text-xs" placeholder="Email (optional)" />
+                    </div>
+                    <div v-if="addSupplierError" class="text-xs text-red-600 bg-red-50 rounded-lg px-2 py-1.5">{{ addSupplierError }}</div>
+                    <button type="button" @click="saveNewSupplier" :disabled="addingSupplier"
+                      class="w-full py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5">
+                      <svg v-if="addingSupplier" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                      <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                      {{ addingSupplier ? 'Creating…' : 'Create & Select' }}
+                    </button>
+                  </div>
+                </div>
+
+                <div v-if="supplierDropdownOpen" class="fixed inset-0 z-10" @click="supplierDropdownOpen = false"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bill Details -->
+          <div class="inv-card p-5 space-y-4">
+            <h2 class="text-sm font-semibold text-gray-800">Bill Details</h2>
+            <div class="space-y-3">
+              <div>
+                <label class="inv-label">Supplier Invoice No.</label>
+                <input v-model="form.supplier_inv_no" type="text" class="inv-input w-full" placeholder="e.g. INV-2024-001" />
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="inv-label">Bill Date *</label>
+                  <input v-model="form.invoice_date" type="date" class="inv-input w-full" required />
+                </div>
+                <div>
+                  <label class="inv-label">Due Date</label>
+                  <input v-model="form.due_date" type="date" class="inv-input w-full" />
+                </div>
+              </div>
+              <label v-if="inventoryMode !== 'none' && stockLocations.length > 1" class="block">
+                <span class="inv-label">Receive at Location</span>
+                <select v-model="form.location_id" class="inv-select mt-1 w-full !bg-white">
+                  <option v-for="l in stockLocations" :key="l.id" :value="l.id">{{ l.name }}</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <!-- Summary -->
+          <div class="inv-card p-5 space-y-3">
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between text-gray-500">
+                <span>Subtotal</span>
+                <span class="font-medium text-gray-800 tabular-nums">{{ inr(totals.subtotal) }}</span>
+              </div>
+              <div v-if="totals.discount > 0" class="flex justify-between text-gray-500">
+                <span>Discount</span>
+                <span class="font-medium text-green-600 tabular-nums">-{{ inr(totals.discount) }}</span>
+              </div>
+              <div v-if="totals.tax > 0" class="flex justify-between text-gray-500">
+                <span>GST</span>
+                <span class="font-medium text-gray-800 tabular-nums">{{ inr(totals.tax) }}</span>
+              </div>
+              <div v-else class="flex justify-between text-gray-400 text-xs">
+                <span>GST</span><span>—</span>
+              </div>
+              <div v-if="totals.roundOff !== 0" class="flex justify-between text-gray-400 text-xs">
+                <span>Round off</span>
+                <span class="tabular-nums">{{ totals.roundOff > 0 ? '+' : '' }}{{ totals.roundOff.toFixed(2) }}</span>
+              </div>
+              <div class="flex justify-between items-center pt-3 border-t border-gray-100">
+                <span class="font-semibold text-gray-800">Total</span>
+                <span class="text-xl font-bold tabular-nums" :class="totals.total > 0 ? 'text-primary-600' : 'text-gray-400'">{{ inr(totals.total) }}</span>
+              </div>
+            </div>
+            <div v-if="error" class="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{{ error }}</div>
+          </div>
+
+        </aside>
+      </form>
+    </div>
+
+    <!-- Mobile sticky footer -->
+    <div class="form-footer-mobile lg:hidden">
+      <div class="flex-1 min-w-0">
+        <p class="text-[10px] font-bold text-google-muted uppercase">Total</p>
+        <p class="text-lg font-bold text-primary-600 tabular-nums">{{ inr(totals.total) }}</p>
+      </div>
+      <button type="button" @click="router.push('/purchases')" class="btn-outline">Cancel</button>
+      <button type="submit" form="pi-form" class="btn-primary" :disabled="loading">
+        {{ loading ? '…' : saved ? '✓' : isEdit ? 'Update' : 'Create' }}
+      </button>
+    </div>
+  </div>
+</template>

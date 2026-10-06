@@ -20,7 +20,7 @@ const allItems = [
 const items = computed(() => allItems.filter(item => !item.permission || can(item.permission)))
 
 const showNavbar = computed(() => {
-  return ['Dashboard', 'POS', 'Invoices', 'Quotes', 'Expenses', 'Products', 'Inventory', 'CreditNotes', 'PurchaseOrders', 'DeliveryChallans', 'GstReturns', 'Reports', 'Settings', 'Help', 'More', 'Clients', 'Payroll', 'StaffNew', 'StaffEdit', 'PayrollRun'].includes(route.name)
+  return ['Dashboard', 'POS', 'Invoices', 'Quotes', 'Expenses', 'Products', 'Inventory', 'CreditNotes', 'PurchaseOrders', 'Purchases', 'DeliveryChallans', 'GstReturns', 'Reports', 'Settings', 'Help', 'More', 'Clients', 'Payroll', 'StaffNew', 'StaffEdit', 'PayrollRun'].includes(route.name)
 })
 
 const showAdminNav = computed(() =>

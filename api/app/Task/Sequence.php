@@ -23,7 +23,7 @@ class Sequence extends Task
     public function next(array $input): array
     {
         $this->validate([
-            'type'        => 'required|in:invoice,quote,credit_note,debit_note,po,dc',
+            'type'        => 'required|in:invoice,quote,credit_note,debit_note,po,dc,pi',
             'business_id' => 'required|integer',
         ]);
 
@@ -44,6 +44,7 @@ class Sequence extends Task
             'debit_note'  => 'DN',
             'po'          => 'PO',
             'dc'          => 'DC',
+            'pi'          => 'PI',
             default       => 'DOC',
         };
 
@@ -93,7 +94,7 @@ class Sequence extends Task
     public function update(array $input): array
     {
         $this->validate([
-            'type'    => 'required|in:invoice,quote,credit_note,debit_note,po,dc',
+            'type'    => 'required|in:invoice,quote,credit_note,debit_note,po,dc,pi',
             'prefix'  => 'required|string',
             'padding' => 'integer',
         ]);

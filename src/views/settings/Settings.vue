@@ -323,6 +323,7 @@ const sequences = ref({
   credit_note: { prefix: 'CN',  next_number: '', padding: 4 },
   po:          { prefix: 'PO',  next_number: '', padding: 4 },
   dc:          { prefix: 'DC',  next_number: '', padding: 4 },
+  pi:          { prefix: 'PI',  next_number: '', padding: 4 },
 })
 const seqSaving = ref(false)
 
@@ -1218,7 +1219,7 @@ async function saveSequences() {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(label, type) in { invoice: 'Invoice / Bill', quote: 'Quotation', credit_note: 'Credit Note', po: 'Purchase Order', dc: 'Delivery Challan' }" :key="type" class="border-b border-gray-100">
+              <tr v-for="(label, type) in { invoice: 'Invoice / Bill', quote: 'Quotation', credit_note: 'Credit Note', po: 'Purchase Order', dc: 'Delivery Challan', pi: 'Purchase Bill' }" :key="type" class="border-b border-gray-100">
                 <td class="py-2.5 pr-3 text-gray-700">{{ label }}</td>
                 <td class="py-2.5 pr-3"><input v-model="sequences[type].prefix" type="text" class="form-input w-20 text-center uppercase" /></td>
                 <td class="py-2.5 pr-3"><input v-model.number="sequences[type].next_number" type="number" min="1" class="form-input w-24" placeholder="1" /></td>

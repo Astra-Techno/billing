@@ -13,6 +13,7 @@ export const PAGE_PERMISSIONS = [
   { key: 'reports',          label: 'Reports' },
   { key: 'gst',              label: 'GST Returns' },
   { key: 'credit_notes',     label: 'Credit Notes' },
+  { key: 'purchases',        label: 'Purchases' },
   { key: 'purchase_orders',  label: 'Purchase Orders' },
   { key: 'delivery_challans',label: 'Delivery Challans' },
   { key: 'timesheets',       label: 'Timesheets' },
@@ -22,7 +23,7 @@ export const PAGE_PERMISSIONS = [
 // Modules that support create/edit/delete actions (others are view-only)
 export const ACTION_MODULES = [
   'invoices', 'quotes', 'expenses', 'clients', 'products',
-  'credit_notes', 'purchase_orders', 'delivery_challans',
+  'credit_notes', 'purchases', 'purchase_orders', 'delivery_challans',
   'inventory', 'timesheets', 'payroll',
 ]
 
