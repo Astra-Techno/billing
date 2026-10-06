@@ -82,9 +82,11 @@ const tabs = [
 const featureToggles = [
   { key: 'quotes',           label: 'Quotes / Estimates',  desc: 'Send price estimates to clients before creating invoices' },
   { key: 'expenses',         label: 'Expense Tracking',    desc: 'Record and categorize your business expenses' },
+  { key: 'purchases',        label: 'Purchase Bills',      desc: 'Record supplier bills, post stock inward, and track payments' },
   { key: 'purchase_orders',  label: 'Purchase Orders',     desc: 'Create orders for your suppliers when buying goods' },
   { key: 'delivery_challans',label: 'Delivery Challans',   desc: 'Track goods shipped to clients with delivery proof' },
   { key: 'credit_notes',     label: 'Credit / Debit Notes',desc: 'Issue refunds or additional charges against invoices' },
+  { key: 'timesheets',       label: 'Timesheets',          desc: 'Log billable hours and track time spent on projects' },
   { key: 'gst_returns',      label: 'GST Returns',         desc: 'View GST filing summaries (GSTR-1, HSN, etc.)' },
   { key: 'reports',          label: 'Reports & Analytics',  desc: 'Revenue, ageing, P&L, and payment collection reports' },
   { key: 'payroll',          label: 'Payroll',              desc: 'Track staff salaries and generate monthly payslips' },

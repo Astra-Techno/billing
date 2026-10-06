@@ -7,9 +7,11 @@ import { useAuthStore } from './auth'
 const DEFAULT_FEATURES = {
   quotes: true,
   expenses: true,
+  purchases: false,
   purchase_orders: false,
   delivery_challans: false,
   credit_notes: false,
+  timesheets: false,
   gst_returns: true,
   reports: true,
   payroll: false,
