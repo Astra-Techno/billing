@@ -13,7 +13,7 @@ class Business extends Table
         'gstin', 'pan', 'cin', 'is_gst_registered', 'gst_registered_date',
         'email', 'mobile', 'phone', 'website',
         'address_line1', 'address_line2', 'city', 'state_id', 'pincode',
-        'bank_name', 'bank_account_no', 'bank_ifsc', 'bank_account_name', 'upi_id',
+        'bank_name', 'bank_account_no', 'bank_ifsc', 'bank_account_name', 'upi_id', 'upi_qr_image',
         'ewb_username', 'ewb_password',
         'logo', 'currency', 'timezone', 'date_format', 'financial_year_start',
         'invoice_prefix', 'quote_prefix', 'draft_invoice_number_enabled', 'invoice_terms', 'invoice_notes', 'signature',

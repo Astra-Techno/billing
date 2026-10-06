@@ -44,6 +44,7 @@ class Invoice extends Sql
             ->left('clients c ON c.id = i.client_id')
             ->left('indian_states s ON s.id = i.place_of_supply')
             ->left('indian_states bs ON bs.id = (SELECT state_id FROM businesses WHERE id = i.business_id)')
+            ->left('indian_states cs ON cs.id = c.state_id')
             ->left('inventory_locations il ON il.id = i.location_id')
             ->left('indian_states ls ON ls.id = i.location_state_id')
             ->select('entity', '
@@ -52,7 +53,7 @@ class Invoice extends Sql
                 c.gstin AS client_gstin, c.pan AS client_pan,
                 c.email AS client_email, c.mobile AS client_mobile,
                 c.address_line1 AS client_address1, c.address_line2 AS client_address2,
-                c.city AS client_city, c.pincode AS client_pincode,
+                c.city AS client_city, c.pincode AS client_pincode, cs.name AS client_state_name,
                 s.name AS place_of_supply_name, s.code AS place_of_supply_code,
                 il.name AS location_name, il.address AS location_address, il.city AS location_city, il.pincode AS location_pincode,
                 ls.name AS location_state_name

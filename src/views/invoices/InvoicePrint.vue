@@ -67,6 +67,12 @@ const sellerAddress = computed(() => {
   return [business.value?.address_line1, business.value?.address_line2, business.value?.city, business.value?.state_name, business.value?.pincode].filter(Boolean).join(', ')
 })
 
+const clientAddress = computed(() => {
+  const inv = invoice.value
+  if (!inv) return ''
+  return [inv.client_address1, inv.client_address2, inv.client_city, inv.client_state_name, inv.client_pincode].filter(Boolean).join(', ')
+})
+
 // Print modes: normal, dc (delivery challan — no prices), proforma
 const mode = computed(() => route.query.mode || 'normal')
 const isDC = computed(() => mode.value === 'dc')
@@ -195,6 +201,7 @@ onMounted(async () => {
       <div class="receipt-rule"></div>
       <p>Bill to: <strong>{{ invoice.client_name || 'Walk-in Customer' }}</strong></p>
       <p v-if="invoice.client_gstin">Customer GSTIN: {{ invoice.client_gstin }}</p>
+      <p v-if="clientAddress">{{ clientAddress }}</p>
       <p v-if="invoice.client_mobile">Mobile: {{ invoice.client_mobile }}</p>
       <div class="receipt-rule"></div>
       <div v-for="(it, idx) in items" :key="it.id || idx" class="receipt-item">
@@ -248,6 +255,7 @@ onMounted(async () => {
           <p class="font-bold text-gray-900 text-sm">{{ invoice.client_name || 'Walk-in Customer' }}</p>
           <p v-if="invoice.client_company" class="text-xs text-gray-600">{{ invoice.client_company }}</p>
           <p v-if="invoice.client_gstin" class="text-xs text-gray-500 font-mono">GSTIN: {{ invoice.client_gstin }}</p>
+          <p v-if="clientAddress" class="text-xs text-gray-500">{{ clientAddress }}</p>
           <p v-if="invoice.client_mobile" class="text-xs text-gray-500">Mob: {{ invoice.client_mobile }}</p>
         </div>
         <div>
@@ -389,6 +397,7 @@ onMounted(async () => {
           <p style="font-size: 14px; font-weight: 700; color: #111827;">{{ invoice.client_name || 'Walk-in Customer' }}</p>
           <p v-if="invoice.client_company" style="font-size: 11px; color: #6b7280;">{{ invoice.client_company }}</p>
           <p v-if="invoice.client_gstin" style="font-size: 11px; color: #6b7280; font-family: monospace;">GSTIN: {{ invoice.client_gstin }}</p>
+          <p v-if="clientAddress" style="font-size: 11px; color: #6b7280;">{{ clientAddress }}</p>
           <p v-if="invoice.client_mobile" style="font-size: 11px; color: #6b7280;">{{ invoice.client_mobile }}</p>
         </div>
       </div>
@@ -537,6 +546,7 @@ onMounted(async () => {
           <p style="font-size: 15px; font-weight: 600; color: #111827;">{{ invoice.client_name || 'Walk-in Customer' }}</p>
           <p v-if="invoice.client_company" style="font-size: 12px; color: #6b7280; margin-top: 2px;">{{ invoice.client_company }}</p>
           <p v-if="invoice.client_gstin" style="font-size: 11px; color: #9ca3af; font-family: monospace; margin-top: 4px;">GSTIN: {{ invoice.client_gstin }}</p>
+          <p v-if="clientAddress" style="font-size: 11px; color: #9ca3af; margin-top: 2px;">{{ clientAddress }}</p>
           <p v-if="invoice.client_mobile" style="font-size: 11px; color: #9ca3af; margin-top: 2px;">{{ invoice.client_mobile }}</p>
         </div>
         <div style="text-align: right;">
@@ -676,6 +686,7 @@ onMounted(async () => {
             <p style="font-size: 14px; font-weight: 700; margin-top: 4px;">{{ invoice.client_name || 'Walk-in Customer' }}</p>
             <p v-if="invoice.client_company" style="font-size: 12px;">{{ invoice.client_company }}</p>
             <p v-if="invoice.client_gstin" style="font-size: 11px; margin-top: 2px;">GSTIN: {{ invoice.client_gstin }}</p>
+            <p v-if="clientAddress" style="font-size: 11px;">{{ clientAddress }}</p>
             <p v-if="invoice.client_mobile" style="font-size: 11px;">Mob: {{ invoice.client_mobile }}</p>
           </td>
           <td style="padding: 10px 12px; vertical-align: top; border-bottom: 1px solid #000;">

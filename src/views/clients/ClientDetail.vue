@@ -45,7 +45,8 @@ async function deleteClient() {
     await task('Client', 'delete', { id: route.params.id })
     emit('refresh')
     router.push('/clients')
-  } catch {
+  } catch (e) {
+    alert(e.response?.data?.message || 'Failed to delete client.')
     deleting.value = false
     showDelete.value = false
   }

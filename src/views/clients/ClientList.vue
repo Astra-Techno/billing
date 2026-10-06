@@ -20,6 +20,7 @@ const { items: clients, loading, loadingMore, total, hasMore, search, onSearch, 
   usePagedList('Client', {
     scrollContainer: '#client-scroll',
     listRouteName: 'Clients',
+    params: () => ({ 'filter.active': 1 }),
   })
 
 // Start tour after first load
