@@ -92,6 +92,13 @@ const routes = [
         ]
       },
       {
+        path: 'purchase-returns', name: 'PurchaseReturns', component: () => import('../views/purchase-returns/PurchaseReturnList.vue'), meta: { permission: 'purchases', feature: 'purchases' },
+        children: [
+          { path: 'new',       name: 'PurchaseReturnNew',  component: () => import('../views/purchase-returns/PurchaseReturnForm.vue'), meta: { action: 'create' } },
+          { path: ':id',       name: 'PurchaseReturnView', component: () => import('../views/purchase-returns/PurchaseReturnDetail.vue') },
+        ]
+      },
+      {
         path: 'delivery-challans', name: 'DeliveryChallans', component: () => import('../views/delivery-challans/DeliveryChallanList.vue'), meta: { permission: 'delivery_challans', feature: 'delivery_challans' },
         children: [
           { path: 'new',       name: 'DeliveryChallanNew',  component: () => import('../views/delivery-challans/DeliveryChallanForm.vue'), meta: { action: 'create' } },

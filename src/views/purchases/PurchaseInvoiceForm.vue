@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, shallowRef, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { task, item, all } from '../../api'
+import { task, item, list, all } from '../../api'
 import { inr } from '../../utils/currency'
 import { today, addDays } from '../../utils/date'
 import { defaultUnits } from '../../utils/units'
@@ -142,7 +142,7 @@ function onFormShortcut(e) {
 onMounted(() => document.addEventListener('keydown', onFormShortcut))
 onUnmounted(() => document.removeEventListener('keydown', onFormShortcut))
 
-const blankItem = () => ({ description: '', hsn_sac: '', unit: 'Nos', quantity: 1, unit_price: '', gst_rate: 18, discount_pct: 0, product_id: null })
+const blankItem = () => ({ description: '', hsn_sac: '', unit: 'Nos', quantity: 1, unit_price: '', gst_rate: 18, discount_pct: 0, product_id: null, batch_no: '', expiry_date: '' })
 
 const units    = defaultUnits
 const gstRates = [0, 5, 12, 18, 28]
@@ -153,6 +153,7 @@ const form = ref({
   due_date:       addDays(today(), 30),
   supplier_inv_no: '',
   location_id:    '',
+  po_id:          null,
   notes:          '',
   items:          [blankItem()],
 })
@@ -192,6 +193,8 @@ function lineTotal(it) {
   return taxable * (1 + parseFloat(it.gst_rate || 0) / 100)
 }
 
+function itemProduct(it) { return it.product_id ? products.value.find(p => p.id == it.product_id) : null }
+
 function pickProduct(i, productId) {
   const p = products.value.find(p => p.id == productId)
   if (!p) return
@@ -229,10 +232,38 @@ onMounted(async () => {
             unit_price: it.unit_price, gst_rate: parseFloat(it.gst_rate || 0),
             discount_pct: parseFloat(it.discount_pct || 0),
             product_id: it.product_id || null,
+            batch_no: it.batch_no || '', expiry_date: it.expiry_date || '',
           }))
         }
       }
     } catch { error.value = 'Could not load purchase bill data.' }
+  }
+
+  // Pre-fill from Purchase Order via ?po_id=X
+  const poId = route.query.po_id
+  if (poId && !isEdit.value) {
+    try {
+      const [poRes, poItemsRes] = await Promise.all([
+        item('PurchaseOrder', { id: poId }),
+        list('PurchaseOrder:items', { po_id: poId }),
+      ])
+      const po = poRes.data?.data
+      const poItems = poItemsRes.data?.data || []
+      if (po) {
+        form.value.supplier_id = po.supplier_id
+        form.value.po_id       = po.id
+        form.value.location_id = po.location_id || form.value.location_id
+        if (poItems.length) {
+          form.value.items = poItems.map(it => ({
+            description: it.description, hsn_sac: it.hsn_sac || '',
+            unit: it.unit || 'Nos', quantity: it.quantity,
+            unit_price: it.unit_price, gst_rate: parseFloat(it.gst_rate || 0),
+            discount_pct: 0, product_id: it.product_id || null,
+            batch_no: '', expiry_date: '',
+          }))
+        }
+      }
+    } catch {}
   }
 
   nextTick(() => { setTimeout(() => { const el = document.querySelector('.line-desc'); if (el) el.focus() }, 150) })
@@ -344,6 +375,11 @@ async function submit() {
                       </div>
                     </div>
                     <div v-if="productSearchIdx === idx" class="fixed inset-0 z-40" @click="closeProductSearch"></div>
+                    <!-- Batch / Expiry -->
+                    <div v-if="itemProduct(it)?.batch_tracking || itemProduct(it)?.expiry_tracking" class="flex gap-2 mt-2">
+                      <input v-if="itemProduct(it)?.batch_tracking" v-model="it.batch_no" type="text" class="inv-input text-xs !bg-white flex-1" placeholder="Batch No." />
+                      <input v-if="itemProduct(it)?.expiry_tracking" v-model="it.expiry_date" type="date" class="inv-input text-xs !bg-white flex-1" placeholder="Expiry" />
+                    </div>
                   </div>
                   <!-- QTY + Unit -->
                   <div class="col-span-2 space-y-2">
@@ -421,6 +457,8 @@ async function submit() {
                   <div><label class="inv-label">Rate (₹)</label><input v-model="it.unit_price" type="number" min="0" step="0.01" class="inv-input w-full" placeholder="0.00" /></div>
                   <div><label class="inv-label">Disc %</label><input v-model="it.discount_pct" type="number" min="0" max="100" step="0.01" class="inv-input w-full" placeholder="0" /></div>
                   <div class="col-span-2"><label class="inv-label">GST %</label><select v-model="it.gst_rate" class="inv-select w-full"><option v-for="r in gstRates" :key="r" :value="r">{{ r }}%</option></select></div>
+                  <div v-if="itemProduct(it)?.batch_tracking"><label class="inv-label">Batch No.</label><input v-model="it.batch_no" type="text" class="inv-input w-full" placeholder="Batch" /></div>
+                  <div v-if="itemProduct(it)?.expiry_tracking"><label class="inv-label">Expiry Date</label><input v-model="it.expiry_date" type="date" class="inv-input w-full" /></div>
                 </div>
                 <div class="flex justify-between text-sm font-semibold text-gray-700 pt-1">
                   <span>Line Total</span>

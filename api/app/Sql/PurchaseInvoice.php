@@ -69,7 +69,9 @@ class PurchaseInvoice extends Sql
                 pii.gst_rate, pii.cgst_rate, pii.sgst_rate, pii.igst_rate,
                 pii.cgst_amt, pii.sgst_amt, pii.igst_amt,
                 pii.total, pii.sort_order,
-                p.name AS product_name, p.type AS product_type
+                pii.batch_no, pii.expiry_date,
+                p.name AS product_name, p.type AS product_type,
+                p.batch_tracking, p.expiry_tracking
             ')
             ->filter('pii.pi_id = {pi_id}')
             ->order('pii.sort_order', 'asc');

@@ -136,6 +136,12 @@ const methodLabel = m => ({ cash:'Cash',upi:'UPI',neft:'NEFT',rtgs:'RTGS',imps:'
           <span class="text-xs">Edit</span>
         </RouterLink>
 
+        <RouterLink v-if="pi.status === 'recorded' || pi.status === 'partial' || pi.status === 'paid'" :to="`/purchase-returns/new?pi_id=${pi.id}`"
+          class="flex-1 min-w-[100px] btn bg-amber-50 text-amber-700 border border-amber-100 hover:bg-amber-100 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+          <span class="text-xs">Return Items</span>
+        </RouterLink>
+
         <button v-if="pi.status !== 'paid' && pi.status !== 'cancelled'" @click="doAction('cancel')" :disabled="acting"
           class="flex-1 min-w-[100px] btn bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 shadow-soft flex flex-col items-center justify-center h-20 gap-1 rounded-[1.5rem]">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -192,7 +198,15 @@ const methodLabel = m => ({ cash:'Cash',upi:'UPI',neft:'NEFT',rtgs:'RTGS',imps:'
             <tbody class="divide-y divide-gray-100">
               <tr v-for="(it, idx) in items" :key="it.id">
                 <td class="px-3 py-3 text-gray-400 text-xs">{{ idx + 1 }}</td>
-                <td class="px-3 py-3"><p class="font-medium text-gray-800">{{ it.description }}</p><p v-if="it.unit" class="text-xs text-gray-400">{{ it.unit }}</p></td>
+                <td class="px-3 py-3">
+                  <p class="font-medium text-gray-800">{{ it.description }}</p>
+                  <p v-if="it.unit" class="text-xs text-gray-400">{{ it.unit }}</p>
+                  <p v-if="it.batch_no || it.expiry_date" class="text-[10px] text-gray-400 mt-0.5">
+                    <span v-if="it.batch_no">Batch: {{ it.batch_no }}</span>
+                    <span v-if="it.batch_no && it.expiry_date"> · </span>
+                    <span v-if="it.expiry_date">Exp: {{ fmtDateShort(it.expiry_date) }}</span>
+                  </p>
+                </td>
                 <td class="px-3 py-3 text-center font-mono text-xs text-gray-500">{{ it.hsn_sac || '—' }}</td>
                 <td class="px-3 py-3 text-right text-gray-700">{{ it.quantity }}</td>
                 <td class="px-3 py-3 text-right text-gray-700">{{ inr(it.unit_price) }}</td>

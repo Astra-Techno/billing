@@ -58,14 +58,20 @@ final class InventoryStock
         if (self::settings($businessId)->inventory_mode === 'none') return;
         $exists = DB::selectOne('SELECT id FROM stock_movements WHERE business_id = ? AND reference_type = ? AND reference_id = ? LIMIT 1', [$businessId, $referenceType, $referenceId]);
         if ($exists) return;
-        $items = DB::select("SELECT product_id, quantity, unit_price FROM {$itemsTable} WHERE {$foreignKey} = ? AND product_id IS NOT NULL", [$referenceId]);
+        $hasBatch = DB::selectOne("SHOW COLUMNS FROM {$itemsTable} LIKE 'batch_no'");
+        $cols = 'product_id, quantity, unit_price';
+        if ($hasBatch) $cols .= ', batch_no, expiry_date';
+        $items = DB::select("SELECT {$cols} FROM {$itemsTable} WHERE {$foreignKey} = ? AND product_id IS NOT NULL", [$referenceId]);
         foreach ($items as $item) {
             $factor = 1.0;
             if ($movementType === 'purchase') {
                 $product = DB::selectOne('SELECT conversion_factor FROM products WHERE id=? AND business_id=?', [(int)$item->product_id, $businessId]);
                 $factor = max(0.0001, (float)($product->conversion_factor ?? 1));
             }
-            self::move($businessId, $locationId, (int)$item->product_id, $sign * (float)$item->quantity * $factor, $movementType, $referenceType, $referenceId, $userId, ['unit_cost' => (float)$item->unit_price / $factor]);
+            $meta = ['unit_cost' => (float)$item->unit_price / $factor];
+            if ($hasBatch && !empty($item->batch_no))    $meta['batch_no']    = $item->batch_no;
+            if ($hasBatch && !empty($item->expiry_date))  $meta['expiry_date'] = $item->expiry_date;
+            self::move($businessId, $locationId, (int)$item->product_id, $sign * (float)$item->quantity * $factor, $movementType, $referenceType, $referenceId, $userId, $meta);
         }
     }
 

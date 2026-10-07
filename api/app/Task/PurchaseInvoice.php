@@ -457,6 +457,8 @@ class PurchaseInvoice extends Task
                 'igst_amt'    => $igstAmt,
                 'total'       => $taxable + $cgstAmt + $sgstAmt + $igstAmt,
                 'sort_order'  => $i,
+                'batch_no'    => $item['batch_no'] ?? null,
+                'expiry_date' => !empty($item['expiry_date']) ? $item['expiry_date'] : null,
             ]);
         }
     }
