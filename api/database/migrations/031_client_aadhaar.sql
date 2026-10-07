@@ -1,0 +1,1 @@
+ALTER TABLE clients ADD COLUMN aadhaar VARCHAR(12) NULL AFTER pan;

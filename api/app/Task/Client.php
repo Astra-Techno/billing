@@ -30,6 +30,15 @@ class Client extends Task
             $input['gstin'] = $gstin;
         }
 
+        // Aadhaar validation if provided
+        if (!empty($input['aadhaar'])) {
+            $aadhaar = preg_replace('/\s+/', '', $input['aadhaar']);
+            if (!preg_match('/^\d{12}$/', $aadhaar)) {
+                $this->fail('Aadhaar number must be exactly 12 digits.');
+            }
+            $input['aadhaar'] = $aadhaar;
+        }
+
         $client = ClientTable::create([
             'business_id'  => $businessId,
             'type'         => $input['type'],
@@ -37,6 +46,7 @@ class Client extends Task
             'company'      => $input['company']      ?? null,
             'gstin'        => $input['gstin']        ?? null,
             'pan'          => $input['pan']          ?? null,
+            'aadhaar'      => $input['aadhaar']      ?? null,
             'email'        => $input['email']        ?? null,
             'mobile'       => $input['mobile']       ?? null,
             'phone'        => $input['phone']        ?? null,
@@ -91,12 +101,21 @@ class Client extends Task
             $input['gstin'] = $gstin;
         }
 
+        if (!empty($input['aadhaar'])) {
+            $aadhaar = preg_replace('/\s+/', '', $input['aadhaar']);
+            if (!preg_match('/^\d{12}$/', $aadhaar)) {
+                $this->fail('Aadhaar number must be exactly 12 digits.');
+            }
+            $input['aadhaar'] = $aadhaar;
+        }
+
         $client->fill([
             'type'         => $input['type']          ?? $client->type,
             'name'         => trim($input['name']),
             'company'      => $input['company']       ?? $client->company,
             'gstin'        => $input['gstin']         ?? $client->gstin,
             'pan'          => $input['pan']           ?? $client->pan,
+            'aadhaar'      => $input['aadhaar']       ?? $client->aadhaar,
             'email'        => $input['email']         ?? $client->email,
             'mobile'       => $input['mobile']        ?? $client->mobile,
             'phone'        => $input['phone']         ?? $client->phone,

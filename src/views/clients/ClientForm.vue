@@ -21,6 +21,7 @@ const error      = ref('')
 const gstinError = ref('')
 
 const GSTIN_RE = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/
+const aadhaarError = ref('')
 
 function validateGstin() {
   const v = (form.value.gstin || '').trim().toUpperCase()
@@ -28,10 +29,17 @@ function validateGstin() {
   if (!v) { gstinError.value = ''; return }
   gstinError.value = GSTIN_RE.test(v) ? '' : 'Invalid GSTIN format. Example: 27AABCU9603R1Z6'
 }
+
+function validateAadhaar() {
+  const v = (form.value.aadhaar || '').replace(/\s+/g, '')
+  form.value.aadhaar = v
+  if (!v) { aadhaarError.value = ''; return }
+  aadhaarError.value = /^\d{12}$/.test(v) ? '' : 'Aadhaar must be exactly 12 digits.'
+}
 const isEdit  = computed(() => !!route.params.id)
 
 const form = ref({
-  type: 'business', name: '', company: '', gstin: '', pan: '',
+  type: 'business', name: '', company: '', gstin: '', pan: '', aadhaar: '',
   email: '', mobile: '', phone: '',
   address_line1: '', address_line2: '', city: '', state_id: '', pincode: '',
   credit_days: 30, notes: '',
@@ -55,7 +63,7 @@ onMounted(async () => {
       if (c) {
         Object.keys(form.value).forEach(k => { if (c[k] !== undefined) form.value[k] = c[k] })
         // Show more details if any optional fields are filled
-        if (c.email || c.gstin || c.pan || c.address_line1 || c.city || c.contact_name) showMore.value = true
+        if (c.email || c.gstin || c.pan || c.aadhaar || c.address_line1 || c.city || c.contact_name) showMore.value = true
       }
     } catch {
       error.value = 'Could not load customer details. Please try again.'
@@ -140,7 +148,7 @@ async function submit() {
                 <svg class="w-4 h-4 transition-transform" :class="showMore ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
                 </svg>
-                {{ showMore ? 'Hide Contact & Tax Details' : 'Add email, GST, PAN & Address details…' }}
+                {{ showMore ? 'Hide Contact & Tax Details' : form.type === 'individual' ? 'Add email, Aadhaar, PAN & Address details…' : 'Add email, GST, PAN & Address details…' }}
               </button>
             </div>
           </div>
@@ -156,12 +164,19 @@ async function submit() {
                   <input v-model="form.email" type="email" class="inv-input !bg-white" placeholder="email@example.com" />
                 </div>
                 
-                <div>
+                <div v-if="form.type !== 'individual'">
                   <label class="inv-label">GST Number <span class="text-gray-400 font-normal">(if registered)</span></label>
                   <input v-model="form.gstin" type="text" @blur="validateGstin"
                     class="inv-input font-mono uppercase !bg-white" :class="gstinError ? 'border-red-400 focus:ring-red-200' : ''"
                     placeholder="e.g. 27AABCU9603R1Z6" maxlength="15" />
                   <p v-if="gstinError" class="text-xs text-red-500 mt-1">{{ gstinError }}</p>
+                </div>
+                <div v-else>
+                  <label class="inv-label">Aadhaar Number</label>
+                  <input v-model="form.aadhaar" type="text" @blur="validateAadhaar"
+                    class="inv-input font-mono !bg-white" :class="aadhaarError ? 'border-red-400 focus:ring-red-200' : ''"
+                    placeholder="e.g. 1234 5678 9012" maxlength="14" />
+                  <p v-if="aadhaarError" class="text-xs text-red-500 mt-1">{{ aadhaarError }}</p>
                 </div>
                 
                 <div>
