@@ -25,8 +25,10 @@ class PurchaseInvoice extends Task
 
         $businessId = $this->requireBusiness();
         $this->requirePermission('purchases', 'create');
+        $this->requireFeature($businessId, 'purchases');
         $locationId = (int)($input['location_id'] ?? InventoryStock::defaultLocation($businessId));
         $this->validateItems($input['items'] ?? []);
+        $this->validateBusinessOwnership($businessId, $input);
 
         $supplyType = $this->resolveSupplyType($businessId, (int)$input['supplier_id'], $locationId);
         $fy     = Sequence::financialYearForDate((string)$input['invoice_date']);
@@ -82,12 +84,14 @@ class PurchaseInvoice extends Task
 
         $businessId = $this->requireBusiness();
         $this->requirePermission('purchases', 'edit');
+        $this->requireFeature($businessId, 'purchases');
         $pi = $this->findPI((int)$input['id'], $businessId);
 
         if ($pi->status !== 'draft')
             $this->fail('Only draft purchase invoices can be edited.');
 
         $this->validateItems($input['items'] ?? []);
+        $this->validateBusinessOwnership($businessId, $input);
         $locationId = (int)($input['location_id'] ?? $pi->location_id ?? InventoryStock::defaultLocation($businessId));
         $supplyType = $this->resolveSupplyType($businessId, (int)$input['supplier_id'], $locationId);
         $totals = $this->calculateTotals($input['items'], $supplyType);
@@ -129,6 +133,7 @@ class PurchaseInvoice extends Task
 
         $businessId = $this->requireBusiness();
         $this->requirePermission('purchases', 'edit');
+        $this->requireFeature($businessId, 'purchases');
         $pi = $this->findPI((int)$input['id'], $businessId);
 
         if ($pi->status !== 'draft')
@@ -159,6 +164,7 @@ class PurchaseInvoice extends Task
 
         $businessId = $this->requireBusiness();
         $this->requirePermission('purchases', 'edit');
+        $this->requireFeature($businessId, 'purchases');
         $pi = $this->findPI((int)$input['id'], $businessId);
 
         if (in_array($pi->status, ['draft', 'cancelled']))
@@ -166,6 +172,11 @@ class PurchaseInvoice extends Task
 
         $amount = round((float)$input['amount'], 2);
         if ($amount <= 0) $this->fail('Payment amount must be positive.');
+
+        // Prevent overpayment
+        $currentDue = round((float)$pi->amount_due, 2);
+        if ($amount > $currentDue)
+            $this->fail("Payment of ₹{$amount} exceeds the balance due of ₹{$currentDue}.");
 
         PurchasePayment::create([
             'business_id'  => $businessId,
@@ -180,21 +191,9 @@ class PurchaseInvoice extends Task
             'note'         => $input['note'] ?? null,
         ]);
 
-        // Recalculate
-        $paid = (float)DB::selectOne(
-            "SELECT COALESCE(SUM(amount), 0) AS total_paid FROM purchase_payments WHERE pi_id = ?",
-            [$pi->id]
-        )->total_paid;
+        $newDue = $this->recalcPayments((int)$pi->id, (float)$pi->total);
 
-        $due    = round((float)$pi->total - $paid, 2);
-        $status = $due <= 0 ? 'paid' : 'partial';
-
-        DB::statement(
-            "UPDATE purchase_invoices SET amount_paid = ?, amount_due = ?, status = ? WHERE id = ?",
-            [$paid, max(0, $due), $status, $pi->id]
-        );
-
-        return $this->success(['amount_due' => max(0, $due)], 'Payment recorded.');
+        return $this->success(['amount_due' => $newDue], 'Payment recorded.');
     }
 
     // ── Cancel ──────────────────────────────────────────────────────────────
@@ -205,6 +204,7 @@ class PurchaseInvoice extends Task
 
         $businessId = $this->requireBusiness();
         $this->requirePermission('purchases', 'edit');
+        $this->requireFeature($businessId, 'purchases');
         $pi = $this->findPI((int)$input['id'], $businessId);
 
         if ($pi->status === 'cancelled')
@@ -238,6 +238,7 @@ class PurchaseInvoice extends Task
         $businessId = $this->requireBusiness();
         $this->requireRole(['owner', 'admin']);
         $this->requirePermission('purchases', 'delete');
+        $this->requireFeature($businessId, 'purchases');
         $pi = $this->findPI((int)$input['id'], $businessId);
 
         if ($pi->status !== 'draft')
@@ -257,27 +258,38 @@ class PurchaseInvoice extends Task
 
         $businessId = $this->requireBusiness();
         $this->requirePermission('purchases', 'edit');
+        $this->requireFeature($businessId, 'purchases');
         $pi = $this->findPI((int)$input['id'], $businessId);
+
+        if ($pi->status === 'cancelled')
+            $this->fail('Cannot modify payments on a cancelled purchase invoice.');
 
         DB::statement("DELETE FROM purchase_payments WHERE id = ? AND pi_id = ?", [(int)$input['payment_id'], $pi->id]);
 
-        $paid = (float)DB::selectOne(
-            "SELECT COALESCE(SUM(amount), 0) AS total_paid FROM purchase_payments WHERE pi_id = ?",
-            [$pi->id]
-        )->total_paid;
-
-        $due    = round((float)$pi->total - $paid, 2);
-        $status = $paid <= 0 ? 'recorded' : ($due <= 0 ? 'paid' : 'partial');
-
-        DB::statement(
-            "UPDATE purchase_invoices SET amount_paid = ?, amount_due = ?, status = ? WHERE id = ?",
-            [$paid, max(0, $due), $status, $pi->id]
-        );
+        $this->recalcPayments((int)$pi->id, (float)$pi->total);
 
         return $this->success(null, 'Payment deleted.');
     }
 
     // ── Private helpers ─────────────────────────────────────────────────────
+
+    private function recalcPayments(int $piId, float $total): float
+    {
+        $paid = (float)DB::selectOne(
+            "SELECT COALESCE(SUM(amount), 0) AS total_paid FROM purchase_payments WHERE pi_id = ?",
+            [$piId]
+        )->total_paid;
+
+        $due    = max(0, round($total - $paid, 2));
+        $status = $paid <= 0 ? 'recorded' : ($due <= 0 ? 'paid' : 'partial');
+
+        DB::statement(
+            "UPDATE purchase_invoices SET amount_paid = ?, amount_due = ?, status = ? WHERE id = ?",
+            [$paid, $due, $status, $piId]
+        );
+
+        return $due;
+    }
 
     private function findPI(int $id, int $businessId): object
     {
@@ -285,6 +297,51 @@ class PurchaseInvoice extends Task
         if (!$pi || (int)$pi->business_id !== $businessId || $pi->deleted_at)
             $this->fail('Purchase invoice not found.', 404);
         return $pi;
+    }
+
+    private function validateBusinessOwnership(int $businessId, array $input): void
+    {
+        // Supplier must belong to this business
+        $supplierId = (int)($input['supplier_id'] ?? 0);
+        if ($supplierId) {
+            $supplier = DB::selectOne(
+                "SELECT id FROM clients WHERE id = ? AND business_id = ? LIMIT 1",
+                [$supplierId, $businessId]
+            );
+            if (!$supplier) $this->fail('Supplier not found or does not belong to this business.');
+        }
+
+        // Location must belong to this business
+        $locationId = (int)($input['location_id'] ?? 0);
+        if ($locationId) {
+            $loc = DB::selectOne(
+                "SELECT id FROM inventory_locations WHERE id = ? AND business_id = ? LIMIT 1",
+                [$locationId, $businessId]
+            );
+            if (!$loc) $this->fail('Inventory location not found or does not belong to this business.');
+        }
+
+        // PO must belong to this business
+        $poId = (int)($input['po_id'] ?? 0);
+        if ($poId) {
+            $po = DB::selectOne(
+                "SELECT id FROM purchase_orders WHERE id = ? AND business_id = ? LIMIT 1",
+                [$poId, $businessId]
+            );
+            if (!$po) $this->fail('Purchase order not found or does not belong to this business.');
+        }
+
+        // Products in items must belong to this business
+        foreach ($input['items'] ?? [] as $i => $item) {
+            $productId = (int)($item['product_id'] ?? 0);
+            if ($productId) {
+                $product = DB::selectOne(
+                    "SELECT id FROM products WHERE id = ? AND business_id = ? LIMIT 1",
+                    [$productId, $businessId]
+                );
+                if (!$product) $this->fail("Item " . ($i + 1) . ": product does not belong to this business.");
+            }
+        }
     }
 
     private function resolveSupplyType(int $businessId, int $supplierId, int $locationId = 0): string

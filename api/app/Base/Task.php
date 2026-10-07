@@ -148,6 +148,26 @@ class Task extends ClassObject
         return $row && $row->permissions ? json_decode($row->permissions, true) : [];
     }
 
+    /**
+     * Check that a feature module is enabled for the business.
+     * Reads the JSON stored in the settings table under the 'features' key.
+     */
+    protected function requireFeature(int $businessId, string $feature): void
+    {
+        $row = DB::selectOne(
+            "SELECT `value` FROM settings WHERE business_id = ? AND `key` = 'features' LIMIT 1",
+            [$businessId]
+        );
+
+        if ($row && $row->value) {
+            $features = json_decode($row->value, true);
+            if (is_array($features) && isset($features[$feature]) && !$features[$feature]) {
+                $this->fail('This module is not enabled. Enable it in Settings > Features.', 403);
+            }
+        }
+        // If no features row or key not set, allow by default
+    }
+
     protected function validate(array $rules, array $messages = []): void
     {
         $validator = Validator::make($this->input, $rules, $messages);

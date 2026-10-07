@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useBusinessStore } from '../stores/business'
 import { isChunkLoadError, reloadForStaleChunk } from '../utils/chunkReload'
 
 const routes = [
@@ -37,7 +38,7 @@ const routes = [
         ]
       },
       {
-        path: 'quotes',           name: 'Quotes',       component: () => import('../views/quotes/QuoteList.vue'), meta: { permission: 'quotes' },
+        path: 'quotes',           name: 'Quotes',       component: () => import('../views/quotes/QuoteList.vue'), meta: { permission: 'quotes', feature: 'quotes' },
         children: [
           { path: 'new',       name: 'QuoteNew',     component: () => import('../views/quotes/QuoteForm.vue'), meta: { action: 'create' } },
           { path: ':id/edit',  name: 'QuoteEdit',    component: () => import('../views/quotes/QuoteForm.vue'), meta: { action: 'edit' } },
@@ -45,14 +46,14 @@ const routes = [
         ]
       },
       {
-        path: 'expenses',         name: 'Expenses',     component: () => import('../views/expenses/ExpenseList.vue'), meta: { permission: 'expenses' },
+        path: 'expenses',         name: 'Expenses',     component: () => import('../views/expenses/ExpenseList.vue'), meta: { permission: 'expenses', feature: 'expenses' },
         children: [
           { path: 'new',     name: 'ExpenseNew',   component: () => import('../views/expenses/ExpenseForm.vue'), meta: { action: 'create' } },
           { path: ':id/edit',name: 'ExpenseEdit',  component: () => import('../views/expenses/ExpenseForm.vue'), meta: { action: 'edit' } },
         ]
       },
       {
-        path: 'payroll', name: 'Payroll', component: () => import('../views/payroll/StaffList.vue'), meta: { permission: 'payroll' },
+        path: 'payroll', name: 'Payroll', component: () => import('../views/payroll/StaffList.vue'), meta: { permission: 'payroll', feature: 'payroll' },
         children: [
           { path: 'staff/new',       name: 'StaffNew',    component: () => import('../views/payroll/StaffForm.vue'), meta: { action: 'create' } },
           { path: 'staff/:id/edit',  name: 'StaffEdit',   component: () => import('../views/payroll/StaffForm.vue'), meta: { action: 'edit' } },
@@ -68,14 +69,14 @@ const routes = [
       },
       { path: 'inventory', name: 'Inventory', component: () => import('../views/inventory/Inventory.vue'), meta: { permission: 'inventory' } },
       {
-        path: 'credit-notes',     name: 'CreditNotes',  component: () => import('../views/credit-notes/CreditNoteList.vue'), meta: { permission: 'credit_notes' },
+        path: 'credit-notes',     name: 'CreditNotes',  component: () => import('../views/credit-notes/CreditNoteList.vue'), meta: { permission: 'credit_notes', feature: 'credit_notes' },
         children: [
           { path: 'new',     name: 'CreditNoteNew',   component: () => import('../views/credit-notes/CreditNoteForm.vue'), meta: { action: 'create' } },
           { path: ':id/edit',name: 'CreditNoteEdit',  component: () => import('../views/credit-notes/CreditNoteForm.vue'), meta: { action: 'edit' } },
         ]
       },
       {
-        path: 'purchase-orders',  name: 'PurchaseOrders', component: () => import('../views/purchase-orders/PurchaseOrderList.vue'), meta: { permission: 'purchase_orders' },
+        path: 'purchase-orders',  name: 'PurchaseOrders', component: () => import('../views/purchase-orders/PurchaseOrderList.vue'), meta: { permission: 'purchase_orders', feature: 'purchase_orders' },
         children: [
           { path: 'new',       name: 'PurchaseOrderNew',    component: () => import('../views/purchase-orders/PurchaseOrderForm.vue'), meta: { action: 'create' } },
           { path: ':id/edit',  name: 'PurchaseOrderEdit',   component: () => import('../views/purchase-orders/PurchaseOrderForm.vue'), meta: { action: 'edit' } },
@@ -83,7 +84,7 @@ const routes = [
         ]
       },
       {
-        path: 'purchases', name: 'Purchases', component: () => import('../views/purchases/PurchaseInvoiceList.vue'), meta: { permission: 'purchases' },
+        path: 'purchases', name: 'Purchases', component: () => import('../views/purchases/PurchaseInvoiceList.vue'), meta: { permission: 'purchases', feature: 'purchases' },
         children: [
           { path: 'new',       name: 'PurchaseNew',  component: () => import('../views/purchases/PurchaseInvoiceForm.vue'), meta: { action: 'create' } },
           { path: ':id/edit',  name: 'PurchaseEdit', component: () => import('../views/purchases/PurchaseInvoiceForm.vue'), meta: { action: 'edit' } },
@@ -91,16 +92,16 @@ const routes = [
         ]
       },
       {
-        path: 'delivery-challans', name: 'DeliveryChallans', component: () => import('../views/delivery-challans/DeliveryChallanList.vue'), meta: { permission: 'delivery_challans' },
+        path: 'delivery-challans', name: 'DeliveryChallans', component: () => import('../views/delivery-challans/DeliveryChallanList.vue'), meta: { permission: 'delivery_challans', feature: 'delivery_challans' },
         children: [
           { path: 'new',       name: 'DeliveryChallanNew',  component: () => import('../views/delivery-challans/DeliveryChallanForm.vue'), meta: { action: 'create' } },
           { path: ':id/edit',  name: 'DeliveryChallanEdit', component: () => import('../views/delivery-challans/DeliveryChallanForm.vue'), meta: { action: 'edit' } },
           { path: ':id',       name: 'DeliveryChallanView', component: () => import('../views/delivery-challans/DeliveryChallanDetail.vue') },
         ]
       },
-      { path: 'timesheets',        name: 'Timesheets',    component: () => import('../views/timesheets/TimesheetList.vue'), meta: { permission: 'timesheets' } },
-      { path: 'gst-returns',      name: 'GstReturns',   component: () => import('../views/gst/GstReturns.vue'), meta: { permission: 'gst' } },
-      { path: 'reports',          name: 'Reports',      component: () => import('../views/reports/Reports.vue'), meta: { permission: 'reports' } },
+      { path: 'timesheets',        name: 'Timesheets',    component: () => import('../views/timesheets/TimesheetList.vue'), meta: { permission: 'timesheets', feature: 'timesheets' } },
+      { path: 'gst-returns',      name: 'GstReturns',   component: () => import('../views/gst/GstReturns.vue'), meta: { permission: 'gst', feature: 'gst_returns' } },
+      { path: 'reports',          name: 'Reports',      component: () => import('../views/reports/Reports.vue'), meta: { permission: 'reports', feature: 'reports' } },
       { path: 'settings',         name: 'Settings',     component: () => import('../views/settings/Settings.vue'), meta: { permission: 'settings' } },
       { path: 'offline-backups', name: 'OfflineBackups', component: () => import('../views/settings/OfflineBackups.vue'), meta: { permission: 'settings', desktop: true } },
       { path: 'help',             name: 'Help',         component: () => import('../views/help/Help.vue') },
@@ -155,6 +156,15 @@ router.beforeEach(async (to) => {
     const response = await fetch('/api/task/DesktopLicense/localStatus', { headers: { Authorization: `Bearer ${auth.token}`, 'X-Business-ID': String(auth.businessId) } })
     const result = response.ok ? await response.json() : null
     if (!result?.data?.active) return { name: 'Activation' }
+  }
+
+  // Feature toggle check: redirect if module is disabled for this business
+  if (auth.isLoggedIn && auth.businessId) {
+    const feature = to.matched.find(r => r.meta.feature)?.meta.feature
+    if (feature) {
+      const biz = useBusinessStore()
+      if (!biz.isEnabled(feature)) return { name: 'Dashboard' }
+    }
   }
 
   // Permission-based page access: check module + action from matched route chain

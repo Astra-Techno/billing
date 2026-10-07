@@ -83,6 +83,11 @@ export const useAuthStore = defineStore('auth', () => {
     businessId.value = data.data.business_id
     localStorage.setItem('token',       data.data.token)
     localStorage.setItem('business_id', data.data.business_id)
+    invalidateApiCache()
+    // Reload business data (logo, features) for the new business
+    const { useBusinessStore } = await import('./business')
+    const biz = useBusinessStore()
+    biz.ensureLoaded(true)
     return data
   }
 
