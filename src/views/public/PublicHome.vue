@@ -22,6 +22,7 @@ const featureSlides = [
   { image: '/screenshots/settings.jpg', eyebrow: 'Settings & permissions', title: 'Configure everything from invoice prefix to staff access.', text: 'Set business profile, GST details, invoice numbering, stock mode, payment info and feature toggles. Create staff with Owner, Admin, Accountant or Staff roles.', points: ['Role-based access', 'Feature toggles', 'Invoice customisation'] },
 ]
 const activeFeature = ref(0)
+const heroScene = ref(null)
 let featureTimer
 let touchStartX = 0
 const selectFeature = index => { activeFeature.value = (index + featureSlides.length) % featureSlides.length }
@@ -31,6 +32,20 @@ const pauseFeatures = () => clearInterval(featureTimer)
 const playFeatures = () => { pauseFeatures(); featureTimer = setInterval(nextFeature, 6500) }
 const startFeatureSwipe = event => { touchStartX = event.changedTouches[0].clientX; pauseFeatures() }
 const endFeatureSwipe = event => { const distance = event.changedTouches[0].clientX - touchStartX; if (Math.abs(distance) > 45) distance > 0 ? previousFeature() : nextFeature(); playFeatures() }
+const tiltHero = event => {
+  if (!heroScene.value || event.pointerType === 'touch') return
+  const bounds = heroScene.value.getBoundingClientRect()
+  const x = (event.clientX - bounds.left) / bounds.width - 0.5
+  const y = (event.clientY - bounds.top) / bounds.height - 0.5
+  heroScene.value.style.setProperty('--tilt-x', `${(-y * 7).toFixed(2)}deg`)
+  heroScene.value.style.setProperty('--tilt-y', `${(x * 9).toFixed(2)}deg`)
+  heroScene.value.style.setProperty('--light-x', `${((x + 0.5) * 100).toFixed(0)}%`)
+  heroScene.value.style.setProperty('--light-y', `${((y + 0.5) * 100).toFixed(0)}%`)
+}
+const resetHeroTilt = () => {
+  heroScene.value?.style.setProperty('--tilt-x', '0deg')
+  heroScene.value?.style.setProperty('--tilt-y', '0deg')
+}
 
 let cleanUp = () => {}
 onMounted(() => {
@@ -95,7 +110,7 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
         </ul>
       </div>
 
-      <div class="counter-scene" aria-label="AI Billing point of sale preview">
+      <div ref="heroScene" class="counter-scene" aria-label="AI Billing point of sale preview" @pointermove="tiltHero" @pointerleave="resetHeroTilt">
         <div class="blue-note">Works offline<br><small>on Windows PC</small></div>
         <div class="screen-shell">
           <div class="screen-bar"><i></i><i></i><i></i><b>AI Billing · POS Counter</b></div>
@@ -333,5 +348,11 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
 .site-header{position:sticky;top:10px;z-index:50;padding-inline:18px;background:#f7f3eaf2;border:1px solid #d9d5cbaa;border-radius:13px;backdrop-filter:blur(16px);box-shadow:0 10px 35px #101a3210}.hero{position:relative}.hero:before{content:'';position:absolute;z-index:-1;width:520px;height:520px;right:-80px;top:55px;border-radius:50%;background:radial-gradient(circle,#dce7ff 0,#edf1fb88 45%,transparent 72%)}.button,.edition a,.site-header a{transition:transform .18s ease,color .18s ease,background .18s ease}.button:focus-visible,.site-header a:focus-visible,.edition a:focus-visible{outline:3px solid var(--cyan);outline-offset:3px}.edition{transition:transform .25s ease,box-shadow .25s ease}.edition:hover{transform:translateY(-5px);box-shadow:0 18px 45px #101a3215}.owner-card{box-shadow:0 16px 40px #101a3214}
 @media(max-width:900px){.site-header{top:6px}.hero:before{width:400px;height:400px;right:-100px}}
 @media(max-width:600px){.site-header{width:calc(100% - 18px);padding-inline:12px}.hero:before{width:280px;height:280px;right:-85px;top:210px}.edition:hover{transform:none}}
+
+/* Dimensional presentation: CSS-only depth with pointer tilt in the hero. */
+.counter-scene{--tilt-x:0deg;--tilt-y:0deg;--light-x:50%;--light-y:35%;perspective:1200px;transform-style:preserve-3d}.screen-shell{position:relative;transform-style:preserve-3d;transform:rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) rotateZ(1deg);transition:transform .16s ease-out,box-shadow .25s ease;box-shadow:0 34px 70px #0f1b3240,0 12px 22px #0f1b3224}.screen-shell:after{content:'';position:absolute;z-index:4;inset:9px;border-radius:9px;pointer-events:none;background:radial-gradient(circle at var(--light-x) var(--light-y),#ffffff26,transparent 36%);mix-blend-mode:screen}.counter-scene:hover .screen-shell{box-shadow:0 45px 90px #0f1b3247,0 15px 28px #0f1b322b}.blue-note{transform:translateZ(70px) rotate(7deg);backface-visibility:hidden}.receipt{transform:translateZ(95px) rotate(-4deg);backface-visibility:hidden;box-shadow:10px 24px 40px #1b28463d}.pos-ui{transform:translateZ(8px)}.products article{transition:transform .2s ease,box-shadow .2s ease}.products article:hover{transform:translateY(-3px) translateZ(16px);box-shadow:0 8px 18px #17233c1c}.printer-drawing{perspective:900px;transform-style:preserve-3d;box-shadow:inset 0 -22px 55px #6479b41a,0 30px 65px #101a321c}.printer-body{transform:rotateY(-8deg) rotateX(3deg);box-shadow:inset 0 -25px 0 #090c12,18px 30px 50px #11182a4a}.printer-top{transform:translateZ(25px) rotateY(-8deg)}.paper{transform:translateZ(55px) rotateY(-5deg) rotateX(2deg);box-shadow:12px 18px 35px #0d142638}.feature-slider{transform:perspective(1500px) rotateX(.8deg);transform-origin:center top}.download-card{perspective:1200px}.download-action{transform:rotateY(-3deg) translateZ(24px);transform-origin:left center;transition:transform .28s ease,box-shadow .28s ease}.download-action:hover{transform:rotateY(0) translateZ(32px) translateY(-3px);box-shadow:0 30px 70px #05091480}.owner-gallery{perspective:1400px}.owner-card{transform-style:preserve-3d;transition:transform .35s ease,box-shadow .35s ease}.owner-card:nth-child(1){transform:rotateY(2deg)}.owner-card:nth-child(2){transform:translateY(18px) rotateX(1deg)}.owner-card:nth-child(3){transform:rotateY(-2deg)}.owner-card figcaption{transform:translateZ(28px)}.edition-grid{perspective:1300px}.edition{transform-style:preserve-3d}.edition:nth-child(1){transform:rotateY(1.5deg)}.edition:nth-child(2){transform:translateZ(18px) translateY(-8px)}.edition:nth-child(3){transform:rotateY(-1.5deg)}.button:active{transform:translateY(3px);box-shadow:none!important}
+@media(hover:hover) and (min-width:901px){.owner-card:hover{transform:translateY(-8px) rotateX(1deg) scale(1.012);box-shadow:0 28px 58px #101a3229}.edition:hover{transform:translateY(-9px) translateZ(25px);box-shadow:0 24px 55px #101a3224}.edition:nth-child(2):hover{transform:translateY(-14px) translateZ(35px)}}
+@media(max-width:900px){.screen-shell{transform:rotateX(1deg) rotateY(-1deg) rotateZ(.5deg)}.download-action,.feature-slider{transform:none}.owner-card:nth-child(n),.edition:nth-child(n){transform:none}.printer-body,.printer-top,.paper{transform:none}}
+@media(prefers-reduced-motion:reduce){.screen-shell,.download-action,.owner-card,.edition,.products article{transition:none!important;transform:none!important}.counter-scene:hover .screen-shell{transform:none}.owner-card img{transition:none}}
 
 </style>
