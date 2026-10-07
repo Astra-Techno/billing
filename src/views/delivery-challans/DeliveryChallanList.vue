@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { inr } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
 import HelpIcon from '../../components/HelpIcon.vue'
+import DeliveryChallanForm from './DeliveryChallanForm.vue'
 import { usePagedList } from '../../composables/usePagedList'
 import { useRole } from '../../composables/useRole'
 
@@ -184,12 +185,10 @@ onMounted(() => {
     </div>
 
     <!-- Right Pane: Detail/Form wrapper -->
-    <div v-if="$route.name !== 'DeliveryChallans'" id="c3-right-view" class="split-pane-right relative z-20">
-      <!-- Subtle noise/texture overlay -->
-      <div class="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-multiply" style="background-image: url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E');"></div>
-
+    <div id="c3-right-view" class="split-pane-right relative z-20 hidden lg:flex" :class="$route.name !== 'DeliveryChallans' ? '!flex' : ''">
       <router-view v-slot="{ Component }">
-        <component :is="Component" :key="$route.fullPath" @refresh="reload" />
+        <component v-if="Component" :is="Component" :key="$route.fullPath" @refresh="reload" />
+        <DeliveryChallanForm v-else :key="'default-new'" @refresh="reload" />
       </router-view>
     </div>
   </div>

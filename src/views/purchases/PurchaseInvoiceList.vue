@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import HelpIcon from '../../components/HelpIcon.vue'
+import PurchaseInvoiceForm from './PurchaseInvoiceForm.vue'
 import { inr } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
 import { usePagedList } from '../../composables/usePagedList'
@@ -138,9 +139,10 @@ async function load() { await reload() }
     </div>
 
     <!-- Right Pane -->
-    <div v-if="$route.name !== 'Purchases'" id="c3-right-view" class="split-pane-right relative z-20">
+    <div id="c3-right-view" class="split-pane-right relative z-20 hidden lg:flex" :class="$route.name !== 'Purchases' ? '!flex' : ''">
       <router-view v-slot="{ Component }">
-        <component :is="Component" :key="$route.fullPath" @refresh="load" />
+        <component v-if="Component" :is="Component" :key="$route.fullPath" @refresh="load" />
+        <PurchaseInvoiceForm v-else :key="'default-new'" @refresh="load" />
       </router-view>
     </div>
 

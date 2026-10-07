@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { task } from '../../api'
 import { inr } from '../../utils/currency'
 import { usePagedList } from '../../composables/usePagedList'
+import StaffForm from './StaffForm.vue'
 
 const route  = useRoute()
 const router = useRouter()
@@ -158,9 +159,10 @@ const filtered = () => {
     </div>
 
     <!-- Right Pane: Child route -->
-    <div v-if="$route.name !== 'Payroll'" class="split-pane-right relative z-20">
+    <div class="split-pane-right relative z-20 hidden lg:flex" :class="$route.name !== 'Payroll' ? '!flex' : ''">
       <router-view v-slot="{ Component }">
-        <component :is="Component" :key="$route.fullPath" @refresh="reload" />
+        <component v-if="Component" :is="Component" :key="$route.fullPath" @refresh="reload" />
+        <StaffForm v-else :key="'default-new'" @refresh="reload" />
       </router-view>
     </div>
 

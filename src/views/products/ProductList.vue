@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { task, all } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
+import ProductForm from './ProductForm.vue'
 import { inr } from '../../utils/currency'
 import { useTour } from '../../composables/useTour'
 import { usePagedList } from '../../composables/usePagedList'
@@ -320,12 +321,10 @@ async function printBarcodes() {
     </div>
 
     <!-- Right Pane: Detail/Form wrapper -->
-    <div v-if="$route.name !== 'Products'" id="c3-right-view" class="split-pane-right relative z-20">
-      <!-- Subtle noise/texture overlay -->
-      <div class="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-multiply" style="background-image: url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E');"></div>
-      
+    <div id="c3-right-view" class="split-pane-right relative z-20 hidden lg:flex" :class="$route.name !== 'Products' ? '!flex' : ''">
       <router-view v-slot="{ Component }">
-        <component :is="Component" :key="$route.fullPath" @refresh="load" />
+        <component v-if="Component" :is="Component" :key="$route.fullPath" @refresh="load" />
+        <ProductForm v-else :key="'default-new'" @refresh="load" />
       </router-view>
     </div>
 

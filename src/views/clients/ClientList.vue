@@ -2,6 +2,7 @@
 import { watch } from 'vue'
 import { useRouter } from 'vue-router'
 import HelpIcon from '../../components/HelpIcon.vue'
+import ClientForm from './ClientForm.vue'
 import { inr } from '../../utils/currency'
 import { useTour } from '../../composables/useTour'
 import { usePagedList } from '../../composables/usePagedList'
@@ -130,9 +131,10 @@ const avatarColor  = (name) => avatarColors[(name?.charCodeAt(0) || 0) % avatarC
     </div>
 
     <!-- Right Pane: Detail/Form wrapper -->
-    <div v-if="$route.name !== 'Clients'" id="c3-right-view" class="split-pane-right relative z-20">
+    <div id="c3-right-view" class="split-pane-right relative z-20 hidden lg:flex" :class="$route.name !== 'Clients' ? '!flex' : ''">
       <router-view v-slot="{ Component }">
-        <component :is="Component" :key="$route.fullPath" @refresh="reload" />
+        <component v-if="Component" :is="Component" :key="$route.fullPath" @refresh="reload" />
+        <ClientForm v-else :key="'default-new'" @refresh="reload" />
       </router-view>
     </div>
   </div>

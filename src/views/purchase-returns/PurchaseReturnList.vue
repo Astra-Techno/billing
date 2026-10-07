@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { inr } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
+import PurchaseReturnForm from './PurchaseReturnForm.vue'
 import { usePagedList } from '../../composables/usePagedList'
 import { useRole } from '../../composables/useRole'
 
@@ -128,9 +129,10 @@ async function load() { await reload() }
     </div>
 
     <!-- Right Pane -->
-    <div v-if="$route.name !== 'PurchaseReturns'" id="c3-right-view" class="split-pane-right relative z-20">
+    <div id="c3-right-view" class="split-pane-right relative z-20 hidden lg:flex" :class="$route.name !== 'PurchaseReturns' ? '!flex' : ''">
       <router-view v-slot="{ Component }">
-        <component :is="Component" :key="$route.fullPath" @refresh="load" />
+        <component v-if="Component" :is="Component" :key="$route.fullPath" @refresh="load" />
+        <PurchaseReturnForm v-else :key="'default-new'" @refresh="load" />
       </router-view>
     </div>
 

@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { task } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
+import CreditNoteForm from './CreditNoteForm.vue'
 import { inr } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
 import { usePagedList } from '../../composables/usePagedList'
@@ -185,9 +186,10 @@ async function adjustCN(cn) {
     </div>
 
     <!-- Right Pane -->
-    <div v-if="$route.name !== 'CreditNotes'" id="c3-right-view" class="split-pane-right relative z-20">
+    <div id="c3-right-view" class="split-pane-right relative z-20 hidden lg:flex" :class="$route.name !== 'CreditNotes' ? '!flex' : ''">
       <router-view v-slot="{ Component }">
-        <component :is="Component" :key="$route.fullPath" @refresh="load" />
+        <component v-if="Component" :is="Component" :key="$route.fullPath" @refresh="load" />
+        <CreditNoteForm v-else :key="'default-new'" @refresh="load" />
       </router-view>
     </div>
 
