@@ -43,6 +43,9 @@ $errorMiddleware = $app->addErrorMiddleware(
 // Custom JSON error handler
 $errorMiddleware->setDefaultErrorHandler(function ($request, \Throwable $e) use ($app) {
     $status  = method_exists($e, 'getStatusCode') ? $e->getStatusCode() : $e->getCode();
+    // PDO uses SQLSTATE strings such as "42S22" as exception codes. They are
+    // diagnostic codes, not valid HTTP response statuses.
+    $status = is_numeric($status) ? (int)$status : 500;
     if ($status < 400 || $status > 599) $status = 500;
     $payload = ['success' => false, 'message' => $e->getMessage()];
 

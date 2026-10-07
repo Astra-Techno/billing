@@ -15,6 +15,14 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    proxy: {
+      '/billing/api': {
+        target: 'http://localhost',
+        changeOrigin: true,
+      },
+    },
+  },
   test: {
     environment: 'node',
     include: ['src/**/*.test.js'],

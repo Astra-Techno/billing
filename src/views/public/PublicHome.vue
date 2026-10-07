@@ -1,6 +1,9 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
+const offlineInstallerUrl = import.meta.env.VITE_OFFLINE_INSTALLER_URL
+  || 'https://github.com/Astra-Techno/billing/releases/latest/download/AI-Billing-Offline-Setup.exe'
+
 const featureSlides = [
   { image: '/screenshots/pos.jpg', eyebrow: 'Fast counter billing', title: 'Choose a product and finish the sale in seconds.', text: 'Search or scan items, change quantity, take Cash, UPI or Card, then print a 58mm, 80mm or A4 bill.', points: ['Barcode scanning', 'Live stock shown', 'One-tap payment'] },
   { image: '/screenshots/invoices.jpg', eyebrow: 'Clear invoice tracking', title: 'Find paid, pending and overdue bills without confusion.', text: 'Filter invoices by status, follow balances and open any bill for payment, sharing, editing or reprinting. POS sales get their own tab.', points: ['Payment status', 'Customer balance', 'POS sales tab'] },
@@ -69,6 +72,7 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
       <a href="#features">Features</a>
       <a href="#more">More</a>
       <a href="#editions">Desktop or Web</a>
+      <a href="#download">Download</a>
       <a href="#faq">Questions</a>
     </nav>
     <a class="header-cta" href="/register">Start free trial</a>
@@ -82,7 +86,7 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
         <p class="hero-lede">Fast GST billing, stock control and thermal printing for Indian shops — even when the internet stops. POS counter, invoices, payments, barcodes, quotes, expenses, payroll, reports and 58mm receipts from one app.</p>
         <div class="hero-actions">
           <a class="button primary" href="/register">Start your free trial <span>↗</span></a>
-          <a class="text-link" href="#how">See a counter sale <span>↓</span></a>
+          <a class="text-link" href="#download">Download for Windows <span>↓</span></a>
         </div>
         <ul class="hero-notes" aria-label="Key benefits">
           <li>Cash, UPI &amp; card payments</li>
@@ -129,6 +133,31 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
     <section class="shop-strip" aria-label="Suitable businesses">
       <p>Made for everyday business</p>
       <div><span>Grocery</span><i>◆</i><span>Textiles</span><i>◆</i><span>Hardware</span><i>◆</i><span>Mobile shops</span><i>◆</i><span>Electronics</span><i>◆</i><span>Wholesale</span><i>◆</i><span>Services</span><i>◆</i><span>Stationery</span><i>◆</i><span>Medical</span><i>◆</i><span>Auto parts</span><i>◆</i><span>Bakery</span></div>
+    </section>
+
+    <section class="section owner-section wrap">
+      <div class="owner-heading">
+        <div>
+          <p class="eyebrow"><span></span> Made for Indian shop owners</p>
+          <h2>Your counter is busy.<br>Billing should feel simple.</h2>
+        </div>
+        <p>Whether you sell groceries, sarees or electrical goods, AI Billing keeps the daily work clear: make the bill, collect payment, print the receipt and know what is left in stock.</p>
+      </div>
+      <div class="owner-gallery">
+        <figure class="owner-card owner-card-wide">
+          <img src="/store-owners/kirana-owner.jpg" alt="Kirana shop owner at his billing counter" loading="lazy">
+          <figcaption><span>Kirana &amp; grocery</span><b>Fast bills when the counter gets busy.</b></figcaption>
+        </figure>
+        <figure class="owner-card">
+          <img src="/store-owners/textile-owner.jpg" alt="Woman textile shop owner serving a customer" loading="lazy">
+          <figcaption><span>Textiles &amp; garments</span><b>Clear prices, stock and customer history.</b></figcaption>
+        </figure>
+        <figure class="owner-card">
+          <img src="/store-owners/hardware-owner.jpg" alt="Electrical shop owner checking an item near his counter" loading="lazy">
+          <figcaption><span>Hardware &amp; electrical</span><b>Thousands of items, easy to find.</b></figcaption>
+        </figure>
+      </div>
+      <p class="owner-note">One familiar workflow across different kinds of shops — with GST, thermal printing and stock control available when you need them.</p>
     </section>
 
     <section id="how" class="section wrap sale-flow">
@@ -218,7 +247,7 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
           <div class="edition-label">Best for single-counter shops</div>
           <h3>AI Billing Offline</h3><p class="edition-lede">For one PC that must keep billing through internet problems.</p>
           <ul><li>All billing, stock, quotes, expenses &amp; reports offline</li><li>Local MySQL database on your PC</li><li>Direct SC588 Bluetooth thermal printing</li><li>Manual &amp; daily local backups with restore</li><li>Single-PC licence activation</li><li>Same features as cloud — nothing removed</li></ul>
-          <a href="#trial">Request desktop setup <span>→</span></a>
+          <a href="#download">Download Windows app <span>→</span></a>
         </article>
         <article class="edition kit">
           <div class="edition-label">Best for new shop setup</div>
@@ -228,6 +257,26 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
         </article>
       </div>
       <p class="honest-note"><b>Good to know:</b> Separate offline PCs do not share live stock. Use the cloud edition when multiple counters or branches must see the same data at the same time. Additional devices, shops and annual support are priced separately.</p>
+    </section>
+
+    <section id="download" class="section download-section">
+      <div class="wrap download-card">
+        <div class="download-copy">
+          <p class="eyebrow light"><span></span> AI Billing Offline</p>
+          <h2>Install once. Keep billing when the internet is down.</h2>
+          <p>The installer includes the billing app, its local database and direct SC588/PSF588 Bluetooth receipt support. Your business data stays on this PC.</p>
+          <div class="download-facts" aria-label="Installer requirements">
+            <span><b>Windows 10 or 11</b><small>64-bit PC</small></span>
+            <span><b>About 94 MB</b><small>Single setup file</small></span>
+            <span><b>Internet once</b><small>For licence activation</small></span>
+          </div>
+        </div>
+        <div class="download-action">
+          <a class="button download-button" :href="offlineInstallerUrl">Download Offline Installer <span>↓</span></a>
+          <p>After installing, create the shop account and send the activation request. Once approved, everyday billing works offline.</p>
+          <a href="#trial" class="setup-link">Need printer setup and training? Ask for the Counter Kit.</a>
+        </div>
+      </div>
     </section>
 
     <section id="trial" class="section trial-section">
@@ -272,5 +321,13 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
 @media(max-width:900px){.feature-intro{grid-template-columns:1fr;gap:20px}.feature-slider{grid-template-columns:1fr}.feature-visual{border-right:0;border-bottom:1px solid #d8dce4}.feature-detail{min-height:390px}.slide-eyebrow{margin-top:15px!important}.site-header{height:68px}.site-header nav{display:none;position:absolute;z-index:20;top:68px;left:20px;right:20px;background:var(--ink);color:white;padding:22px;flex-direction:column;align-items:flex-start;border-radius:8px;box-shadow:0 18px 50px #101a3255}.site-header nav.open{display:flex}.site-header nav a{color:white}.menu-button{display:block;margin-left:auto}.header-cta{display:none}.hero,.sale-flow,.feature-layout,.print-story,.trial-inner,.faq{grid-template-columns:1fr}.hero{padding-top:55px;gap:42px}.counter-scene{max-width:680px;width:100%;margin:auto}.sale-flow,.feature-layout,.print-story,.faq{gap:45px}.sticky-copy{position:static}.edition-grid,.edition-grid.three{grid-template-columns:1fr}.trial-inner{align-items:start}.section{padding-block:78px}.print-story .printer-drawing{max-width:520px;width:100%;margin:auto}.more-grid{grid-template-columns:1fr 1fr 1fr}.footer-grid{grid-template-columns:1.5fr 1fr 1fr}}
 @media(max-width:600px){.feature-intro{margin-bottom:28px}.feature-slider{border-radius:9px}.screen-caption{height:38px}.screen-caption small{display:none}.feature-visual img{aspect-ratio:16/11}.feature-detail{padding:25px 22px;min-height:360px}.feature-detail h3{font-size:29px}.slider-controls>button{width:38px;height:38px}.wrap{width:min(100% - 30px,1180px)}.site-header{width:calc(100% - 30px)}.brand img{width:38px;height:38px}.hero{min-height:0;padding-block:45px 58px}.hero h1{font-size:49px}.hero-lede{font-size:16px}.hero-actions{align-items:flex-start;flex-direction:column;gap:20px}.hero-notes{display:grid;gap:5px;margin-top:30px}.counter-scene{padding:20px 0 38px}.screen-shell{padding:6px;border-radius:11px}.pos-ui{height:295px;grid-template-columns:30px 1fr 108px}.product-area{padding:9px}.products{gap:5px}.products article{height:94px;padding:7px}.products article i{width:20px;height:20px}.products article b{margin-top:5px}.cart-area{padding:9px 7px}.line{font-size:6px}.pay{padding:8px}.blue-note{width:78px;height:78px;font-size:11px;right:-4px;top:-18px}.receipt{width:100px;padding:10px;right:3px}.shop-strip div{justify-content:flex-start;animation:marquee 16s linear infinite}.shop-strip p{text-align:left;padding-left:15px}.section{padding-block:65px}.section-heading h2,.print-copy h2,.trial-inner h2{font-size:41px}.sale-flow li{grid-template-columns:45px 1fr}.feature-list article{grid-template-columns:42px 1fr}.printer-drawing{height:320px}.printer-body{transform:scale(.8)}.printer-top{transform:scale(.8);top:52px}.paper{transform:scale(.8);top:112px}.tick-grid{grid-template-columns:1fr}.more-grid{grid-template-columns:1fr 1fr}.edition{padding:27px 23px}.edition h3{font-size:34px}.faq{gap:35px}.footer-grid{grid-template-columns:1fr 1fr}.footer-grid>div:first-child{grid-column:1/-1}.footer-bottom{gap:16px;align-items:flex-start;flex-direction:column}@keyframes marquee{to{transform:translateX(-55%)}}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.shop-strip div{animation:none}.button:hover{transform:none}}
+
+.download-section{background:#0d1730;color:#fff;padding-block:82px}.download-card{display:grid;grid-template-columns:1.25fr .75fr;gap:90px;align-items:center}.download-copy h2{font-family:var(--serif);font-size:clamp(42px,5vw,64px);font-weight:500;letter-spacing:-.045em;line-height:.98;margin:0;max-width:730px}.download-copy>p:last-of-type{color:#b4bfd5;font-size:16px;max-width:690px;margin:25px 0 30px}.download-facts{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid #34405a;border-bottom:1px solid #34405a}.download-facts span{padding:15px 12px 15px 0}.download-facts span+span{border-left:1px solid #34405a;padding-left:20px}.download-facts b,.download-facts small{display:block}.download-facts b{font-size:13px}.download-facts small{color:#8f9bb5;font-size:11px;margin-top:2px}.download-action{background:#f7f3ea;color:var(--ink);padding:34px;border-radius:14px;box-shadow:0 22px 55px #05091466}.download-button{width:100%;background:var(--cyan);color:#071328;box-shadow:0 6px 0 #238ba2;font-size:15px}.download-action p{color:var(--muted);font-size:13px;line-height:1.65;margin:24px 0 16px}.setup-link{color:var(--blue);font-size:12px;font-weight:800;border-bottom:1px solid #aebce3}.download-action .button span{font-size:20px}.download-action .button:hover{transform:translateY(-1px)}
+@media(max-width:900px){.download-card{grid-template-columns:1fr;gap:42px}.download-action{max-width:560px}.download-section{padding-block:70px}}
+@media(max-width:600px){.download-facts{grid-template-columns:1fr}.download-facts span+span{border-left:0;border-top:1px solid #34405a;padding-left:0}.download-action{padding:25px 20px}.download-button{font-size:13px}.download-section{padding-block:58px}}
+
+.owner-section{padding-top:92px}.owner-heading{display:grid;grid-template-columns:1.1fr .7fr;gap:80px;align-items:end;margin-bottom:38px}.owner-heading h2{font-family:var(--serif);font-size:clamp(42px,5vw,64px);font-weight:500;letter-spacing:-.045em;line-height:.98;margin:0}.owner-heading>p{color:var(--muted);font-size:16px;margin:0 0 5px}.owner-gallery{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:16px}.owner-card{position:relative;height:410px;margin:0;border-radius:12px;overflow:hidden;background:#d9d5cb}.owner-card img{width:100%;height:100%;display:block;object-fit:cover;transition:transform .5s ease}.owner-card:first-child img{object-position:center}.owner-card:hover img{transform:scale(1.025)}.owner-card:after{content:'';position:absolute;inset:45% 0 0;background:linear-gradient(transparent,#071020d9)}.owner-card figcaption{position:absolute;z-index:2;left:22px;right:22px;bottom:20px;color:#fff}.owner-card figcaption span{display:block;color:#79e4f6;font-size:9px;font-weight:850;letter-spacing:.14em;text-transform:uppercase;margin-bottom:5px}.owner-card figcaption b{font-family:var(--serif);font-size:21px;line-height:1.15;font-weight:500}.owner-note{font-size:12px;color:#6b7280;border-bottom:1px solid var(--line);padding:15px 2px 17px;margin:0}.owner-section+.sale-flow{padding-top:82px}
+@media(max-width:900px){.owner-heading{grid-template-columns:1fr;gap:22px}.owner-gallery{grid-template-columns:1fr 1fr}.owner-card-wide{grid-column:1/-1;height:430px}.owner-card{height:390px}}
+@media(max-width:600px){.owner-section{padding-top:62px}.owner-gallery{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px}.owner-card,.owner-card-wide{flex:0 0 86%;height:385px;grid-column:auto;scroll-snap-align:start}.owner-heading{margin-bottom:27px}.owner-heading>p{font-size:14px}.owner-card figcaption{left:18px;right:18px}.owner-card figcaption b{font-size:19px}}
 
 </style>
