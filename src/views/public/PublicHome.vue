@@ -23,7 +23,9 @@ const featureSlides = [
 ]
 const activeFeature = ref(0)
 const heroScene = ref(null)
+const publicSite = ref(null)
 let featureTimer
+let parallaxFrame
 let touchStartX = 0
 const selectFeature = index => { activeFeature.value = (index + featureSlides.length) % featureSlides.length }
 const nextFeature = () => selectFeature(activeFeature.value + 1)
@@ -46,6 +48,23 @@ const resetHeroTilt = () => {
   heroScene.value?.style.setProperty('--tilt-x', '0deg')
   heroScene.value?.style.setProperty('--tilt-y', '0deg')
 }
+const updateParallax = () => {
+  parallaxFrame = undefined
+  if (!publicSite.value || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  const viewportCenter = window.innerHeight / 2
+  publicSite.value.querySelectorAll('[data-parallax]').forEach(element => {
+    const rect = element.getBoundingClientRect()
+    if (rect.bottom < -150 || rect.top > window.innerHeight + 150) return
+    const speed = Number(element.dataset.parallax || 0.05)
+    const distance = rect.top + rect.height / 2 - viewportCenter
+    const limit = window.innerWidth < 700 ? 22 : 48
+    const offset = Math.max(-limit, Math.min(limit, distance * speed))
+    element.style.setProperty('--parallax-offset', `${offset.toFixed(1)}px`)
+  })
+}
+const requestParallax = () => {
+  if (!parallaxFrame) parallaxFrame = requestAnimationFrame(updateParallax)
+}
 
 let cleanUp = () => {}
 onMounted(() => {
@@ -64,10 +83,16 @@ onMounted(() => {
   }
   button?.addEventListener('click', toggle)
   nav?.querySelectorAll('a').forEach(link => link.addEventListener('click', close))
+  window.addEventListener('scroll', requestParallax, { passive: true })
+  window.addEventListener('resize', requestParallax, { passive: true })
+  requestParallax()
   cleanUp = () => {
     document.title = previousTitle
     button?.removeEventListener('click', toggle)
     nav?.querySelectorAll('a').forEach(link => link.removeEventListener('click', close))
+    window.removeEventListener('scroll', requestParallax)
+    window.removeEventListener('resize', requestParallax)
+    if (parallaxFrame) cancelAnimationFrame(parallaxFrame)
   }
   playFeatures()
 })
@@ -75,7 +100,7 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
 </script>
 
 <template>
-<div class="public-site">
+<div ref="publicSite" class="public-site">
   <header class="site-header">
     <a class="brand" href="#top" aria-label="AI Billing home">
       <img src="/logo.png" alt="AI Billing">
@@ -95,7 +120,7 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
 
   <main id="top">
     <section class="hero wrap">
-      <div class="hero-copy">
+      <div class="hero-copy" data-parallax="-0.025">
         <p class="eyebrow"><span></span> Built for Indian shop counters</p>
         <h1>GST billing that keeps up with <em>your shop.</em></h1>
         <p class="hero-lede">Easy GST billing software, POS, inventory and thermal printing for Indian shops — even when the internet stops. Make invoices, collect payments, scan barcodes and understand your business from one app.</p>
@@ -110,7 +135,7 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
         </ul>
       </div>
 
-      <div ref="heroScene" class="counter-scene" aria-label="AI Billing point of sale preview" @pointermove="tiltHero" @pointerleave="resetHeroTilt">
+      <div ref="heroScene" class="counter-scene" data-parallax="0.035" aria-label="AI Billing point of sale preview" @pointermove="tiltHero" @pointerleave="resetHeroTilt">
         <div class="blue-note">Works offline<br><small>on Windows PC</small></div>
         <div class="screen-shell">
           <div class="screen-bar"><i></i><i></i><i></i><b>AI Billing · POS Counter</b></div>
@@ -160,15 +185,15 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
       </div>
       <div class="owner-gallery">
         <figure class="owner-card owner-card-wide">
-          <img src="/store-owners/kirana-owner.jpg" alt="Kirana shop owner at his billing counter" loading="lazy">
+          <img src="/store-owners/kirana-owner.jpg" data-parallax="0.025" alt="Kirana shop owner at his billing counter" loading="lazy">
           <figcaption><span>Kirana &amp; grocery</span><b>Fast bills when the counter gets busy.</b></figcaption>
         </figure>
         <figure class="owner-card">
-          <img src="/store-owners/textile-owner.jpg" alt="Woman textile shop owner serving a customer" loading="lazy">
+          <img src="/store-owners/textile-owner.jpg" data-parallax="-0.02" alt="Woman textile shop owner serving a customer" loading="lazy">
           <figcaption><span>Textiles &amp; garments</span><b>Clear prices, stock and customer history.</b></figcaption>
         </figure>
         <figure class="owner-card">
-          <img src="/store-owners/hardware-owner.jpg" alt="Electrical shop owner checking an item near his counter" loading="lazy">
+          <img src="/store-owners/hardware-owner.jpg" data-parallax="0.03" alt="Electrical shop owner checking an item near his counter" loading="lazy">
           <figcaption><span>Hardware &amp; electrical</span><b>Thousands of items, easy to find.</b></figcaption>
         </figure>
       </div>
@@ -190,7 +215,7 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
 
     <section id="features" class="section feature-section">
       <div class="wrap feature-showcase">
-        <div class="feature-intro">
+        <div class="feature-intro" data-parallax="-0.025">
           <div><p class="eyebrow light"><span></span> See how it works</p><h2>Easy to understand.<br>Quick to use.</h2></div>
           <p>Real screens from AI Billing, shown with sample shop data. Use the arrows or swipe to explore the main features.</p>
         </div>
@@ -212,7 +237,7 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
     </section>
 
     <section class="section wrap print-story">
-      <div class="printer-drawing" aria-hidden="true">
+      <div class="printer-drawing" data-parallax="0.035" aria-hidden="true">
         <div class="printer-top"></div><div class="printer-body"><span></span></div>
         <div class="paper"><b>AI BILLING</b><i></i><i></i><i></i><strong>₹ 910.00</strong></div>
       </div>
@@ -276,7 +301,7 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
 
     <section id="download" class="section download-section">
       <div class="wrap download-card">
-        <div class="download-copy">
+        <div class="download-copy" data-parallax="-0.025">
           <p class="eyebrow light"><span></span> AI Billing Offline</p>
           <h2>Install once. Keep billing when the internet is down.</h2>
           <p>The installer includes the billing app, its local database and direct SC588/PSF588 Bluetooth receipt support. Your business data stays on this PC.</p>
@@ -354,5 +379,10 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
 @media(hover:hover) and (min-width:901px){.owner-card:hover{transform:translateY(-8px) rotateX(1deg) scale(1.012);box-shadow:0 28px 58px #101a3229}.edition:hover{transform:translateY(-9px) translateZ(25px);box-shadow:0 24px 55px #101a3224}.edition:nth-child(2):hover{transform:translateY(-14px) translateZ(35px)}}
 @media(max-width:900px){.screen-shell{transform:rotateX(1deg) rotateY(-1deg) rotateZ(.5deg)}.download-action,.feature-slider{transform:none}.owner-card:nth-child(n),.edition:nth-child(n){transform:none}.printer-body,.printer-top,.paper{transform:none}}
 @media(prefers-reduced-motion:reduce){.screen-shell,.download-action,.owner-card,.edition,.products article{transition:none!important;transform:none!important}.counter-scene:hover .screen-shell{transform:none}.owner-card img{transition:none}}
+
+/* Scroll parallax uses a single RAF-updated custom property per visible layer. */
+[data-parallax]{--parallax-offset:0px}.hero-copy[data-parallax],.counter-scene[data-parallax],.feature-intro[data-parallax],.printer-drawing[data-parallax],.download-copy[data-parallax]{transform:translate3d(0,var(--parallax-offset),0);will-change:transform}.owner-card img[data-parallax]{height:116%;margin-top:-8%;transform:translate3d(0,var(--parallax-offset),0) scale(1.045);will-change:transform}.owner-card:hover img[data-parallax]{transform:translate3d(0,var(--parallax-offset),0) scale(1.07)}
+@media(max-width:700px){.hero-copy[data-parallax],.counter-scene[data-parallax],.feature-intro[data-parallax],.printer-drawing[data-parallax],.download-copy[data-parallax]{will-change:auto}.owner-card img[data-parallax]{height:110%;margin-top:-5%;will-change:auto}}
+@media(prefers-reduced-motion:reduce){[data-parallax]{--parallax-offset:0px!important;transform:none!important}.owner-card img[data-parallax]{height:100%;margin-top:0}}
 
 </style>
