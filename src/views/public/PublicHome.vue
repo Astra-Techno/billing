@@ -24,6 +24,9 @@ const featureSlides = [
 const activeFeature = ref(0)
 const heroScene = ref(null)
 const publicSite = ref(null)
+const featureSection = ref(null)
+const storyActive = ref(false)
+const storySlides = [0, 1, 2, 5, 14]
 let featureTimer
 let parallaxFrame
 let touchStartX = 0
@@ -61,12 +64,28 @@ const updateParallax = () => {
     const offset = Math.max(-limit, Math.min(limit, distance * speed))
     element.style.setProperty('--parallax-offset', `${offset.toFixed(1)}px`)
   })
+  if (featureSection.value) {
+    const rect = featureSection.value.getBoundingClientRect()
+    const travel = Math.max(1, rect.height - window.innerHeight)
+    const progress = Math.max(0, Math.min(1, -rect.top / travel))
+    featureSection.value.style.setProperty('--story-progress', progress.toFixed(4))
+    featureSection.value.style.setProperty('--story-lift', `${((0.5 - progress) * 28).toFixed(1)}px`)
+    featureSection.value.style.setProperty('--story-scale', (0.965 + Math.sin(progress * Math.PI) * 0.035).toFixed(4))
+    storyActive.value = window.innerWidth > 900
+      && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      && rect.top <= 0 && rect.bottom >= window.innerHeight
+    if (rect.top <= window.innerHeight * 0.2 && rect.bottom >= window.innerHeight * 0.8) {
+      pauseFeatures()
+      activeFeature.value = storySlides[Math.min(storySlides.length - 1, Math.round(progress * (storySlides.length - 1)))]
+    }
+  }
 }
 const requestParallax = () => {
   if (!parallaxFrame) parallaxFrame = requestAnimationFrame(updateParallax)
 }
 
 let cleanUp = () => {}
+let scrollObserver
 onMounted(() => {
   const previousTitle = document.title
   document.title = 'GST Billing Software for Indian Shops | AI Billing'
@@ -84,15 +103,32 @@ onMounted(() => {
   button?.addEventListener('click', toggle)
   nav?.querySelectorAll('a').forEach(link => link.addEventListener('click', close))
   window.addEventListener('scroll', requestParallax, { passive: true })
+  document.body.addEventListener('scroll', requestParallax, { passive: true })
   window.addEventListener('resize', requestParallax, { passive: true })
   requestParallax()
+
+  // Scroll-reveal: fade-in elements when they enter viewport
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    scrollObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed')
+          scrollObserver.unobserve(entry.target)
+        }
+      })
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' })
+    publicSite.value?.querySelectorAll('.reveal').forEach(el => scrollObserver.observe(el))
+  }
+
   cleanUp = () => {
     document.title = previousTitle
     button?.removeEventListener('click', toggle)
     nav?.querySelectorAll('a').forEach(link => link.removeEventListener('click', close))
     window.removeEventListener('scroll', requestParallax)
+    document.body.removeEventListener('scroll', requestParallax)
     window.removeEventListener('resize', requestParallax)
     if (parallaxFrame) cancelAnimationFrame(parallaxFrame)
+    scrollObserver?.disconnect()
   }
   playFeatures()
 })
@@ -176,14 +212,14 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
     </section>
 
     <section class="section owner-section wrap">
-      <div class="owner-heading">
+      <div class="owner-heading reveal">
         <div>
           <p class="eyebrow"><span></span> Made for Indian shop owners</p>
           <h2>Your counter is busy.<br>Billing should feel simple.</h2>
         </div>
         <p>Billing software for kirana stores, textile shops, hardware counters and growing retailers. Make the bill, collect payment, print the receipt and know what is left in stock.</p>
       </div>
-      <div class="owner-gallery">
+      <div class="owner-gallery reveal reveal-stagger">
         <figure class="owner-card owner-card-wide">
           <img src="/store-owners/kirana-owner.jpg" data-parallax="0.025" alt="Kirana shop owner at his billing counter" loading="lazy">
           <figcaption><span>Kirana &amp; grocery</span><b>Fast bills when the counter gets busy.</b></figcaption>
@@ -201,11 +237,11 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
     </section>
 
     <section id="how" class="section wrap sale-flow">
-      <div class="section-heading">
+      <div class="section-heading reveal">
         <p class="eyebrow"><span></span> One counter sale</p>
         <h2>From product to printed bill in four clear steps.</h2>
       </div>
-      <ol>
+      <ol class="reveal">
         <li><b>01</b><div><h3>Find or scan</h3><p>Search by name, SKU or scan a barcode with your camera. Saved rate, HSN/SAC and GST fill automatically.</p></div></li>
         <li><b>02</b><div><h3>Check the cart</h3><p>Adjust quantities, pick a customer or sell walk-in. See live stock, GST split and the final amount before payment.</p></div></li>
         <li><b>03</b><div><h3>Collect payment</h3><p>Record Cash, UPI or Card in one tap. Partial payments are tracked against the invoice automatically.</p></div></li>
@@ -213,16 +249,19 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
       </ol>
     </section>
 
-    <section id="features" class="section feature-section">
-      <div class="wrap feature-showcase">
+    <section id="features" ref="featureSection" class="section feature-section">
+      <div class="wrap feature-showcase" :class="{ 'story-active': storyActive }">
         <div class="feature-intro" data-parallax="-0.025">
           <div><p class="eyebrow light"><span></span> See how it works</p><h2>Easy to understand.<br>Quick to use.</h2></div>
           <p>Real screens from AI Billing, shown with sample shop data. Use the arrows or swipe to explore the main features.</p>
         </div>
         <div class="feature-slider" tabindex="0" aria-label="AI Billing feature screenshots" @mouseenter="pauseFeatures" @mouseleave="playFeatures" @focusin="pauseFeatures" @focusout="playFeatures" @keydown.left.prevent="previousFeature" @keydown.right.prevent="nextFeature" @touchstart.passive="startFeatureSwipe" @touchend.passive="endFeatureSwipe">
+          <span class="orbit-chip orbit-chip-one">GST ready</span>
+          <span class="orbit-chip orbit-chip-two">Works offline</span>
+          <span class="orbit-chip orbit-chip-three">58mm print</span>
           <div class="feature-visual">
             <div class="screen-caption"><span>AI Billing</span><small>Actual application screen · sample data</small></div>
-            <transition name="feature-fade" mode="out-in"><img :key="featureSlides[activeFeature].image" :src="featureSlides[activeFeature].image" :alt="featureSlides[activeFeature].title"></transition>
+            <transition name="story-shift" mode="out-in"><img :key="featureSlides[activeFeature].image" :src="featureSlides[activeFeature].image" :alt="featureSlides[activeFeature].title"></transition>
           </div>
           <div class="feature-detail" aria-live="polite">
             <span class="slide-count">{{String(activeFeature + 1).padStart(2, '0')}} / {{String(featureSlides.length).padStart(2, '0')}}</span>
@@ -237,11 +276,11 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
     </section>
 
     <section class="section wrap print-story">
-      <div class="printer-drawing" data-parallax="0.035" aria-hidden="true">
+      <div class="printer-drawing reveal reveal-scale" data-parallax="0.035" aria-hidden="true">
         <div class="printer-top"></div><div class="printer-body"><span></span></div>
         <div class="paper"><b>AI BILLING</b><i></i><i></i><i></i><strong>₹ 910.00</strong></div>
       </div>
-      <div class="print-copy">
+      <div class="print-copy reveal">
         <p class="eyebrow"><span></span> Small printer. Proper bill.</p>
         <h2>Made to work with the counter you already have.</h2>
         <p>Print A4 invoices, compact 58mm receipts or 80mm thermal bills. The Windows app sends directly to SC588/PSF588 Bluetooth printers. Every bill shows clear GST, UPI details and your logo.</p>
@@ -250,11 +289,11 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
     </section>
 
     <section id="more" class="section wrap more-features">
-      <div class="section-heading center">
+      <div class="section-heading center reveal">
         <p class="eyebrow"><span></span> And there's more</p>
         <h2>Small details that save real time.</h2>
       </div>
-      <div class="more-grid">
+      <div class="more-grid reveal reveal-stagger">
         <div><b>Per-shop GST identity</b><p>Each shop or location can have its own GSTIN, state and address. Invoices auto-use the shop's GSTIN and GST returns file separately.</p></div>
         <div><b>Recurring invoices</b><p>Set an invoice to repeat daily, weekly, monthly or quarterly. The next bill generates automatically on schedule.</p></div>
         <div><b>UPI QR on invoices</b><p>Your UPI ID prints as a QR code on every bill. Customers scan and pay directly from the receipt.</p></div>
@@ -271,12 +310,12 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
     </section>
 
     <section id="editions" class="section editions wrap">
-      <div class="section-heading center">
+      <div class="section-heading center reveal">
         <p class="eyebrow"><span></span> Choose your setup</p>
         <h2>At the counter or wherever you are.</h2>
         <p>All editions use the same billing workflow. Choose based on where your data and team need to work.</p>
       </div>
-      <div class="edition-grid three">
+      <div class="edition-grid three reveal reveal-stagger">
         <article class="edition">
           <div class="edition-label">Best for access anywhere</div>
           <h3>AI Billing Web</h3><p class="edition-lede">For owners and teams who need access from phones and multiple computers.</p>
@@ -301,7 +340,7 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
 
     <section id="download" class="section download-section">
       <div class="wrap download-card">
-        <div class="download-copy" data-parallax="-0.025">
+        <div class="download-copy reveal" data-parallax="-0.025">
           <p class="eyebrow light"><span></span> AI Billing Offline</p>
           <h2>Install once. Keep billing when the internet is down.</h2>
           <p>The installer includes the billing app, its local database and direct SC588/PSF588 Bluetooth receipt support. Your business data stays on this PC.</p>
@@ -311,7 +350,7 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
             <span><b>Internet once</b><small>For licence activation</small></span>
           </div>
         </div>
-        <div class="download-action">
+        <div class="download-action reveal reveal-scale">
           <a class="button download-button" :href="offlineInstallerUrl">Download Offline Installer <span>↓</span></a>
           <p>After installing, create the shop account and send the activation request. Once approved, everyday billing works offline.</p>
           <a href="#trial" class="setup-link">Need printer setup and training? Ask for the Counter Kit.</a>
@@ -320,15 +359,15 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
     </section>
 
     <section id="trial" class="section trial-section">
-      <div class="wrap trial-inner">
+      <div class="wrap trial-inner reveal">
         <div><p class="eyebrow light"><span></span> See it with your own products</p><h2>Take one real sale for a test drive.</h2></div>
         <div><p>Create your business, add a few items and make a sample bill. No payment needed. If you need the Windows app and printer setup, request an assisted installation after the trial.</p><a class="button pale" href="/register">Create free account <span>↗</span></a></div>
       </div>
     </section>
 
     <section id="faq" class="section wrap faq">
-      <div class="section-heading"><p class="eyebrow"><span></span> Straight answers</p><h2>Before you set up your counter.</h2></div>
-      <div class="faq-list">
+      <div class="section-heading reveal"><p class="eyebrow"><span></span> Straight answers</p><h2>Before you set up your counter.</h2></div>
+      <div class="faq-list reveal">
         <details><summary>Will billing work without internet?<i>+</i></summary><p>Yes. AI Billing Offline is Windows billing software for shops that need to continue during internet problems. Initial activation needs internet once, but everyday billing, customers, products, payments, stock, reports and thermal printing all continue offline.</p></details>
         <details><summary>Can I use the app without stock maintenance?<i>+</i></summary><p>Yes. Choose "Billing Only" mode and stock is ignored completely. You can switch to "Warn" (show low-stock alerts) or "Strict" (block overselling) at any time from Settings.</p></details>
         <details><summary>Does it print on 58mm thermal paper?<i>+</i></summary><p>Yes. Three print sizes: 58mm receipt, 80mm receipt and A4 full invoice. The Windows app supports direct SC588/PSF588 Bluetooth thermal printing. In the browser, standard print works with any connected printer.</p></details>
@@ -384,5 +423,15 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
 [data-parallax]{--parallax-offset:0px}.hero-copy[data-parallax],.counter-scene[data-parallax],.feature-intro[data-parallax],.printer-drawing[data-parallax],.download-copy[data-parallax]{transform:translate3d(0,var(--parallax-offset),0);will-change:transform}.owner-card img[data-parallax]{height:116%;margin-top:-8%;transform:translate3d(0,var(--parallax-offset),0) scale(1.045);will-change:transform}.owner-card:hover img[data-parallax]{transform:translate3d(0,var(--parallax-offset),0) scale(1.07)}
 @media(max-width:700px){.hero-copy[data-parallax],.counter-scene[data-parallax],.feature-intro[data-parallax],.printer-drawing[data-parallax],.download-copy[data-parallax]{will-change:auto}.owner-card img[data-parallax]{height:110%;margin-top:-5%;will-change:auto}}
 @media(prefers-reduced-motion:reduce){[data-parallax]{--parallax-offset:0px!important;transform:none!important}.owner-card img[data-parallax]{height:100%;margin-top:0}}
+
+/* Pinned cinematic showcase inspired by a scrolling presentation canvas. */
+.feature-section{--story-progress:0;--story-lift:14px;--story-scale:.965;height:420vh;padding:0;background:radial-gradient(circle at 50% 38%,#fff 0,#f4f2fb 34%,#e9e6f2 100%);color:var(--ink)}.feature-showcase{position:relative;height:100vh;display:flex;flex-direction:column;justify-content:center;padding-block:32px}.feature-showcase.story-active{position:fixed;z-index:35;top:0;left:50%;width:min(1180px,calc(100% - 48px));transform:translateX(-50%)}.feature-section .feature-intro{margin-bottom:24px;grid-template-columns:1fr .65fr}.feature-section .feature-intro h2{color:var(--ink);font-size:clamp(34px,4vw,54px)}.feature-section .feature-intro>p{color:#6e7283}.feature-section .eyebrow.light{color:#686d82}.feature-section .eyebrow.light span{background:var(--blue)}.feature-section .feature-slider{position:relative;overflow:visible;transform:translate3d(0,var(--story-lift),0) scale(var(--story-scale)) perspective(1500px) rotateX(.7deg);transform-origin:center center;box-shadow:0 42px 95px #4e496d30,0 10px 28px #27243b1c;border:1px solid #ffffff}.feature-section .feature-visual{overflow:hidden;border-radius:14px 0 0 14px}.feature-section .feature-detail{border-radius:0 14px 14px 0;background:#fff}.orbit-chip{position:absolute;z-index:8;padding:9px 13px;border:1px solid #ffffffcc;border-radius:999px;background:#ffffffdb;box-shadow:0 12px 28px #34304e25;backdrop-filter:blur(12px);color:#27304a;font-size:10px;font-weight:850;letter-spacing:.04em;pointer-events:none}.orbit-chip-one{left:-42px;top:18%;transform:translate3d(0,calc(-1 * var(--story-lift)),45px) rotate(-7deg)}.orbit-chip-two{right:-48px;top:12%;transform:translate3d(0,var(--story-lift),55px) rotate(6deg);color:#1557e8}.orbit-chip-three{right:-35px;bottom:13%;transform:translate3d(0,var(--story-lift),38px) rotate(-4deg)}.story-shift-enter-active,.story-shift-leave-active{transition:opacity .32s ease,transform .42s cubic-bezier(.22,.8,.22,1),filter .32s ease}.story-shift-enter-from{opacity:0;transform:translateY(55px) scale(.97);filter:blur(4px)}.story-shift-leave-to{opacity:0;transform:translateY(-45px) scale(1.015);filter:blur(3px)}
+@media(max-height:760px) and (min-width:901px){.feature-showcase{padding-block:18px}.feature-section .feature-intro{margin-bottom:14px}.feature-section .feature-intro h2{font-size:36px}.feature-detail{padding-block:24px}.feature-visual img{max-height:52vh}}
+@media(max-width:900px){.feature-section{height:auto;padding-block:78px}.feature-showcase{position:relative;height:auto;padding-block:0}.feature-section .feature-slider{transform:none}.feature-section .feature-visual{border-radius:14px 14px 0 0}.feature-section .feature-detail{border-radius:0 0 14px 14px}.orbit-chip{display:none}}
+@media(prefers-reduced-motion:reduce){.feature-section{height:auto;padding-block:78px}.feature-showcase{position:relative;height:auto}.feature-section .feature-slider{transform:none}.story-shift-enter-active,.story-shift-leave-active{transition:none}}
+/* Scroll-reveal: elements fade up as they enter the viewport. */
+.reveal{opacity:0;transform:translateY(32px);transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1)}.reveal.revealed{opacity:1;transform:none}.reveal.reveal-scale{transform:translateY(24px) scale(.97)}.reveal.reveal-scale.revealed{transform:none}
+.reveal-stagger>*:nth-child(1){transition-delay:.04s}.reveal-stagger>*:nth-child(2){transition-delay:.12s}.reveal-stagger>*:nth-child(3){transition-delay:.2s}.reveal-stagger>*:nth-child(4){transition-delay:.28s}.reveal-stagger>*:nth-child(5){transition-delay:.36s}.reveal-stagger>*:nth-child(6){transition-delay:.44s}.reveal-stagger>*:nth-child(7){transition-delay:.5s}.reveal-stagger>*:nth-child(8){transition-delay:.56s}.reveal-stagger>*:nth-child(9){transition-delay:.6s}.reveal-stagger>*:nth-child(10){transition-delay:.64s}.reveal-stagger>*:nth-child(11){transition-delay:.68s}.reveal-stagger>*:nth-child(12){transition-delay:.72s}
+@media(prefers-reduced-motion:reduce){.reveal{opacity:1!important;transform:none!important;transition:none!important}.reveal-stagger>*{transition-delay:0s!important}}
 
 </style>
