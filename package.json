@@ -12,6 +12,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "node node_modules/@playwright/test/cli.js test",
+    "pree2e:server": "vite build --mode development",
+    "e2e:server": "vite preview --host 127.0.0.1 --port 5173",
+    "e2e:routes": "node e2e/route-smoke.mjs",
     "e2e:ui": "node node_modules/@playwright/test/cli.js test --ui",
     "e2e:headed": "node node_modules/@playwright/test/cli.js test --headed",
     "e2e:report": "node node_modules/@playwright/test/cli.js show-report"

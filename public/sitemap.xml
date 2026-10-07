@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://billing.cloudkart24.com/about</loc>
+    <lastmod>2026-10-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://billing.cloudkart24.com/store-owners/kirana-owner.jpg</image:loc>
+      <image:caption>GST billing software for an Indian kirana shop counter</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://billing.cloudkart24.com/store-owners/textile-owner.jpg</image:loc>
+      <image:caption>Billing and inventory software for an Indian textile shop</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://billing.cloudkart24.com/store-owners/hardware-owner.jpg</image:loc>
+      <image:caption>POS and stock software for an Indian hardware shop</image:caption>
+    </image:image>
+  </url>
+</urlset>

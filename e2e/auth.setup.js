@@ -15,12 +15,12 @@ const AUTH_FILE  = path.join(__dirname, '.auth/user.json')
 setup('authenticate', async ({ page }) => {
   // ── Try Login First ───────────────────────────────────────────────────────
   await page.goto('/login')
-  await page.getByLabel('Email address').fill(TEST_USER.email)
-  await page.getByLabel('Password').fill(TEST_USER.password)
+  await page.locator('input[type="email"]').fill(TEST_USER.email)
+  await page.locator('input[autocomplete="current-password"]').fill(TEST_USER.password)
   await page.getByRole('button', { name: 'Sign In' }).click()
 
   // If login succeeded → dashboard will appear within 5s
-  const onDashboard = await page.getByText(/Good morning|Good afternoon|Good evening/i)
+  const onDashboard = await page.getByRole('heading', { name: 'Dashboard', exact: true })
     .waitFor({ timeout: 6_000 })
     .then(() => true)
     .catch(() => false)
@@ -31,21 +31,21 @@ setup('authenticate', async ({ page }) => {
     await page.goto('/register')
 
     // Step 1: personal info
-    await page.getByLabel('Full Name').fill(TEST_USER.name)
-    await page.getByLabel('Email').fill(TEST_USER.email)
-    await page.getByLabel('Mobile Number').fill(TEST_USER.mobile)
-    await page.getByLabel('Password').fill(TEST_USER.password)
-    await page.getByLabel('Confirm Password').fill(TEST_USER.password)
+    await page.locator('input[autocomplete="name"]').fill(TEST_USER.name)
+    await page.locator('input[type="email"]').fill(TEST_USER.email)
+    await page.locator('input[autocomplete="tel"]').fill(TEST_USER.mobile)
+    await page.locator('input[autocomplete="new-password"]').first().fill(TEST_USER.password)
+    await page.locator('input[autocomplete="new-password"]').last().fill(TEST_USER.password)
     await page.getByRole('button', { name: 'Continue' }).click()
 
     // Step 2: business info
-    await expect(page.getByText('Your Business')).toBeVisible({ timeout: 5_000 })
-    await page.getByLabel(/Business.*Name/i).fill(TEST_USER.business)
-    await page.getByLabel('State').selectOption({ index: 1 })  // first state
+    await expect(page.getByRole('heading', { name: 'Your Business', exact: true })).toBeVisible({ timeout: 5_000 })
+    await page.getByPlaceholder('e.g. Sharma Electronics').fill(TEST_USER.business)
+    await page.locator('select[required]').selectOption({ index: 1 })  // first state
     await page.getByRole('button', { name: 'Create Free Account' }).click()
 
     await page.waitForURL('/', { timeout: 15_000 })
-    await expect(page.getByText(/Good morning|Good afternoon|Good evening/i)).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Dashboard', exact: true })).toBeVisible()
   }
 
   // ── Save auth state ───────────────────────────────────────────────────────

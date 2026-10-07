@@ -35,7 +35,7 @@ const endFeatureSwipe = event => { const distance = event.changedTouches[0].clie
 let cleanUp = () => {}
 onMounted(() => {
   const previousTitle = document.title
-  document.title = 'AI Billing | GST Billing, POS & Stock for Indian Shops'
+  document.title = 'GST Billing Software for Indian Shops | AI Billing'
   const button = document.querySelector('.public-site .menu-button')
   const nav = document.querySelector('.public-site #site-nav')
   const toggle = () => {
@@ -82,8 +82,8 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
     <section class="hero wrap">
       <div class="hero-copy">
         <p class="eyebrow"><span></span> Built for Indian shop counters</p>
-        <h1>Billing that keeps up with <em>your shop.</em></h1>
-        <p class="hero-lede">Fast GST billing, stock control and thermal printing for Indian shops — even when the internet stops. POS counter, invoices, payments, barcodes, quotes, expenses, payroll, reports and 58mm receipts from one app.</p>
+        <h1>GST billing that keeps up with <em>your shop.</em></h1>
+        <p class="hero-lede">Easy GST billing software, POS, inventory and thermal printing for Indian shops — even when the internet stops. Make invoices, collect payments, scan barcodes and understand your business from one app.</p>
         <div class="hero-actions">
           <a class="button primary" href="/register">Start your free trial <span>↗</span></a>
           <a class="text-link" href="#download">Download for Windows <span>↓</span></a>
@@ -141,7 +141,7 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
           <p class="eyebrow"><span></span> Made for Indian shop owners</p>
           <h2>Your counter is busy.<br>Billing should feel simple.</h2>
         </div>
-        <p>Whether you sell groceries, sarees or electrical goods, AI Billing keeps the daily work clear: make the bill, collect payment, print the receipt and know what is left in stock.</p>
+        <p>Billing software for kirana stores, textile shops, hardware counters and growing retailers. Make the bill, collect payment, print the receipt and know what is left in stock.</p>
       </div>
       <div class="owner-gallery">
         <figure class="owner-card owner-card-wide">
@@ -289,7 +289,7 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
     <section id="faq" class="section wrap faq">
       <div class="section-heading"><p class="eyebrow"><span></span> Straight answers</p><h2>Before you set up your counter.</h2></div>
       <div class="faq-list">
-        <details><summary>Will billing work without internet?<i>+</i></summary><p>Yes, in the Windows offline edition. Initial activation needs internet once, but everyday billing, customers, products, payments, stock, reports and thermal printing all continue offline.</p></details>
+        <details><summary>Will billing work without internet?<i>+</i></summary><p>Yes. AI Billing Offline is Windows billing software for shops that need to continue during internet problems. Initial activation needs internet once, but everyday billing, customers, products, payments, stock, reports and thermal printing all continue offline.</p></details>
         <details><summary>Can I use the app without stock maintenance?<i>+</i></summary><p>Yes. Choose "Billing Only" mode and stock is ignored completely. You can switch to "Warn" (show low-stock alerts) or "Strict" (block overselling) at any time from Settings.</p></details>
         <details><summary>Does it print on 58mm thermal paper?<i>+</i></summary><p>Yes. Three print sizes: 58mm receipt, 80mm receipt and A4 full invoice. The Windows app supports direct SC588/PSF588 Bluetooth thermal printing. In the browser, standard print works with any connected printer.</p></details>
         <details><summary>Can I import my existing products?<i>+</i></summary><p>Yes. Download a CSV template, fill in your product name, price, tax rate, SKU, HSN/SAC and opening stock, then upload. Location-specific stock and pricing are also supported during import.</p></details>
@@ -305,8 +305,8 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
 
   <footer>
     <div class="wrap footer-grid">
-      <div><a class="brand footer-brand" href="#top"><img src="/logo.png" alt=""><span>AI Billing</span></a><p>Fast GST billing, stock control and thermal printing for Indian shops — even when the internet stops.</p></div>
-      <div><b>Product</b><a href="#features">Features</a><a href="#editions">Desktop &amp; Web</a><a href="#more">More features</a><a href="/register">Free trial</a></div>
+      <div><a class="brand footer-brand" href="/about"><img src="/logo.png" alt="AI Billing logo"><span>AI Billing</span></a><p>GST billing software, POS, stock control and thermal printing for Indian shops — even when the internet stops.</p></div>
+      <div><b>Product</b><a href="#features">GST billing features</a><a href="#editions">Desktop &amp; Web</a><a href="#download">Offline billing software</a><a href="#more">Inventory &amp; reports</a><a href="/register">Free trial</a></div>
       <div><b>Useful</b><a href="#how">How it works</a><a href="#faq">Questions</a><a href="/login">Customer login</a></div>
     </div>
     <div class="wrap footer-bottom"><span>© 2026 AI Billing</span><span>GST billing · POS · Stock · Quotes · Expenses · Payroll · Barcodes · Reports</span></div>
@@ -329,5 +329,9 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
 .owner-section{padding-top:92px}.owner-heading{display:grid;grid-template-columns:1.1fr .7fr;gap:80px;align-items:end;margin-bottom:38px}.owner-heading h2{font-family:var(--serif);font-size:clamp(42px,5vw,64px);font-weight:500;letter-spacing:-.045em;line-height:.98;margin:0}.owner-heading>p{color:var(--muted);font-size:16px;margin:0 0 5px}.owner-gallery{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:16px}.owner-card{position:relative;height:410px;margin:0;border-radius:12px;overflow:hidden;background:#d9d5cb}.owner-card img{width:100%;height:100%;display:block;object-fit:cover;transition:transform .5s ease}.owner-card:first-child img{object-position:center}.owner-card:hover img{transform:scale(1.025)}.owner-card:after{content:'';position:absolute;inset:45% 0 0;background:linear-gradient(transparent,#071020d9)}.owner-card figcaption{position:absolute;z-index:2;left:22px;right:22px;bottom:20px;color:#fff}.owner-card figcaption span{display:block;color:#79e4f6;font-size:9px;font-weight:850;letter-spacing:.14em;text-transform:uppercase;margin-bottom:5px}.owner-card figcaption b{font-family:var(--serif);font-size:21px;line-height:1.15;font-weight:500}.owner-note{font-size:12px;color:#6b7280;border-bottom:1px solid var(--line);padding:15px 2px 17px;margin:0}.owner-section+.sale-flow{padding-top:82px}
 @media(max-width:900px){.owner-heading{grid-template-columns:1fr;gap:22px}.owner-gallery{grid-template-columns:1fr 1fr}.owner-card-wide{grid-column:1/-1;height:430px}.owner-card{height:390px}}
 @media(max-width:600px){.owner-section{padding-top:62px}.owner-gallery{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px}.owner-card,.owner-card-wide{flex:0 0 86%;height:385px;grid-column:auto;scroll-snap-align:start}.owner-heading{margin-bottom:27px}.owner-heading>p{font-size:14px}.owner-card figcaption{left:18px;right:18px}.owner-card figcaption b{font-size:19px}}
+
+.site-header{position:sticky;top:10px;z-index:50;padding-inline:18px;background:#f7f3eaf2;border:1px solid #d9d5cbaa;border-radius:13px;backdrop-filter:blur(16px);box-shadow:0 10px 35px #101a3210}.hero{position:relative}.hero:before{content:'';position:absolute;z-index:-1;width:520px;height:520px;right:-80px;top:55px;border-radius:50%;background:radial-gradient(circle,#dce7ff 0,#edf1fb88 45%,transparent 72%)}.button,.edition a,.site-header a{transition:transform .18s ease,color .18s ease,background .18s ease}.button:focus-visible,.site-header a:focus-visible,.edition a:focus-visible{outline:3px solid var(--cyan);outline-offset:3px}.edition{transition:transform .25s ease,box-shadow .25s ease}.edition:hover{transform:translateY(-5px);box-shadow:0 18px 45px #101a3215}.owner-card{box-shadow:0 16px 40px #101a3214}
+@media(max-width:900px){.site-header{top:6px}.hero:before{width:400px;height:400px;right:-100px}}
+@media(max-width:600px){.site-header{width:calc(100% - 18px);padding-inline:12px}.hero:before{width:280px;height:280px;right:-85px;top:210px}.edition:hover{transform:none}}
 
 </style>

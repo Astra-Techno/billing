@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /print/
+
+Sitemap: https://billing.cloudkart24.com/sitemap.xml
