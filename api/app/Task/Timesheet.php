@@ -19,6 +19,7 @@ class Timesheet extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requireFeature($businessId, 'timesheets');
         $this->requirePermission('timesheets', 'create');
 
         // Staff can only log time for today
@@ -56,6 +57,7 @@ class Timesheet extends Task
         ]);
 
         $businessId = $this->requireBusiness();
+        $this->requireFeature($businessId, 'timesheets');
         $this->requirePermission('timesheets', 'edit');
         $entry = $this->findEntry((int)$input['id'], $businessId);
         $role = $this->getRole();
@@ -94,6 +96,7 @@ class Timesheet extends Task
         $this->validate(['id' => 'required|integer']);
 
         $businessId = $this->requireBusiness();
+        $this->requireFeature($businessId, 'timesheets');
         $this->requirePermission('timesheets', 'delete');
         $entry = $this->findEntry((int)$input['id'], $businessId);
 
@@ -119,6 +122,7 @@ class Timesheet extends Task
     {
         $this->validate(['id' => 'required|integer']);
         $businessId = $this->requireBusiness();
+        $this->requireFeature($businessId, 'timesheets');
         $this->requireRole(['owner', 'admin']);
         $this->requirePermission('timesheets', 'edit');
 
@@ -137,6 +141,7 @@ class Timesheet extends Task
     {
         $this->validate(['id' => 'required|integer']);
         $businessId = $this->requireBusiness();
+        $this->requireFeature($businessId, 'timesheets');
         $this->requireRole(['owner', 'admin']);
         $this->requirePermission('timesheets', 'edit');
 
@@ -157,6 +162,7 @@ class Timesheet extends Task
     {
         $this->validate(['ids' => 'required']);
         $businessId = $this->requireBusiness();
+        $this->requireFeature($businessId, 'timesheets');
         $this->requireRole(['owner', 'admin']);
         $this->requirePermission('timesheets', 'edit');
 

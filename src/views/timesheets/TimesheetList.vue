@@ -27,6 +27,7 @@ function fmtTime12(t) {
 
 const entries    = ref([])
 const loading    = ref(true)
+const loadError  = ref('')
 const statusTab  = ref('')
 const showForm   = ref(false)
 const editingId  = ref(null)
@@ -43,6 +44,7 @@ const multiRows = ref([blankRow()])
 
 async function load() {
   loading.value = true
+  loadError.value = ''
   try {
     const p = {
       sort_by: 't.work_date', sort_order: 'desc',
@@ -57,7 +59,9 @@ async function load() {
     ])
     entries.value = res.data?.data || []
     totalCount.value = cntRes.data?.total || 0
-  } catch {}
+  } catch (e) {
+    loadError.value = e.response?.data?.message || 'Failed to load timesheets.'
+  }
   loading.value = false
 }
 
@@ -160,18 +164,22 @@ function openEdit(entry) {
 }
 
 const saving = ref(false)
+const formError = ref('')
 async function saveEntry() {
   saving.value = true
+  formError.value = ''
   try {
     if (editingId.value) {
       const hours = calcHours(form.value.from_time, form.value.to_time)
+      if (hours <= 0) { formError.value = 'End time must be after start time.'; saving.value = false; return }
       await task('Timesheet', 'update', { id: editingId.value, ...form.value, hours })
     } else {
       const rows = multiRows.value.filter(r => r.from_time && r.to_time && r.description?.trim())
-      if (!rows.length) { saving.value = false; return }
+      if (!rows.length) { formError.value = 'Please fill in at least one row with times and description.'; saving.value = false; return }
+      const invalidRow = rows.find(r => calcHours(r.from_time, r.to_time) <= 0)
+      if (invalidRow) { formError.value = 'End time must be after start time for all rows.'; saving.value = false; return }
       for (const r of rows) {
         const hours = calcHours(r.from_time, r.to_time)
-        if (hours <= 0) continue
         await task('Timesheet', 'create', {
           work_date: form.value.work_date, hours,
           description: r.description, project: r.project,
@@ -181,7 +189,9 @@ async function saveEntry() {
     }
     showForm.value = false
     await load()
-  } catch {}
+  } catch (e) {
+    formError.value = e.response?.data?.message || e.message || 'Failed to save timesheet entry.'
+  }
   saving.value = false
 }
 
@@ -260,8 +270,11 @@ onMounted(load)
       <div class="w-8 h-8 border-4 border-primary-100 border-t-primary-600 rounded-full animate-spin"></div>
     </div>
 
+    <!-- Load error -->
+    <div v-if="!loading && loadError" class="mx-4 mt-4 p-4 bg-red-50 text-red-700 rounded-xl text-sm font-medium">{{ loadError }}</div>
+
     <!-- Empty state -->
-    <div v-else-if="!entries.length" class="text-center py-16 px-6">
+    <div v-else-if="!loading && !entries.length" class="text-center py-16 px-6">
       <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 flex items-center justify-center">
         <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       </div>
@@ -425,6 +438,8 @@ onMounted(load)
           <h3 class="font-semibold text-gray-800">{{ editingId ? 'Edit Entry' : 'Log Time' }}</h3>
           <button @click="showForm = false" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
         </div>
+
+        <div v-if="formError" class="mx-5 mt-4 p-3 bg-red-50 text-red-700 rounded-xl text-sm font-medium">{{ formError }}</div>
 
         <!-- Edit single entry -->
         <form v-if="editingId" @submit.prevent="saveEntry" class="p-5 space-y-4">
