@@ -1,8 +1,10 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useAuthStore } from '../../stores/auth'
 
 const route = useRoute()
+const auth = useAuthStore()
 const activeSection = ref('visual-guides')
 
 function goToHash(hash) {
@@ -13,7 +15,17 @@ function goToHash(hash) {
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
-onMounted(() => { if (route.hash) setTimeout(() => goToHash(route.hash), 100) })
+onMounted(() => {
+  document.title = 'AI Billing Help | GST, POS, Stock & Invoice Guides'
+  let description = document.querySelector('meta[name="description"]')
+  if (!description) {
+    description = document.createElement('meta')
+    description.name = 'description'
+    document.head.appendChild(description)
+  }
+  description.content = 'Free visual guides for AI Billing: GST setup, invoices, POS billing, inventory, purchases, reports, thermal printing and offline backup.'
+  if (route.hash) setTimeout(() => goToHash(route.hash), 100)
+})
 watch(() => route.hash, (h) => goToHash(h))
 
 const sections = [
@@ -332,6 +344,24 @@ function exportPdf() {
 </script>
 
 <template>
+  <header class="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur-xl">
+    <div class="max-w-7xl mx-auto h-[68px] px-4 sm:px-6 flex items-center gap-4">
+      <RouterLink to="/about" class="flex items-center gap-3 font-black text-gray-950" aria-label="AI Billing home">
+        <img src="/logo.png" alt="AI Billing" class="w-10 h-10 rounded-xl object-cover" />
+        <span>AI Billing</span>
+      </RouterLink>
+      <span class="hidden sm:block h-6 w-px bg-gray-200"></span>
+      <span class="hidden sm:block text-sm font-bold text-gray-500">Help &amp; Learning Centre</span>
+      <nav class="ml-auto flex items-center gap-2 sm:gap-3" aria-label="Help navigation">
+        <RouterLink to="/about" class="hidden sm:inline-flex px-3 py-2 text-sm font-bold text-gray-600 hover:text-primary-600">Website</RouterLink>
+        <RouterLink v-if="auth.isLoggedIn" to="/" class="inline-flex rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-primary-700">Back to dashboard</RouterLink>
+        <template v-else>
+          <RouterLink to="/login" class="inline-flex px-3 py-2 text-sm font-bold text-gray-700 hover:text-primary-600">Login</RouterLink>
+          <RouterLink to="/register" class="inline-flex rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-primary-700">Try free</RouterLink>
+        </template>
+      </nav>
+    </div>
+  </header>
   <div class="gpay-screen"><div class="max-w-7xl mx-auto w-full px-4 py-4 lg:px-6 lg:py-6 pb-24">
 
     <div class="relative rounded-[2rem] bg-slate-950 text-white mb-8 overflow-hidden shadow-gpay mt-2 border border-slate-800">
