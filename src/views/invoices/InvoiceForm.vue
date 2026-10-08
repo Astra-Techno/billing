@@ -173,7 +173,8 @@ const error    = ref('')
 const showAddClient = ref(false)
 const addingClient = ref(false)
 const addClientError = ref('')
-const newClient = ref({ name: '', mobile: '', email: '', type: 'individual' })
+const newClient = ref({ name: '', mobile: '', email: '', type: 'business', gstin: '', aadhaar: '', pan: '', address_line1: '', city: '', state_id: '', pincode: '' })
+const showFullClientForm = ref(false)
 
 function selectClient(c) {
   form.value.client_id = c.id
@@ -207,7 +208,12 @@ async function saveNewClient() {
   if (!newClient.value.name) return addClientError.value = 'Customer name is required.'
   addingClient.value = true
   try {
-    const res = await task('Client', 'create', { ...newClient.value, type: 'individual' })
+    const payload = { ...newClient.value }
+    // Clean empty optional fields
+    Object.keys(payload).forEach(k => { if (payload[k] === '') delete payload[k] })
+    payload.name = newClient.value.name
+    payload.type = newClient.value.type || 'business'
+    const res = await task('Client', 'create', payload)
     const resData = res.data?.data
     const created = {
       id: resData.client_id,
@@ -221,7 +227,8 @@ async function saveNewClient() {
     clientSearch.value = ''
     clientDropdownOpen.value = false
     editingClient.value = false
-    newClient.value = { name: '', mobile: '', email: '', type: 'individual' }
+    showFullClientForm.value = false
+    newClient.value = { name: '', mobile: '', email: '', type: 'business', gstin: '', aadhaar: '', pan: '', address_line1: '', city: '', state_id: '', pincode: '' }
     nextTick(() => focusItemDescription(0))
   } catch (e) {
     addClientError.value = e.response?.data?.message || 'Failed to save customer.'
@@ -231,7 +238,8 @@ async function saveNewClient() {
 
 function openAddClient() {
   addClientError.value = ''
-  newClient.value = { name: clientSearch.value, mobile: '', email: '', type: 'individual' }
+  newClient.value = { name: clientSearch.value, mobile: '', email: '', type: 'business', gstin: '', aadhaar: '', pan: '', address_line1: '', city: '', state_id: '', pincode: '' }
+  showFullClientForm.value = false
   showAddClient.value = true
 }
 
@@ -239,9 +247,8 @@ function openAddClient() {
 function onClientSearchInput() {
   clientDropdownOpen.value = true
   clientHighlight.value = -1
-  newClient.value.name = clientSearch.value
-  newClient.value.mobile = ''
-  newClient.value.email = ''
+  newClient.value = { name: clientSearch.value, mobile: '', email: '', type: 'business', gstin: '', aadhaar: '', pan: '', address_line1: '', city: '', state_id: '', pincode: '' }
+  showFullClientForm.value = false
   addClientError.value = ''
 }
 
@@ -1174,9 +1181,56 @@ async function submit() {
                       <input v-model="newClient.name" type="text" class="inv-input w-full text-sm" placeholder="Customer name *" />
                     </div>
                     <div class="grid grid-cols-2 gap-2">
-                      <input v-model="newClient.mobile" type="tel" class="inv-input w-full text-xs" placeholder="Mobile (optional)" />
-                      <input v-model="newClient.email" type="email" class="inv-input w-full text-xs" placeholder="Email (optional)" />
+                      <input v-model="newClient.mobile" type="tel" class="inv-input w-full text-xs" placeholder="Mobile" maxlength="10" />
+                      <input v-model="newClient.email" type="email" class="inv-input w-full text-xs" placeholder="Email" />
                     </div>
+
+                    <!-- Expandable full details -->
+                    <button type="button" @click="showFullClientForm = !showFullClientForm"
+                      class="flex items-center gap-1 text-xs font-semibold text-primary-600 hover:text-primary-700 transition-colors">
+                      <svg class="w-3.5 h-3.5 transition-transform" :class="showFullClientForm ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                      </svg>
+                      {{ showFullClientForm ? 'Hide details' : 'Add GST, PAN, address…' }}
+                    </button>
+
+                    <div v-if="showFullClientForm" class="space-y-2 pt-1">
+                      <!-- Customer type toggle -->
+                      <div class="flex gap-1 p-0.5 bg-gray-100 rounded-lg">
+                        <button type="button" @click="newClient.type='business'"
+                          class="flex-1 py-1.5 rounded-md text-xs font-bold transition-all"
+                          :class="newClient.type==='business' ? 'bg-white text-primary-700 shadow-sm' : 'text-gray-500'">
+                          Business
+                        </button>
+                        <button type="button" @click="newClient.type='individual'"
+                          class="flex-1 py-1.5 rounded-md text-xs font-bold transition-all"
+                          :class="newClient.type==='individual' ? 'bg-white text-primary-700 shadow-sm' : 'text-gray-500'">
+                          Individual
+                        </button>
+                      </div>
+
+                      <!-- GST or Aadhaar based on type -->
+                      <div class="grid grid-cols-2 gap-2">
+                        <input v-if="newClient.type !== 'individual'" v-model="newClient.gstin" type="text"
+                          class="inv-input w-full text-xs font-mono uppercase" placeholder="GSTIN" maxlength="15" />
+                        <input v-else v-model="newClient.aadhaar" type="text"
+                          class="inv-input w-full text-xs font-mono" placeholder="Aadhaar (12 digits)" maxlength="12" />
+                        <input v-model="newClient.pan" type="text"
+                          class="inv-input w-full text-xs font-mono uppercase" placeholder="PAN" maxlength="10" />
+                      </div>
+
+                      <!-- Address -->
+                      <input v-model="newClient.address_line1" type="text" class="inv-input w-full text-xs" placeholder="Address line" />
+                      <div class="grid grid-cols-2 gap-2">
+                        <input v-model="newClient.city" type="text" class="inv-input w-full text-xs" placeholder="City" />
+                        <input v-model="newClient.pincode" type="text" class="inv-input w-full text-xs" placeholder="PIN Code" maxlength="6" />
+                      </div>
+                      <select v-model="newClient.state_id" class="inv-select w-full text-xs">
+                        <option value="">Select State</option>
+                        <option v-for="s in states" :key="s.id" :value="s.id">{{ s.name }}</option>
+                      </select>
+                    </div>
+
                     <div v-if="addClientError" class="text-xs text-red-600 bg-red-50 rounded-lg px-2 py-1.5">{{ addClientError }}</div>
                     <button type="button" @click="saveNewClient" :disabled="addingClient"
                       class="w-full py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5">
