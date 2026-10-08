@@ -6,6 +6,7 @@ import { isChunkLoadError, reloadForStaleChunk } from '../utils/chunkReload'
 const routes = [
   // Public website — accessible without an account
   { path: '/about', name: 'PublicHome', component: () => import('../views/public/PublicHome.vue') },
+  { path: '/help', name: 'Help', component: () => import('../views/help/Help.vue') },
 
   // Auth
   { path: '/login',    name: 'Login',    component: () => import('../views/auth/Login.vue'),    meta: { guest: true } },
@@ -111,7 +112,6 @@ const routes = [
       { path: 'reports',          name: 'Reports',      component: () => import('../views/reports/Reports.vue'), meta: { permission: 'reports', feature: 'reports' } },
       { path: 'settings',         name: 'Settings',     component: () => import('../views/settings/Settings.vue'), meta: { permission: 'settings' } },
       { path: 'offline-backups', name: 'OfflineBackups', component: () => import('../views/settings/OfflineBackups.vue'), meta: { permission: 'settings', desktop: true } },
-      { path: 'help',             name: 'Help',         component: () => import('../views/help/Help.vue') },
       { path: 'more',             name: 'More',         component: () => import('../views/more/More.vue') },
 
       // Super admin routes (restricted)

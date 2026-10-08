@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, nextTick, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 
@@ -89,17 +89,32 @@ const filteredGuides = computed(() => {
   })
 })
 
-function chooseGuide(id) {
+async function chooseGuide(id) {
   activeGuide.value = id
-  if (window.innerWidth < 640) {
-    requestAnimationFrame(() => document.getElementById('visual-guide-detail')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
-  }
+  await nextTick()
+  const detail = document.getElementById('visual-guide-detail')
+  detail?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  animateDestination(detail, 350)
 }
 
 function scrollTo(id) {
   activeSection.value = id
   const el = document.getElementById(id)
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    animateDestination(el)
+  }
+}
+
+function animateDestination(element, delay = 300) {
+  if (!element?.animate || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  window.setTimeout(() => {
+    element.animate([
+      { transform: 'translateY(10px) scale(.992)', opacity: .72, boxShadow: '0 0 0 0 rgba(79,70,229,0)' },
+      { transform: 'translateY(0) scale(1)', opacity: 1, boxShadow: '0 0 0 5px rgba(79,70,229,.14)' },
+      { transform: 'translateY(0) scale(1)', opacity: 1, boxShadow: '0 0 0 0 rgba(79,70,229,0)' },
+    ], { duration: 650, easing: 'cubic-bezier(.22,1,.36,1)' })
+  }, delay)
 }
 
 function exportPdf() {
@@ -362,43 +377,17 @@ function exportPdf() {
       </nav>
     </div>
   </header>
-  <div class="gpay-screen"><div class="max-w-7xl mx-auto w-full px-4 py-4 lg:px-6 lg:py-6 pb-24">
+  <div class="gpay-screen lg:h-[calc(100vh-68px)] lg:overflow-hidden"><div class="max-w-7xl mx-auto w-full px-4 py-4 lg:px-6 lg:py-6 pb-24 lg:pb-6 lg:h-full">
 
-    <div class="relative rounded-[2rem] bg-slate-950 text-white mb-8 overflow-hidden shadow-gpay mt-2 border border-slate-800">
-      <div class="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(34,211,238,.18),transparent_30%),radial-gradient(circle_at_10%_90%,rgba(99,102,241,.25),transparent_35%)]"></div>
-      <div class="relative z-10 grid lg:grid-cols-[1fr_300px] gap-8 p-7 sm:p-10">
-        <div>
-          <div class="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-[11px] font-black uppercase tracking-[.18em] text-cyan-200">AI Billing Learning Centre</div>
-          <h1 class="text-3xl sm:text-5xl font-black tracking-tight mt-4 text-white">Learn one job at a time.</h1>
-          <p class="text-slate-300 text-sm sm:text-base mt-3 max-w-2xl leading-relaxed">Simple visual instructions for Indian shop owners. Choose what you want to do and follow four clear steps.</p>
-          <div class="mt-7 flex flex-col sm:flex-row gap-3 max-w-2xl">
-            <label class="relative flex-1">
-              <span class="sr-only">Search help guides</span>
-              <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-              <input v-model="guideSearch" type="search" placeholder="Search GST, invoice, stock, printer..." class="w-full bg-white text-gray-900 border-0 rounded-2xl py-4 pl-12 pr-4 shadow-xl focus:ring-2 focus:ring-cyan-300 placeholder-gray-400 text-sm font-medium" />
-            </label>
-            <button @click="exportPdf" class="flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-5 py-4 text-sm font-bold hover:bg-white/15 transition-colors">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-              Printable guide
-            </button>
-          </div>
-        </div>
-        <div class="grid grid-cols-2 lg:grid-cols-1 gap-3 self-stretch">
-          <div class="rounded-2xl border border-white/10 bg-white/[0.06] p-4 flex lg:block items-center gap-3"><strong class="text-3xl font-black text-cyan-300">{{ visualGuides.length }}</strong><p class="text-xs text-slate-300 lg:mt-1">visual job guides</p></div>
-          <div class="rounded-2xl border border-white/10 bg-white/[0.06] p-4 flex lg:block items-center gap-3"><strong class="text-3xl font-black text-emerald-300">4</strong><p class="text-xs text-slate-300 lg:mt-1">steps in every guide</p></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="lg:flex lg:gap-8">
+    <div class="lg:flex lg:gap-8 lg:h-full lg:min-h-0">
 
       <!-- Sidebar TOC (desktop) -->
-      <div class="hidden lg:block lg:w-64 shrink-0">
-        <div class="card p-4 sticky top-6 bg-white/80 backdrop-blur-xl border border-gray-100 shadow-soft">
+      <div class="hidden lg:block lg:w-64 shrink-0 lg:h-full lg:min-h-0">
+        <div class="card p-4 h-full overflow-hidden bg-white/80 backdrop-blur-xl border border-gray-100 shadow-soft">
           <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 mb-3">Contents</p>
           <nav class="space-y-1">
             <button v-for="s in sections" :key="s.id" @click="scrollTo(s.id)"
-              class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-sm transition-all font-medium"
+              class="w-full flex items-center gap-3 px-3 py-1.5 rounded-xl text-left text-sm transition-all font-medium"
               :class="activeSection === s.id ? 'bg-primary-50 text-primary-700 shadow-sm' : 'text-gray-600 hover:bg-gray-50'">
               <div class="p-1.5 rounded-lg transition-colors" :class="activeSection === s.id ? 'bg-primary-100 text-primary-600' : 'bg-gray-100 text-gray-400'">
                 <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -421,7 +410,7 @@ function exportPdf() {
       </div>
 
       <!-- Content -->
-      <div class="flex-1 space-y-8">
+      <div class="flex-1 space-y-8 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-2">
 
         <section id="visual-guides" class="card p-5 sm:p-8 scroll-mt-6 border-0 shadow-soft relative overflow-hidden">
           <div class="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-cyan-50"></div>
@@ -434,6 +423,18 @@ function exportPdf() {
                 <h2 class="text-xl font-extrabold text-gray-900">All {{ visualGuides.length }} visual guides</h2>
                 <p class="text-sm text-gray-500 mt-1">Every guide is listed here. Choose one and follow the steps from left to right.</p>
               </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 mb-5">
+              <label class="relative flex-1">
+                <span class="sr-only">Search help guides</span>
+                <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input v-model="guideSearch" type="search" placeholder="Search GST, invoice, stock, printer..." class="w-full rounded-2xl border border-gray-200 bg-gray-50 py-3.5 pl-12 pr-4 text-sm font-medium text-gray-900 placeholder-gray-400 focus:border-primary-400 focus:bg-white focus:ring-2 focus:ring-primary-100" />
+              </label>
+              <button @click="exportPdf" class="flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-5 py-3.5 text-sm font-bold text-gray-700 hover:border-primary-300 hover:text-primary-700 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Printable guide
+              </button>
             </div>
 
             <div class="flex gap-2 overflow-x-auto no-scrollbar pb-3 mb-3">
@@ -451,7 +452,7 @@ function exportPdf() {
 
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 mb-7">
               <button v-for="guide in filteredGuides" :key="guide.id" type="button" @click="chooseGuide(guide.id)"
-                class="min-h-[62px] rounded-2xl border px-3 py-2.5 text-left transition-all flex items-center gap-2.5"
+                class="min-h-[62px] rounded-2xl border px-3 py-2.5 text-left transition-all duration-200 flex items-center gap-2.5 hover:-translate-y-0.5 active:translate-y-0 active:scale-[.98]"
                 :class="activeGuide === guide.id ? 'border-primary-500 bg-primary-50 text-primary-800 shadow-sm ring-2 ring-primary-100' : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200 hover:bg-gray-50'">
                 <span class="text-xl" aria-hidden="true">{{ guide.emoji }}</span>
                 <span class="flex-1"><span class="block text-xs sm:text-sm font-bold leading-tight">{{ guide.title }}</span><span class="block text-[10px] text-gray-400 mt-1">4 easy steps</span></span>
@@ -463,7 +464,7 @@ function exportPdf() {
               <p class="font-bold text-gray-800">No guide found</p><p class="text-sm text-gray-500 mt-1">Try invoice, GST, stock, purchase, printer or payment.</p>
             </div>
 
-            <div id="visual-guide-detail" class="scroll-mt-6 rounded-[1.75rem] bg-slate-900 p-5 sm:p-7 text-white shadow-xl">
+            <div :key="selectedGuide.id" id="visual-guide-detail" class="scroll-mt-6 rounded-[1.75rem] bg-slate-900 p-5 sm:p-7 text-white shadow-xl animate-fade-in-up">
               <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
                 <div>
                   <p class="text-[10px] uppercase tracking-[0.22em] text-cyan-300 font-black">Visual guide</p>

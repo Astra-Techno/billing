@@ -9,6 +9,7 @@ import HelpIcon from '../../components/HelpIcon.vue'
 import { useTour } from '../../composables/useTour'
 import { usePagedList } from '../../composables/usePagedList'
 import { useRole } from '../../composables/useRole'
+import InvoiceForm from './InvoiceForm.vue'
 
 const { startTour, isTourSeen } = useTour('invoice-list', [
   { target: '[data-tour="inv-tabs"]', title: 'Filter by Status', text: 'Quickly switch between All, Draft, Awaiting Payment, and Overdue invoices.' },
@@ -429,16 +430,17 @@ const activeDateLabel = () => {
     </div>
 
     <!-- Right Pane: Detail/Form wrapper -->
-    <div v-if="$route.name !== 'Invoices'" id="c3-right-view" class="split-pane-right relative z-20">
+    <div id="c3-right-view" class="split-pane-right relative z-20 hidden lg:flex" :class="$route.name !== 'Invoices' ? '!flex' : ''">
       <!-- Panel toggle button -->
-      <button @click="togglePanel" title="Toggle invoice list"
+      <button v-if="$route.name !== 'Invoices'" @click="togglePanel" title="Toggle invoice list"
         class="hidden lg:flex absolute top-3 left-3 z-30 w-7 h-7 items-center justify-center rounded-lg bg-white border border-gray-200 shadow-sm hover:bg-gray-50 text-gray-500 hover:text-gray-700 transition-all">
         <svg class="w-4 h-4 transition-transform" :class="panelCollapsed ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
         </svg>
       </button>
       <router-view v-slot="{ Component }">
-        <component :is="Component" :key="$route.fullPath" @refresh="reload" />
+        <component v-if="Component" :is="Component" :key="$route.fullPath" @refresh="reload" />
+        <InvoiceForm v-else :key="'default-new'" @refresh="reload" />
       </router-view>
     </div>
   </div>
