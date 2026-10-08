@@ -1,9 +1,9 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
-const activeSection = ref('getting-started')
+const activeSection = ref('visual-guides')
 
 function goToHash(hash) {
   const id = hash?.replace('#', '')
@@ -17,6 +17,7 @@ onMounted(() => { if (route.hash) setTimeout(() => goToHash(route.hash), 100) })
 watch(() => route.hash, (h) => goToHash(h))
 
 const sections = [
+  { id: 'visual-guides',    label: 'Visual Step Guides',   icon: 'M4 6h16M4 12h10M4 18h16m2-8l2 2-2 2' },
   { id: 'getting-started',  label: 'Getting Started',     icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
   { id: 'dashboard',        label: 'Dashboard',            icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
   { id: 'bills',            label: 'Bills / Invoices',     icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
@@ -32,6 +33,56 @@ const sections = [
   { id: 'settings',         label: 'Settings',             icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
   { id: 'vs-vyapar',        label: 'AI Billing vs Vyapar',  icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
 ]
+
+const visualGuides = [
+  { id: 'setup', title: 'Set up my shop', emoji: '🏪', route: '/settings', action: 'Open Settings', result: 'Your shop details, GSTIN and payment details appear correctly on bills.', steps: [['Business profile', 'Enter shop name, address and state'], ['GST details', 'Add GSTIN and choose your GST settings'], ['Payment details', 'Add bank account and UPI ID'], ['Invoice setup', 'Choose prefix, terms and print format']] },
+  { id: 'gst', title: 'Set up GST', emoji: '🇮🇳', route: '/settings', action: 'Open GST Settings', result: 'The correct CGST + SGST or IGST is calculated automatically.', steps: [['Add GSTIN', 'Enter the 15-character GST number'], ['Set shop state', 'This is your place of business'], ['Set customer state', 'Add it once in the customer record'], ['Select bill type', 'Use Tax Invoice when GST applies']] },
+  { id: 'pos', title: 'Fast POS sale', emoji: '🧾', route: '/pos', action: 'Open POS Counter', result: 'Payment is recorded and the receipt is ready to print.', steps: [['Find items', 'Search, scan barcode or tap a product'], ['Set quantity', 'Use + / - or enter the number'], ['Choose customer', 'Use Walk-in or select a customer'], ['Take payment', 'Choose Cash, UPI or Card and tap Pay']] },
+  { id: 'invoice', title: 'Create an invoice', emoji: '📄', route: '/invoices/new', action: 'Create Invoice', result: 'A GST-ready invoice can be printed, downloaded or shared.', steps: [['Choose customer', 'State decides the GST split'], ['Add products', 'Rate, HSN and tax fill automatically'], ['Check totals', 'Review discount, GST and balance'], ['Save or finalise', 'Keep as draft or create the official bill']] },
+  { id: 'customer', title: 'Customer & payment', emoji: '🤝', route: '/clients', action: 'Open Customers', result: 'Outstanding balance and payment history stay up to date.', steps: [['Add customer', 'Name and mobile are enough to start'], ['Enter state/GSTIN', 'Needed for business GST bills'], ['Create invoice', 'Select the saved customer'], ['Record payment', 'Enter amount, date and payment method']] },
+  { id: 'products', title: 'Products & barcode', emoji: '🏷️', route: '/products', action: 'Open Products', result: 'Items become available in Invoice and POS with correct price and tax.', steps: [['Add product', 'Enter name, unit and selling price'], ['Set GST', 'Choose HSN/SAC and tax rate'], ['Add barcode', 'Scan or type the printed code'], ['Choose stock mode', 'Off, warning, or strict control']] },
+  { id: 'stock', title: 'Maintain stock', emoji: '📦', route: '/inventory', action: 'Open Inventory', result: 'Available quantity remains clear for every shop or godown.', steps: [['Choose location', 'Select shop or godown'], ['Check quantity', 'See available and low-stock items'], ['Adjust or transfer', 'Record the reason for every movement'], ['Review history', 'Confirm who changed stock and when']] },
+  { id: 'purchase', title: 'Purchase & receive stock', emoji: '🛒', route: '/purchases/new', action: 'Record Purchase', result: 'Purchase cost, input GST and stock are updated.', steps: [['Choose supplier', 'Add supplier in Customers if needed'], ['Enter supplier bill', 'Number and date prevent duplicates'], ['Add received items', 'Enter quantity, cost and tax'], ['Save purchase', 'Stock and input tax are recorded']] },
+  { id: 'purchase-order', title: 'Purchase order', emoji: '📋', route: '/purchase-orders/new', action: 'Create Purchase Order', result: 'The supplier order is documented before goods arrive.', steps: [['Choose supplier', 'Select the party you buy from'], ['Add required items', 'Enter quantity and expected rate'], ['Send the PO', 'Print or share it with supplier'], ['Receive goods', 'Record the final purchase when delivered']] },
+  { id: 'returns', title: 'Sales or purchase return', emoji: '↩️', route: '/credit-notes', action: 'Open Credit Notes', result: 'The return, tax reversal and stock movement have an audit trail.', steps: [['Open original bill', 'Start from the related sale or purchase'], ['Choose return items', 'Enter only returned quantities'], ['Check reason and tax', 'Confirm value and GST reversal'], ['Save return', 'Issue credit note or purchase return']] },
+  { id: 'quote', title: 'Quote to invoice', emoji: '💬', route: '/quotes/new', action: 'Create Quotation', result: 'Accepted work becomes an invoice without entering items again.', steps: [['Create quote', 'Add customer, items and validity'], ['Share with customer', 'Send price for approval'], ['Mark accepted', 'Update after customer confirms'], ['Convert to invoice', 'Review and finalise the copied bill']] },
+  { id: 'challan', title: 'Delivery challan', emoji: '🚚', route: '/delivery-challans/new', action: 'Create Challan', result: 'Goods can be dispatched first and billed later.', steps: [['Choose customer', 'Add delivery address'], ['Add goods', 'Enter item quantities'], ['Add transport', 'Vehicle, driver and destination'], ['Deliver & convert', 'Mark delivered, then create invoice']] },
+  { id: 'expense', title: 'Record an expense', emoji: '💸', route: '/expenses/new', action: 'Add Expense', result: 'Spending and eligible input tax appear in reports.', steps: [['Choose category', 'Rent, travel, supplies or another type'], ['Enter supplier', 'Add GSTIN when relevant'], ['Enter amount & GST', 'Use the values from supplier bill'], ['Attach & save', 'Keep proof for later checking']] },
+  { id: 'gst-return', title: 'Prepare GST return', emoji: '📊', route: '/gst-returns', action: 'Open GST Returns', result: 'Your summary is ready to verify with your accountant before portal filing.', steps: [['Choose period', 'Select month or quarter'], ['Check sales', 'Review B2B, B2C and credit notes'], ['Check purchases', 'Review eligible input tax credit'], ['Verify & export', 'Use totals while filing on GST portal']] },
+  { id: 'reports', title: 'Understand reports', emoji: '📈', route: '/reports', action: 'Open Reports', result: 'You can see sales, profit, dues, tax and stock movement clearly.', steps: [['Choose report', 'Select sales, GST, stock or party report'], ['Set date range', 'Today, month, year or custom'], ['Apply filters', 'Shop, customer, product or status'], ['Review or export', 'Use the result for decisions and CA sharing']] },
+  { id: 'payroll', title: 'Staff & payroll', emoji: '👥', route: '/payroll', action: 'Open Payroll', result: 'Staff salary records are organised for the selected month.', steps: [['Add staff', 'Enter role and salary details'], ['Record attendance', 'Check payable days and adjustments'], ['Run payroll', 'Review earnings and deductions'], ['Mark paid', 'Save payment date and method']] },
+  { id: 'backup', title: 'Offline backup', emoji: '🛡️', route: '/offline-backups', action: 'Open Backup & Restore', result: 'A recoverable copy of local business data is stored safely.', steps: [['Connect storage', 'Use a separate drive or secure folder'], ['Create backup', 'Wait for the success message'], ['Keep another copy', 'Store it away from the billing PC'], ['Test restore', 'Periodically confirm the backup can be read']] },
+  { id: 'printer', title: 'Print on SC588', emoji: '🖨️', route: '/settings', action: 'Open Print Settings', result: 'Invoices and POS receipts print at the correct 58 mm width.', steps: [['Pair printer', 'Connect PSF588/SC588 in Bluetooth settings'], ['Choose 58 mm', 'Select the thermal receipt format'], ['Print a test', 'Confirm text and paper feed'], ['Print bill', 'Use Print from invoice or POS']] },
+  { id: 'locations', title: 'Multi-shop & godown', emoji: '🏬', route: '/settings', action: 'Open Location Settings', result: 'Bills and stock remain separated by shop while the owner sees everything.', steps: [['Create locations', 'Add each shop and godown'], ['Assign staff', 'Give access only where required'], ['Set opening stock', 'Enter quantity for each location'], ['Transfer stock', 'Move items with a recorded transfer']] },
+]
+
+const activeGuide = ref('setup')
+const guideSearch = ref('')
+const activeGuideGroup = ref('All')
+const guideGroups = [
+  { label: 'All', ids: [] },
+  { label: 'Start here', ids: ['setup', 'gst', 'printer', 'backup'] },
+  { label: 'Sales', ids: ['pos', 'invoice', 'customer', 'quote', 'challan', 'returns'] },
+  { label: 'Stock & buying', ids: ['products', 'stock', 'purchase', 'purchase-order', 'locations'] },
+  { label: 'Accounts', ids: ['expense', 'gst-return', 'reports', 'payroll'] },
+]
+const selectedGuide = computed(() => visualGuides.find((guide) => guide.id === activeGuide.value) || visualGuides[0])
+const filteredGuides = computed(() => {
+  const query = guideSearch.value.trim().toLowerCase()
+  const group = guideGroups.find((item) => item.label === activeGuideGroup.value)
+  return visualGuides.filter((guide) => {
+    const inGroup = !group?.ids.length || group.ids.includes(guide.id)
+    const searchable = [guide.title, guide.result, ...guide.steps.flat()].join(' ').toLowerCase()
+    return inGroup && (!query || searchable.includes(query))
+  })
+})
+
+function chooseGuide(id) {
+  activeGuide.value = id
+  if (window.innerWidth < 640) {
+    requestAnimationFrame(() => document.getElementById('visual-guide-detail')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
+}
 
 function scrollTo(id) {
   activeSection.value = id
@@ -281,31 +332,30 @@ function exportPdf() {
 </script>
 
 <template>
-  <div class="gpay-screen"><div class="max-w-5xl mx-auto w-full px-4 py-4 lg:px-6 lg:py-6 pb-24">
+  <div class="gpay-screen"><div class="max-w-7xl mx-auto w-full px-4 py-4 lg:px-6 lg:py-6 pb-24">
 
-    <!-- Premium Hero Section -->
-    <div class="relative bg-gradient-to-br from-primary-600 to-primary-800 rounded-[2.5rem] p-8 sm:p-12 text-white mb-10 overflow-hidden shadow-gpay mt-4">
-      <div class="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-white opacity-10 rounded-full blur-3xl pointer-events-none"></div>
-      <div class="absolute bottom-0 left-10 -mb-10 w-48 h-48 bg-primary-400 opacity-20 rounded-full blur-2xl pointer-events-none"></div>
-      
-      <div class="relative z-10 max-w-2xl">
-        <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight mb-3 text-white">How can we help?</h1>
-        <p class="text-primary-100 text-base sm:text-lg">Explore our guides and find answers to all your questions about AI Billing.</p>
-
-        <div class="mt-8 flex flex-wrap gap-3 animate-fade-in-up">
-          <!-- Search bar -->
-          <div class="relative flex-1 min-w-[200px] max-w-md">
-            <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            <input type="text" placeholder="Search guides, invoices, GST..." class="w-full bg-white text-gray-900 border-0 rounded-2xl py-4 pl-12 pr-4 shadow-xl focus:ring-2 focus:ring-primary-300 placeholder-gray-400 text-sm font-medium transition-all" />
+    <div class="relative rounded-[2rem] bg-slate-950 text-white mb-8 overflow-hidden shadow-gpay mt-2 border border-slate-800">
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(34,211,238,.18),transparent_30%),radial-gradient(circle_at_10%_90%,rgba(99,102,241,.25),transparent_35%)]"></div>
+      <div class="relative z-10 grid lg:grid-cols-[1fr_300px] gap-8 p-7 sm:p-10">
+        <div>
+          <div class="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-[11px] font-black uppercase tracking-[.18em] text-cyan-200">AI Billing Learning Centre</div>
+          <h1 class="text-3xl sm:text-5xl font-black tracking-tight mt-4 text-white">Learn one job at a time.</h1>
+          <p class="text-slate-300 text-sm sm:text-base mt-3 max-w-2xl leading-relaxed">Simple visual instructions for Indian shop owners. Choose what you want to do and follow four clear steps.</p>
+          <div class="mt-7 flex flex-col sm:flex-row gap-3 max-w-2xl">
+            <label class="relative flex-1">
+              <span class="sr-only">Search help guides</span>
+              <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <input v-model="guideSearch" type="search" placeholder="Search GST, invoice, stock, printer..." class="w-full bg-white text-gray-900 border-0 rounded-2xl py-4 pl-12 pr-4 shadow-xl focus:ring-2 focus:ring-cyan-300 placeholder-gray-400 text-sm font-medium" />
+            </label>
+            <button @click="exportPdf" class="flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-5 py-4 text-sm font-bold hover:bg-white/15 transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              Printable guide
+            </button>
           </div>
-          <!-- Export PDF button -->
-          <button @click="exportPdf"
-            class="flex items-center gap-2 bg-white/15 hover:bg-white/25 active:scale-95 backdrop-blur-md text-white font-bold text-sm rounded-2xl px-5 py-4 border border-white/20 transition-all shadow-lg shrink-0">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-            Export PDF
-          </button>
+        </div>
+        <div class="grid grid-cols-2 lg:grid-cols-1 gap-3 self-stretch">
+          <div class="rounded-2xl border border-white/10 bg-white/[0.06] p-4 flex lg:block items-center gap-3"><strong class="text-3xl font-black text-cyan-300">{{ visualGuides.length }}</strong><p class="text-xs text-slate-300 lg:mt-1">visual job guides</p></div>
+          <div class="rounded-2xl border border-white/10 bg-white/[0.06] p-4 flex lg:block items-center gap-3"><strong class="text-3xl font-black text-emerald-300">4</strong><p class="text-xs text-slate-300 lg:mt-1">steps in every guide</p></div>
         </div>
       </div>
     </div>
@@ -342,6 +392,93 @@ function exportPdf() {
 
       <!-- Content -->
       <div class="flex-1 space-y-8">
+
+        <section id="visual-guides" class="card p-5 sm:p-8 scroll-mt-6 border-0 shadow-soft relative overflow-hidden">
+          <div class="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-cyan-50"></div>
+          <div class="relative z-10">
+            <div class="flex items-start gap-4 mb-6">
+              <div class="w-12 h-12 rounded-2xl bg-cyan-100 flex items-center justify-center shrink-0">
+                <svg class="w-6 h-6 text-cyan-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h10M4 18h16m2-8l2 2-2 2"/></svg>
+              </div>
+              <div>
+                <h2 class="text-xl font-extrabold text-gray-900">All {{ visualGuides.length }} visual guides</h2>
+                <p class="text-sm text-gray-500 mt-1">Every guide is listed here. Choose one and follow the steps from left to right.</p>
+              </div>
+            </div>
+
+            <div class="flex gap-2 overflow-x-auto no-scrollbar pb-3 mb-3">
+              <button v-for="group in guideGroups" :key="group.label" type="button" @click="activeGuideGroup = group.label"
+                class="shrink-0 rounded-full px-4 py-2 text-xs font-extrabold border transition-colors"
+                :class="activeGuideGroup === group.label ? 'bg-slate-900 border-slate-900 text-white' : 'bg-white border-gray-200 text-gray-600 hover:border-gray-400'">
+                {{ group.label }}
+              </button>
+            </div>
+
+            <div class="flex items-center justify-between mb-3 text-xs text-gray-500">
+              <span>{{ filteredGuides.length }} guide{{ filteredGuides.length === 1 ? '' : 's' }} shown</span>
+              <button v-if="guideSearch || activeGuideGroup !== 'All'" type="button" class="font-bold text-primary-600" @click="guideSearch = ''; activeGuideGroup = 'All'">Show all</button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 mb-7">
+              <button v-for="guide in filteredGuides" :key="guide.id" type="button" @click="chooseGuide(guide.id)"
+                class="min-h-[62px] rounded-2xl border px-3 py-2.5 text-left transition-all flex items-center gap-2.5"
+                :class="activeGuide === guide.id ? 'border-primary-500 bg-primary-50 text-primary-800 shadow-sm ring-2 ring-primary-100' : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200 hover:bg-gray-50'">
+                <span class="text-xl" aria-hidden="true">{{ guide.emoji }}</span>
+                <span class="flex-1"><span class="block text-xs sm:text-sm font-bold leading-tight">{{ guide.title }}</span><span class="block text-[10px] text-gray-400 mt-1">4 easy steps</span></span>
+                <span class="text-gray-300">›</span>
+              </button>
+            </div>
+
+            <div v-if="!filteredGuides.length" class="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center mb-7">
+              <p class="font-bold text-gray-800">No guide found</p><p class="text-sm text-gray-500 mt-1">Try invoice, GST, stock, purchase, printer or payment.</p>
+            </div>
+
+            <div id="visual-guide-detail" class="scroll-mt-6 rounded-[1.75rem] bg-slate-900 p-5 sm:p-7 text-white shadow-xl">
+              <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+                <div>
+                  <p class="text-[10px] uppercase tracking-[0.22em] text-cyan-300 font-black">Visual guide</p>
+                  <h3 class="text-xl sm:text-2xl font-black mt-1">{{ selectedGuide.emoji }} {{ selectedGuide.title }}</h3>
+                </div>
+                <RouterLink :to="selectedGuide.route" class="rounded-xl bg-white px-4 py-2.5 text-xs font-extrabold text-slate-900 hover:bg-cyan-50 transition-colors">
+                  {{ selectedGuide.action }} →
+                </RouterLink>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <template v-for="(step, index) in selectedGuide.steps" :key="`${selectedGuide.id}-${index}`">
+                  <div class="relative rounded-2xl border border-white/10 bg-white/[0.07] p-4 min-h-[132px]">
+                    <div class="w-8 h-8 rounded-full bg-cyan-400 text-slate-950 flex items-center justify-center text-sm font-black mb-3">{{ index + 1 }}</div>
+                    <p class="font-extrabold text-sm">{{ step[0] }}</p>
+                    <p class="text-xs text-slate-300 leading-relaxed mt-1.5">{{ step[1] }}</p>
+                    <div v-if="index < selectedGuide.steps.length - 1" class="hidden sm:flex absolute -right-5 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-cyan-400 text-slate-900 items-center justify-center font-black shadow-lg">→</div>
+                    <div v-if="index < selectedGuide.steps.length - 1" class="sm:hidden mt-3 text-cyan-300 text-center font-black">↓</div>
+                  </div>
+                </template>
+              </div>
+
+              <div class="mt-5 rounded-2xl bg-emerald-400/10 border border-emerald-300/20 px-4 py-3 flex gap-3 items-start">
+                <span class="w-7 h-7 shrink-0 rounded-full bg-emerald-400 text-emerald-950 flex items-center justify-center font-black">✓</span>
+                <div><p class="text-[10px] uppercase tracking-widest text-emerald-300 font-black">Done</p><p class="text-sm text-emerald-50 mt-0.5">{{ selectedGuide.result }}</p></div>
+              </div>
+            </div>
+
+            <div v-if="activeGuide === 'gst'" class="mt-6 rounded-3xl border border-orange-200 bg-orange-50 p-5 sm:p-6">
+              <div class="flex items-center gap-3 mb-5">
+                <span class="w-10 h-10 rounded-xl bg-orange-500 text-white flex items-center justify-center font-black">GST</span>
+                <div><h3 class="font-black text-gray-900">Which tax will be used?</h3><p class="text-xs text-gray-600">AI Billing checks the shop state and place of supply.</p></div>
+              </div>
+              <div class="grid sm:grid-cols-[1fr_auto_1fr] items-stretch gap-3">
+                <div class="rounded-2xl bg-white border border-orange-200 p-4 text-center"><p class="text-xs font-bold text-gray-500">Shop state</p><p class="font-black text-gray-900 mt-1">Compare with customer state</p></div>
+                <div class="flex items-center justify-center text-orange-500 font-black text-xl">→</div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="rounded-2xl bg-blue-600 text-white p-3 text-center"><p class="text-[10px] font-bold text-blue-100">SAME STATE</p><p class="font-black mt-1">CGST + SGST</p><p class="text-[11px] text-blue-100 mt-1">₹1,000 @18% = ₹90 + ₹90</p></div>
+                  <div class="rounded-2xl bg-violet-600 text-white p-3 text-center"><p class="text-[10px] font-bold text-violet-100">OTHER STATE</p><p class="font-black mt-1">IGST</p><p class="text-[11px] text-violet-100 mt-1">₹1,000 @18% = ₹180</p></div>
+                </div>
+              </div>
+              <p class="mt-3 text-xs text-orange-900"><strong>Bill of Supply:</strong> GST is not charged. Always confirm unusual transactions with your accountant.</p>
+            </div>
+          </div>
+        </section>
 
         <!-- ── Getting Started ── -->
         <section :id="'getting-started'" class="card p-8 scroll-mt-6 border-0 shadow-soft relative overflow-hidden group">
