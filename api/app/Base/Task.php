@@ -149,6 +149,39 @@ class Task extends ClassObject
     }
 
     /**
+     * Get the location IDs this user is restricted to.
+     * Returns empty array if user has no location restriction (owner/admin or no assignment).
+     */
+    protected function userLocationIds(): array
+    {
+        $role = $this->userRole();
+        if (in_array($role, ['owner', 'admin'], true)) return [];
+
+        if (!$this->user) return [];
+        $businessId = $this->businessId();
+        if (!$businessId) return [];
+
+        $row = DB::selectOne(
+            "SELECT location_ids FROM business_users WHERE business_id = ? AND user_id = ? AND active = 1 LIMIT 1",
+            [$businessId, $this->userId()]
+        );
+
+        return $row && $row->location_ids ? json_decode($row->location_ids, true) : [];
+    }
+
+    /**
+     * Build a SQL IN clause for location filtering.
+     * Returns null if user has access to all locations.
+     */
+    protected function locationFilter(string $column = 'location_id'): ?string
+    {
+        $ids = $this->userLocationIds();
+        if (empty($ids)) return null;
+        $list = implode(',', array_map('intval', $ids));
+        return "{$column} IN ({$list})";
+    }
+
+    /**
      * Check that a feature module is enabled for the business.
      * Reads the JSON stored in the settings table under the 'features' key.
      */

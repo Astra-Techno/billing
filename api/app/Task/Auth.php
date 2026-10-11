@@ -32,7 +32,7 @@ class Auth extends Task
 
         // Load user's businesses
         $businesses = DB::select(
-            "SELECT b.id, b.name, b.slug, b.logo, bu.role, bu.permissions
+            "SELECT b.id, b.name, b.slug, b.logo, bu.role, bu.permissions, bu.location_ids
              FROM businesses b
              INNER JOIN business_users bu ON bu.business_id = b.id AND bu.user_id = ? AND bu.active = 1
              WHERE b.active = 1
@@ -40,7 +40,8 @@ class Auth extends Task
             [$row->id]
         );
         foreach ($businesses as &$biz) {
-            $biz->permissions = $biz->permissions ? json_decode($biz->permissions, true) : null;
+            $biz->permissions  = $biz->permissions  ? json_decode($biz->permissions, true)  : null;
+            $biz->location_ids = $biz->location_ids ? json_decode($biz->location_ids, true) : null;
         }
         unset($biz);
 
@@ -129,8 +130,9 @@ class Auth extends Task
                     'name'        => $bizResult['data']['name'],
                     'slug'        => $bizResult['data']['slug'],
                     'logo'        => null,
-                    'role'        => 'owner',
-                    'permissions' => null,
+                    'role'         => 'owner',
+                    'permissions'  => null,
+                    'location_ids' => null,
                 ]],
                 'business_id' => $businessId,
             ], 'Welcome! Your account and business have been created.');
@@ -147,7 +149,7 @@ class Auth extends Task
         $businessId = (int)$input['business_id'];
 
         $member = DB::selectOne(
-            "SELECT bu.role, bu.permissions, b.name
+            "SELECT bu.role, bu.permissions, bu.location_ids, b.name
              FROM business_users bu
              INNER JOIN businesses b ON b.id = bu.business_id AND b.active = 1
              WHERE bu.business_id = ? AND bu.user_id = ? AND bu.active = 1 LIMIT 1",

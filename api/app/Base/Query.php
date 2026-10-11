@@ -234,6 +234,8 @@ class Query extends ClassObject
                 $value = Auth::businessId();
             elseif ($match === 'user_id' && Auth::check())
                 $value = Auth::id();
+            elseif ($match === 'user_location_ids' && Auth::check())
+                $value = Auth::locationIds();
             elseif ($requestField && array_key_exists($requestField, $request))
                 $value = $request[$requestField];
             elseif (array_key_exists($match, $input))
@@ -242,6 +244,8 @@ class Query extends ClassObject
                 $value = Auth::businessId();
             elseif ($match === 'user_id')
                 $value = Auth::id();
+            elseif ($match === 'user_location_ids')
+                $value = Auth::locationIds();
             else {
                 $failed[] = $match;
                 continue;

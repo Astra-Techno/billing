@@ -39,6 +39,32 @@ class Auth
         self::$businessId = $id;
     }
 
+    // ── Location-based access control ──────────────────────────────────────
+
+    /**
+     * Get the location IDs the current user is restricted to.
+     * Returns empty array if no restriction (owner/admin or no assignment).
+     * Used by Query builder for {user_location_ids} placeholder.
+     */
+    public static function locationIds(): array
+    {
+        $user = self::$user;
+        if (!$user) return [];
+
+        $role = $user->business_role ?? null;
+        if (in_array($role, ['owner', 'admin'], true)) return [];
+
+        $businessId = self::$businessId;
+        if (!$businessId) return [];
+
+        $row = DB::selectOne(
+            "SELECT location_ids FROM business_users WHERE business_id = ? AND user_id = ? AND active = 1 LIMIT 1",
+            [$businessId, $user->id]
+        );
+
+        return $row && $row->location_ids ? json_decode($row->location_ids, true) : [];
+    }
+
     // ── Token management ──────────────────────────────────────────────────────
 
     public static function validateToken(string $plainToken): ?object

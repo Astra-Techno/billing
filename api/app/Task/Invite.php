@@ -107,13 +107,18 @@ class Invite extends Task
 
             // Load all businesses for this user
             $businesses = DB::select(
-                "SELECT b.id, b.name, b.slug, b.logo, bu.role
+                "SELECT b.id, b.name, b.slug, b.logo, bu.role, bu.permissions, bu.location_ids
                  FROM businesses b
                  INNER JOIN business_users bu ON bu.business_id = b.id AND bu.user_id = ? AND bu.active = 1
                  WHERE b.active = 1
                  ORDER BY b.name",
                 [(int)$user->id]
             );
+            foreach ($businesses as &$biz) {
+                $biz->permissions  = $biz->permissions  ? json_decode($biz->permissions, true)  : null;
+                $biz->location_ids = $biz->location_ids ? json_decode($biz->location_ids, true) : null;
+            }
+            unset($biz);
 
             $business = DB::selectOne("SELECT name FROM businesses WHERE id = ? LIMIT 1", [$inv->business_id]);
 

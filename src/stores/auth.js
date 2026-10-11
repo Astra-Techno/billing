@@ -31,6 +31,12 @@ export const useAuthStore = defineStore('auth', () => {
     return window.__BILLING_DESKTOP__ ? null : (biz?.permissions || null)
   })
 
+  // Assigned location IDs for current business (null = all locations)
+  const locationIds = computed(() => {
+    const biz = businesses.value?.find(b => String(b.id) === String(businessId.value))
+    return biz?.location_ids || null
+  })
+
   function setSession(data) {
     token.value      = data.token
     user.value       = data.user
@@ -91,5 +97,5 @@ export const useAuthStore = defineStore('auth', () => {
     return data
   }
 
-  return { token, user, businessId, businesses, role, permissions, isLoggedIn, isSuperAdmin, setSession, logout, login, register, switchBusiness }
+  return { token, user, businessId, businesses, role, permissions, locationIds, isLoggedIn, isSuperAdmin, setSession, logout, login, register, switchBusiness }
 })

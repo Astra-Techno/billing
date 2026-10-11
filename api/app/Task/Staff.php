@@ -15,7 +15,7 @@ class Staff extends Task
         $this->requireRole(['owner', 'admin']);
 
         $members = DB::select(
-            "SELECT u.id, u.name, u.email, u.mobile, bu.role, bu.permissions, bu.created_at AS joined_at
+            "SELECT u.id, u.name, u.email, u.mobile, bu.role, bu.permissions, bu.location_ids, bu.created_at AS joined_at
              FROM business_users bu
              INNER JOIN users u ON u.id = bu.user_id
              WHERE bu.business_id = ? AND bu.active = 1
@@ -24,7 +24,8 @@ class Staff extends Task
         );
 
         foreach ($members as &$m) {
-            $m->permissions = $m->permissions ? json_decode($m->permissions, true) : null;
+            $m->permissions  = $m->permissions  ? json_decode($m->permissions, true)  : null;
+            $m->location_ids = $m->location_ids ? json_decode($m->location_ids, true) : null;
         }
         unset($m);
 
@@ -50,6 +51,9 @@ class Staff extends Task
         $role        = $input['role'];
         $permissions = !empty($input['permissions']) && is_array($input['permissions'])
             ? json_encode(array_values($input['permissions']))
+            : null;
+        $locationIds = !empty($input['location_ids']) && is_array($input['location_ids'])
+            ? json_encode(array_map('intval', $input['location_ids']))
             : null;
 
         // Check if already a member of this business
@@ -79,10 +83,10 @@ class Staff extends Task
 
         // Link user to business
         DB::statement(
-            "INSERT INTO business_users (business_id, user_id, role, permissions, invited_by, accepted_at, active, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, NOW(), 1, NOW(), NOW())
-             ON DUPLICATE KEY UPDATE role = VALUES(role), permissions = VALUES(permissions), active = 1, updated_at = NOW()",
-            [$businessId, $userId, $role, $permissions, $this->userId()]
+            "INSERT INTO business_users (business_id, user_id, role, permissions, location_ids, invited_by, accepted_at, active, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, NOW(), 1, NOW(), NOW())
+             ON DUPLICATE KEY UPDATE role = VALUES(role), permissions = VALUES(permissions), location_ids = VALUES(location_ids), active = 1, updated_at = NOW()",
+            [$businessId, $userId, $role, $permissions, $locationIds, $this->userId()]
         );
 
         return $this->success(null, "Staff account created for {$name}. They can login with their email and password.");
@@ -113,10 +117,13 @@ class Staff extends Task
         $permissions = !empty($input['permissions']) && is_array($input['permissions'])
             ? json_encode(array_values($input['permissions']))
             : null;
+        $locationIds = !empty($input['location_ids']) && is_array($input['location_ids'])
+            ? json_encode(array_map('intval', $input['location_ids']))
+            : null;
 
         DB::statement(
-            "UPDATE business_users SET role = ?, permissions = ? WHERE business_id = ? AND user_id = ?",
-            [$input['role'], $permissions, $businessId, $targetUserId]
+            "UPDATE business_users SET role = ?, permissions = ?, location_ids = ? WHERE business_id = ? AND user_id = ?",
+            [$input['role'], $permissions, $locationIds, $businessId, $targetUserId]
         );
 
         return $this->success(null, 'Role updated.');

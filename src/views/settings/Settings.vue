@@ -111,7 +111,9 @@ const removing      = ref(null)
 const removeTarget  = ref(null)
 const permEditTarget = ref(null)  // member being edited
 const permEditPerms  = ref([])    // working copy of permissions
+const permEditLocations = ref([]) // working copy of location_ids
 const permSaving     = ref(false)
+const allLocations   = ref([])    // all shops/godowns for this business
 
 const ROLE_LABELS = { owner: 'Owner', admin: 'Admin', accountant: 'Accountant', staff: 'Staff' }
 const ROLE_COLORS = {
@@ -145,10 +147,17 @@ function openStaffModal() {
   staffModal.value = true
 }
 
-function openPermEditor(member) {
+async function openPermEditor(member) {
   permEditTarget.value = member
   permEditPerms.value  = [...(member.permissions || [])]
+  permEditLocations.value = [...(member.location_ids || [])]
   teamError.value = ''
+  if (!allLocations.value.length) {
+    try {
+      const res = await task('Inventory', 'overview', {})
+      allLocations.value = (res.data?.data?.locations || []).filter(l => l.active)
+    } catch {}
+  }
 }
 
 async function savePermissions() {
@@ -157,9 +166,10 @@ async function savePermissions() {
   teamError.value = ''
   try {
     await task('Staff', 'updateRole', {
-      user_id:     permEditTarget.value.id,
-      role:        permEditTarget.value.role,
-      permissions: permEditPerms.value,
+      user_id:      permEditTarget.value.id,
+      role:         permEditTarget.value.role,
+      permissions:  permEditPerms.value,
+      location_ids: permEditLocations.value.length ? permEditLocations.value : null,
     })
     permEditTarget.value = null
     await loadTeam()
@@ -1537,6 +1547,21 @@ async function saveSequences() {
                   </tr>
                 </tbody>
               </table>
+            </div>
+            <!-- Shop/Location Assignment -->
+            <div v-if="allLocations.length > 1" class="mt-4">
+              <h4 class="text-xs font-bold text-gray-700 mb-2">Assigned Shops</h4>
+              <p class="text-[10px] text-gray-400 mb-2">Leave all unchecked to allow access to all shops.</p>
+              <div class="bg-gray-50 rounded-xl p-3 flex flex-wrap gap-2">
+                <label v-for="loc in allLocations" :key="loc.id" class="flex items-center gap-1.5 bg-white rounded-lg px-3 py-1.5 border border-gray-100 cursor-pointer hover:border-primary-300 text-xs"
+                  :class="permEditLocations.includes(loc.id) ? 'border-primary-400 bg-primary-50' : ''">
+                  <input type="checkbox" :checked="permEditLocations.includes(loc.id)"
+                    @change="permEditLocations.includes(loc.id) ? permEditLocations.splice(permEditLocations.indexOf(loc.id), 1) : permEditLocations.push(loc.id)"
+                    class="w-3.5 h-3.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer" />
+                  <span class="font-medium text-gray-700">{{ loc.name }}</span>
+                  <span class="text-[10px] text-gray-400 capitalize">{{ loc.type }}</span>
+                </label>
+              </div>
             </div>
             <div v-if="teamError" class="text-sm text-danger-600 bg-danger-50 rounded-lg px-3 py-2 mt-3">{{ teamError }}</div>
           </div>
