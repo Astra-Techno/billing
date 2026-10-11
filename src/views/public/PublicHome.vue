@@ -2,7 +2,7 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 const offlineInstallerUrl = import.meta.env.VITE_OFFLINE_INSTALLER_URL
-  || 'https://github.com/Astra-Techno/billing/releases/latest/download/AI-Billing-Offline-Setup.exe'
+  || '/downloads/AI-Billing-Offline-Setup.exe'
 
 const featureSlides = [
   { image: '/screenshots/pos.jpg', eyebrow: 'Fast counter billing', title: 'Choose a product and finish the sale in seconds.', text: 'Search or scan items, change quantity, take Cash, UPI or Card, then print a 58mm, 80mm or A4 bill.', points: ['Barcode scanning', 'Live stock shown', 'One-tap payment'] },
