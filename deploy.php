@@ -89,49 +89,49 @@ log_step('⬇', "Downloading <strong>{$repo}@{$branch}</strong> from GitHub…")
 
 $zipUrl = "https://github.com/{$repo}/archive/refs/heads/{$branch}.tar.gz";
 
-$zipData = false;
+$tmpTar = sys_get_temp_dir() . '/billing_deploy_' . time() . '.tar.gz';
+$tmpDir = sys_get_temp_dir() . '/billing_extract_' . time();
+
+// Stream download directly to file to avoid memory exhaustion on large repos
 if (function_exists('curl_init')) {
+    $fp = fopen($tmpTar, 'wb');
     $ch = curl_init($zipUrl);
     curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FILE           => $fp,
         CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_TIMEOUT        => 90,
+        CURLOPT_TIMEOUT        => 300,
         CURLOPT_SSL_VERIFYPEER => true,
         CURLOPT_USERAGENT      => 'BillBook-Deployer/1.0',
         CURLOPT_HTTPHEADER     => array_filter([
             $token ? "Authorization: Bearer {$token}" : null,
         ]),
     ]);
-    $zipData  = curl_exec($ch);
+    curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $curlErr  = curl_error($ch);
     curl_close($ch);
+    fclose($fp);
 
     if ($httpCode === 404) abort("Repo not found (404). Check GITHUB_REPO in api/.env");
     if ($httpCode === 401 || $httpCode === 403) abort("GitHub auth failed ({$httpCode}). Add GITHUB_TOKEN to api/.env");
     if ($httpCode !== 200) abort("GitHub returned HTTP {$httpCode}. cURL: {$curlErr}");
 } else {
     $ctx     = stream_context_create(['http' => [
-        'timeout' => 90,
+        'timeout' => 300,
         'header'  => $token ? "Authorization: Bearer {$token}\r\n" : '',
         'user_agent' => 'BillBook-Deployer/1.0',
     ]]);
-    $zipData = @file_get_contents($zipUrl, false, $ctx);
+    $data = @file_get_contents($zipUrl, false, $ctx);
+    if ($data) { file_put_contents($tmpTar, $data); unset($data); }
 }
 
-if (!$zipData) abort('Failed to download archive. Enable cURL or allow_url_fopen.');
-log_step('✔', 'Download complete (' . round(strlen($zipData) / 1024) . ' KB)', 'ok');
+if (!file_exists($tmpTar) || filesize($tmpTar) < 100) abort('Failed to download archive. Enable cURL or allow_url_fopen.');
+log_step('✔', 'Download complete (' . round(filesize($tmpTar) / 1024) . ' KB)', 'ok');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STEP 2 — Extract tar.gz to temp dir (uses PharData — no extension needed)
 // ─────────────────────────────────────────────────────────────────────────────
 log_step('📦', 'Extracting archive…');
-
-$tmpTar = sys_get_temp_dir() . '/billing_deploy_' . time() . '.tar.gz';
-$tmpDir = sys_get_temp_dir() . '/billing_extract_' . time();
-
-file_put_contents($tmpTar, $zipData);
-unset($zipData);
 
 mkdir($tmpDir, 0755, true);
 
