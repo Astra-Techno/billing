@@ -25,6 +25,7 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+ini_set('memory_limit', '512M');
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 define('BASE_DIR',  __DIR__);
@@ -135,7 +136,7 @@ log_step('📦', 'Extracting archive…');
 
 mkdir($tmpDir, 0755, true);
 
-// Use system tar to extract (PharData loads into memory and can exhaust PHP limits)
+// Try system tar first (low memory), then PharData as fallback
 $extracted = false;
 
 if (function_exists('exec')) {
@@ -149,6 +150,17 @@ if (!$extracted && function_exists('shell_exec')) {
     $result = shell_exec('tar -xzf ' . escapeshellarg($tmpTar) . ' -C ' . escapeshellarg($tmpDir) . ' 2>&1');
     if (is_dir($tmpDir) && count(glob($tmpDir . '/*')) > 0) $extracted = true;
     else log_step('⚠', 'shell_exec tar output: ' . $result, 'warn');
+}
+
+if (!$extracted && class_exists('PharData')) {
+    try {
+        $phar = new PharData($tmpTar);
+        $phar->extractTo($tmpDir);
+        unset($phar);
+        $extracted = true;
+    } catch (Throwable $e) {
+        log_step('⚠', 'PharData failed: ' . $e->getMessage(), 'warn');
+    }
 }
 
 @unlink($tmpTar);
