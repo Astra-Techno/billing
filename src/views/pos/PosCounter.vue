@@ -9,6 +9,7 @@ const products=ref([]), clients=ref([]), locations=ref([]), stockRows=ref([]), p
 const recentSales=ref([]), showRecent=ref(false), recentLoading=ref(false)
 const cart=ref([]), category=ref('All'), search=ref(''), clientSearch=ref(''), selectedClient=ref(null)
 const customerName=ref(''), customerPhone=ref(''), note=ref(''), paymentMethod=ref('cash'), locationId=ref(null)
+const discountType=ref('percent'), discountValue=ref(0)
 const loading=ref(true), paying=ref(false), drafting=ref(false), error=ref(''), success=ref(''), printAfterPay=ref(true)
 const searchInput=ref(null), cartExpanded=ref(false)
 const scanning=ref(false), scannerReady=ref(false), lastScanCode=ref('')
@@ -20,21 +21,21 @@ const locationProducts=computed(()=>{const lid=locationId.value;if(!lid||!produc
 const visibleProducts=computed(()=>{const q=search.value.trim().toLowerCase();return locationProducts.value.filter(p=>(category.value==='All'||(p.pos_category||'Others')===category.value)&&(!q||[p.name,p.sku,p.barcode,p.pos_category].some(v=>String(v||'').toLowerCase().includes(q))))})
 const customerMatches=computed(()=>{const q=clientSearch.value.trim().toLowerCase();if(!q)return [];return clients.value.filter(c=>[c.name,c.mobile,c.company].some(v=>String(v||'').toLowerCase().includes(q))).slice(0,6)})
 const itemCount=computed(()=>cart.value.reduce((s,l)=>s+Number(l.quantity),0))
-const invoiceItems=computed(()=>cart.value.map(l=>({product_id:l.product.id,description:l.product.name,unit:l.product.unit||'Nos',quantity:l.quantity,unit_price:price(l.product),gst_rate:Number(l.product.gst_rate||0),discount_pct:0})))
-const totals=computed(()=>calcInvoice(invoiceItems.value,'intra'))
+const invoiceItems=computed(()=>cart.value.map(l=>({product_id:l.product.id,description:l.product.name,unit:l.product.unit||'Nos',quantity:l.quantity,unit_price:price(l.product),gst_rate:Number(l.product.gst_rate||0),discount_pct:Number(l.discount||0)})))
+const totals=computed(()=>calcInvoice(invoiceItems.value,'intra',discountType.value,discountValue.value))
 
 function lineFor(product){return cart.value.find(l=>l.product.id===product.id)}
 function stockAt(product){return stockRows.value.find(s=>Number(s.product_id)===Number(product.id)&&Number(s.location_id)===Number(locationId.value))}
 function available(product){const row=stockAt(product);return row?Number(row.quantity||0)-Number(row.reserved_quantity||0):Number(product.available_stock||0)}
 function price(product){const shopPrice=stockAt(product)?.location_price;return Number(shopPrice===null||shopPrice===undefined?product.price:shopPrice)}
 function cannotAdd(product){return inventoryMode.value==='strict'&&+product.track_stock&&available(product)<=Number(lineFor(product)?.quantity||0)}
-function add(product){error.value='';if(cannotAdd(product)){error.value=`Only ${available(product)} ${product.unit||'Nos'} available for ${product.name}.`;return}const line=lineFor(product);if(line)line.quantity++;else cart.value.push({product,quantity:1});if(inventoryMode.value==='warn'&&+product.track_stock&&Number(lineFor(product)?.quantity||0)>available(product))error.value=`Stock warning: only ${available(product)} ${product.unit||'Nos'} available for ${product.name}. Sale is still allowed.`}
+function add(product){error.value='';if(cannotAdd(product)){error.value=`Only ${available(product)} ${product.unit||'Nos'} available for ${product.name}.`;return}const line=lineFor(product);if(line)line.quantity++;else cart.value.push({product,quantity:1,discount:0});if(inventoryMode.value==='warn'&&+product.track_stock&&Number(lineFor(product)?.quantity||0)>available(product))error.value=`Stock warning: only ${available(product)} ${product.unit||'Nos'} available for ${product.name}. Sale is still allowed.`}
 function addExactSearch(){const q=search.value.trim().toLowerCase();if(!q)return;const product=products.value.find(p=>[p.barcode,p.sku].some(v=>String(v||'').toLowerCase()===q))||visibleProducts.value[0];if(product){add(product);search.value=''}}
 function change(line,amount){if(amount>0&&cannotAdd(line.product)){error.value=`Only ${available(line.product)} ${line.product.unit||'Nos'} available.`;return}line.quantity+=amount;if(line.quantity<=0)cart.value=cart.value.filter(x=>x!==line)}
 function chooseClient(client){selectedClient.value=client;clientSearch.value=client.name;customerName.value=client.name;customerPhone.value=client.mobile||''}
 function onLocationChange(){if(cart.value.length){const invalid=cart.value.filter(l=>!locationProducts.value.some(p=>p.id===l.product.id));if(invalid.length){cart.value=cart.value.filter(l=>locationProducts.value.some(p=>p.id===l.product.id));error.value=`${invalid.length} item(s) removed — not available at this shop.`}}category.value='All'}
 function clearCart(){if(cart.value.length&&!confirm('Clear all items from the current sale?'))return;cart.value=[];error.value='';success.value='';nextTick(()=>searchInput.value?.focus())}
-function resetSale(){cart.value=[];clientSearch.value='';selectedClient.value=null;customerName.value='';customerPhone.value='';note.value='';paymentMethod.value='cash';search.value='';category.value='All';nextTick(()=>searchInput.value?.focus())}
+function resetSale(){cart.value=[];clientSearch.value='';selectedClient.value=null;customerName.value='';customerPhone.value='';note.value='';paymentMethod.value='cash';discountType.value='percent';discountValue.value=0;search.value='';category.value='All';nextTick(()=>searchInput.value?.focus())}
 
 async function openScanner(){
   scanning.value=true; scannerReady.value=false; error.value=''
@@ -87,7 +88,7 @@ async function createSaleInvoice(){
     if(existing)clientId=existing.id
     else {const created=await task('Client','create',{name:customerName.value.trim(),mobile:customerPhone.value.trim()||null,type:'individual'});clientId=created.data?.data?.client_id}
   }
-  const created=await task('Invoice','create',{client_id:clientId,location_id:locationId.value,invoice_type:'retail',issue_date:today(),due_date:today(),notes:note.value.trim()||null,items:invoiceItems.value})
+  const created=await task('Invoice','create',{client_id:clientId,location_id:locationId.value,invoice_type:'retail',issue_date:today(),due_date:today(),notes:note.value.trim()||null,discount_type:discountType.value,discount_value:discountValue.value||0,items:invoiceItems.value})
   return created.data?.data?.invoice_id
 }
 
@@ -138,7 +139,7 @@ onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Cli
     <aside class="pos-cart" :class="{'cart-collapsed':!cartExpanded && cart.length}">
       <div v-if="locations.length>1" class="pos-shop-bar"><select v-model="locationId" @change="onLocationChange"><option v-for="l in locations" :key="l.id" :value="l.id">{{l.name}}</option></select></div>
       <div class="pos-cart-head" @click="cartExpanded=!cartExpanded"><div><p>CURRENT SALE</p><h2>{{itemCount}} {{itemCount===1?'item':'items'}}<span class="cart-toggle lg:hidden">{{cartExpanded?'▾':'▴'}}</span></h2></div><button v-if="cart.length" @click.stop="clearCart">Clear Cart</button></div>
-      <div class="pos-lines"><div v-if="!cart.length" class="pos-empty"><strong>Cart is empty</strong><small>Tap products from the left.</small></div><article v-for="line in cart" :key="line.product.id"><div><strong>{{line.product.name}}</strong><small>{{inr(price(line.product))}} × {{line.quantity}}</small></div><div class="pos-step"><button title="Reduce quantity" @click="change(line,-1)">−</button><b>{{line.quantity}}</b><button title="Increase quantity" @click="change(line,1)">+</button></div><strong>{{inr(price(line.product)*line.quantity)}}</strong></article></div>
+      <div class="pos-lines"><div v-if="!cart.length" class="pos-empty"><strong>Cart is empty</strong><small>Tap products from the left.</small></div><article v-for="line in cart" :key="line.product.id"><div><strong>{{line.product.name}}</strong><small>{{inr(price(line.product))}} × {{line.quantity}}<template v-if="Number(line.discount)"> · -{{line.discount}}%</template></small></div><div class="pos-step"><button title="Reduce quantity" @click="change(line,-1)">−</button><b>{{line.quantity}}</b><button title="Increase quantity" @click="change(line,1)">+</button></div><div class="pos-line-right"><strong>{{inr(price(line.product)*line.quantity*(1-Number(line.discount||0)/100))}}</strong><input v-model.number="line.discount" type="number" min="0" max="100" step="1" class="pos-disc-input" placeholder="0" title="Discount %" /></div></article></div>
       <div class="pos-bottom">
         <div class="pos-details-row"><input v-model="customerName" placeholder="Customer name" /><input v-model="customerPhone" inputmode="tel" placeholder="Mobile" /><input v-model="note" placeholder="Note" /></div>
         <div class="pos-pay-row">
@@ -152,6 +153,7 @@ onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Cli
             </select>
           </div>
         </div>
+        <div v-if="cart.length" class="pos-discount-row"><label>Discount</label><select v-model="discountType" class="pos-disc-type"><option value="percent">%</option><option value="fixed">₹</option></select><input v-model.number="discountValue" type="number" min="0" step="0.01" class="pos-disc-val" placeholder="0" /><small v-if="totals.invoiceDiscount">−{{inr(totals.invoiceDiscount)}}</small></div>
         <footer class="pos-footer"><div><strong>{{inr(totals.total)}}</strong><small>GST incl.</small></div><div class="pos-footer-actions"><button class="draft-btn" :disabled="drafting||paying||!cart.length" @click="draftSale">{{drafting?'Saving…':'Draft'}}</button><button :disabled="paying||drafting||!cart.length" @click="checkout">{{paying?'Processing…':`Pay ${inr(totals.total)}`}} →</button></div></footer>
       </div>
     </aside>
@@ -234,6 +236,15 @@ onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Cli
 .pos-step{display:flex;align-items:center;gap:7px}
 .pos-step button{width:24px;height:24px;border-radius:7px;background:#eef2ff;color:#4f46e5;font-weight:800;font-size:13px}
 .pos-step b{font-size:13px}
+.pos-line-right{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.pos-disc-input{width:42px;border:1px solid #e2e8f0;border-radius:5px;padding:2px 4px;font-size:10px;text-align:center;color:#4f46e5;background:#f8fafc}
+.pos-disc-input:focus{border-color:#818cf8;outline:none}
+.pos-discount-row{display:flex;align-items:center;gap:6px;padding:6px 12px;border-top:1px solid #f1f5f9}
+.pos-discount-row label{font-size:11px;font-weight:700;color:#64748b}
+.pos-disc-type{border:1px solid #e2e8f0;border-radius:6px;padding:3px 4px;font-size:11px;font-weight:700;color:#4338ca;background:#f8fafc;cursor:pointer}
+.pos-disc-val{width:64px;border:1px solid #e2e8f0;border-radius:6px;padding:4px 8px;font-size:12px;text-align:right;color:#4338ca;font-weight:700}
+.pos-disc-val:focus{border-color:#818cf8;outline:none}
+.pos-discount-row small{color:#059669;font-size:11px;font-weight:600;margin-left:auto}
 .pos-bottom{flex-shrink:0;border-top:1px solid #e5e7eb}
 .pos-details-row{display:flex;gap:6px;padding:8px 12px}
 .pos-details-row input{flex:1;min-width:0;border:1px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:12px}
