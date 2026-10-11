@@ -9,7 +9,7 @@ const products=ref([]), clients=ref([]), locations=ref([]), stockRows=ref([]), p
 const recentSales=ref([]), showRecent=ref(false), recentLoading=ref(false)
 const cart=ref([]), category=ref('All'), search=ref(''), clientSearch=ref(''), selectedClient=ref(null)
 const customerName=ref(''), customerPhone=ref(''), note=ref(''), paymentMethod=ref('cash'), locationId=ref(null)
-const loading=ref(true), paying=ref(false), error=ref(''), success=ref(''), printAfterPay=ref(true)
+const loading=ref(true), paying=ref(false), drafting=ref(false), error=ref(''), success=ref(''), printAfterPay=ref(true)
 const searchInput=ref(null), cartExpanded=ref(false)
 const scanning=ref(false), scannerReady=ref(false), lastScanCode=ref('')
 const printFormat=ref(localStorage.getItem('posPrintFormat')||'thermal58')
@@ -80,26 +80,43 @@ function reprintSale(inv,format){
   window.open(`/print/invoice/${inv.id}?paper=${paper}`,'_blank')
 }
 
+async function createSaleInvoice(){
+  let clientId=selectedClient.value?.id||null
+  if(!clientId&&customerName.value.trim()){
+    const existing=clients.value.find(c=>(customerPhone.value&&c.mobile===customerPhone.value)||c.name.toLowerCase()===customerName.value.trim().toLowerCase())
+    if(existing)clientId=existing.id
+    else {const created=await task('Client','create',{name:customerName.value.trim(),mobile:customerPhone.value.trim()||null,type:'individual'});clientId=created.data?.data?.client_id}
+  }
+  const created=await task('Invoice','create',{client_id:clientId,location_id:locationId.value,invoice_type:'retail',issue_date:today(),due_date:today(),notes:note.value.trim()||null,items:invoiceItems.value})
+  return created.data?.data?.invoice_id
+}
+
 async function checkout(){
   error.value='';success.value=''
   if(!cart.value.length){error.value='Add at least one product before payment.';return}
   paying.value=true
   const printWindow=printAfterPay.value?window.open('about:blank','_blank'):null
   try{
-    let clientId=selectedClient.value?.id||null
-    if(!clientId&&customerName.value.trim()){
-      const existing=clients.value.find(c=>(customerPhone.value&&c.mobile===customerPhone.value)||c.name.toLowerCase()===customerName.value.trim().toLowerCase())
-      if(existing)clientId=existing.id
-      else {const created=await task('Client','create',{name:customerName.value.trim(),mobile:customerPhone.value.trim()||null,type:'individual'});clientId=created.data?.data?.client_id}
-    }
-    const created=await task('Invoice','create',{client_id:clientId,location_id:locationId.value,invoice_type:'retail',issue_date:today(),due_date:today(),notes:note.value.trim()||null,items:invoiceItems.value})
-    const invoiceId=created.data?.data?.invoice_id
+    const invoiceId=await createSaleInvoice()
     const paid=await task('Invoice','markPaid',{id:invoiceId,payment_date:today(),method:paymentMethod.value})
     const number=paid.data?.data?.number||''
     success.value=`Sale ${number} completed successfully.`
     if(printAfterPay.value){const printUrl=`/print/invoice/${invoiceId}?paper=${printFormat.value}`;if(printWindow)printWindow.location.href=printUrl;else window.location.assign(printUrl)}
     resetSale()
   }catch(e){printWindow?.close();error.value=e.response?.data?.message||'Could not complete this sale. Please try again.'}finally{paying.value=false}
+}
+
+async function draftSale(){
+  error.value='';success.value=''
+  if(!cart.value.length){error.value='Add at least one product before saving draft.';return}
+  drafting.value=true
+  const printWindow=printAfterPay.value?window.open('about:blank','_blank'):null
+  try{
+    const invoiceId=await createSaleInvoice()
+    success.value='Sale saved as draft.'
+    if(printAfterPay.value){const printUrl=`/print/invoice/${invoiceId}?paper=${printFormat.value}`;if(printWindow)printWindow.location.href=printUrl;else window.location.assign(printUrl)}
+    resetSale()
+  }catch(e){printWindow?.close();error.value=e.response?.data?.message||'Could not save draft. Please try again.'}finally{drafting.value=false}
 }
 
 onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Client'),task('Inventory','overview')]);products.value=p.data?.data||[];clients.value=c.data?.data||[];const stock=s.data?.data||{};locations.value=stock.locations||[];stockRows.value=stock.stock||[];productLocations.value=stock.productLocations||[];inventoryMode.value=stock.settings?.inventory_mode||'none';locationId.value=stock.defaultId||locations.value[0]?.id||null}catch(e){error.value=e.response?.data?.message||'Could not load POS.'}finally{loading.value=false;nextTick(()=>searchInput.value?.focus())}})
@@ -135,7 +152,7 @@ onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Cli
             </select>
           </div>
         </div>
-        <footer class="pos-footer"><div><strong>{{inr(totals.total)}}</strong><small>GST incl.</small></div><button :disabled="paying||!cart.length" @click="checkout">{{paying?'Processing…':`Pay ${inr(totals.total)}`}} →</button></footer>
+        <footer class="pos-footer"><div><strong>{{inr(totals.total)}}</strong><small>GST incl.</small></div><div class="pos-footer-actions"><button class="draft-btn" :disabled="drafting||paying||!cart.length" @click="draftSale">{{drafting?'Saving…':'Draft'}}</button><button :disabled="paying||drafting||!cart.length" @click="checkout">{{paying?'Processing…':`Pay ${inr(totals.total)}`}} →</button></div></footer>
       </div>
     </aside>
   </div>
@@ -228,7 +245,10 @@ onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Cli
 .pos-footer{padding:10px 12px;background:#111827;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:10px;border-radius:0 0 14px 14px}
 .pos-footer small{display:block;color:#94a3b8;font-size:10px}
 .pos-footer strong{font-size:20px}
+.pos-footer-actions{display:flex;gap:8px}
 .pos-footer button{background:#6366f1;border-radius:10px;padding:11px 14px;font-weight:800;font-size:13px;min-width:150px}
+.pos-footer .draft-btn{background:transparent;border:1.5px solid #6366f1;color:#a5b4fc;min-width:auto;padding:11px 16px}
+.pos-footer .draft-btn:hover{background:rgba(99,102,241,.15)}
 .pos-footer button:disabled{opacity:.5}
 .pos-empty{text-align:center;color:#94a3b8;padding:20px 10px;font-size:13px}
 .pos-empty strong,.pos-empty small{display:block}
