@@ -135,19 +135,10 @@ log_step('📦', 'Extracting archive…');
 
 mkdir($tmpDir, 0755, true);
 
-// Try PharData (built-in), then system tar via exec/shell_exec
+// Use system tar to extract (PharData loads into memory and can exhaust PHP limits)
 $extracted = false;
 
-if (class_exists('PharData')) {
-    try {
-        $phar = new PharData($tmpTar);
-        $phar->extractTo($tmpDir);
-        unset($phar);
-        $extracted = true;
-    } catch (Throwable $e) {}
-}
-
-if (!$extracted && function_exists('exec')) {
+if (function_exists('exec')) {
     $out = []; $rc = 0;
     exec('tar -xzf ' . escapeshellarg($tmpTar) . ' -C ' . escapeshellarg($tmpDir) . ' 2>&1', $out, $rc);
     if ($rc === 0) $extracted = true;
