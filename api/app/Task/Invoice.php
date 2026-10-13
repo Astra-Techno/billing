@@ -626,6 +626,7 @@ class Invoice extends Task
      */
     private function calculateTotals(array $items, string $supplyType, string $discountType = 'percent', float $discountValue = 0): array
     {
+        if ($discountType === 'fixed') $discountType = 'amount';
         if (!in_array($discountType, ['percent','amount'], true) || $discountValue < 0 || !is_finite($discountValue))
             $this->fail('Invalid invoice discount.', 422);
         $grossSubtotal    = 0;
