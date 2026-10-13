@@ -253,6 +253,10 @@ class Query extends ClassObject
 
             // Array → IN clause
             if (is_array($value)) {
+                if (empty($value)) {
+                    $failed[] = $match;
+                    continue;
+                }
                 if ($isSql && str_contains(strtoupper($str), 'IN (')) {
                     $pdo    = DB::getPdo();
                     $quoted = array_map(
