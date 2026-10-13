@@ -153,7 +153,7 @@ onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Cli
             </select>
           </div>
         </div>
-        <div v-if="cart.length" class="pos-discount-row"><label>Discount</label><select v-model="discountType" class="pos-disc-type"><option value="percent">%</option><option value="fixed">₹</option></select><input v-model.number="discountValue" type="number" min="0" step="0.01" class="pos-disc-val" placeholder="0" /><small v-if="totals.invoiceDiscount">−{{inr(totals.invoiceDiscount)}}</small></div>
+        <div v-if="cart.length" class="pos-discount-row"><label>Discount</label><select v-model="discountType" class="pos-disc-type"><option value="percent">%</option><option value="amount">₹</option></select><input v-model.number="discountValue" type="number" min="0" step="0.01" class="pos-disc-val" placeholder="0" /><small v-if="totals.invoiceDiscount">−{{inr(totals.invoiceDiscount)}}</small></div>
         <footer class="pos-footer"><div><strong>{{inr(totals.total)}}</strong><small>GST incl.</small></div><div class="pos-footer-actions"><button class="draft-btn" :disabled="drafting||paying||!cart.length" @click="draftSale">{{drafting?'Saving…':'Draft'}}</button><button :disabled="paying||drafting||!cart.length" @click="checkout">{{paying?'Processing…':`Pay ${inr(totals.total)}`}} →</button></div></footer>
       </div>
     </aside>
