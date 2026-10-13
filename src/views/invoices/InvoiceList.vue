@@ -302,10 +302,10 @@ const activeDateLabel = () => {
         </div>
 
         <!-- Tabs -->
-        <div data-tour="inv-tabs" class="flex gap-1 bg-gray-100/80 p-1 rounded-[10px] ring-1 ring-inset ring-gray-200/50 overflow-x-auto hide-scrollbar">
+        <div data-tour="inv-tabs" class="flex gap-1 bg-gray-100/80 p-1 rounded-[10px] ring-1 ring-inset ring-gray-200/50 overflow-x-auto">
             <button v-for="t in tabs" :key="t.value"
               @click="filter.status = t.value; reload()"
-              class="flex-1 text-[11px] font-semibold rounded-md py-1.5 transition-all whitespace-nowrap px-2"
+              class="flex-shrink-0 text-[11px] font-semibold rounded-md py-1.5 transition-all whitespace-nowrap px-3"
               :class="filter.status === t.value ? 'bg-white shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-700'">
               {{ t.label }}
             </button>
