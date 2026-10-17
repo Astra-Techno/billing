@@ -15,7 +15,7 @@ const searchInput=ref(null), cartExpanded=ref(false)
 const scanning=ref(false), scannerReady=ref(false), lastScanCode=ref('')
 const printFormat=ref(localStorage.getItem('posPrintFormat')||'thermal58')
 const shiftRequired=ref(false), currentShift=ref(null), shiftModal=ref(false), shiftMode=ref('open'), openingCash=ref(0), countedCash=ref(0), closingNote=ref(''), shiftBusy=ref(false)
-const isDesktop=!!window.__BILLING_DESKTOP__
+const isCounterPc=window.__BILLING_NETWORK_MODE__==='CounterPc'
 const serverConnected=ref(true)
 let connectionTimer=null, html5QrCode=null
 
@@ -26,7 +26,7 @@ async function checkConnection(){
 }
 
 function startConnectionMonitor(){
-  if(!isDesktop)return
+  if(!isCounterPc)return
   connectionTimer=setInterval(checkConnection,8000)
   window.addEventListener('online',checkConnection)
   window.addEventListener('offline',()=>{serverConnected.value=false})
@@ -158,7 +158,7 @@ onUnmounted(()=>{stopConnectionMonitor();if(html5QrCode){try{html5QrCode.stop()}
 
 <template>
 <main class="pos-page">
-  <div v-if="isDesktop&&!serverConnected" class="pos-disconnected">Main PC connection lost. Your cart is safe — billing will resume automatically when the connection is restored.</div>
+  <div v-if="isCounterPc&&!serverConnected" class="pos-disconnected">Main PC connection lost. Your cart is safe — billing will resume automatically when the connection is restored.</div>
   <p v-if="error" class="pos-alert error">{{error}}</p><p v-if="success" class="pos-alert success">{{success}}</p>
   <div class="pos-layout">
     <section class="pos-catalog">
