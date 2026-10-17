@@ -25,6 +25,7 @@ class PurchaseInvoice extends Sql
             ->select('total', 'COUNT(*) AS total')
             ->filter('pi.business_id = {business_id}')
             ->filter('pi.deleted_at IS NULL')
+            ->filterOptional('pi.location_id IN ({user_location_ids})')
             ->filterOptional('pi.status = {filter.status}')
             ->filterOptional('pi.supplier_id = {filter.supplier_id}')
             ->filterOptional('pi.invoice_date >= {filter.from_date}')

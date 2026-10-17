@@ -4,6 +4,7 @@ namespace App\Task;
 
 use App\Base\Task;
 use App\Core\DB;
+use App\Core\Auth;
 use App\Core\InventoryStock;
 use App\Tables\Invoice as InvoiceTable;
 use App\Tables\InvoiceItem;
@@ -26,7 +27,13 @@ class Invoice extends Task
 
         $businessId = $this->requireBusiness();
         $this->requirePermission('invoices', 'create');
-        $locationId = (int)($input['location_id'] ?? InventoryStock::defaultLocation($businessId));
+        $locationId = (int)(Auth::counterLocationId() ?: ($input['location_id'] ?? InventoryStock::defaultLocation($businessId)));
+        $shiftId = !empty($input['shift_id']) ? (int)$input['shift_id'] : null;
+        if (Auth::deviceId() && !$shiftId) {
+            $openShift = DB::selectOne("SELECT id FROM cashier_shifts WHERE business_id=? AND device_id=? AND cashier_user_id=? AND status='open' LIMIT 1", [$businessId,Auth::deviceId(),$this->userId()]);
+            if (!$openShift) $this->fail('Open your cashier shift before billing.', 409);
+            $shiftId = (int)$openShift->id;
+        }
         $this->validateItems($input['items'] ?? []);
 
         // Determine supply type (intra-state = CGST+SGST, inter-state = IGST)
@@ -40,6 +47,7 @@ class Invoice extends Task
 
         // Calculate totals
         $discountType  = $input['discount_type']  ?? 'percent';
+        if ($discountType === 'fixed') $discountType = 'amount';
         $discountValue = (float)($input['discount_value'] ?? 0);
         $totals = $this->calculateTotals($input['items'], $supplyType, $discountType, $discountValue);
 
@@ -53,6 +61,11 @@ class Invoice extends Task
         $invoice = InvoiceTable::create([
             'business_id'   => $businessId,
             'location_id'   => $locationId,
+            'counter_id'    => Auth::counterId(),
+            'device_id'     => Auth::deviceId(),
+            'pos_request_id'=> !empty($input['pos_request_id']) ? strtolower(trim($input['pos_request_id'])) : null,
+            'shift_id'      => $shiftId,
+            'cashier_user_id'=> Auth::deviceId() ? $this->userId() : null,
             'location_gstin'   => $locGstin,
             'location_state_id'=> $locStateId,
             'created_by'    => $this->userId(),
@@ -106,6 +119,43 @@ class Invoice extends Task
         ], 'Invoice created.');
     }
 
+    /** Complete a POS sale atomically so invoice, payment and stock succeed together. */
+    public function checkout(array $input): array
+    {
+        $this->validate([
+            'pos_request_id' => 'required|string',
+            'payment_date'   => 'required|date',
+            'method'         => 'required|in:cash,upi,neft,rtgs,imps,cheque,card,netbanking,other',
+        ]);
+        $businessId = $this->requireBusiness();
+        $requestId = strtolower(trim((string)$input['pos_request_id']));
+        if (!preg_match('/^[a-f0-9-]{36}$/', $requestId)) $this->fail('Invalid POS request identity.', 422);
+
+        $existing = DB::selectOne(
+            'SELECT id,number,total,status FROM invoices WHERE business_id=? AND pos_request_id=? AND deleted_at IS NULL LIMIT 1',
+            [$businessId,$requestId]
+        );
+        if ($existing) return $this->success(['invoice_id'=>(int)$existing->id,'number'=>$existing->number,'total'=>(float)$existing->total,'status'=>$existing->status,'replayed'=>true], 'Sale was already completed.');
+
+        if (Auth::deviceId()) {
+            $shift = DB::selectOne("SELECT id FROM cashier_shifts WHERE business_id=? AND device_id=? AND cashier_user_id=? AND status='open' LIMIT 1 FOR UPDATE", [$businessId,Auth::deviceId(),$this->userId()]);
+            if (!$shift) $this->fail('Open your cashier shift before taking payment.', 409);
+            $input['shift_id'] = (int)$shift->id;
+        }
+
+        $created = $this->create(array_merge($input, ['pos_request_id'=>$requestId]));
+        $invoiceId = (int)$created['data']['invoice_id'];
+        $this->input = array_merge($input, ['id'=>$invoiceId]);
+        $paid = $this->markPaid($this->input);
+        return $this->success([
+            'invoice_id'=>$invoiceId,
+            'number'=>$paid['data']['number'] ?? null,
+            'total'=>$created['data']['total'] ?? null,
+            'status'=>'paid',
+            'replayed'=>false,
+        ], 'Sale completed successfully.');
+    }
+
     // ── Update invoice (only draft) ───────────────────────────────────────────
 
     public function update(array $input): array
@@ -126,10 +176,11 @@ class Invoice extends Task
 
         $this->validateItems($input['items'] ?? []);
         $clientId   = !empty($input['client_id']) ? (int)$input['client_id'] : null;
-        $locationId = (int)($input['location_id'] ?? $invoice->location_id ?? 0);
+        $locationId = (int)(Auth::counterLocationId() ?: ($input['location_id'] ?? $invoice->location_id ?? 0));
         // client_id is optional — retail/walk-in invoices
         $supplyType    = $this->resolveSupplyType($businessId, $clientId, $input, $locationId);
         $discountType  = $input['discount_type']  ?? 'percent';
+        if ($discountType === 'fixed') $discountType = 'amount';
         $discountValue = (float)($input['discount_value'] ?? 0);
         $totals        = $this->calculateTotals($input['items'], $supplyType, $discountType, $discountValue);
 
@@ -142,6 +193,7 @@ class Invoice extends Task
 
         $invoice->fill([
             'client_id'      => $clientId,
+            'location_id'    => $locationId,
             'location_gstin'    => $locGstin,
             'location_state_id' => $locStateId,
             'invoice_type'   => $input['invoice_type']    ?? $invoice->invoice_type,
@@ -224,10 +276,14 @@ class Invoice extends Task
         // Record payment
         DB::statement(
             "INSERT INTO payments
-                (business_id, invoice_id, client_id, recorded_by, amount, method, reference, utr_number, payment_date, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())",
+                (business_id, counter_id, device_id, shift_id, cashier_user_id, invoice_id, client_id, recorded_by, amount, method, reference, utr_number, payment_date, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())",
             [
                 $businessId,
+                Auth::counterId(),
+                Auth::deviceId(),
+                $invoice->shift_id ?? null,
+                Auth::deviceId() ? $this->userId() : null,
                 $invoice->id,
                 $invoice->client_id,
                 $this->userId(),
@@ -285,9 +341,9 @@ class Invoice extends Task
             InventoryStock::postDocument($businessId, (int)($fullInvoice->location_id ?: InventoryStock::defaultLocation($businessId)), 'invoice', (int)$fullInvoice->id, 'invoice_items', 'invoice_id', 'sale', -1, $this->userId());
             DB::statement(
                 "INSERT INTO payments
-                 (business_id, invoice_id, client_id, recorded_by, amount, method, payment_date, created_at, updated_at)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())",
-                [$businessId, $inv->id, $inv->client_id, $this->userId(),
+                 (business_id, counter_id, device_id, shift_id, cashier_user_id, invoice_id, client_id, recorded_by, amount, method, payment_date, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())",
+                [$businessId, Auth::counterId(), Auth::deviceId(), $fullInvoice->shift_id ?? null, Auth::deviceId() ? $this->userId() : null, $inv->id, $inv->client_id, $this->userId(),
                  (float)$inv->amount_due, $input['method'], $input['payment_date']]
             );
             DB::statement(
@@ -429,6 +485,11 @@ class Invoice extends Task
         // Clone invoice
         $newInvoice = InvoiceTable::create([
             'business_id'    => $businessId,
+            'location_id'    => Auth::counterLocationId() ?: $original->location_id,
+            'counter_id'     => Auth::counterId(),
+            'device_id'      => Auth::deviceId(),
+            'shift_id'       => Auth::deviceId() ? (DB::selectOne("SELECT id FROM cashier_shifts WHERE business_id=? AND device_id=? AND cashier_user_id=? AND status='open' LIMIT 1", [$businessId,Auth::deviceId(),$this->userId()])->id ?? null) : null,
+            'cashier_user_id'=> Auth::deviceId() ? $this->userId() : null,
             'created_by'     => $this->userId(),
             'client_id'      => $original->client_id,
             'number'         => $number,
@@ -626,7 +687,6 @@ class Invoice extends Task
      */
     private function calculateTotals(array $items, string $supplyType, string $discountType = 'percent', float $discountValue = 0): array
     {
-        if ($discountType === 'fixed') $discountType = 'amount';
         if (!in_array($discountType, ['percent','amount'], true) || $discountValue < 0 || !is_finite($discountValue))
             $this->fail('Invalid invoice discount.', 422);
         $grossSubtotal    = 0;

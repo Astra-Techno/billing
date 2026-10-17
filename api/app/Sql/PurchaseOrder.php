@@ -23,6 +23,7 @@ class PurchaseOrder extends Sql
             ')
             ->select('total', 'COUNT(*) AS total')
             ->filter('po.business_id = {business_id}')
+            ->filterOptional('po.location_id IN ({user_location_ids})')
             ->filterOptional('po.status = {filter.status}')
             ->filterOptional('po.supplier_id = {filter.supplier_id}')
             ->filterOptional('po.order_date >= {filter.from_date}')

@@ -22,6 +22,7 @@ class PurchaseReturn extends Sql
             ')
             ->select('total', 'COUNT(*) AS total')
             ->filter('pr.business_id = {business_id}')
+            ->filterOptional('pi.location_id IN ({user_location_ids})')
             ->filterOptional('pr.status = {filter.status}')
             ->filterOptional('(pr.number LIKE {filter.search} OR pi.number LIKE {filter.search} OR c.name LIKE {filter.search})')
             ->order('{sort_by}', '{sort_order}');

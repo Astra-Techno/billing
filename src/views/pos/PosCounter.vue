@@ -14,6 +14,7 @@ const loading=ref(true), paying=ref(false), drafting=ref(false), error=ref(''), 
 const searchInput=ref(null), cartExpanded=ref(false)
 const scanning=ref(false), scannerReady=ref(false), lastScanCode=ref('')
 const printFormat=ref(localStorage.getItem('posPrintFormat')||'thermal58')
+const shiftRequired=ref(false), currentShift=ref(null), shiftModal=ref(false), shiftMode=ref('open'), openingCash=ref(0), countedCash=ref(0), closingNote=ref(''), shiftBusy=ref(false)
 let html5QrCode=null
 
 const categories=computed(()=>['All',...new Set(products.value.map(p=>p.pos_category||'Others'))])
@@ -65,6 +66,11 @@ onUnmounted(()=>{if(html5QrCode){try{html5QrCode.stop()}catch{};html5QrCode=null
 
 function setPrintFormat(fmt){printFormat.value=fmt;localStorage.setItem('posPrintFormat',fmt)}
 
+async function refreshShift(){const r=await task('CashierShift','current');const data=r.data?.data||{};shiftRequired.value=!!data.required;currentShift.value=data.shift||null;if(shiftRequired.value&&!currentShift.value){shiftMode.value='open';shiftModal.value=true}}
+async function startShift(){shiftBusy.value=true;error.value='';try{const r=await task('CashierShift','open',{opening_cash:Number(openingCash.value||0)});currentShift.value=r.data?.data?.shift||null;shiftModal.value=false;success.value='Counter shift opened. You can start billing.'}catch(e){error.value=e.response?.data?.message||'Could not open shift.'}finally{shiftBusy.value=false}}
+async function showCloseShift(){await refreshShift();shiftMode.value='close';countedCash.value=Number(currentShift.value?.expected_cash||0);shiftModal.value=true}
+async function closeShift(){shiftBusy.value=true;error.value='';try{const r=await task('CashierShift','close',{counted_cash:Number(countedCash.value||0),closing_note:closingNote.value});const closed=r.data?.data?.shift;shiftModal.value=false;currentShift.value=null;openingCash.value=0;closingNote.value='';success.value=`Shift closed. Cash difference: ${inr(Number(closed?.cash_variance||0))}.`;shiftMode.value='open';shiftModal.value=true}catch(e){error.value=e.response?.data?.message||'Could not close shift.'}finally{shiftBusy.value=false}}
+
 async function loadRecentSales(){
   recentLoading.value=true
   try{
@@ -81,14 +87,21 @@ function reprintSale(inv,format){
   window.open(`/print/invoice/${inv.id}?paper=${paper}`,'_blank')
 }
 
-async function createSaleInvoice(){
+async function resolveClientId(){
   let clientId=selectedClient.value?.id||null
   if(!clientId&&customerName.value.trim()){
     const existing=clients.value.find(c=>(customerPhone.value&&c.mobile===customerPhone.value)||c.name.toLowerCase()===customerName.value.trim().toLowerCase())
     if(existing)clientId=existing.id
     else {const created=await task('Client','create',{name:customerName.value.trim(),mobile:customerPhone.value.trim()||null,type:'individual'});clientId=created.data?.data?.client_id}
   }
-  const created=await task('Invoice','create',{client_id:clientId,location_id:locationId.value,invoice_type:'retail',issue_date:today(),due_date:today(),notes:note.value.trim()||null,discount_type:discountType.value,discount_value:discountValue.value||0,items:invoiceItems.value})
+  return clientId
+}
+
+function salePayload(){return {client_id:null,location_id:locationId.value,invoice_type:'retail',issue_date:today(),due_date:today(),notes:note.value.trim()||null,discount_type:discountType.value,discount_value:discountValue.value||0,items:invoiceItems.value}}
+
+async function createSaleInvoice(extra={}){
+  const clientId=await resolveClientId()
+  const created=await task('Invoice','create',{...salePayload(),client_id:clientId,...extra})
   return created.data?.data?.invoice_id
 }
 
@@ -98,8 +111,9 @@ async function checkout(){
   paying.value=true
   const printWindow=printAfterPay.value?window.open('about:blank','_blank'):null
   try{
-    const invoiceId=await createSaleInvoice()
-    const paid=await task('Invoice','markPaid',{id:invoiceId,payment_date:today(),method:paymentMethod.value})
+    const clientId=await resolveClientId()
+    const paid=await task('Invoice','checkout',{...salePayload(),client_id:clientId,pos_request_id:crypto.randomUUID(),payment_date:today(),method:paymentMethod.value})
+    const invoiceId=paid.data?.data?.invoice_id
     const number=paid.data?.data?.number||''
     success.value=`Sale ${number} completed successfully.`
     if(printAfterPay.value){const printUrl=`/print/invoice/${invoiceId}?paper=${printFormat.value}`;if(printWindow)printWindow.location.href=printUrl;else window.location.assign(printUrl)}
@@ -120,7 +134,7 @@ async function draftSale(){
   }catch(e){printWindow?.close();error.value=e.response?.data?.message||'Could not save draft. Please try again.'}finally{drafting.value=false}
 }
 
-onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Client'),task('Inventory','overview')]);products.value=p.data?.data||[];clients.value=c.data?.data||[];const stock=s.data?.data||{};locations.value=stock.locations||[];stockRows.value=stock.stock||[];productLocations.value=stock.productLocations||[];inventoryMode.value=stock.settings?.inventory_mode||'none';locationId.value=stock.defaultId||locations.value[0]?.id||null}catch(e){error.value=e.response?.data?.message||'Could not load POS.'}finally{loading.value=false;nextTick(()=>searchInput.value?.focus())}})
+onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Client'),task('Inventory','overview')]);products.value=p.data?.data||[];clients.value=c.data?.data||[];const stock=s.data?.data||{};locations.value=stock.locations||[];stockRows.value=stock.stock||[];productLocations.value=stock.productLocations||[];inventoryMode.value=stock.settings?.inventory_mode||'none';locationId.value=stock.defaultId||locations.value[0]?.id||null;await refreshShift()}catch(e){error.value=e.response?.data?.message||'Could not load POS.'}finally{loading.value=false;nextTick(()=>searchInput.value?.focus())}})
 </script>
 
 <template>
@@ -129,6 +143,7 @@ onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Cli
   <div class="pos-layout">
     <section class="pos-catalog">
       <div class="pos-search"><span>⌕</span><input ref="searchInput" v-model="search" placeholder="Search product, SKU or scan barcode" title="Type a product name, SKU or barcode. Press Enter to add the first match." @keydown.enter.prevent="addExactSearch" /><button class="scan-btn" title="Scan barcode with camera" @click="openScanner"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M5 21H3a2 2 0 01-2-2v-2m5-4h8m-4-4v8"/></svg></button><button class="scan-btn" title="Recent sales" @click="openRecent"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></button></div>
+      <div v-if="shiftRequired&&currentShift" class="shift-bar"><span>● {{currentShift.counter_name}} · {{currentShift.cashier_name}}</span><button title="Count cash and close this shift" @click="showCloseShift">Close shift</button></div>
       <div class="pos-categories"><button v-for="c in categories" :key="c" :class="{active:category===c}" @click="category=c">{{c==='All'?'All items':c}}</button></div>
       <div v-if="loading" class="pos-empty">Loading products…</div>
       <div v-else class="pos-products">
@@ -157,6 +172,20 @@ onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Cli
         <footer class="pos-footer"><div><strong>{{inr(totals.total)}}</strong><small>GST incl.</small></div><div class="pos-footer-actions"><button class="draft-btn" :disabled="drafting||paying||!cart.length" @click="draftSale">{{drafting?'Saving…':'Draft'}}</button><button :disabled="paying||drafting||!cart.length" @click="checkout">{{paying?'Processing…':`Pay ${inr(totals.total)}`}} →</button></div></footer>
       </div>
     </aside>
+  </div>
+  <div v-if="shiftModal" class="scan-overlay">
+    <form class="shift-modal" @submit.prevent="shiftMode==='open'?startShift():closeShift()">
+      <div class="shift-icon">₹</div>
+      <h3>{{shiftMode==='open'?'Start counter shift':'Close counter shift'}}</h3>
+      <p v-if="shiftMode==='open'">Enter the cash already kept in the drawer before billing starts.</p>
+      <template v-else>
+        <p>Count the physical cash in the drawer and enter it below.</p>
+        <div class="shift-summary"><span>Bills <b>{{currentShift?.invoice_count||0}}</b></span><span>Cash sales <b>{{inr(currentShift?.cash_sales||0)}}</b></span><span>UPI <b>{{inr(currentShift?.upi_sales||0)}}</b></span><span>Card <b>{{inr(currentShift?.card_sales||0)}}</b></span><span class="wide">Expected drawer cash <b>{{inr(currentShift?.expected_cash||0)}}</b></span></div>
+      </template>
+      <label>{{shiftMode==='open'?'Opening cash':'Counted cash'}}<input v-if="shiftMode==='open'" v-model.number="openingCash" type="number" min="0" step="0.01" required autofocus><input v-else v-model.number="countedCash" type="number" min="0" step="0.01" required autofocus></label>
+      <label v-if="shiftMode==='close'">Note (optional)<textarea v-model="closingNote" maxlength="500" placeholder="Reason for extra or short cash"></textarea></label>
+      <div class="shift-actions"><button v-if="shiftMode==='close'" type="button" @click="shiftModal=false">Continue billing</button><button class="primary" :disabled="shiftBusy">{{shiftBusy?'Please wait…':shiftMode==='open'?'Open shift':'Close and check cash'}}</button></div>
+    </form>
   </div>
   <!-- Recent Sales drawer -->
   <div v-if="showRecent" class="scan-overlay" @click.self="showRecent=false">
@@ -268,7 +297,9 @@ onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Cli
 .pos-alert.success{background:#ecfdf5;color:#047857}
 .scan-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;color:#4f46e5;background:transparent;border:none;cursor:pointer;flex-shrink:0;transition:.15s}
 .scan-btn:hover{background:#eef2ff}
+.shift-bar{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;margin-top:7px;border-radius:9px;background:#ecfdf5;color:#047857;font-size:10px;font-weight:800}.shift-bar button{border:1px solid #6ee7b7;border-radius:999px;padding:4px 9px;background:#fff;color:#047857}
 .scan-overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:20px}
+.shift-modal{width:min(440px,100%);background:#fff;border-radius:20px;padding:24px;box-shadow:0 24px 70px #0005}.shift-icon{width:48px;height:48px;border-radius:14px;background:#eef2ff;color:#4f46e5;display:grid;place-items:center;font-size:22px;font-weight:900}.shift-modal h3{font-size:20px;font-weight:850;color:#111827;margin:14px 0 4px}.shift-modal>p{font-size:13px;color:#64748b;margin-bottom:16px}.shift-modal label{display:block;font-size:12px;font-weight:750;color:#475569;margin-top:14px}.shift-modal input,.shift-modal textarea{display:block;width:100%;margin-top:6px;border:1px solid #dbe1ea;border-radius:10px;padding:11px 12px;font-size:14px;outline:none}.shift-modal textarea{min-height:72px;resize:vertical}.shift-modal input:focus,.shift-modal textarea:focus{border-color:#6366f1;box-shadow:0 0 0 3px #6366f122}.shift-summary{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}.shift-summary span{background:#f8fafc;border-radius:10px;padding:9px 10px;font-size:11px;color:#64748b}.shift-summary b{display:block;color:#0f172a;font-size:13px;margin-top:2px}.shift-summary .wide{grid-column:1/-1;background:#ecfdf5;color:#047857}.shift-summary .wide b{color:#047857;font-size:17px}.shift-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}.shift-actions button{padding:10px 14px;border-radius:10px;background:#f1f5f9;font-size:12px;font-weight:800;color:#475569}.shift-actions .primary{background:#4f46e5;color:#fff}.shift-actions button:disabled{opacity:.55}
 .scan-modal{background:#fff;border-radius:16px;width:100%;max-width:420px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)}
 .scan-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #e5e7eb}
 .scan-header h3{font-size:15px;font-weight:700;color:#111827}
