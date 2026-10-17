@@ -19,7 +19,7 @@ class CorsMiddleware
             $response = new \Slim\Psr7\Response();
             return $response
                 ->withHeader('Access-Control-Allow-Origin',  $origin)
-                ->withHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Business-ID')
+                ->withHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Business-ID, X-AI-Device-ID, X-AI-Device-Session')
                 ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
                 ->withHeader('Access-Control-Allow-Credentials', 'true')
                 ->withStatus(200);
@@ -29,7 +29,7 @@ class CorsMiddleware
 
         return $response
             ->withHeader('Access-Control-Allow-Origin',  $origin)
-            ->withHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Business-ID')
+            ->withHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Business-ID, X-AI-Device-ID, X-AI-Device-Session')
             ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
             ->withHeader('Access-Control-Allow-Credentials', 'true');
     }

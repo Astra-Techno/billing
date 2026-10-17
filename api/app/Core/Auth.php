@@ -6,6 +6,9 @@ class Auth
 {
     private static ?object $user       = null;
     private static ?int    $businessId = null;
+    private static ?int    $deviceId = null;
+    private static ?int    $counterId = null;
+    private static ?int    $counterLocationId = null;
 
     public static function user(): ?object
     {
@@ -38,6 +41,17 @@ class Auth
     {
         self::$businessId = $id;
     }
+
+    public static function setDeviceContext(?int $deviceId, ?int $counterId, ?int $locationId): void
+    {
+        self::$deviceId = $deviceId;
+        self::$counterId = $counterId;
+        self::$counterLocationId = $locationId;
+    }
+
+    public static function deviceId(): ?int { return self::$deviceId; }
+    public static function counterId(): ?int { return self::$counterId; }
+    public static function counterLocationId(): ?int { return self::$counterLocationId; }
 
     // ── Location-based access control ──────────────────────────────────────
 

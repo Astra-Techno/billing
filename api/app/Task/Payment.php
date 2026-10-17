@@ -4,6 +4,7 @@ namespace App\Task;
 
 use App\Base\Task;
 use App\Core\DB;
+use App\Core\Auth;
 use App\Core\InventoryStock;
 use App\Tables\Payment as PaymentTable;
 
@@ -43,8 +44,18 @@ class Payment extends Task
         }
 
         // Create payment record
+        $shiftId = null;
+        if (Auth::deviceId()) {
+            $shift = DB::selectOne("SELECT id FROM cashier_shifts WHERE business_id=? AND device_id=? AND cashier_user_id=? AND status='open' LIMIT 1", [$businessId,Auth::deviceId(),$this->userId()]);
+            if (!$shift) $this->fail('Open your cashier shift before recording payment.', 409);
+            $shiftId = (int)$shift->id;
+        }
         $payment = PaymentTable::create([
             'business_id'  => $businessId,
+            'counter_id'   => Auth::counterId(),
+            'device_id'    => Auth::deviceId(),
+            'shift_id'     => $shiftId,
+            'cashier_user_id'=> Auth::deviceId() ? $this->userId() : null,
             'invoice_id'   => (int)$input['invoice_id'],
             'client_id'    => $invoice->client_id,
             'recorded_by'  => $this->userId(),

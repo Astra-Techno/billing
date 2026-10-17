@@ -9,7 +9,7 @@ class Payment extends Table
     protected string $table      = 'payments';
     protected string $primaryKey = 'id';
     protected array  $fillable   = [
-        'business_id', 'invoice_id', 'client_id', 'recorded_by',
+        'business_id', 'counter_id', 'device_id', 'shift_id', 'cashier_user_id', 'invoice_id', 'client_id', 'recorded_by',
         'amount', 'method', 'reference', 'utr_number', 'payment_date', 'note',
     ];
     protected array $guarded = ['id'];

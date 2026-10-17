@@ -36,7 +36,7 @@ try {
         Copy-Item -LiteralPath "$repo\api\$name" -Destination "$payloadRoot\api\$name" -Recurse
     }
     Copy-Item -LiteralPath "$repo\api\index.php" -Destination "$payloadRoot\api\index.php"
-    foreach ($name in @('Launch.ps1','Launch.vbs','Uninstall.ps1','Uninstall.vbs','app.ico','php.ini','router.php','environment.php','cli.php','check-runtime.php','README.md','web')) {
+    foreach ($name in @('Launch.ps1','Launch.vbs','ServerLaunch.vbs','DiscoveryServer.ps1','CounterSetup.ps1','CounterSetup.vbs','CounterLaunch.ps1','CounterLaunch.vbs','Uninstall.ps1','Uninstall.vbs','app.ico','php.ini','router.php','environment.php','cli.php','check-runtime.php','README.md','web')) {
         Copy-Item -LiteralPath "$PSScriptRoot\$name" -Destination "$desktopRoot\$name" -Recurse
     }
     New-Item -ItemType Directory -Force -Path "$desktopRoot\runtime\php", "$desktopRoot\runtime\mysql\bin" | Out-Null
@@ -80,6 +80,9 @@ try {
     & $compiler /nologo /target:winexe /platform:x64 "/win32icon:$iconPath" "/out:$installer" /reference:System.Windows.Forms.dll "/resource:$zip,payload.zip" "/resource:$PSScriptRoot\Install.ps1,Install.ps1" "$PSScriptRoot\Installer.cs"
     if ($LASTEXITCODE -ne 0) { throw 'Installer compilation failed.' }
     Get-FileHash -LiteralPath $installer -Algorithm SHA256 | Format-List | Out-File "$buildRoot\SHA256.txt"
+    $downloadDir = Join-Path $repo 'public_html\downloads'
+    New-Item -ItemType Directory -Force -Path $downloadDir | Out-Null
+    Copy-Item -LiteralPath $installer -Destination (Join-Path $downloadDir 'AI-Billing-Offline-Setup.exe') -Force
     Write-Output "INSTALLER $installer"
     Write-Output "PORTABLE $zip"
 } finally { Pop-Location }

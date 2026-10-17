@@ -39,6 +39,9 @@ api/storage/
 # Test results
 test-results/
 playwright-report/
+marketing/demo-videos/demo-store.json
+marketing/demo-videos/demo-auth.json
+marketing/demo-videos/.work-*/
 desktop/runtime/
 desktop/web/
 desktop/.test-data*/

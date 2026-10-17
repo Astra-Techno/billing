@@ -66,7 +66,7 @@ Updates create a pre-update backup before pending migrations. SQL migration fail
 
 ## Offline boundaries
 
-Local billing, customers, products, payments, reports, invoices and PDFs work without internet. Live e-way bill generation is disabled; guest task, public-card and HTTP migration paths are blocked locally. Cloud sync, cloud backup, email delivery and multi-PC access are outside this release. The server is intended only for the loopback single-user desktop workload, not public hosting.
+Local billing, customers, products, payments, reports, invoices and PDFs work without internet. Main PC mode shares these records with securely paired Counter PCs on the same private shop network. It is not intended for public hosting or access across the internet. Live e-way bill generation, cloud sync, cloud backup and email delivery still require internet where offered.
 
 ## Verification
 

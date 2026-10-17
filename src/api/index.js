@@ -17,6 +17,12 @@ api.interceptors.request.use(config => {
   const auth = useAuthStore()
   if (auth.token)        config.headers['Authorization'] = `Bearer ${auth.token}`
   if (auth.businessId)   config.headers['X-Business-ID'] = auth.businessId
+  const deviceId = sessionStorage.getItem('ai_billing_device_id')
+  const deviceSession = sessionStorage.getItem('ai_billing_device_session')
+  if (deviceId && deviceSession) {
+    config.headers['X-AI-Device-ID'] = deviceId
+    config.headers['X-AI-Device-Session'] = deviceSession
+  }
   if ((config.method || 'get').toLowerCase() === 'get') {
     config.params = { ...config.params, _t: Date.now() }
   }

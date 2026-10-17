@@ -43,7 +43,7 @@ class Desktop extends Task
         if (($input['confirmation'] ?? '') !== 'RESTORE') $this->fail('Type RESTORE to confirm replacing current data.', 422);
         $file = $_FILES['backup'] ?? null;
         if (!$file || $file['error'] !== UPLOAD_ERR_OK || !is_uploaded_file($file['tmp_name'])) $this->fail('Backup upload failed. Maximum size is 512 MB.', 422);
-        DesktopBackup::restore($file['tmp_name']);
+        DesktopBackup::restore($file['tmp_name'], !empty($input['replacement_pc']));
         return $this->success(null, 'Backup restored. Sign in with the account from your backup.');
     }
 }

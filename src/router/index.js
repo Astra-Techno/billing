@@ -111,6 +111,7 @@ const routes = [
       { path: 'gst-returns',      name: 'GstReturns',   component: () => import('../views/gst/GstReturns.vue'), meta: { permission: 'gst', feature: 'gst_returns' } },
       { path: 'reports',          name: 'Reports',      component: () => import('../views/reports/Reports.vue'), meta: { permission: 'reports', feature: 'reports' } },
       { path: 'settings',         name: 'Settings',     component: () => import('../views/settings/Settings.vue'), meta: { permission: 'settings' } },
+      { path: 'settings/billing-counters', name: 'BillingCounters', component: () => import('../views/settings/BillingCounters.vue'), meta: { permission: 'settings', roles: ['owner', 'admin'] } },
       { path: 'offline-backups', name: 'OfflineBackups', component: () => import('../views/settings/OfflineBackups.vue'), meta: { permission: 'settings', desktop: true } },
       { path: 'more',             name: 'More',         component: () => import('../views/more/More.vue') },
 
@@ -157,6 +158,7 @@ router.beforeEach(async (to) => {
   if (to.meta.auth  && !auth.isLoggedIn)                           return { name: 'Login' }
   if (to.meta.guest && auth.isLoggedIn)                            return auth.isSuperAdmin && !auth.businessId ? { name: 'AdminDashboard' } : { name: 'Dashboard' }
   if (to.meta.superAdmin && !auth.isSuperAdmin)                    return { name: 'Dashboard' }
+  if (to.meta.roles && !to.meta.roles.includes(auth.role))         return { name: 'Dashboard' }
   // Super admin with no business trying to access regular pages → send to admin
   if (auth.isSuperAdmin && !auth.businessId && !to.meta.superAdmin) return { name: 'AdminDashboard' }
   if (window.__BILLING_DESKTOP__ && auth.isLoggedIn && !['Activation','OfflineBackups'].includes(to.name)) {

@@ -60,7 +60,7 @@ $errorMiddleware->setDefaultErrorHandler(function ($request, \Throwable $e) use 
     return $response
         ->withHeader('Content-Type', 'application/json')
         ->withHeader('Access-Control-Allow-Origin',      $origin)
-        ->withHeader('Access-Control-Allow-Headers',     'Content-Type, Authorization, X-Requested-With, X-Business-ID')
+        ->withHeader('Access-Control-Allow-Headers',     'Content-Type, Authorization, X-Requested-With, X-Business-ID, X-AI-Device-ID, X-AI-Device-Session')
         ->withHeader('Access-Control-Allow-Methods',     'GET, POST, PUT, PATCH, DELETE, OPTIONS')
         ->withHeader('Access-Control-Allow-Credentials', 'true');
 });

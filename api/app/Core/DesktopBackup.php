@@ -110,7 +110,7 @@ class DesktopBackup
         return $manifest;
     }
 
-    public static function restore(string $archive): void
+    public static function restore(string $archive, bool $replacementPc = false): void
     {
         $zip = new ZipArchive();
         if ($zip->open($archive) !== true) throw new RuntimeException('Cannot read backup.', 422);
@@ -147,6 +147,8 @@ class DesktopBackup
             if (!(int)$check->query("SELECT COUNT(*) FROM business_users WHERE role = 'owner' AND active = 1")->fetchColumn()) throw new RuntimeException('Backup has no active business owner.', 422);
             $check->exec('UPDATE users SET is_super_admin = 0');
             $check->exec('DELETE FROM personal_access_tokens');
+            $check->exec('DELETE FROM device_sessions');
+            if ($replacementPc) $check->exec("UPDATE business_devices SET status='inactive',credential_hash=NULL,updated_at=NOW() WHERE device_type='counter'");
             // All imported upload URLs must continue to resolve on this PC.
             $check->exec("UPDATE businesses SET logo = CONCAT('/api/storage/logos/', SUBSTRING_INDEX(logo, '/', -1)) WHERE logo LIKE '%/storage/logos/%'");
             @unlink($sql);

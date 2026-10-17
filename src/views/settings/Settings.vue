@@ -681,6 +681,12 @@ async function saveSequences() {
         <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Settings</p>
       </div>
 
+      <RouterLink v-if="['owner','admin'].includes(authStore.role)" to="/settings/billing-counters"
+        class="mx-2 mt-2 flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-700 text-[13px] font-semibold hover:bg-indigo-100 transition-colors">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5h16v11H4zM8 20h8m-4-4v4M8 9h2m4 0h2"/></svg>
+        Billing Counters
+      </RouterLink>
+
       <!-- Mobile: horizontal scroll tabs -->
       <!-- Desktop: vertical tab list -->
       <div data-tour="settings-tabs" class="flex lg:flex-col gap-0.5 bg-gray-100 lg:bg-transparent p-1.5 lg:p-2 rounded-xl lg:rounded-none overflow-x-auto lg:overflow-y-auto no-scrollbar pb-2 lg:pb-6 lg:flex-1">

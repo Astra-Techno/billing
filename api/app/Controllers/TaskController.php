@@ -43,7 +43,8 @@ class TaskController
     public function guest(Request $request, Response $response, array $args): Response
     {
         $allowed = ($args['name'] === 'Invite' && in_array($args['method'] ?? '', ['check','accept'], true))
-            || ($args['name'] === 'DesktopLicense' && in_array($args['method'] ?? '', ['publicKey','request','status','refresh'], true));
+            || ($args['name'] === 'DesktopLicense' && in_array($args['method'] ?? '', ['publicKey','request','status','refresh'], true))
+            || ($args['name'] === 'BillingCounter' && in_array($args['method'] ?? '', ['requestJoin','pairingStatus','heartbeat'], true));
         if (!$allowed)
             throw new \Exception('Guest task not allowed.', 403);
         return $this->action($request, $response, $args);

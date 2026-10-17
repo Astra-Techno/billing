@@ -18,6 +18,9 @@
     "e2e:ui": "node node_modules/@playwright/test/cli.js test --ui",
     "e2e:headed": "node node_modules/@playwright/test/cli.js test --headed",
     "e2e:report": "node node_modules/@playwright/test/cli.js show-report"
+    ,"demo:gst": "node scripts/demo-videos/record-gst-basics.mjs"
+    ,"demo:gst:tamil": "node scripts/demo-videos/record-gst-basics.mjs tamil"
+    ,"demo:store:tamil": "node scripts/demo-videos/record-store-setup-tamil.mjs"
   },
   "dependencies": {
     "@vueuse/core": "^14.2.1",

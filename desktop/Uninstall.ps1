@@ -46,9 +46,16 @@ foreach ($entry in $mysqlOwned) {
 }
 $desktopShortcut = Join-Path ([Environment]::GetFolderPath('Desktop')) 'AI Billing Offline.lnk'
 $menuShortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'AI Billing Offline.lnk'
+$counterDesktopShortcut = Join-Path ([Environment]::GetFolderPath('Desktop')) 'AI Billing Counter.lnk'
+$counterMenuShortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'AI Billing Counter.lnk'
+$counterSetupShortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'AI Billing Counter Setup.lnk'
+$serverStartupShortcut = Join-Path ([Environment]::GetFolderPath('Startup')) 'AI Billing Main PC Server.lnk'
 $uninstallShortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'Uninstall AI Billing Offline.lnk'
-Remove-Item -LiteralPath $desktopShortcut, $menuShortcut, $uninstallShortcut -Force -ErrorAction SilentlyContinue
+Remove-Item -LiteralPath $desktopShortcut, $menuShortcut, $counterDesktopShortcut, $counterMenuShortcut, $counterSetupShortcut, $serverStartupShortcut, $uninstallShortcut -Force -ErrorAction SilentlyContinue
 Remove-Item -LiteralPath 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\AI Billing Offline' -Recurse -Force -ErrorAction SilentlyContinue
+try {
+    Get-NetFirewallRule -DisplayName 'AI Billing Main PC (Private LAN)','AI Billing Main PC Discovery (Private LAN)' -ErrorAction SilentlyContinue | Remove-NetFirewallRule
+} catch {}
 if ($DeleteData -and (Test-Path -LiteralPath $dataRoot)) {
     $expectedDataParent = [IO.Path]::GetFullPath((Join-Path $env:LOCALAPPDATA 'AI Billing'))
     if (!$dataRoot.StartsWith($expectedDataParent + '\', [StringComparison]::OrdinalIgnoreCase) -or (Split-Path $dataRoot -Leaf) -ne 'Data') { throw 'Unexpected data path; data deletion stopped.' }

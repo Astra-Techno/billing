@@ -8,6 +8,7 @@ use App\Controllers\InvoicePdfController;
 use App\Controllers\InvoiceThermalController;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\DesktopLicenseMiddleware;
+use App\Middleware\CounterDeviceMiddleware;
 
 // ── Guest routes ───────────────────────────────────────────────────────────────
 
@@ -143,4 +144,4 @@ $app->group('', function ($group) {
         return $response->withHeader('Content-Type', 'application/json');
     });
 
-})->add(new DesktopLicenseMiddleware())->add(new AuthMiddleware());
+})->add(new DesktopLicenseMiddleware())->add(new CounterDeviceMiddleware())->add(new AuthMiddleware());

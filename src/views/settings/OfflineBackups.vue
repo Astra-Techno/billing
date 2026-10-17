@@ -5,7 +5,7 @@ import { useAuthStore } from '../../stores/auth'
 
 const backups = ref([]), busy = ref(false), error = ref(''), message = ref('')
 const loading = ref(true)
-const selectedFile = ref(null), confirmation = ref('')
+const selectedFile = ref(null), confirmation = ref(''), replacementPc = ref(false)
 let timer
 async function load() {
   try {
@@ -32,7 +32,7 @@ async function create() {
 async function restore() {
   if (!selectedFile.value || confirmation.value !== 'RESTORE') return
   busy.value = true; error.value = ''; message.value = ''
-  const body = new FormData(); body.append('backup', selectedFile.value); body.append('confirmation', confirmation.value)
+  const body = new FormData(); body.append('backup', selectedFile.value); body.append('confirmation', confirmation.value); body.append('replacement_pc', replacementPc.value ? '1' : '0')
   try {
     await api.post('task/Desktop/restore', body, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 600000 })
     useAuthStore().logout(); window.location.replace('/login?restored=1')
@@ -71,8 +71,13 @@ onUnmounted(() => clearInterval(timer))
       <label class="block">Type RESTORE to confirm
         <input v-model="confirmation" :disabled="busy" class="input block mt-2 max-w-xs" autocomplete="off" />
       </label>
+      <label class="flex items-start gap-2"><input v-model="replacementPc" type="checkbox" class="mt-1" /><span><strong>This is a replacement Main PC</strong><small class="block text-gray-500">Counter credentials from the old PC will be revoked. Reconnect each Counter PC using its Setup shortcut after restore.</small></span></label>
       <button class="btn-primary" :disabled="busy || !selectedFile || confirmation !== 'RESTORE'" @click="restore">Restore selected backup</button>
       <p v-if="busy">Keep AI Billing open until this operation finishes.</p>
+    </section>
+    <section class="card p-5 space-y-3">
+      <h2 class="text-lg font-semibold">Move to a replacement Main PC</h2>
+      <ol class="list-decimal pl-5 space-y-2 text-sm"><li>On the old Main PC, create and download a fresh backup to a USB drive.</li><li>Install the same or newer AI Billing version on the replacement and choose <strong>Main PC</strong>.</li><li>Activate the replacement PC, open this page and restore the backup with the replacement option selected.</li><li>Open Settings → Billing Counters and create a new pairing code.</li><li>On every Counter PC, run <strong>AI Billing Counter Setup</strong>. It will find the new Main PC automatically.</li><li>Create one test bill, print it, and verify stock before normal billing starts.</li></ol>
     </section>
   </div>
 </template>

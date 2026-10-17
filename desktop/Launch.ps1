@@ -4,6 +4,7 @@ param(
     [int]$DatabasePort = 18766,
     [string]$PhpRoot = "$PSScriptRoot\runtime\php",
     [string]$MysqlRoot = "$PSScriptRoot\runtime\mysql",
+    [string]$NetworkMode = '',
     [switch]$Headless
 )
 $ErrorActionPreference = 'Stop'
@@ -11,14 +12,21 @@ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 $DataRoot = [IO.Path]::GetFullPath($DataRoot)
 New-Item -ItemType Directory -Force -Path $DataRoot | Out-Null
+$modeFile = Join-Path $DataRoot 'network-mode.txt'
+if (!$NetworkMode -and (Test-Path -LiteralPath $modeFile)) { $NetworkMode = (Get-Content -LiteralPath $modeFile -Raw).Trim() }
+if (!$NetworkMode) { $NetworkMode = 'SinglePc' }
+if ($NetworkMode -notin @('SinglePc','MainPc')) { throw 'Invalid AI Billing network mode.' }
 $env:BILLING_DESKTOP_DATA = $DataRoot
 $env:BILLING_DESKTOP_PORT = "$AppPort"
 $env:BILLING_DESKTOP_DB_PORT = "$DatabasePort"
 $env:BILLING_MYSQL_BIN = "$MysqlRoot\bin"
+$env:BILLING_DESKTOP_NETWORK_MODE = $NetworkMode
+$env:BILLING_DESKTOP_HOST = if ($NetworkMode -eq 'MainPc') { $env:COMPUTERNAME } else { '127.0.0.1' }
 $php = "$PhpRoot\php.exe"
 $mysql = "$MysqlRoot\bin\mysqld.exe"
 $phpArgs = @('-c', "$PSScriptRoot\php.ini", '-d', "extension_dir=$PhpRoot\ext")
 $url = "http://127.0.0.1:$AppPort"
+$listenAddress = if ($NetworkMode -eq 'MainPc') { '0.0.0.0' } else { '127.0.0.1' }
 $appProfile = Join-Path $DataRoot 'desktop-window'
 function Find-DesktopEngine {
     foreach ($candidate in @("${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe", "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe", "$env:LOCALAPPDATA\Microsoft\Edge\Application\msedge.exe")) {
@@ -219,8 +227,11 @@ try {
     Update-Splash $splash 'Updating database...'
     Run-Cli 'migrate'
     Update-Splash $splash 'Starting billing service...'
-    $serverArguments = @('-c', "`"$PSScriptRoot\php.ini`"", '-d', "`"extension_dir=$PhpRoot\ext`"", '-S', "127.0.0.1:$AppPort", "`"$PSScriptRoot\router.php`"")
+    $serverArguments = @('-c', "`"$PSScriptRoot\php.ini`"", '-d', "`"extension_dir=$PhpRoot\ext`"", '-S', "${listenAddress}:$AppPort", "`"$PSScriptRoot\router.php`"")
     $webProcess = Start-Process -FilePath $php -ArgumentList $serverArguments -WorkingDirectory $PSScriptRoot -PassThru -WindowStyle Hidden -RedirectStandardError "$DataRoot\web-error.log"
+    if ($NetworkMode -eq 'MainPc') {
+        $discoveryProcess = Start-Process -FilePath 'powershell.exe' -ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-File',"$PSScriptRoot\DiscoveryServer.ps1" -PassThru -WindowStyle Hidden
+    }
     Save-Processes
     if ($Headless) {
         Write-Output "READY $url"
@@ -250,12 +261,17 @@ try {
             if ($window) { Open-DesktopWindow; break }
             Start-Sleep -Milliseconds 250
         }
-        # A separate profile keeps the app independent of ordinary browser windows.
-        $missingChecks = 0
-        while ($missingChecks -lt 20) {
-            if ($webProcess.HasExited -or $dbProcess.HasExited) { throw 'A local service stopped. Close and reopen AI Billing Offline.' }
-            if (Test-DesktopWindowOpen) { $missingChecks = 0 } else { $missingChecks++ }
-            Start-Sleep -Milliseconds 500
+        if ($NetworkMode -eq 'MainPc') {
+            # Keep the shop server available after the owner closes its local window.
+            while (!$webProcess.HasExited -and !$dbProcess.HasExited -and !(Test-Path -LiteralPath "$DataRoot\stop")) { Start-Sleep -Seconds 1 }
+        } else {
+            # A separate profile keeps the single-PC app independent of ordinary browser windows.
+            $missingChecks = 0
+            while ($missingChecks -lt 20) {
+                if ($webProcess.HasExited -or $dbProcess.HasExited) { throw 'A local service stopped. Close and reopen AI Billing Offline.' }
+                if (Test-DesktopWindowOpen) { $missingChecks = 0 } else { $missingChecks++ }
+                Start-Sleep -Milliseconds 500
+            }
         }
     }
 } catch {
@@ -264,6 +280,7 @@ try {
     if ($Headless) { Write-Error $_ } else { [Windows.Forms.MessageBox]::Show($_.Exception.Message, 'AI Billing startup failed') | Out-Null }
 } finally {
     Close-Splash $splash
+    if ($discoveryProcess -and !$discoveryProcess.HasExited) { Stop-Process -Id $discoveryProcess.Id -Force -ErrorAction SilentlyContinue }
     if ($webProcess -and !$webProcess.HasExited) { Stop-Process -Id $webProcess.Id }
     Stop-Database $dbProcess
     if ($owned) { Remove-Item -LiteralPath "$DataRoot\processes.json" -ErrorAction SilentlyContinue }

@@ -1,23 +1,36 @@
 <?php
 require __DIR__ . '/environment.php';
 desktopEnvironment();
-$expectedHost = parse_url($_ENV['FRONTEND_URL'], PHP_URL_HOST) . ':' . parse_url($_ENV['FRONTEND_URL'], PHP_URL_PORT);
-if (($_SERVER['HTTP_HOST'] ?? '') !== $expectedHost || !in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true)) {
-    http_response_code(403); exit('Local access only.');
+$networkMode = $_ENV['DESKTOP_NETWORK_MODE'] ?? 'SinglePc';
+$requestHost = strtolower($_SERVER['HTTP_HOST'] ?? '');
+$requestIp = $_SERVER['REMOTE_ADDR'] ?? '';
+$expectedPort = (int)parse_url($_ENV['FRONTEND_URL'], PHP_URL_PORT);
+$allowedHosts = ['127.0.0.1:' . $expectedPort, 'localhost:' . $expectedPort];
+if ($networkMode === 'MainPc') {
+    $allowedHosts[] = strtolower(($_ENV['DESKTOP_NETWORK_HOST'] ?? gethostname()) . ':' . $expectedPort);
+    if (!empty($_SERVER['SERVER_ADDR'])) $allowedHosts[] = strtolower($_SERVER['SERVER_ADDR'] . ':' . $expectedPort);
+}
+$isPrivateClient = in_array($requestIp, ['127.0.0.1','::1'], true)
+    || preg_match('/^10\./', $requestIp)
+    || preg_match('/^192\.168\./', $requestIp)
+    || preg_match('/^172\.(1[6-9]|2\d|3[01])\./', $requestIp);
+if (!in_array($requestHost, $allowedHosts, true) || ($networkMode === 'SinglePc' && !in_array($requestIp, ['127.0.0.1','::1'], true)) || ($networkMode === 'MainPc' && !$isPrivateClient)) {
+    http_response_code(403); exit('This AI Billing service is not available from this address.');
 }
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-if ($origin && $origin !== $_ENV['FRONTEND_URL']) { http_response_code(403); exit('Origin denied.'); }
+$requestOrigin = 'http://' . $requestHost;
+if ($origin && strtolower($origin) !== $requestOrigin) { http_response_code(403); exit('Origin denied.'); }
 $path = rawurldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
 if (str_contains($path, '..') || str_contains($path, '\\') || str_contains($path, "\0")) { http_response_code(400); exit; }
 if ($path === '/desktop-config.js') {
     header('Content-Type: application/javascript'); header('Cache-Control: no-store');
-    echo 'window.__BILLING_DESKTOP__ = true;'; return;
+    echo 'window.__BILLING_DESKTOP__ = true;window.__BILLING_NETWORK_MODE__=' . json_encode($networkMode) . ';'; return;
 }
 if ($path === '/desktop-info') {
     require dirname(__DIR__) . '/api/vendor/autoload.php';
     \App\Core\DB::connect(require dirname(__DIR__) . '/api/config/database.php');
     header('Content-Type: application/json'); header('Cache-Control: no-store');
-    echo json_encode(['needs_setup'=>(int)\App\Core\DB::selectOne('SELECT COUNT(*) AS total FROM users')->total === 0]); return;
+    echo json_encode(['needs_setup'=>(int)\App\Core\DB::selectOne('SELECT COUNT(*) AS total FROM users')->total === 0,'network_mode'=>$networkMode,'server_name'=>$_ENV['DESKTOP_NETWORK_HOST'] ?? '127.0.0.1','port'=>$expectedPort]); return;
 }
 if (str_starts_with($path, '/api/storage/')) {
     $root = realpath($_ENV['STORAGE_PATH']);
@@ -29,9 +42,11 @@ if (str_starts_with($path, '/api/storage/')) {
 }
 if (str_starts_with($path, '/api/')) {
     // The desktop edition does not expose maintenance, public cards or team invitations.
-    if (preg_match('#^/api/(run-migrate|migrate|entity|shop|guest-task|invoice/(?:bluetooth-print|[0-9]+/bluetooth-print))#', $path)) { http_response_code(404); return; }
+    if (preg_match('#^/api/(run-migrate|migrate|entity|shop|invoice/(?:bluetooth-print|[0-9]+/bluetooth-print))#', $path)) { http_response_code(404); return; }
+    if (str_starts_with($path, '/api/guest-task/') && !preg_match('#^/api/guest-task/BillingCounter/(requestJoin|pairingStatus|heartbeat)$#', $path)) { http_response_code(404); return; }
     if (preg_match('#^/api/(task/(Admin|Invite)/|task/Business/(inviteMember|removeMember)|(?:list|all|item|count|options|group-list)/(Admin|User)(?:[:/]|$))#', $path)) { http_response_code(404); return; }
-    if ($_SERVER['REQUEST_METHOD'] !== 'GET' && $origin !== $_ENV['FRONTEND_URL']) { http_response_code(403); exit('Origin required.'); }
+    $isPairingCall = preg_match('#^/api/guest-task/BillingCounter/(requestJoin|pairingStatus|heartbeat)$#', $path);
+    if ($_SERVER['REQUEST_METHOD'] !== 'GET' && !$isPairingCall && strtolower($origin) !== $requestOrigin) { http_response_code(403); exit('Origin required.'); }
     require dirname(__DIR__) . '/api/index.php'; return;
 }
 $root = realpath(__DIR__ . '/web');

@@ -7,6 +7,19 @@ import { installChunkReloadHandlers } from './utils/chunkReload'
 
 installChunkReloadHandlers()
 
+// The URL fragment is not sent to the Main PC. Keep this short-lived counter
+// session only in the current app window, then remove it from the address.
+if (window.location.hash.startsWith('#device=')) {
+  const counterParams = new URLSearchParams(window.location.hash.slice(1))
+  const device = counterParams.get('device')
+  const session = counterParams.get('session')
+  if (device && session) {
+    sessionStorage.setItem('ai_billing_device_id', device)
+    sessionStorage.setItem('ai_billing_device_session', session)
+    history.replaceState(null, '', window.location.pathname + window.location.search)
+  }
+}
+
 const app = createApp(App)
 app.use(createPinia())
 app.use(router)
