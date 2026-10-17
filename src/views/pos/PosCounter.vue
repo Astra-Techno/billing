@@ -15,7 +15,26 @@ const searchInput=ref(null), cartExpanded=ref(false)
 const scanning=ref(false), scannerReady=ref(false), lastScanCode=ref('')
 const printFormat=ref(localStorage.getItem('posPrintFormat')||'thermal58')
 const shiftRequired=ref(false), currentShift=ref(null), shiftModal=ref(false), shiftMode=ref('open'), openingCash=ref(0), countedCash=ref(0), closingNote=ref(''), shiftBusy=ref(false)
-let html5QrCode=null
+const isDesktop=!!window.__BILLING_DESKTOP__
+const serverConnected=ref(true)
+let connectionTimer=null, html5QrCode=null
+
+function isNetworkError(e){return !e.response && (e.code==='ERR_NETWORK'||e.message==='Network Error'||!navigator.onLine)}
+
+async function checkConnection(){
+  try{const r=await fetch('/desktop-info',{method:'GET',cache:'no-store',signal:AbortSignal.timeout(5000)});serverConnected.value=r.ok}catch{serverConnected.value=false}
+}
+
+function startConnectionMonitor(){
+  if(!isDesktop)return
+  connectionTimer=setInterval(checkConnection,8000)
+  window.addEventListener('online',checkConnection)
+  window.addEventListener('offline',()=>{serverConnected.value=false})
+}
+function stopConnectionMonitor(){
+  if(connectionTimer){clearInterval(connectionTimer);connectionTimer=null}
+  window.removeEventListener('online',checkConnection)
+}
 
 const categories=computed(()=>['All',...new Set(products.value.map(p=>p.pos_category||'Others'))])
 const locationProducts=computed(()=>{const lid=locationId.value;if(!lid||!productLocations.value.length)return products.value;const assigned=new Set(productLocations.value.filter(pl=>Number(pl.location_id)===Number(lid)).map(pl=>Number(pl.product_id)));const hasAnyAssignment=new Set(productLocations.value.map(pl=>Number(pl.product_id)));return products.value.filter(p=>assigned.has(Number(p.id))||!hasAnyAssignment.has(Number(p.id)))})
@@ -62,7 +81,6 @@ async function closeScanner(){
   if(html5QrCode){try{await html5QrCode.stop()}catch{};try{html5QrCode.clear()}catch{};html5QrCode=null}
   scanning.value=false;scannerReady.value=false;lastScanCode.value=''
 }
-onUnmounted(()=>{if(html5QrCode){try{html5QrCode.stop()}catch{};html5QrCode=null}})
 
 function setPrintFormat(fmt){printFormat.value=fmt;localStorage.setItem('posPrintFormat',fmt)}
 
@@ -118,7 +136,7 @@ async function checkout(){
     success.value=`Sale ${number} completed successfully.`
     if(printAfterPay.value){const printUrl=`/print/invoice/${invoiceId}?paper=${printFormat.value}`;if(printWindow)printWindow.location.href=printUrl;else window.location.assign(printUrl)}
     resetSale()
-  }catch(e){printWindow?.close();error.value=e.response?.data?.message||'Could not complete this sale. Please try again.'}finally{paying.value=false}
+  }catch(e){printWindow?.close();if(isNetworkError(e)){serverConnected.value=false;error.value='Main PC connection lost. Your cart is safe. Billing will continue after reconnection.'}else{error.value=e.response?.data?.message||'Could not complete this sale. Please try again.'}}finally{paying.value=false}
 }
 
 async function draftSale(){
@@ -131,14 +149,16 @@ async function draftSale(){
     success.value='Sale saved as draft.'
     if(printAfterPay.value){const printUrl=`/print/invoice/${invoiceId}?paper=${printFormat.value}`;if(printWindow)printWindow.location.href=printUrl;else window.location.assign(printUrl)}
     resetSale()
-  }catch(e){printWindow?.close();error.value=e.response?.data?.message||'Could not save draft. Please try again.'}finally{drafting.value=false}
+  }catch(e){printWindow?.close();if(isNetworkError(e)){serverConnected.value=false;error.value='Main PC connection lost. Your cart is safe. Billing will continue after reconnection.'}else{error.value=e.response?.data?.message||'Could not save draft. Please try again.'}}finally{drafting.value=false}
 }
 
-onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Client'),task('Inventory','overview')]);products.value=p.data?.data||[];clients.value=c.data?.data||[];const stock=s.data?.data||{};locations.value=stock.locations||[];stockRows.value=stock.stock||[];productLocations.value=stock.productLocations||[];inventoryMode.value=stock.settings?.inventory_mode||'none';locationId.value=stock.defaultId||locations.value[0]?.id||null;await refreshShift()}catch(e){error.value=e.response?.data?.message||'Could not load POS.'}finally{loading.value=false;nextTick(()=>searchInput.value?.focus())}})
+onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Client'),task('Inventory','overview')]);products.value=p.data?.data||[];clients.value=c.data?.data||[];const stock=s.data?.data||{};locations.value=stock.locations||[];stockRows.value=stock.stock||[];productLocations.value=stock.productLocations||[];inventoryMode.value=stock.settings?.inventory_mode||'none';locationId.value=stock.defaultId||locations.value[0]?.id||null;await refreshShift();startConnectionMonitor()}catch(e){error.value=e.response?.data?.message||'Could not load POS.'}finally{loading.value=false;nextTick(()=>searchInput.value?.focus())}})
+onUnmounted(()=>{stopConnectionMonitor();if(html5QrCode){try{html5QrCode.stop()}catch{};html5QrCode=null}})
 </script>
 
 <template>
 <main class="pos-page">
+  <div v-if="isDesktop&&!serverConnected" class="pos-disconnected">Main PC connection lost. Your cart is safe — billing will resume automatically when the connection is restored.</div>
   <p v-if="error" class="pos-alert error">{{error}}</p><p v-if="success" class="pos-alert success">{{success}}</p>
   <div class="pos-layout">
     <section class="pos-catalog">
@@ -169,7 +189,7 @@ onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Cli
           </div>
         </div>
         <div v-if="cart.length" class="pos-discount-row"><label>Discount</label><select v-model="discountType" class="pos-disc-type"><option value="percent">%</option><option value="amount">₹</option></select><input v-model.number="discountValue" type="number" min="0" step="0.01" class="pos-disc-val" placeholder="0" /><small v-if="totals.invoiceDiscount">−{{inr(totals.invoiceDiscount)}}</small></div>
-        <footer class="pos-footer"><div><strong>{{inr(totals.total)}}</strong><small>GST incl.</small></div><div class="pos-footer-actions"><button class="draft-btn" :disabled="drafting||paying||!cart.length" @click="draftSale">{{drafting?'Saving…':'Draft'}}</button><button :disabled="paying||drafting||!cart.length" @click="checkout">{{paying?'Processing…':`Pay ${inr(totals.total)}`}} →</button></div></footer>
+        <footer class="pos-footer"><div><strong>{{inr(totals.total)}}</strong><small>GST incl.</small></div><div class="pos-footer-actions"><button class="draft-btn" :disabled="drafting||paying||!cart.length||!serverConnected" @click="draftSale">{{drafting?'Saving…':'Draft'}}</button><button :disabled="paying||drafting||!cart.length||!serverConnected" @click="checkout">{{paying?'Processing…':`Pay ${inr(totals.total)}`}} →</button></div></footer>
       </div>
     </aside>
   </div>
@@ -293,6 +313,8 @@ onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Cli
 .pos-empty{text-align:center;color:#94a3b8;padding:20px 10px;font-size:13px}
 .pos-empty strong,.pos-empty small{display:block}
 .pos-alert{padding:8px 12px;border-radius:9px;margin-bottom:8px;font-size:12px;font-weight:600;flex-shrink:0}
+.pos-disconnected{background:#dc2626;color:#fff;padding:10px 14px;border-radius:9px;margin-bottom:8px;font-size:13px;font-weight:700;text-align:center;flex-shrink:0;animation:pulse-red 2s ease-in-out infinite}
+@keyframes pulse-red{0%,100%{opacity:1}50%{opacity:.8}}
 .pos-alert.error{background:#fef2f2;color:#b91c1c}
 .pos-alert.success{background:#ecfdf5;color:#047857}
 .scan-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;color:#4f46e5;background:transparent;border:none;cursor:pointer;flex-shrink:0;transition:.15s}
