@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { all, item, list, task } from '../../api'
 import { inr } from '../../utils/currency'
 import { today, fmtDateShort } from '../../utils/date'
@@ -11,6 +11,7 @@ const cart=ref([]), category=ref('All'), search=ref(''), clientSearch=ref(''), s
 const customerName=ref(''), customerPhone=ref(''), note=ref(''), paymentMethod=ref('cash'), locationId=ref(null)
 const discountType=ref('percent'), discountValue=ref(0)
 const loading=ref(true), paying=ref(false), drafting=ref(false), error=ref(''), success=ref(''), printAfterPay=ref(true)
+let pendingRequestId=null // idempotency: one UUID per checkout attempt, survives retries
 const searchInput=ref(null), cartExpanded=ref(false)
 const scanning=ref(false), scannerReady=ref(false), lastScanCode=ref('')
 const printFormat=ref(localStorage.getItem('posPrintFormat')||'thermal58')
@@ -56,7 +57,50 @@ function change(line,amount){if(amount>0&&cannotAdd(line.product)){error.value=`
 function chooseClient(client){selectedClient.value=client;clientSearch.value=client.name;customerName.value=client.name;customerPhone.value=client.mobile||''}
 function onLocationChange(){if(cart.value.length){const invalid=cart.value.filter(l=>!locationProducts.value.some(p=>p.id===l.product.id));if(invalid.length){cart.value=cart.value.filter(l=>locationProducts.value.some(p=>p.id===l.product.id));error.value=`${invalid.length} item(s) removed — not available at this shop.`}}category.value='All'}
 function clearCart(){if(cart.value.length&&!confirm('Clear all items from the current sale?'))return;cart.value=[];error.value='';success.value='';nextTick(()=>searchInput.value?.focus())}
-function resetSale(){cart.value=[];clientSearch.value='';selectedClient.value=null;customerName.value='';customerPhone.value='';note.value='';paymentMethod.value='cash';discountType.value='percent';discountValue.value=0;search.value='';category.value='All';nextTick(()=>searchInput.value?.focus())}
+function resetSale(){cart.value=[];clientSearch.value='';selectedClient.value=null;customerName.value='';customerPhone.value='';note.value='';paymentMethod.value='cash';discountType.value='percent';discountValue.value=0;search.value='';category.value='All';pendingRequestId=null;saveCartToStorage();nextTick(()=>searchInput.value?.focus())}
+
+// ── Cart persistence (survives page refresh / app restart) ──────────────
+const CART_KEY='pos_cart_state'
+function saveCartToStorage(){
+  try{
+    const state={
+      cart:cart.value.map(l=>({pid:l.product.id,qty:l.quantity,disc:l.discount})),
+      customer:{name:customerName.value,phone:customerPhone.value,clientId:selectedClient.value?.id||null},
+      note:note.value,method:paymentMethod.value,discType:discountType.value,discVal:discountValue.value,
+      requestId:pendingRequestId,locationId:locationId.value,ts:Date.now()
+    }
+    if(!state.cart.length){localStorage.removeItem(CART_KEY);return}
+    localStorage.setItem(CART_KEY,JSON.stringify(state))
+  }catch{}
+}
+function restoreCartFromStorage(){
+  try{
+    const raw=localStorage.getItem(CART_KEY)
+    if(!raw)return
+    const state=JSON.parse(raw)
+    // Discard carts older than 12 hours
+    if(Date.now()-state.ts>12*60*60*1000){localStorage.removeItem(CART_KEY);return}
+    if(!state.cart?.length)return
+    const restored=[]
+    for(const l of state.cart){
+      const p=products.value.find(x=>Number(x.id)===Number(l.pid))
+      if(p)restored.push({product:p,quantity:l.qty,discount:l.disc||0})
+    }
+    if(!restored.length){localStorage.removeItem(CART_KEY);return}
+    cart.value=restored
+    customerName.value=state.customer?.name||''
+    customerPhone.value=state.customer?.phone||''
+    if(state.customer?.clientId){const c=clients.value.find(x=>Number(x.id)===Number(state.customer.clientId));if(c){selectedClient.value=c;clientSearch.value=c.name}}
+    note.value=state.note||''
+    paymentMethod.value=state.method||'cash'
+    discountType.value=state.discType||'percent'
+    discountValue.value=state.discVal||0
+    pendingRequestId=state.requestId||null
+    if(state.locationId)locationId.value=state.locationId
+  }catch{localStorage.removeItem(CART_KEY)}
+}
+// Auto-save on any cart/customer change
+watch([cart,customerName,customerPhone,note,discountType,discountValue],saveCartToStorage,{deep:true})
 
 async function openScanner(){
   scanning.value=true; scannerReady.value=false; error.value=''
@@ -128,16 +172,19 @@ async function checkout(){
   error.value='';success.value=''
   if(!cart.value.length){error.value='Add at least one product before payment.';return}
   paying.value=true
+  // Reuse existing request ID on retry so the backend deduplicates
+  if(!pendingRequestId)pendingRequestId=crypto.randomUUID()
   const printWindow=printAfterPay.value?window.open('about:blank','_blank'):null
   try{
     const clientId=await resolveClientId()
-    const paid=await task('Invoice','checkout',{...salePayload(),client_id:clientId,pos_request_id:crypto.randomUUID(),payment_date:today(),method:paymentMethod.value})
+    const paid=await task('Invoice','checkout',{...salePayload(),client_id:clientId,pos_request_id:pendingRequestId,payment_date:today(),method:paymentMethod.value})
     const invoiceId=paid.data?.data?.invoice_id
     const number=paid.data?.data?.number||''
-    success.value=`Sale ${number} completed successfully.`
+    success.value=paid.data?.data?.replayed?`Sale ${number} was already completed (duplicate prevented).`:`Sale ${number} completed successfully.`
     if(printAfterPay.value){const printUrl=`/print/invoice/${invoiceId}?paper=${printFormat.value}`;if(printWindow)printWindow.location.href=printUrl;else window.location.assign(printUrl)}
+    pendingRequestId=null
     resetSale()
-  }catch(e){printWindow?.close();if(isNetworkError(e)){serverConnected.value=false;error.value='Main PC connection lost. Your cart is safe. Billing will continue after reconnection.'}else{error.value=e.response?.data?.message||'Could not complete this sale. Please try again.'}}finally{paying.value=false}
+  }catch(e){printWindow?.close();if(isNetworkError(e)){serverConnected.value=false;error.value='Main PC connection lost. Your cart is safe — tap Pay again to retry.'}else{pendingRequestId=null;error.value=e.response?.data?.message||'Could not complete this sale. Please try again.'}}finally{paying.value=false}
 }
 
 async function draftSale(){
@@ -153,7 +200,7 @@ async function draftSale(){
   }catch(e){printWindow?.close();if(isNetworkError(e)){serverConnected.value=false;error.value='Main PC connection lost. Your cart is safe. Billing will continue after reconnection.'}else{error.value=e.response?.data?.message||'Could not save draft. Please try again.'}}finally{drafting.value=false}
 }
 
-onMounted(async()=>{try{const [p,c,s,tr]=await Promise.all([all('Product'),all('Client'),task('Inventory','overview'),all('TaxRate')]);products.value=p.data?.data||[];clients.value=c.data?.data||[];taxRates.value=tr.data?.data||[];const stock=s.data?.data||{};locations.value=stock.locations||[];stockRows.value=stock.stock||[];productLocations.value=stock.productLocations||[];inventoryMode.value=stock.settings?.inventory_mode||'none';locationId.value=stock.defaultId||locations.value[0]?.id||null;await refreshShift();startConnectionMonitor()}catch(e){error.value=e.response?.data?.message||'Could not load POS.'}finally{loading.value=false;nextTick(()=>searchInput.value?.focus())}})
+onMounted(async()=>{try{const [p,c,s,tr]=await Promise.all([all('Product'),all('Client'),task('Inventory','overview'),all('TaxRate')]);products.value=p.data?.data||[];clients.value=c.data?.data||[];taxRates.value=tr.data?.data||[];const stock=s.data?.data||{};locations.value=stock.locations||[];stockRows.value=stock.stock||[];productLocations.value=stock.productLocations||[];inventoryMode.value=stock.settings?.inventory_mode||'none';locationId.value=stock.defaultId||locations.value[0]?.id||null;restoreCartFromStorage();await refreshShift();startConnectionMonitor()}catch(e){error.value=e.response?.data?.message||'Could not load POS.'}finally{loading.value=false;nextTick(()=>searchInput.value?.focus())}})
 onUnmounted(()=>{stopConnectionMonitor();if(html5QrCode){try{html5QrCode.stop()}catch{};html5QrCode=null}})
 </script>
 
