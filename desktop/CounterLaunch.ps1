@@ -1,5 +1,17 @@
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Windows.Forms
+# Accept self-signed certificates from the Main PC's TLS proxy
+Add-Type @'
+using System.Net;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
+public static class TlsTrustL {
+    public static void AcceptSelfSigned() {
+        ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+    }
+}
+'@
+[TlsTrustL]::AcceptSelfSigned()
 $configPath = Join-Path $env:LOCALAPPDATA 'AI Billing Counter\connection.json'
 try {
     if (!(Test-Path -LiteralPath $configPath)) { throw 'This counter is not connected. Run AI Billing Counter Setup first.' }
@@ -19,7 +31,10 @@ try {
     $device = [Uri]::EscapeDataString([string]$config.device_uuid)
     $session = [Uri]::EscapeDataString([string]$heartbeat.data.device_session)
     $url = "$($config.server_url)/pos#device=$device&session=$session"
-    Start-Process -FilePath $edge -ArgumentList @("--app=$url", "--user-data-dir=`"$profile`"", '--start-maximized', '--no-first-run', '--no-default-browser-check', '--disable-background-mode') | Out-Null
+    # --ignore-certificate-errors is needed for the self-signed TLS cert on the LAN
+    $edgeArgs = @("--app=$url", "--user-data-dir=`"$profile`"", '--start-maximized', '--no-first-run', '--no-default-browser-check', '--disable-background-mode')
+    if ($config.server_url -match '^https://') { $edgeArgs += '--ignore-certificate-errors' }
+    Start-Process -FilePath $edge -ArgumentList $edgeArgs | Out-Null
 } catch {
     [Windows.Forms.MessageBox]::Show($_.Exception.Message + "`n`nCheck that the Main PC and shop router are switched on.", 'AI Billing Counter') | Out-Null
     exit 1

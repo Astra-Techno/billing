@@ -70,6 +70,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Licence host compilation failed.' }
     & $compiler /nologo /target:exe /platform:x64 "/out:$desktopRoot\ThermalPrintHost.exe" /reference:System.dll /reference:System.Management.dll "$PSScriptRoot\ThermalPrintHost.cs"
     if ($LASTEXITCODE -ne 0) { throw 'Thermal printer helper compilation failed.' }
+    & $compiler /nologo /target:exe /platform:x64 "/out:$desktopRoot\TlsProxy.exe" /reference:System.dll /reference:System.Net.Http.dll "$PSScriptRoot\TlsProxy.cs"
+    if ($LASTEXITCODE -ne 0) { throw 'TLS proxy compilation failed.' }
     # Validate extensions against the shipped configuration before creating an installer.
     & "$desktopRoot\runtime\php\php.exe" -c "$desktopRoot\php.ini" -d "extension_dir=$desktopRoot\runtime\php\ext" "$desktopRoot\check-runtime.php"
     if ($LASTEXITCODE -ne 0) { throw 'Bundled PHP extension validation failed.' }

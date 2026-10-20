@@ -12,6 +12,18 @@ function Ask([string]$message, [string]$title, [string]$default = '') {
 function Post-Json([string]$url, [hashtable]$body) {
     Invoke-RestMethod -Uri $url -Method Post -ContentType 'application/json' -Body ($body | ConvertTo-Json -Depth 5) -TimeoutSec 12
 }
+# Accept self-signed certificates from the Main PC's TLS proxy
+Add-Type @'
+using System.Net;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
+public static class TlsTrust {
+    public static void AcceptSelfSigned() {
+        ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+    }
+}
+'@
+[TlsTrust]::AcceptSelfSigned()
 function Find-MainPcs {
     $udp = [Net.Sockets.UdpClient]::new()
     try {
@@ -37,8 +49,17 @@ try {
     $serverName = Ask "Enter the detected Main PC IP address, or enter its computer name.$foundText" 'Connect billing counter' $suggested
     if (!$serverName) { throw 'Main PC name is required.' }
     if ($serverName -notmatch '^[A-Za-z0-9.-]+$') { throw 'Main PC name contains unsupported characters.' }
-    $serverUrl = "http://${serverName}:18765"
-    $info = Invoke-RestMethod -Uri "$serverUrl/desktop-info" -TimeoutSec 8
+    # Try HTTPS (TLS proxy) first, fall back to HTTP for older Main PCs
+    $serverUrl = $null
+    try {
+        $testUrl = "https://${serverName}:18443"
+        $info = Invoke-RestMethod -Uri "$testUrl/desktop-info" -TimeoutSec 8
+        $serverUrl = $testUrl
+    } catch {
+        $testUrl = "http://${serverName}:18765"
+        $info = Invoke-RestMethod -Uri "$testUrl/desktop-info" -TimeoutSec 8
+        $serverUrl = $testUrl
+    }
     if ($info.network_mode -ne 'MainPc') { throw 'The selected computer is not running AI Billing in Main PC mode.' }
     $code = Ask 'On the Main PC, open Settings > Billing Counters > Connect a counter. Enter the six-digit code shown there.' 'Enter pairing code'
     if ($code -notmatch '^\d{6}$') { throw 'Enter the six-digit pairing code.' }

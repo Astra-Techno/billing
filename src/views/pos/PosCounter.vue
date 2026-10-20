@@ -4,6 +4,7 @@ import { all, item, list, task } from '../../api'
 import { inr } from '../../utils/currency'
 import { today, fmtDateShort } from '../../utils/date'
 import { calcInvoice } from '../../utils/invoice'
+import { useAuthStore } from '../../stores/auth'
 
 const products=ref([]), clients=ref([]), locations=ref([]), stockRows=ref([]), productLocations=ref([]), taxRates=ref([]), inventoryMode=ref('none')
 const recentSales=ref([]), showRecent=ref(false), recentLoading=ref(false)
@@ -60,33 +61,35 @@ function clearCart(){if(cart.value.length&&!confirm('Clear all items from the cu
 function resetSale(){cart.value=[];clientSearch.value='';selectedClient.value=null;customerName.value='';customerPhone.value='';note.value='';paymentMethod.value='cash';discountType.value='percent';discountValue.value=0;search.value='';category.value='All';pendingRequestId=null;saveCartToStorage();nextTick(()=>searchInput.value?.focus())}
 
 // ── Cart persistence (survives page refresh / app restart) ──────────────
-const CART_KEY='pos_cart_state'
+function cartKey(){const auth=useAuthStore();return `pos_cart_${auth.businessId||0}_${auth.user?.id||0}`}
 function saveCartToStorage(){
   try{
+    const key=cartKey()
     const state={
       cart:cart.value.map(l=>({pid:l.product.id,qty:l.quantity,disc:l.discount})),
       customer:{name:customerName.value,phone:customerPhone.value,clientId:selectedClient.value?.id||null},
       note:note.value,method:paymentMethod.value,discType:discountType.value,discVal:discountValue.value,
       requestId:pendingRequestId,locationId:locationId.value,ts:Date.now()
     }
-    if(!state.cart.length){localStorage.removeItem(CART_KEY);return}
-    localStorage.setItem(CART_KEY,JSON.stringify(state))
+    if(!state.cart.length){localStorage.removeItem(key);return}
+    localStorage.setItem(key,JSON.stringify(state))
   }catch{}
 }
 function restoreCartFromStorage(){
   try{
-    const raw=localStorage.getItem(CART_KEY)
+    const key=cartKey()
+    const raw=localStorage.getItem(key)
     if(!raw)return
     const state=JSON.parse(raw)
     // Discard carts older than 12 hours
-    if(Date.now()-state.ts>12*60*60*1000){localStorage.removeItem(CART_KEY);return}
+    if(Date.now()-state.ts>12*60*60*1000){localStorage.removeItem(key);return}
     if(!state.cart?.length)return
     const restored=[]
     for(const l of state.cart){
       const p=products.value.find(x=>Number(x.id)===Number(l.pid))
       if(p)restored.push({product:p,quantity:l.qty,discount:l.disc||0})
     }
-    if(!restored.length){localStorage.removeItem(CART_KEY);return}
+    if(!restored.length){localStorage.removeItem(key);return}
     cart.value=restored
     customerName.value=state.customer?.name||''
     customerPhone.value=state.customer?.phone||''
@@ -97,10 +100,10 @@ function restoreCartFromStorage(){
     discountValue.value=state.discVal||0
     pendingRequestId=state.requestId||null
     if(state.locationId)locationId.value=state.locationId
-  }catch{localStorage.removeItem(CART_KEY)}
+  }catch{localStorage.removeItem(cartKey())}
 }
-// Auto-save on any cart/customer change
-watch([cart,customerName,customerPhone,note,discountType,discountValue],saveCartToStorage,{deep:true})
+// Auto-save on any cart/customer/payment/location change
+watch([cart,customerName,customerPhone,note,discountType,discountValue,paymentMethod,locationId],saveCartToStorage,{deep:true})
 
 async function openScanner(){
   scanning.value=true; scannerReady.value=false; error.value=''
@@ -174,6 +177,8 @@ async function checkout(){
   paying.value=true
   // Reuse existing request ID on retry so the backend deduplicates
   if(!pendingRequestId)pendingRequestId=crypto.randomUUID()
+  // Persist immediately so a page refresh before response still reuses the same ID
+  saveCartToStorage()
   const printWindow=printAfterPay.value?window.open('about:blank','_blank'):null
   try{
     const clientId=await resolveClientId()

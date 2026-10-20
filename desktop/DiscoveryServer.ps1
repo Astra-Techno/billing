@@ -10,7 +10,7 @@ try {
             $remote = [Net.IPEndPoint]::new([Net.IPAddress]::Any, 0)
             $bytes = $udp.Receive([ref]$remote)
             if ([Text.Encoding]::ASCII.GetString($bytes) -ne 'AI_BILLING_DISCOVER_V1') { continue }
-            $payload = @{ service='ai-billing-main-pc'; version=1; server_name=$env:COMPUTERNAME; port=18765 } | ConvertTo-Json -Compress
+            $payload = @{ service='ai-billing-main-pc'; version=1; server_name=$env:COMPUTERNAME; port=18765; tls_port=18443 } | ConvertTo-Json -Compress
             $reply = [Text.Encoding]::UTF8.GetBytes($payload)
             [void]$udp.Send($reply, $reply.Length, $remote)
         } catch [Net.Sockets.SocketException] {

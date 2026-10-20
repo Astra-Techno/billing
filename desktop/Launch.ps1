@@ -25,8 +25,10 @@ $env:BILLING_DESKTOP_HOST = if ($NetworkMode -eq 'MainPc') { $env:COMPUTERNAME }
 $php = "$PhpRoot\php.exe"
 $mysql = "$MysqlRoot\bin\mysqld.exe"
 $phpArgs = @('-c', "$PSScriptRoot\php.ini", '-d', "extension_dir=$PhpRoot\ext")
+$TlsPort = 18443
 $url = "http://127.0.0.1:$AppPort"
-$listenAddress = if ($NetworkMode -eq 'MainPc') { '0.0.0.0' } else { '127.0.0.1' }
+# PHP always listens on localhost; in MainPc mode a TLS proxy handles the LAN-facing port
+$listenAddress = '127.0.0.1'
 $appProfile = Join-Path $DataRoot 'desktop-window'
 function Find-DesktopEngine {
     foreach ($candidate in @("${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe", "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe", "$env:LOCALAPPDATA\Microsoft\Edge\Application\msedge.exe")) {
@@ -160,6 +162,7 @@ $mutex = New-Object Threading.Mutex($false, $lockName)
 $owned = $false
 $webProcess = $null
 $dbProcess = $null
+$tlsProcess = $null
 function Run-Cli([string]$Command) {
     & $php @phpArgs "$PSScriptRoot\cli.php" $Command
     if ($LASTEXITCODE -ne 0) { throw "Offline setup failed. See $DataRoot\launcher.log" }
@@ -230,6 +233,10 @@ try {
     $serverArguments = @('-c', "`"$PSScriptRoot\php.ini`"", '-d', "`"extension_dir=$PhpRoot\ext`"", '-S', "${listenAddress}:$AppPort", "`"$PSScriptRoot\router.php`"")
     $webProcess = Start-Process -FilePath $php -ArgumentList $serverArguments -WorkingDirectory $PSScriptRoot -PassThru -WindowStyle Hidden -RedirectStandardError "$DataRoot\web-error.log"
     if ($NetworkMode -eq 'MainPc') {
+        $tlsProxy = Join-Path $PSScriptRoot 'TlsProxy.exe'
+        if (Test-Path -LiteralPath $tlsProxy) {
+            $tlsProcess = Start-Process -FilePath $tlsProxy -ArgumentList $TlsPort, $AppPort, $DataRoot -PassThru -WindowStyle Hidden -RedirectStandardOutput "$DataRoot\tls-proxy.log" -RedirectStandardError "$DataRoot\tls-proxy-error.log"
+        }
         $discoveryProcess = Start-Process -FilePath 'powershell.exe' -ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-File',"$PSScriptRoot\DiscoveryServer.ps1" -PassThru -WindowStyle Hidden
     }
     Save-Processes
@@ -280,6 +287,7 @@ try {
     if ($Headless) { Write-Error $_ } else { [Windows.Forms.MessageBox]::Show($_.Exception.Message, 'AI Billing startup failed') | Out-Null }
 } finally {
     Close-Splash $splash
+    if ($tlsProcess -and !$tlsProcess.HasExited) { Stop-Process -Id $tlsProcess.Id -Force -ErrorAction SilentlyContinue }
     if ($discoveryProcess -and !$discoveryProcess.HasExited) { Stop-Process -Id $discoveryProcess.Id -Force -ErrorAction SilentlyContinue }
     if ($webProcess -and !$webProcess.HasExited) { Stop-Process -Id $webProcess.Id }
     Stop-Database $dbProcess
