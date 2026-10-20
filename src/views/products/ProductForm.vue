@@ -36,7 +36,8 @@ const form = ref({
   hsn_sac: '',
   unit: 'Nos',
   price: '',
-  discount_pct: 0,
+  discount_type: 'percent',
+  discount_value: 0,
   purchase_price: '', mrp: '', reorder_level: 0, track_stock: false,
   sku: '', barcode: '', base_unit: 'Nos', conversion_factor: 1,
   batch_tracking: false, expiry_tracking: false, serial_tracking: false,
@@ -67,7 +68,8 @@ async function load() {
           hsn_sac:     p.hsn_sac     || '',
           unit:        p.unit        || 'Nos',
           price:       p.price,
-          discount_pct: parseFloat(p.discount_pct || 0),
+          discount_type: p.discount_type || 'percent',
+          discount_value: parseFloat(p.discount_value || 0),
           purchase_price: p.purchase_price || '', mrp: p.mrp || '', reorder_level: p.reorder_level || 0,
           track_stock: !!+p.track_stock, sku: p.sku || '', barcode: p.barcode || '',
           base_unit: p.base_unit || p.unit || 'Nos', conversion_factor: p.conversion_factor || 1,
@@ -284,10 +286,13 @@ function printBarcode() {
               </div>
 
               <div>
-                <label class="inv-label">Discount %</label>
-                <div class="relative mt-1">
-                  <input v-model="form.discount_pct" type="number" min="0" max="100" step="0.1" class="inv-input pr-7 !bg-white" placeholder="0" />
-                  <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+                <label class="inv-label">Discount</label>
+                <div class="flex gap-1.5 mt-1">
+                  <select v-model="form.discount_type" class="inv-select !bg-white w-16 shrink-0 text-green-700 font-medium">
+                    <option value="percent">%</option>
+                    <option value="amount">₹</option>
+                  </select>
+                  <input v-model="form.discount_value" type="number" min="0" :max="form.discount_type === 'percent' ? 100 : undefined" step="0.01" class="inv-input !bg-white flex-1" placeholder="0" />
                 </div>
                 <p class="text-xs text-gray-400 mt-1">Auto-applied on invoices &amp; POS.</p>
               </div>

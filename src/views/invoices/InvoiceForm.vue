@@ -654,7 +654,13 @@ function pickProduct(i, productId) {
   it.unit         = p.unit || 'Nos'
   it.unit_price   = p.price
   it.hsn_sac      = p.hsn_sac || ''
-  it.discount_pct = parseFloat(p.discount_pct || 0)
+  const dv = parseFloat(p.discount_value || 0)
+  if (dv > 0 && (p.discount_type || 'percent') === 'amount') {
+    const price = parseFloat(p.price || 0)
+    it.discount_pct = price > 0 ? Math.round((dv / price) * 100 * 100) / 100 : 0
+  } else {
+    it.discount_pct = dv
+  }
   const tr = taxRates.value.find(t => t.id == p.tax_rate_id)
   it.gst_rate = tr ? parseFloat(tr.rate) : 0
 }
