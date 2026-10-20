@@ -146,17 +146,22 @@ class Product extends Task
 
         // Map column names
         $colMap = [
-            'type'        => ['type'],
-            'name'        => ['name', 'product name', 'item name', 'item'],
-            'hsn_sac'     => ['hsn/sac', 'hsn_sac', 'hsn', 'sac'],
-            'sku'         => ['sku'],
-            'unit'        => ['unit', 'uom'],
-            'price'       => ['price', 'rate', 'amount'],
-            'tax_rate'    => ['tax rate %', 'tax rate', 'gst %', 'gst', 'tax %', 'tax'],
-            'description' => ['description', 'desc'],
-            'pos_category'=> ['pos category', 'pos_category', 'category'],
-            'stock'       => ['stock', 'opening stock', 'qty', 'quantity'],
-            'shop_price'  => ['shop price', 'shop_price', 'location price', 'branch price'],
+            'type'           => ['type'],
+            'name'           => ['name', 'product name', 'item name', 'item'],
+            'hsn_sac'        => ['hsn/sac', 'hsn_sac', 'hsn', 'sac'],
+            'sku'            => ['sku'],
+            'barcode'        => ['barcode', 'ean', 'upc'],
+            'unit'           => ['unit', 'uom'],
+            'price'          => ['price', 'rate', 'amount', 'selling price'],
+            'purchase_price' => ['purchase price', 'purchase_price', 'cost', 'cost price', 'buy price'],
+            'mrp'            => ['mrp', 'max price', 'maximum retail price'],
+            'discount_type'  => ['discount type', 'discount_type'],
+            'discount_value' => ['discount', 'discount value', 'discount_value', 'disc', 'disc %'],
+            'tax_rate'       => ['tax rate %', 'tax rate', 'gst %', 'gst', 'tax %', 'tax'],
+            'description'    => ['description', 'desc'],
+            'pos_category'   => ['pos category', 'pos_category', 'category'],
+            'stock'          => ['stock', 'opening stock', 'qty', 'quantity'],
+            'shop_price'     => ['shop price', 'shop_price', 'location price', 'branch price'],
         ];
 
         $colIndex = [];
@@ -200,6 +205,16 @@ class Product extends Task
             $type  = isset($colIndex['type']) ? strtolower(trim($cols[$colIndex['type']] ?? '')) : 'product';
             if (!in_array($type, ['product', 'service'])) $type = 'product';
             $price = isset($colIndex['price']) ? (float)($cols[$colIndex['price']] ?? 0) : 0;
+            $purchasePrice = isset($colIndex['purchase_price']) ? trim($cols[$colIndex['purchase_price']] ?? '') : '';
+            $mrp = isset($colIndex['mrp']) ? trim($cols[$colIndex['mrp']] ?? '') : '';
+            $barcode = isset($colIndex['barcode']) ? trim($cols[$colIndex['barcode']] ?? '') : '';
+            $discountType = isset($colIndex['discount_type']) ? strtolower(trim($cols[$colIndex['discount_type']] ?? '')) : '';
+            if (!in_array($discountType, ['percent', 'amount', '%', '₹'])) $discountType = '';
+            if ($discountType === '%') $discountType = 'percent';
+            if ($discountType === '₹') $discountType = 'amount';
+            $discountValue = isset($colIndex['discount_value']) ? (float)($cols[$colIndex['discount_value']] ?? 0) : 0;
+            // If no discount_type column but discount_value present, default to percent
+            if ($discountValue > 0 && $discountType === '') $discountType = 'percent';
             $stock = isset($colIndex['stock']) ? (float)($cols[$colIndex['stock']] ?? 0) : 0;
             $shopPrice = isset($colIndex['shop_price']) ? trim($cols[$colIndex['shop_price']] ?? '') : '';
 
@@ -226,8 +241,12 @@ class Product extends Task
                     if (isset($colIndex['unit']))        $updateData['unit']        = trim($cols[$colIndex['unit']] ?? '') ?: 'Nos';
                     if (isset($colIndex['hsn_sac']))     $updateData['hsn_sac']     = trim($cols[$colIndex['hsn_sac']] ?? '') ?: null;
                     if (isset($colIndex['sku']))          $updateData['sku']         = trim($cols[$colIndex['sku']] ?? '') ?: null;
+                    if ($barcode !== '')                   $updateData['barcode']     = $barcode ?: null;
                     if (isset($colIndex['description']))  $updateData['description'] = trim($cols[$colIndex['description']] ?? '') ?: null;
                     if (isset($colIndex['pos_category'])) $updateData['pos_category'] = trim($cols[$colIndex['pos_category']] ?? '') ?: null;
+                    if ($purchasePrice !== '')             $updateData['purchase_price'] = (float)$purchasePrice;
+                    if ($mrp !== '')                       $updateData['mrp']         = (float)$mrp;
+                    if ($discountType !== '') {            $updateData['discount_type'] = $discountType; $updateData['discount_value'] = max(0, $discountValue); }
                     if ($taxRateId !== null)               $updateData['tax_rate_id'] = $taxRateId;
                     if ($stock > 0 && !$existing->track_stock) $updateData['track_stock'] = 1;
 
@@ -240,18 +259,23 @@ class Product extends Task
                     // Create new product
                     $trackStock = ($type === 'product' && $stock > 0) ? 1 : 0;
                     $product = ProductTable::create([
-                        'business_id' => $businessId,
-                        'type'        => $type,
-                        'track_stock' => $trackStock,
-                        'name'        => $name,
-                        'description' => isset($colIndex['description']) ? trim($cols[$colIndex['description']] ?? '') ?: null : null,
-                        'pos_category'=> isset($colIndex['pos_category']) ? trim($cols[$colIndex['pos_category']] ?? '') ?: null : null,
-                        'hsn_sac'     => isset($colIndex['hsn_sac']) ? trim($cols[$colIndex['hsn_sac']] ?? '') ?: null : null,
-                        'unit'        => isset($colIndex['unit']) ? trim($cols[$colIndex['unit']] ?? '') ?: 'Nos' : 'Nos',
-                        'price'       => $price,
-                        'tax_rate_id' => $taxRateId,
-                        'sku'         => isset($colIndex['sku']) ? trim($cols[$colIndex['sku']] ?? '') ?: null : null,
-                        'active'      => 1,
+                        'business_id'    => $businessId,
+                        'type'           => $type,
+                        'track_stock'    => $trackStock,
+                        'name'           => $name,
+                        'description'    => isset($colIndex['description']) ? trim($cols[$colIndex['description']] ?? '') ?: null : null,
+                        'pos_category'   => isset($colIndex['pos_category']) ? trim($cols[$colIndex['pos_category']] ?? '') ?: null : null,
+                        'hsn_sac'        => isset($colIndex['hsn_sac']) ? trim($cols[$colIndex['hsn_sac']] ?? '') ?: null : null,
+                        'unit'           => isset($colIndex['unit']) ? trim($cols[$colIndex['unit']] ?? '') ?: 'Nos' : 'Nos',
+                        'price'          => $price,
+                        'purchase_price' => $purchasePrice !== '' ? (float)$purchasePrice : 0,
+                        'mrp'            => $mrp !== '' ? (float)$mrp : null,
+                        'discount_type'  => $discountType ?: 'percent',
+                        'discount_value' => max(0, $discountValue),
+                        'tax_rate_id'    => $taxRateId,
+                        'sku'            => isset($colIndex['sku']) ? trim($cols[$colIndex['sku']] ?? '') ?: null : null,
+                        'barcode'        => $barcode ?: null,
+                        'active'         => 1,
                     ]);
                     $productId = (int)$product->id;
                     $created++;

@@ -74,7 +74,7 @@ const typeColors = { product: 'bg-blue-100 text-blue-700', service: 'bg-purple-1
 function exportCsv() {
   const rows = filteredProducts()
   if (!rows.length) return
-  const headers = ['Type', 'Name', 'POS Category', 'HSN/SAC', 'SKU', 'Unit', 'Price', 'Tax Rate', 'Description']
+  const headers = ['Type', 'Name', 'POS Category', 'HSN/SAC', 'SKU', 'Barcode', 'Unit', 'Price', 'Discount Type', 'Discount', 'Tax Rate %', 'Description']
   const escape = v => `"${String(v ?? '').replace(/"/g, '""')}"`
   const lines = [
     headers.join(','),
@@ -84,9 +84,12 @@ function exportCsv() {
       escape(r.pos_category || ''),
       escape(r.hsn_sac || ''),
       escape(r.sku || ''),
+      escape(r.barcode || ''),
       escape(r.unit || ''),
       parseFloat(r.price || 0).toFixed(2),
-      r.gst_rate != null ? `${r.gst_rate}%` : '',
+      escape(r.discount_type || ''),
+      parseFloat(r.discount_value || 0),
+      r.gst_rate != null ? r.gst_rate : '',
       escape(r.description || ''),
     ].join(','))
   ]
@@ -121,9 +124,9 @@ async function openImportModal() {
 }
 
 function downloadTemplate() {
-  const headers = 'Type,Name,POS Category,HSN/SAC,SKU,Unit,Price,Tax Rate %,Description,Stock,Shop Price'
-  const sample1 = 'product,Tea Packet,Grocery,1234,SKU-001,Nos,100.00,18,Sample product,50,'
-  const sample2 = 'service,Consulting,Services,9954,,Hrs,500.00,18,Hourly consulting,, '
+  const headers = 'Type,Name,POS Category,HSN/SAC,SKU,Barcode,Unit,Price,Purchase Price,MRP,Discount Type,Discount,Tax Rate %,Description,Stock,Shop Price'
+  const sample1 = 'product,Tea Packet,Grocery,1234,SKU-001,,Nos,100.00,80.00,120.00,percent,5,18,Sample product,50,'
+  const sample2 = 'service,Consulting,Services,9954,,,Hrs,500.00,,,,,18,Hourly consulting,,'
   const blob = new Blob([headers + '\n' + sample1 + '\n' + sample2 + '\n'], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
@@ -334,7 +337,7 @@ async function printBarcodes() {
         <h3 class="font-bold text-[16px] text-gray-900 tracking-tight">Import Products from CSV</h3>
 
         <div v-if="!importResult" class="space-y-3">
-          <p class="text-[12px] text-gray-500">CSV columns: <span class="font-mono text-gray-700">Type, Name, POS Category, HSN/SAC, SKU, Unit, Price, Tax Rate %, Description, Stock, Shop Price</span></p>
+          <p class="text-[12px] text-gray-500">CSV columns: <span class="font-mono text-gray-700">Type, Name, POS Category, HSN/SAC, SKU, Barcode, Unit, Price, Purchase Price, MRP, Discount Type, Discount, Tax Rate %, Description, Stock, Shop Price</span></p>
           <p class="text-[11px] text-gray-400">Existing products will be updated. New products will be created.</p>
           <button @click="downloadTemplate" class="text-[12px] font-bold text-primary-500 hover:text-primary-700 underline underline-offset-2">Download sample template</button>
 
