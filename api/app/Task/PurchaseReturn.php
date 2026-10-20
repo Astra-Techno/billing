@@ -191,6 +191,7 @@ class PurchaseReturn extends Task
 
     private function saveItems(int $prId, array $items, string $supplyType): void
     {
+        $rows = [];
         foreach ($items as $i => $item) {
             $qty   = (float)($item['quantity']   ?? 1);
             $price = (float)($item['unit_price'] ?? 0);
@@ -205,7 +206,7 @@ class PurchaseReturn extends Task
                 $igstAmt = round($taxable * ($rate / 100), 2);
             }
 
-            PurchaseReturnItem::create([
+            $rows[] = [
                 'pr_id'       => $prId,
                 'product_id'  => !empty($item['product_id']) ? (int)$item['product_id'] : null,
                 'description' => $item['description'],
@@ -222,7 +223,8 @@ class PurchaseReturn extends Task
                 'batch_no'    => $item['batch_no'] ?? null,
                 'expiry_date' => !empty($item['expiry_date']) ? $item['expiry_date'] : null,
                 'sort_order'  => $i,
-            ]);
+            ];
         }
+        PurchaseReturnItem::bulkInsert($rows);
     }
 }

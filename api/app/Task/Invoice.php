@@ -771,6 +771,7 @@ class Invoice extends Task
             $afterItemDiscount += $lineGross - round($lineGross * (min($discPct, 100) / 100), 2);
         }
 
+        $rows = [];
         $allocated = 0;
         foreach ($items as $i => $item) {
             $qty     = (float)($item['quantity']    ?? 1);
@@ -800,7 +801,7 @@ class Invoice extends Task
 
             $total = $taxable + $cgstAmt + $sgstAmt + $igstAmt + $utgstAmt;
 
-            InvoiceItem::create([
+            $rows[] = [
                 'invoice_id'   => $invoiceId,
                 'product_id'   => !empty($item['product_id']) ? (int)$item['product_id'] : null,
                 'description'  => $item['description'],
@@ -822,8 +823,10 @@ class Invoice extends Task
                 'utgst_amt'    => $utgstAmt,
                 'total'        => $total,
                 'sort_order'   => $i,
-            ]);
+            ];
         }
+
+        InvoiceItem::bulkInsert($rows);
     }
 
     private function setNextRecurDate(int $invoiceId, string $fromDate, array $input): void

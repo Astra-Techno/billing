@@ -257,6 +257,41 @@ class Table extends ClassObject
         return $instance;
     }
 
+    /**
+     * Bulk-insert multiple rows in batches (default 10 rows per INSERT).
+     * Each element of $rows must be an associative array of column => value.
+     */
+    final public static function bulkInsert(array $rows, int $batchSize = 10): void
+    {
+        if (empty($rows)) return;
+
+        $instance = new static();
+        $pdo      = DB::getPdo($instance->connection);
+        $table    = $instance->getTable();
+
+        // Use columns from first row
+        $columns = array_keys($instance->filterColumns($rows[0]));
+        if (empty($columns)) return;
+
+        $colList = implode(', ', array_map(fn($c) => "`{$c}`", $columns));
+        $rowPlaceholder = '(' . implode(',', array_fill(0, count($columns), '?')) . ')';
+
+        foreach (array_chunk($rows, $batchSize) as $chunk) {
+            $placeholders = [];
+            $params = [];
+            foreach ($chunk as $row) {
+                $filtered = $instance->filterColumns($row);
+                $placeholders[] = $rowPlaceholder;
+                foreach ($columns as $col) {
+                    $params[] = $filtered[$col] ?? null;
+                }
+            }
+            $sql = "INSERT INTO `{$table}` ({$colList}) VALUES " . implode(', ', $placeholders);
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+        }
+    }
+
     final public static function updateWhere(array $where, array $data): int
     {
         $instance = new static();

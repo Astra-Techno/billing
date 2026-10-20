@@ -164,6 +164,7 @@ class CreditNote extends Task
 
     private function saveItems(int $cnId, array $items, string $supplyType): void
     {
+        $rows = [];
         foreach ($items as $item) {
             $qty     = (float)($item['quantity']   ?? 1);
             $price   = (float)($item['unit_price'] ?? 0);
@@ -178,7 +179,7 @@ class CreditNote extends Task
                 $igstAmt = round($taxable * ($gstRate / 100), 2);
             }
 
-            CreditNoteItem::create([
+            $rows[] = [
                 'credit_note_id' => $cnId,
                 'product_id'     => !empty($item['product_id']) ? (int)$item['product_id'] : null,
                 'description'    => $item['description'],
@@ -192,7 +193,8 @@ class CreditNote extends Task
                 'sgst_amt'       => $sgstAmt,
                 'igst_amt'       => $igstAmt,
                 'total'          => $taxable + $cgstAmt + $sgstAmt + $igstAmt,
-            ]);
+            ];
         }
+        CreditNoteItem::bulkInsert($rows);
     }
 }

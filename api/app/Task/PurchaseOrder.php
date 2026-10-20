@@ -216,6 +216,7 @@ class PurchaseOrder extends Task
 
     private function saveItems(int $poId, array $items): void
     {
+        $rows = [];
         foreach ($items as $i => $item) {
             $qty     = (float)($item['quantity']   ?? 1);
             $price   = (float)($item['unit_price'] ?? 0);
@@ -223,7 +224,7 @@ class PurchaseOrder extends Task
             $line    = $qty * $price;
             $taxAmt  = round($line * ($gstRate / 100), 2);
 
-            PurchaseOrderItem::create([
+            $rows[] = [
                 'po_id'       => $poId,
                 'product_id'  => !empty($item['product_id']) ? (int)$item['product_id'] : null,
                 'description' => $item['description'],
@@ -234,7 +235,8 @@ class PurchaseOrder extends Task
                 'gst_rate'    => $gstRate,
                 'total'       => $line + $taxAmt,
                 'sort_order'  => $i,
-            ]);
+            ];
         }
+        PurchaseOrderItem::bulkInsert($rows);
     }
 }

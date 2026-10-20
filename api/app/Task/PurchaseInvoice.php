@@ -415,6 +415,7 @@ class PurchaseInvoice extends Task
 
     private function saveItems(int $piId, array $items, string $supplyType): void
     {
+        $rows = [];
         foreach ($items as $i => $item) {
             $qty      = (float)($item['quantity']   ?? 1);
             $price    = (float)($item['unit_price'] ?? 0);
@@ -437,7 +438,7 @@ class PurchaseInvoice extends Task
                 $sgstAmt  = round($taxable * ($sgstRate / 100), 2);
             }
 
-            PurchaseInvoiceItem::create([
+            $rows[] = [
                 'pi_id'       => $piId,
                 'product_id'  => !empty($item['product_id']) ? (int)$item['product_id'] : null,
                 'description' => $item['description'],
@@ -459,7 +460,8 @@ class PurchaseInvoice extends Task
                 'sort_order'  => $i,
                 'batch_no'    => $item['batch_no'] ?? null,
                 'expiry_date' => !empty($item['expiry_date']) ? $item['expiry_date'] : null,
-            ]);
+            ];
         }
+        PurchaseInvoiceItem::bulkInsert($rows);
     }
 }

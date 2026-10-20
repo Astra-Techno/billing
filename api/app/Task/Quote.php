@@ -309,6 +309,7 @@ class Quote extends Task
 
     private function saveItems(int $quoteId, array $items, string $supplyType): void
     {
+        $rows = [];
         foreach ($items as $i => $item) {
             $qty     = (float)($item['quantity']    ?? 1);
             $price   = (float)($item['unit_price']  ?? 0);
@@ -329,7 +330,7 @@ class Quote extends Task
                 $igstAmt  = round($taxable * ($gstRate / 100), 2);
             }
 
-            QuoteItem::create([
+            $rows[] = [
                 'quote_id'     => $quoteId,
                 'product_id'   => !empty($item['product_id']) ? (int)$item['product_id'] : null,
                 'description'  => $item['description'],
@@ -349,7 +350,8 @@ class Quote extends Task
                 'igst_amt'     => $igstAmt,
                 'total'        => $taxable + $cgstAmt + $sgstAmt + $igstAmt,
                 'sort_order'   => $i,
-            ]);
+            ];
         }
+        QuoteItem::bulkInsert($rows);
     }
 }

@@ -103,17 +103,19 @@ class DeliveryChallan extends Task
 
     private function saveItems(int $dcId, array $items): void
     {
+        $rows = [];
         foreach ($items as $i => $it) {
             if (empty($it['description'])) continue;
-            DeliveryChallanItem::create([
-                'dc_id' => $dcId,
-                'product_id'          => !empty($it['product_id']) ? (int)$it['product_id'] : null,
-                'description'         => trim($it['description']),
-                'hsn_sac'             => $it['hsn_sac'] ?? null,
-                'unit'                => $it['unit']    ?? 'Nos',
-                'quantity'            => (float)($it['quantity'] ?? 1),
-                'sort_order'          => $i,
-            ]);
+            $rows[] = [
+                'dc_id'       => $dcId,
+                'product_id'  => !empty($it['product_id']) ? (int)$it['product_id'] : null,
+                'description' => trim($it['description']),
+                'hsn_sac'     => $it['hsn_sac'] ?? null,
+                'unit'        => $it['unit']    ?? 'Nos',
+                'quantity'    => (float)($it['quantity'] ?? 1),
+                'sort_order'  => $i,
+            ];
         }
+        DeliveryChallanItem::bulkInsert($rows);
     }
 }
