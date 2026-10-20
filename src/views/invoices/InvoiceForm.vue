@@ -650,10 +650,11 @@ function pickProduct(i, productId) {
   const p = products.value.find(p => p.id == productId)
   if (!p) return
   const it = form.value.items[i]
-  it.description = p.name
-  it.unit        = p.unit || 'Nos'
-  it.unit_price  = p.price
-  it.hsn_sac     = p.hsn_sac || ''
+  it.description  = p.name
+  it.unit         = p.unit || 'Nos'
+  it.unit_price   = p.price
+  it.hsn_sac      = p.hsn_sac || ''
+  it.discount_pct = parseFloat(p.discount_pct || 0)
   const tr = taxRates.value.find(t => t.id == p.tax_rate_id)
   it.gst_rate = tr ? parseFloat(tr.rate) : 0
 }

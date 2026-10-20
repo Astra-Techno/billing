@@ -1,0 +1,1 @@
+ALTER TABLE products ADD COLUMN discount_pct DECIMAL(5,2) NOT NULL DEFAULT 0 AFTER price;

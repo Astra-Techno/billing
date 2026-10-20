@@ -36,6 +36,7 @@ const form = ref({
   hsn_sac: '',
   unit: 'Nos',
   price: '',
+  discount_pct: 0,
   purchase_price: '', mrp: '', reorder_level: 0, track_stock: false,
   sku: '', barcode: '', base_unit: 'Nos', conversion_factor: 1,
   batch_tracking: false, expiry_tracking: false, serial_tracking: false,
@@ -66,6 +67,7 @@ async function load() {
           hsn_sac:     p.hsn_sac     || '',
           unit:        p.unit        || 'Nos',
           price:       p.price,
+          discount_pct: parseFloat(p.discount_pct || 0),
           purchase_price: p.purchase_price || '', mrp: p.mrp || '', reorder_level: p.reorder_level || 0,
           track_stock: !!+p.track_stock, sku: p.sku || '', barcode: p.barcode || '',
           base_unit: p.base_unit || p.unit || 'Nos', conversion_factor: p.conversion_factor || 1,
@@ -272,7 +274,7 @@ function printBarcode() {
           <div class="inv-card p-5 space-y-4">
             <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider mb-2">Pricing & Tax</h2>
             
-            <div class="grid sm:grid-cols-2 gap-4">
+            <div class="grid sm:grid-cols-3 gap-4">
               <div>
                 <label class="inv-label">Selling Price (₹) *</label>
                 <div class="relative mt-1">
@@ -280,7 +282,16 @@ function printBarcode() {
                   <input v-model="form.price" type="number" min="0" step="0.01" required class="inv-input pl-7 font-semibold !bg-white" placeholder="0.00" />
                 </div>
               </div>
-              
+
+              <div>
+                <label class="inv-label">Discount %</label>
+                <div class="relative mt-1">
+                  <input v-model="form.discount_pct" type="number" min="0" max="100" step="0.1" class="inv-input pr-7 !bg-white" placeholder="0" />
+                  <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+                </div>
+                <p class="text-xs text-gray-400 mt-1">Auto-applied on invoices &amp; POS.</p>
+              </div>
+
               <div>
                 <label class="inv-label">GST Rate</label>
                 <select v-model="form.tax_rate_id" class="inv-select mt-1 !bg-white">
