@@ -41,7 +41,7 @@ class Inventory extends Task
         }
 
         $locations = DB::select("SELECT il.id, il.name, il.type, il.address, il.gstin, il.state_id, il.city, il.pincode, il.is_default, il.active, s.name AS state_name FROM inventory_locations il LEFT JOIN indian_states s ON s.id = il.state_id WHERE il.business_id = ?{$locationFilter} ORDER BY il.active DESC, il.is_default DESC, il.name", array_merge([$businessId], $locationFilterParams));
-        $stock = DB::select("SELECT p.id product_id, p.name, p.sku, p.barcode, p.unit, p.purchase_price, p.mrp, p.reorder_level, p.batch_tracking, p.expiry_tracking, p.serial_tracking, l.id location_id, l.name location_name, pl.price location_price, COALESCE(sb.quantity,0) quantity, COALESCE(sb.reserved_quantity,0) reserved_quantity, COALESCE(sb.average_cost,p.purchase_price,0) average_cost, lm.last_moved_at FROM products p CROSS JOIN inventory_locations l LEFT JOIN product_locations pl ON pl.product_id=p.id AND pl.location_id=l.id LEFT JOIN stock_balances sb ON sb.business_id=p.business_id AND sb.product_id=p.id AND sb.location_id=l.id LEFT JOIN (SELECT business_id,product_id,location_id,MAX(occurred_at) last_moved_at FROM stock_movements GROUP BY business_id,product_id,location_id) lm ON lm.business_id=p.business_id AND lm.product_id=p.id AND lm.location_id=l.id WHERE p.business_id=? AND p.active=1 AND p.track_stock=1 AND l.active=1{$whereLocation} ORDER BY p.name,l.name", $params);
+        $stock = DB::select("SELECT p.id product_id, p.name, p.sku, p.barcode, p.unit, p.purchase_price, p.mrp, p.reorder_level, p.batch_tracking, p.expiry_tracking, p.serial_tracking, l.id location_id, l.name location_name, pl.price location_price, pl.tax_rate_id location_tax_rate_id, COALESCE(sb.quantity,0) quantity, COALESCE(sb.reserved_quantity,0) reserved_quantity, COALESCE(sb.average_cost,p.purchase_price,0) average_cost, lm.last_moved_at FROM products p CROSS JOIN inventory_locations l LEFT JOIN product_locations pl ON pl.product_id=p.id AND pl.location_id=l.id LEFT JOIN stock_balances sb ON sb.business_id=p.business_id AND sb.product_id=p.id AND sb.location_id=l.id LEFT JOIN (SELECT business_id,product_id,location_id,MAX(occurred_at) last_moved_at FROM stock_movements GROUP BY business_id,product_id,location_id) lm ON lm.business_id=p.business_id AND lm.product_id=p.id AND lm.location_id=l.id WHERE p.business_id=? AND p.active=1 AND p.track_stock=1 AND l.active=1{$whereLocation} ORDER BY p.name,l.name", $params);
         $summary = ['products' => 0, 'low' => 0, 'out' => 0, 'dead' => 0, 'value' => 0.0];
         $seen = []; $deadSeen = [];
         foreach ($stock as $row) {
@@ -67,7 +67,7 @@ class Inventory extends Task
             foreach ($movements as &$m) { $m->unit_cost = null; }
         }
 
-        $productLocations = DB::select("SELECT product_id, location_id FROM product_locations WHERE product_id IN (SELECT id FROM products WHERE business_id = ? AND active = 1)", [$businessId]);
+        $productLocations = DB::select("SELECT product_id, location_id, tax_rate_id FROM product_locations WHERE product_id IN (SELECT id FROM products WHERE business_id = ? AND active = 1)", [$businessId]);
 
         // If staff is restricted to specific locations, default to their first assigned location
         if (!empty($staffLocationIds) && !in_array($defaultId, $staffLocationIds)) {

@@ -141,6 +141,7 @@ const products     = shallowRef([])
 const taxRates     = shallowRef([])
 const states       = shallowRef([])
 const stockLocations = shallowRef([])
+const shopProductOverrides = shallowRef([]) // [{ product_id, location_id, tax_rate_id }]
 const inventoryMode = ref('none')
 const stockWarnings = ref({}) // { lineIndex: 'Only 4 packets available in Main Shop.' }
 const loading      = ref(false)
@@ -481,6 +482,7 @@ onMounted(async () => {
   taxRates.value = tRes.data?.data  || []
   states.value   = sRes.data?.data  || []
   stockLocations.value = (stockRes.data?.data?.locations || []).filter(x => +x.active)
+  shopProductOverrides.value = stockRes.data?.data?.productLocations || []
   inventoryMode.value = stockRes.data?.data?.settings?.inventory_mode || 'none'
   form.value.location_id = stockRes.data?.data?.defaultId || ''
   const bizStateId = bizRes.data?.data?.state_id
@@ -661,8 +663,16 @@ function pickProduct(i, productId) {
   } else {
     it.discount_pct = dv
   }
-  const tr = taxRates.value.find(t => t.id == p.tax_rate_id)
-  it.gst_rate = tr ? parseFloat(tr.rate) : 0
+  // Check shop-specific GST override
+  const lid = form.value.location_id
+  const shopOverride = lid ? shopProductOverrides.value.find(o => Number(o.product_id) === Number(p.id) && Number(o.location_id) === Number(lid)) : null
+  if (shopOverride && shopOverride.tax_rate_id !== null && shopOverride.tax_rate_id !== undefined) {
+    if (Number(shopOverride.tax_rate_id) === 0) { it.gst_rate = 0 }
+    else { const otr = taxRates.value.find(t => t.id == shopOverride.tax_rate_id); it.gst_rate = otr ? parseFloat(otr.rate) : 0 }
+  } else {
+    const tr = taxRates.value.find(t => t.id == p.tax_rate_id)
+    it.gst_rate = tr ? parseFloat(tr.rate) : 0
+  }
 }
 
 // Tab from GST on last row → add next line and focus its description

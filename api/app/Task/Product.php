@@ -311,7 +311,7 @@ class Product extends Task
         if (!empty($input['id'])) {
             $productId = (int)$input['id'];
             $result['product_locations'] = DB::select(
-                'SELECT pl.location_id, pl.price, COALESCE(sb.quantity, 0) AS stock
+                'SELECT pl.location_id, pl.price, pl.tax_rate_id, COALESCE(sb.quantity, 0) AS stock
                  FROM product_locations pl
                  LEFT JOIN stock_balances sb ON sb.product_id = pl.product_id AND sb.location_id = pl.location_id AND sb.business_id = ?
                  WHERE pl.product_id = ?',
@@ -324,7 +324,7 @@ class Product extends Task
 
     private function syncLocations(int $productId, int $businessId, array $locations): void
     {
-        // locations = [{ location_id: 1, price: null }, { location_id: 2, price: 250 }, ...]
+        // locations = [{ location_id: 1, price: null, tax_rate_id: null }, ...]
         DB::statement('DELETE FROM product_locations WHERE product_id = ?', [$productId]);
 
         // Validate location_ids belong to this business
@@ -337,9 +337,10 @@ class Product extends Task
             $locId = (int)($loc['location_id'] ?? 0);
             if (!$locId || !in_array($locId, $validIds, true)) continue;
             $price = isset($loc['price']) && $loc['price'] !== '' && $loc['price'] !== null ? (float)$loc['price'] : null;
+            $taxRateId = isset($loc['tax_rate_id']) && $loc['tax_rate_id'] !== '' && $loc['tax_rate_id'] !== null ? (int)$loc['tax_rate_id'] : null;
             DB::statement(
-                'INSERT INTO product_locations (product_id, location_id, price) VALUES (?, ?, ?)',
-                [$productId, $locId, $price]
+                'INSERT INTO product_locations (product_id, location_id, price, tax_rate_id) VALUES (?, ?, ?, ?)',
+                [$productId, $locId, $price, $taxRateId]
             );
         }
     }

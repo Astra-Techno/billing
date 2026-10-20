@@ -19,6 +19,7 @@ const loading  = ref(false)
 const saving   = ref(false)
 const error    = ref('')
 const saved    = ref(false)
+const activeTab = ref('details')
 
 const isEdit = route.params.id && route.params.id !== 'new'
 const productId = isEdit ? route.params.id : null
@@ -26,7 +27,7 @@ const productId = isEdit ? route.params.id : null
 const units = defaultUnits
 
 const locations = ref([])
-const productLocations = ref([]) // [{ location_id, price, stock }]
+const productLocations = ref([]) // [{ location_id, price, tax_rate_id, stock }]
 
 const form = ref({
   type: 'service',
@@ -44,6 +45,13 @@ const form = ref({
   tax_rate_id: '',
   is_active: true,
 })
+
+const tabs = [
+  { key: 'details',   label: 'Details' },
+  { key: 'pricing',   label: 'Pricing' },
+  { key: 'shops',     label: 'Shops',     showIf: () => locations.value.length && form.value.type === 'product' },
+  { key: 'inventory', label: 'Inventory', showIf: () => form.value.type === 'product' },
+]
 
 async function load() {
   loading.value = true
@@ -80,6 +88,7 @@ async function load() {
         productLocations.value = (formData.product_locations || []).map(pl => ({
           location_id: +pl.location_id,
           price: pl.price !== null && pl.price !== undefined ? pl.price : '',
+          tax_rate_id: pl.tax_rate_id !== null && pl.tax_rate_id !== undefined ? pl.tax_rate_id : '',
           stock: +pl.stock || 0,
         }))
       }
@@ -91,6 +100,7 @@ async function load() {
   if (form.value.barcode) nextTick(renderBarcode)
 }
 
+// ── Location helpers ────────────────────────────────────────────────────
 function isLocationAssigned(locId) {
   return productLocations.value.some(pl => pl.location_id === +locId)
 }
@@ -100,7 +110,7 @@ function toggleLocation(locId) {
   if (idx >= 0) {
     productLocations.value.splice(idx, 1)
   } else {
-    productLocations.value.push({ location_id: +locId, price: '', stock: 0 })
+    productLocations.value.push({ location_id: +locId, price: '', tax_rate_id: '', stock: 0 })
   }
   saved.value = false
 }
@@ -116,11 +126,23 @@ function setLocationPrice(locId, val) {
   saved.value = false
 }
 
+function getLocationTax(locId) {
+  const pl = productLocations.value.find(pl => pl.location_id === +locId)
+  return pl ? pl.tax_rate_id : ''
+}
+
+function setLocationTax(locId, val) {
+  const pl = productLocations.value.find(pl => pl.location_id === +locId)
+  if (pl) pl.tax_rate_id = val
+  saved.value = false
+}
+
 function getLocationStock(locId) {
   const pl = productLocations.value.find(pl => pl.location_id === +locId)
   return pl ? pl.stock : 0
 }
 
+// ── Save ────────────────────────────────────────────────────────────────
 async function save() {
   error.value = ''
   const errors = []
@@ -137,6 +159,7 @@ async function save() {
   const locPayload = productLocations.value.map(pl => ({
     location_id: pl.location_id,
     price: pl.price !== '' ? pl.price : null,
+    tax_rate_id: pl.tax_rate_id !== '' ? pl.tax_rate_id : null,
   }))
   try {
     if (isEdit) {
@@ -161,7 +184,7 @@ async function save() {
 
 onMounted(load)
 
-// ── Barcode generation & preview ─────────────────────────────────────────
+// ── Barcode generation & preview ────────────────────────────────────────
 const barcodePreview = ref(null)
 const generatingBarcode = ref(false)
 
@@ -227,7 +250,7 @@ function printBarcode() {
       <div v-if="loading" class="flex items-center justify-center p-12 text-gray-400">
         Loading item details...
       </div>
-      
+
       <form v-else id="product-form" @submit.prevent="save" @input="saved = false" class="inv-layout">
         <!-- Main Column -->
         <div class="inv-main">
@@ -235,10 +258,21 @@ function printBarcode() {
             {{ error }}
           </div>
 
-          <!-- Basic Details Card -->
-          <div class="inv-card p-5 space-y-4">
-            <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider mb-2">Basic Details</h2>
-            
+          <!-- Tabs -->
+          <div class="flex gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100/60">
+            <template v-for="t in tabs" :key="t.key">
+              <button v-if="!t.showIf || t.showIf()" type="button" @click="activeTab = t.key"
+                class="flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all"
+                :class="activeTab === t.key
+                  ? 'bg-white text-primary-700 shadow-sm ring-1 ring-gray-200/50'
+                  : 'text-gray-500 hover:text-gray-700'">
+                {{ t.label }}
+              </button>
+            </template>
+          </div>
+
+          <!-- Tab: Details -->
+          <div v-show="activeTab === 'details'" class="inv-card p-5 space-y-4">
             <div>
               <label class="inv-label">Item Type</label>
               <div class="flex gap-2 p-1 bg-gray-50 rounded-2xl w-full sm:w-64 border border-gray-100/60 mt-1">
@@ -265,6 +299,18 @@ function printBarcode() {
               <input v-model="form.description" type="text" class="inv-input !bg-white" placeholder="Short note about this item" />
             </div>
 
+            <div class="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label class="inv-label">Unit of Measure</label>
+                <input v-model="form.unit" list="unit-options" class="inv-input mt-1 !bg-white" placeholder="Type or select" />
+                <datalist id="unit-options"><option v-for="u in units" :key="u" :value="u" /></datalist>
+              </div>
+              <div>
+                <label class="inv-label">HSN / SAC Code</label>
+                <input v-model="form.hsn_sac" type="text" class="inv-input mt-1 !bg-white" placeholder="e.g. 998313" />
+              </div>
+            </div>
+
             <div>
               <label class="inv-label flex items-center gap-1.5">POS Category <InfoTip text="Used only to group product buttons on the POS counter. It is not shown on invoices or printed bills." /></label>
               <input v-model="form.pos_category" type="text" class="inv-input !bg-white" placeholder="e.g. Grocery, Snacks, Beverages" />
@@ -272,96 +318,83 @@ function printBarcode() {
             </div>
           </div>
 
-          <!-- Pricing & Tax Card -->
-          <div class="inv-card p-5 space-y-4">
-            <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider mb-2">Pricing & Tax</h2>
-            
-            <div class="grid sm:grid-cols-3 gap-4">
-              <div>
-                <label class="inv-label">Selling Price (₹) *</label>
-                <div class="relative mt-1">
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
-                  <input v-model="form.price" type="number" min="0" step="0.01" required class="inv-input pl-7 font-semibold !bg-white" placeholder="0.00" />
+          <!-- Tab: Pricing -->
+          <div v-show="activeTab === 'pricing'" class="space-y-4">
+            <div class="inv-card p-5 space-y-4">
+              <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider">Selling</h2>
+              <div class="grid sm:grid-cols-3 gap-4">
+                <div>
+                  <label class="inv-label">Selling Price (₹) *</label>
+                  <div class="relative mt-1">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
+                    <input v-model="form.price" type="number" min="0" step="0.01" required class="inv-input pl-7 font-semibold !bg-white" placeholder="0.00" />
+                  </div>
                 </div>
-              </div>
-
-              <div>
-                <label class="inv-label">Discount</label>
-                <div class="flex gap-1.5 mt-1">
-                  <select v-model="form.discount_type" class="inv-select !bg-white w-16 shrink-0 text-green-700 font-medium">
-                    <option value="percent">%</option>
-                    <option value="amount">₹</option>
+                <div>
+                  <label class="inv-label">Discount</label>
+                  <div class="flex gap-1.5 mt-1">
+                    <select v-model="form.discount_type" class="inv-select !bg-white w-16 shrink-0 text-green-700 font-medium">
+                      <option value="percent">%</option>
+                      <option value="amount">₹</option>
+                    </select>
+                    <input v-model="form.discount_value" type="number" min="0" :max="form.discount_type === 'percent' ? 100 : undefined" step="0.01" class="inv-input !bg-white flex-1" placeholder="0" />
+                  </div>
+                  <p class="text-xs text-gray-400 mt-1">Auto-applied on invoices &amp; POS.</p>
+                </div>
+                <div>
+                  <label class="inv-label">GST Rate</label>
+                  <select v-model="form.tax_rate_id" class="inv-select mt-1 !bg-white">
+                    <option value="">No GST (Exempt/Nil)</option>
+                    <option v-for="t in taxRates" :key="t.id" :value="t.id">{{ t.name }} ({{ t.rate }}%)</option>
                   </select>
-                  <input v-model="form.discount_value" type="number" min="0" :max="form.discount_type === 'percent' ? 100 : undefined" step="0.01" class="inv-input !bg-white flex-1" placeholder="0" />
                 </div>
-                <p class="text-xs text-gray-400 mt-1">Auto-applied on invoices &amp; POS.</p>
               </div>
+            </div>
 
-              <div>
-                <label class="inv-label">GST Rate</label>
-                <select v-model="form.tax_rate_id" class="inv-select mt-1 !bg-white">
-                  <option value="">No GST (Exempt/Nil)</option>
-                  <option v-for="t in taxRates" :key="t.id" :value="t.id">{{ t.name }} ({{ t.rate }}%)</option>
-                </select>
+            <div v-if="form.type === 'product'" class="inv-card p-5 space-y-4">
+              <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider">Purchase</h2>
+              <div class="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="inv-label">Purchase Price (₹)</label>
+                  <div class="relative mt-1">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
+                    <input v-model="form.purchase_price" type="number" step="0.01" class="inv-input pl-7 !bg-white" placeholder="0.00" />
+                  </div>
+                </div>
+                <div>
+                  <label class="inv-label">MRP (₹)</label>
+                  <div class="relative mt-1">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
+                    <input v-model="form.mrp" type="number" step="0.01" class="inv-input pl-7 !bg-white" placeholder="0.00" />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Sidebar Column -->
-        <div class="inv-sidebar">
-          <!-- Inventory details -->
-          <div class="inv-card p-5 space-y-4">
-            <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider mb-2">Inventory Details</h2>
-            <label v-if="form.type === 'product'" class="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50 p-3">
-              <input v-model="form.track_stock" type="checkbox" class="mt-1" />
-              <span><span class="flex items-center gap-2 text-sm font-semibold">Maintain stock for this item? <InfoTip text="Turn this on for physical goods. Leave it off for services, labour, delivery charges and items whose stock you do not want to maintain." /></span><span class="text-xs text-gray-500">Shows available quantity during billing.</span></span>
-            </label>
-            
-            <div>
-              <label class="inv-label">Unit of Measure</label>
-              <input v-model="form.unit" list="unit-options" class="inv-input mt-1 !bg-white" placeholder="Type or select" />
-              <datalist id="unit-options"><option v-for="u in units" :key="u" :value="u" /></datalist>
-            </div>
-
-            <div>
-              <label class="inv-label">HSN / SAC Code</label>
-              <input v-model="form.hsn_sac" type="text" class="inv-input mt-1 !bg-white" placeholder="e.g. 998313" />
-            </div>
-            <div class="grid grid-cols-2 gap-3"><div><label class="inv-label">SKU / Item Code</label><input v-model="form.sku" class="inv-input mt-1 !bg-white" /></div><div><label class="inv-label">Barcode</label><div class="flex gap-1.5 mt-1"><input v-model="form.barcode" class="inv-input !bg-white flex-1 min-w-0" placeholder="Scan or generate" /><button type="button" @click="generateBarcode" :disabled="generatingBarcode" class="shrink-0 px-2.5 py-1.5 bg-primary-50 hover:bg-primary-100 text-primary-700 text-[11px] font-bold rounded-lg border border-primary-200 transition-colors disabled:opacity-50" title="Auto-generate EAN-13 barcode">{{ generatingBarcode ? '…' : 'Generate' }}</button></div></div></div>
-            <div v-if="form.barcode?.trim()" class="rounded-xl border border-gray-100 bg-gray-50 p-3 flex items-center justify-between gap-3">
-              <svg ref="barcodePreview" class="max-w-[200px]"></svg>
-              <button type="button" @click="printBarcode" class="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold text-gray-700 transition-colors" title="Print barcode label">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-                Print
-              </button>
-            </div>
-            <template v-if="form.type === 'product' && form.track_stock">
-              <div class="grid grid-cols-2 gap-3"><div><label class="inv-label">Purchase Price (₹)</label><input v-model="form.purchase_price" type="number" step="0.01" class="inv-input mt-1 !bg-white" /></div><div><label class="inv-label">MRP (₹)</label><input v-model="form.mrp" type="number" step="0.01" class="inv-input mt-1 !bg-white" /></div></div>
-              <div><label class="inv-label flex items-center gap-2">Low Stock Alert <InfoTip text="The app highlights this item when current stock reaches this quantity." /></label><input v-model="form.reorder_level" type="number" step="0.001" class="inv-input mt-1 !bg-white" /></div>
-              <div class="rounded-xl border p-3"><div class="flex items-center gap-2 text-xs font-bold uppercase text-gray-600">Purchase unit conversion <InfoTip text="Example: if you purchase one Box containing 12 Pieces, keep billing unit as Pcs, choose Box here and enter 12." /></div><div class="mt-2 grid grid-cols-2 gap-3"><input v-model="form.base_unit" list="unit-options" class="inv-input !bg-white" placeholder="Type or select" /><input v-model="form.conversion_factor" type="number" min="0.0001" step="0.0001" class="inv-input !bg-white" placeholder="1 purchase unit = ?" /></div></div>
-              <div class="rounded-xl border p-3 space-y-2"><p class="flex items-center gap-2 text-xs font-bold uppercase text-gray-600">Optional trade controls <InfoTip text="Use these only when your trade needs them: batch and expiry for pharmacy/food; serial or IMEI for electronics." /></p><label class="flex gap-2 text-sm"><input v-model="form.batch_tracking" type="checkbox"/> Batch / lot number</label><label class="flex gap-2 text-sm"><input v-model="form.expiry_tracking" type="checkbox"/> Expiry date</label><label class="flex gap-2 text-sm"><input v-model="form.serial_tracking" type="checkbox"/> Serial / IMEI number</label></div>
-            </template>
-          </div>
-
-          <!-- Shop / Godown assignment -->
-          <div v-if="locations.length && form.type === 'product'" class="inv-card p-5 space-y-3">
-            <div class="flex items-center gap-2">
+          <!-- Tab: Shops -->
+          <div v-show="activeTab === 'shops'" class="inv-card p-5 space-y-3">
+            <div class="flex items-center gap-2 mb-1">
               <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider">Shops / Godowns</h2>
-              <InfoTip text="Assign this product to shops where it is sold. You can set a shop-specific price override." />
+              <InfoTip text="Assign this product to shops where it is sold. You can set shop-specific price and GST overrides." />
             </div>
-            <div v-for="loc in locations" :key="loc.id" class="rounded-xl border p-3 space-y-2"
+
+            <div v-for="loc in locations" :key="loc.id"
+              class="rounded-xl border p-4 space-y-3 transition-colors"
               :class="isLocationAssigned(loc.id) ? 'border-primary-200 bg-primary-50/30' : 'border-gray-100'">
+              <!-- Checkbox header -->
               <label class="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" :checked="isLocationAssigned(loc.id)" @change="toggleLocation(loc.id)"
                   class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
                 <span class="text-sm font-semibold text-gray-900">{{ loc.name }}</span>
                 <span class="text-[10px] text-gray-400 capitalize">{{ loc.type }}</span>
-                <span v-if="+loc.is_default" class="text-[10px] text-primary-600 font-medium">Default</span>
+                <span v-if="+loc.is_default" class="text-[10px] bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded font-medium">Default</span>
               </label>
+
+              <!-- Override fields -->
               <template v-if="isLocationAssigned(loc.id)">
-                <div class="flex items-center gap-3 pl-6">
-                  <div class="flex-1">
+                <div class="grid sm:grid-cols-3 gap-3 pl-6">
+                  <div>
                     <label class="text-[11px] text-gray-500">Price override</label>
                     <div class="relative mt-0.5">
                       <span class="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">₹</span>
@@ -370,16 +403,106 @@ function printBarcode() {
                         class="inv-input !py-1.5 !text-sm pl-6 !bg-white" placeholder="Default price" />
                     </div>
                   </div>
-                  <div v-if="isEdit" class="text-right">
+                  <div>
+                    <label class="text-[11px] text-gray-500">GST override</label>
+                    <select :value="getLocationTax(loc.id)"
+                      @change="setLocationTax(loc.id, $event.target.value)"
+                      class="inv-select !py-1.5 !text-sm !bg-white mt-0.5">
+                      <option value="">Default (product GST)</option>
+                      <option value="0">No GST (Exempt)</option>
+                      <option v-for="t in taxRates" :key="t.id" :value="t.id">{{ t.name }} ({{ t.rate }}%)</option>
+                    </select>
+                  </div>
+                  <div v-if="isEdit" class="text-center sm:text-right">
                     <p class="text-[11px] text-gray-500">Stock</p>
-                    <p class="text-sm font-bold" :class="getLocationStock(loc.id) > 0 ? 'text-green-600' : 'text-gray-400'">
+                    <p class="text-lg font-bold mt-0.5" :class="getLocationStock(loc.id) > 0 ? 'text-green-600' : 'text-gray-400'">
                       {{ getLocationStock(loc.id) }}
                     </p>
                   </div>
                 </div>
               </template>
             </div>
+
             <p v-if="!locations.length" class="text-xs text-gray-400">No shops configured. Add shops in Stock &gt; Shops / Godowns.</p>
+          </div>
+
+          <!-- Tab: Inventory -->
+          <div v-show="activeTab === 'inventory'" class="space-y-4">
+            <div class="inv-card p-5 space-y-4">
+              <label class="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50 p-3">
+                <input v-model="form.track_stock" type="checkbox" class="mt-1" />
+                <span>
+                  <span class="flex items-center gap-2 text-sm font-semibold">Maintain stock for this item? <InfoTip text="Turn this on for physical goods. Leave it off for services, labour, delivery charges and items whose stock you do not want to maintain." /></span>
+                  <span class="text-xs text-gray-500">Shows available quantity during billing.</span>
+                </span>
+              </label>
+
+              <template v-if="form.track_stock">
+                <div>
+                  <label class="inv-label flex items-center gap-2">Low Stock Alert <InfoTip text="The app highlights this item when current stock reaches this quantity." /></label>
+                  <input v-model="form.reorder_level" type="number" step="0.001" class="inv-input mt-1 !bg-white" />
+                </div>
+
+                <div class="rounded-xl border border-gray-100 p-4 space-y-3">
+                  <div class="flex items-center gap-2 text-xs font-bold uppercase text-gray-600">
+                    Purchase unit conversion
+                    <InfoTip text="Example: if you purchase one Box containing 12 Pieces, keep billing unit as Pcs, choose Box here and enter 12." />
+                  </div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="text-[11px] text-gray-500">Purchase unit</label>
+                      <input v-model="form.base_unit" list="unit-options" class="inv-input mt-0.5 !bg-white" placeholder="e.g. Box" />
+                    </div>
+                    <div>
+                      <label class="text-[11px] text-gray-500">1 purchase unit =</label>
+                      <input v-model="form.conversion_factor" type="number" min="0.0001" step="0.0001" class="inv-input mt-0.5 !bg-white" placeholder="e.g. 12" />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="rounded-xl border border-gray-100 p-4 space-y-2">
+                  <p class="flex items-center gap-2 text-xs font-bold uppercase text-gray-600">
+                    Optional trade controls
+                    <InfoTip text="Use these only when your trade needs them: batch and expiry for pharmacy/food; serial or IMEI for electronics." />
+                  </p>
+                  <label class="flex gap-2 text-sm"><input v-model="form.batch_tracking" type="checkbox" /> Batch / lot number</label>
+                  <label class="flex gap-2 text-sm"><input v-model="form.expiry_tracking" type="checkbox" /> Expiry date</label>
+                  <label class="flex gap-2 text-sm"><input v-model="form.serial_tracking" type="checkbox" /> Serial / IMEI number</label>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar Column -->
+        <div class="inv-sidebar">
+          <!-- SKU & Barcode -->
+          <div class="inv-card p-5 space-y-4">
+            <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider mb-1">Identifiers</h2>
+            <div>
+              <label class="inv-label">SKU / Item Code</label>
+              <input v-model="form.sku" class="inv-input mt-1 !bg-white" placeholder="e.g. PROD-001" />
+            </div>
+            <div>
+              <label class="inv-label">Barcode</label>
+              <div class="flex gap-1.5 mt-1">
+                <input v-model="form.barcode" class="inv-input !bg-white flex-1 min-w-0" placeholder="Scan or generate" />
+                <button type="button" @click="generateBarcode" :disabled="generatingBarcode"
+                  class="shrink-0 px-2.5 py-1.5 bg-primary-50 hover:bg-primary-100 text-primary-700 text-[11px] font-bold rounded-lg border border-primary-200 transition-colors disabled:opacity-50"
+                  title="Auto-generate EAN-13 barcode">
+                  {{ generatingBarcode ? '…' : 'Generate' }}
+                </button>
+              </div>
+            </div>
+            <div v-if="form.barcode?.trim()" class="rounded-xl border border-gray-100 bg-gray-50 p-3 flex items-center justify-between gap-3">
+              <svg ref="barcodePreview" class="max-w-[200px]"></svg>
+              <button type="button" @click="printBarcode"
+                class="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold text-gray-700 transition-colors"
+                title="Print barcode label">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                Print
+              </button>
+            </div>
           </div>
 
           <!-- Status toggle -->

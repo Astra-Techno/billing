@@ -5,7 +5,7 @@ import { inr } from '../../utils/currency'
 import { today, fmtDateShort } from '../../utils/date'
 import { calcInvoice } from '../../utils/invoice'
 
-const products=ref([]), clients=ref([]), locations=ref([]), stockRows=ref([]), productLocations=ref([]), inventoryMode=ref('none')
+const products=ref([]), clients=ref([]), locations=ref([]), stockRows=ref([]), productLocations=ref([]), taxRates=ref([]), inventoryMode=ref('none')
 const recentSales=ref([]), showRecent=ref(false), recentLoading=ref(false)
 const cart=ref([]), category=ref('All'), search=ref(''), clientSearch=ref(''), selectedClient=ref(null)
 const customerName=ref(''), customerPhone=ref(''), note=ref(''), paymentMethod=ref('cash'), locationId=ref(null)
@@ -41,13 +41,14 @@ const locationProducts=computed(()=>{const lid=locationId.value;if(!lid||!produc
 const visibleProducts=computed(()=>{const q=search.value.trim().toLowerCase();return locationProducts.value.filter(p=>(category.value==='All'||(p.pos_category||'Others')===category.value)&&(!q||[p.name,p.sku,p.barcode,p.pos_category].some(v=>String(v||'').toLowerCase().includes(q))))})
 const customerMatches=computed(()=>{const q=clientSearch.value.trim().toLowerCase();if(!q)return [];return clients.value.filter(c=>[c.name,c.mobile,c.company].some(v=>String(v||'').toLowerCase().includes(q))).slice(0,6)})
 const itemCount=computed(()=>cart.value.reduce((s,l)=>s+Number(l.quantity),0))
-const invoiceItems=computed(()=>cart.value.map(l=>({product_id:l.product.id,description:l.product.name,unit:l.product.unit||'Nos',quantity:l.quantity,unit_price:price(l.product),gst_rate:Number(l.product.gst_rate||0),discount_pct:Number(l.discount||0)})))
+const invoiceItems=computed(()=>cart.value.map(l=>({product_id:l.product.id,description:l.product.name,unit:l.product.unit||'Nos',quantity:l.quantity,unit_price:price(l.product),gst_rate:gstRate(l.product),discount_pct:Number(l.discount||0)})))
 const totals=computed(()=>calcInvoice(invoiceItems.value,'intra',discountType.value,discountValue.value))
 
 function lineFor(product){return cart.value.find(l=>l.product.id===product.id)}
 function stockAt(product){return stockRows.value.find(s=>Number(s.product_id)===Number(product.id)&&Number(s.location_id)===Number(locationId.value))}
 function available(product){const row=stockAt(product);return row?Number(row.quantity||0)-Number(row.reserved_quantity||0):Number(product.available_stock||0)}
 function price(product){const shopPrice=stockAt(product)?.location_price;return Number(shopPrice===null||shopPrice===undefined?product.price:shopPrice)}
+function gstRate(product){const row=stockAt(product);if(row&&row.location_tax_rate_id!==null&&row.location_tax_rate_id!==undefined){if(Number(row.location_tax_rate_id)===0)return 0;const tr=taxRates.value.find(t=>Number(t.id)===Number(row.location_tax_rate_id));return tr?Number(tr.rate):Number(product.gst_rate||0)}return Number(product.gst_rate||0)}
 function cannotAdd(product){return inventoryMode.value==='strict'&&+product.track_stock&&available(product)<=Number(lineFor(product)?.quantity||0)}
 function add(product){error.value='';if(cannotAdd(product)){error.value=`Only ${available(product)} ${product.unit||'Nos'} available for ${product.name}.`;return}const line=lineFor(product);if(line)line.quantity++;else{const dv=parseFloat(product.discount_value||0);const dp=(dv>0&&product.discount_type==='amount')?((parseFloat(product.price||0)>0)?Math.round(dv/parseFloat(product.price)*100*100)/100:0):dv;cart.value.push({product,quantity:1,discount:dp})};if(inventoryMode.value==='warn'&&+product.track_stock&&Number(lineFor(product)?.quantity||0)>available(product))error.value=`Stock warning: only ${available(product)} ${product.unit||'Nos'} available for ${product.name}. Sale is still allowed.`}
 function addExactSearch(){const q=search.value.trim().toLowerCase();if(!q)return;const product=products.value.find(p=>[p.barcode,p.sku].some(v=>String(v||'').toLowerCase()===q))||visibleProducts.value[0];if(product){add(product);search.value=''}}
@@ -152,7 +153,7 @@ async function draftSale(){
   }catch(e){printWindow?.close();if(isNetworkError(e)){serverConnected.value=false;error.value='Main PC connection lost. Your cart is safe. Billing will continue after reconnection.'}else{error.value=e.response?.data?.message||'Could not save draft. Please try again.'}}finally{drafting.value=false}
 }
 
-onMounted(async()=>{try{const [p,c,s]=await Promise.all([all('Product'),all('Client'),task('Inventory','overview')]);products.value=p.data?.data||[];clients.value=c.data?.data||[];const stock=s.data?.data||{};locations.value=stock.locations||[];stockRows.value=stock.stock||[];productLocations.value=stock.productLocations||[];inventoryMode.value=stock.settings?.inventory_mode||'none';locationId.value=stock.defaultId||locations.value[0]?.id||null;await refreshShift();startConnectionMonitor()}catch(e){error.value=e.response?.data?.message||'Could not load POS.'}finally{loading.value=false;nextTick(()=>searchInput.value?.focus())}})
+onMounted(async()=>{try{const [p,c,s,tr]=await Promise.all([all('Product'),all('Client'),task('Inventory','overview'),all('TaxRate')]);products.value=p.data?.data||[];clients.value=c.data?.data||[];taxRates.value=tr.data?.data||[];const stock=s.data?.data||{};locations.value=stock.locations||[];stockRows.value=stock.stock||[];productLocations.value=stock.productLocations||[];inventoryMode.value=stock.settings?.inventory_mode||'none';locationId.value=stock.defaultId||locations.value[0]?.id||null;await refreshShift();startConnectionMonitor()}catch(e){error.value=e.response?.data?.message||'Could not load POS.'}finally{loading.value=false;nextTick(()=>searchInput.value?.focus())}})
 onUnmounted(()=>{stopConnectionMonitor();if(html5QrCode){try{html5QrCode.stop()}catch{};html5QrCode=null}})
 </script>
 
