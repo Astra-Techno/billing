@@ -654,24 +654,30 @@ function pickProduct(i, productId) {
   const it = form.value.items[i]
   it.description  = p.name
   it.unit         = p.unit || 'Nos'
-  it.unit_price   = p.price
   it.hsn_sac      = p.hsn_sac || ''
+  // Resolve GST rate first (needed for tax-inclusive price back-calculation)
+  const lid = form.value.location_id
+  const shopOverride = lid ? shopProductOverrides.value.find(o => Number(o.product_id) === Number(p.id) && Number(o.location_id) === Number(lid)) : null
+  let gstRate = 0
+  if (shopOverride && shopOverride.tax_rate_id !== null && shopOverride.tax_rate_id !== undefined) {
+    if (Number(shopOverride.tax_rate_id) === 0) { gstRate = 0 }
+    else { const otr = taxRates.value.find(t => t.id == shopOverride.tax_rate_id); gstRate = otr ? parseFloat(otr.rate) : 0 }
+  } else {
+    const tr = taxRates.value.find(t => t.id == p.tax_rate_id)
+    gstRate = tr ? parseFloat(tr.rate) : 0
+  }
+  it.gst_rate = gstRate
+  // Back-calculate exclusive price if product price includes GST
+  let price = parseFloat(p.price || 0)
+  if (+p.price_includes_tax && gstRate > 0) {
+    price = Math.round(price / (1 + gstRate / 100) * 100) / 100
+  }
+  it.unit_price = price
   const dv = parseFloat(p.discount_value || 0)
   if (dv > 0 && (p.discount_type || 'percent') === 'amount') {
-    const price = parseFloat(p.price || 0)
     it.discount_pct = price > 0 ? Math.round((dv / price) * 100 * 100) / 100 : 0
   } else {
     it.discount_pct = dv
-  }
-  // Check shop-specific GST override
-  const lid = form.value.location_id
-  const shopOverride = lid ? shopProductOverrides.value.find(o => Number(o.product_id) === Number(p.id) && Number(o.location_id) === Number(lid)) : null
-  if (shopOverride && shopOverride.tax_rate_id !== null && shopOverride.tax_rate_id !== undefined) {
-    if (Number(shopOverride.tax_rate_id) === 0) { it.gst_rate = 0 }
-    else { const otr = taxRates.value.find(t => t.id == shopOverride.tax_rate_id); it.gst_rate = otr ? parseFloat(otr.rate) : 0 }
-  } else {
-    const tr = taxRates.value.find(t => t.id == p.tax_rate_id)
-    it.gst_rate = tr ? parseFloat(tr.rate) : 0
   }
 }
 

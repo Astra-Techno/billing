@@ -37,6 +37,7 @@ const form = ref({
   hsn_sac: '',
   unit: 'Nos',
   price: '',
+  price_includes_tax: false,
   discount_type: 'percent',
   discount_value: 0,
   purchase_price: '', mrp: '', reorder_level: 0, track_stock: false,
@@ -76,6 +77,7 @@ async function load() {
           hsn_sac:     p.hsn_sac     || '',
           unit:        p.unit        || 'Nos',
           price:       p.price,
+          price_includes_tax: !!+p.price_includes_tax,
           discount_type: p.discount_type || 'percent',
           discount_value: parseFloat(p.discount_value || 0),
           purchase_price: p.purchase_price || '', mrp: p.mrp || '', reorder_level: p.reorder_level || 0,
@@ -329,6 +331,10 @@ function printBarcode() {
                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
                     <input v-model="form.price" type="number" min="0" step="0.01" required class="inv-input pl-7 font-semibold !bg-white" placeholder="0.00" />
                   </div>
+                  <label class="flex items-center gap-1.5 mt-1.5 cursor-pointer text-xs text-gray-500">
+                    <input v-model="form.price_includes_tax" type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                    Includes GST
+                  </label>
                 </div>
                 <div>
                   <label class="inv-label">Discount</label>
