@@ -55,7 +55,7 @@ class SqlController
     public function item(Request $request, Response $response, array $args): Response
     {
         $name  = $this->withMethod($args['name'], 'entity');
-        $input = RequestHolder::all();
+        $input = array_merge(RequestHolder::all(), ['select_type' => 'entity']);
         $sql   = (new Sql())->load($name, $input);
         return $this->json($response, ['success' => true, 'data' => $sql->assoc()]);
     }
