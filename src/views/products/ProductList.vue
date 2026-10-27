@@ -124,10 +124,11 @@ async function openImportModal() {
 }
 
 function downloadTemplate() {
-  const headers = 'Type,Name,POS Category,HSN/SAC,SKU,Barcode,Unit,Price,Purchase Price,MRP,Discount Type,Discount,Tax Rate %,Description,Stock,Shop Price'
-  const sample1 = 'product,Tea Packet,Grocery,1234,SKU-001,,Nos,100.00,80.00,120.00,percent,5,18,Sample product,50,'
-  const sample2 = 'service,Consulting,Services,9954,,,Hrs,500.00,,,,,18,Hourly consulting,,'
-  const blob = new Blob([headers + '\n' + sample1 + '\n' + sample2 + '\n'], { type: 'text/csv;charset=utf-8;' })
+  const headers = 'Type,Name,POS Category,HSN/SAC,SKU,Barcode,Unit,Price,Includes GST,Discount Type,Discount,Purchase Price,MRP,Tax Rate %,Track Stock,Low Stock Alert,Purchase Unit,Unit Conversion,Batch Tracking,Expiry Tracking,Serial Tracking,Status,Description,Stock,Shop Price,Shop GST %'
+  const sample1 = 'product,Tea Packet 250g,Grocery,0902,TEA-001,8901030000001,Nos,100.00,yes,percent,5,80.00,120.00,18,yes,10,Box,12,no,yes,no,active,Assam CTC Black Tea,50,105.00,'
+  const sample2 = 'product,Paracetamol 500mg,Pharmacy,3004,MED-001,8901030000002,Strip,25.00,no,percent,0,18.00,30.00,12,yes,50,Box,10,yes,yes,no,active,Pain relief tablets,100,,0'
+  const sample3 = 'service,Consulting,Services,9983,SRV-001,,Hrs,1000.00,no,percent,0,,,18,no,0,Hrs,1,no,no,no,active,Hourly IT Consulting,,,'
+  const blob = new Blob([headers + '\n' + sample1 + '\n' + sample2 + '\n' + sample3 + '\n'], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
@@ -333,12 +334,15 @@ async function printBarcodes() {
 
     <!-- Import CSV Modal -->
     <div v-if="showImportModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
-      <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4 border border-gray-100 animate-fade-in-up">
+      <div class="bg-white rounded-2xl w-full max-w-xl shadow-2xl p-6 space-y-4 border border-gray-100 animate-fade-in-up">
         <h3 class="font-bold text-[16px] text-gray-900 tracking-tight">Import Products from CSV</h3>
 
         <div v-if="!importResult" class="space-y-3">
-          <p class="text-[12px] text-gray-500">CSV columns: <span class="font-mono text-gray-700">Type, Name, POS Category, HSN/SAC, SKU, Barcode, Unit, Price, Purchase Price, MRP, Discount Type, Discount, Tax Rate %, Description, Stock, Shop Price</span></p>
-          <p class="text-[11px] text-gray-400">Existing products will be updated. New products will be created.</p>
+          <p class="text-[12px] text-gray-500">
+            All fields in Product Edit are supported:
+            <span class="font-mono text-[11px] text-gray-700 block mt-1 bg-gray-50 p-2 rounded-lg border border-gray-200/60 leading-relaxed">Type, Name, POS Category, HSN/SAC, SKU, Barcode, Unit, Price, Includes GST, Discount Type, Discount, Purchase Price, MRP, Tax Rate %, Track Stock, Low Stock Alert, Purchase Unit, Unit Conversion, Batch Tracking, Expiry Tracking, Serial Tracking, Status, Description, Stock, Shop Price, Shop GST %</span>
+          </p>
+          <p class="text-[11px] text-gray-400">Existing products matched by Name will be updated. New products will be created. Blank optional columns keep their default or existing values.</p>
           <button @click="downloadTemplate" class="text-[12px] font-bold text-primary-500 hover:text-primary-700 underline underline-offset-2">Download sample template</button>
 
           <div v-if="importLocations.length" class="space-y-1">

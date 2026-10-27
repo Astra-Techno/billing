@@ -146,24 +146,34 @@ class Product extends Task
         $header = str_getcsv(array_shift($lines));
         $header = array_map(fn($h) => strtolower(trim($h)), $header);
 
-        // Map column names
+        // Map column names to all fields available in Product Edit screen
         $colMap = [
-            'type'           => ['type'],
-            'name'           => ['name', 'product name', 'item name', 'item'],
-            'hsn_sac'        => ['hsn/sac', 'hsn_sac', 'hsn', 'sac'],
-            'sku'            => ['sku'],
-            'barcode'        => ['barcode', 'ean', 'upc'],
-            'unit'           => ['unit', 'uom'],
-            'price'          => ['price', 'rate', 'amount', 'selling price'],
-            'purchase_price' => ['purchase price', 'purchase_price', 'cost', 'cost price', 'buy price'],
-            'mrp'            => ['mrp', 'max price', 'maximum retail price'],
-            'discount_type'  => ['discount type', 'discount_type'],
-            'discount_value' => ['discount', 'discount value', 'discount_value', 'disc', 'disc %'],
-            'tax_rate'       => ['tax rate %', 'tax rate', 'gst %', 'gst', 'tax %', 'tax'],
-            'description'    => ['description', 'desc'],
-            'pos_category'   => ['pos category', 'pos_category', 'category'],
-            'stock'          => ['stock', 'opening stock', 'qty', 'quantity'],
-            'shop_price'     => ['shop price', 'shop_price', 'location price', 'branch price'],
+            'type'               => ['type', 'item type'],
+            'name'               => ['name', 'product name', 'item name', 'item'],
+            'description'        => ['description', 'desc', 'note', 'notes'],
+            'pos_category'       => ['pos category', 'pos_category', 'category'],
+            'hsn_sac'            => ['hsn/sac', 'hsn_sac', 'hsn', 'sac'],
+            'unit'               => ['unit', 'uom', 'billing unit'],
+            'price'              => ['price', 'rate', 'amount', 'selling price'],
+            'price_includes_tax' => ['includes gst', 'price includes tax', 'price_includes_tax', 'tax inclusive', 'gst inclusive', 'includes tax', 'tax included', 'is_tax_inclusive'],
+            'discount_type'      => ['discount type', 'discount_type'],
+            'discount_value'     => ['discount', 'discount value', 'discount_value', 'disc', 'disc %'],
+            'purchase_price'     => ['purchase price', 'purchase_price', 'cost', 'cost price', 'buy price'],
+            'mrp'                => ['mrp', 'max price', 'maximum retail price'],
+            'tax_rate'           => ['tax rate %', 'tax rate', 'gst %', 'gst', 'tax %', 'tax'],
+            'sku'                => ['sku', 'item code', 'product code'],
+            'barcode'            => ['barcode', 'ean', 'upc'],
+            'track_stock'        => ['track stock', 'track_stock', 'maintain stock', 'track stock?', 'inventory tracking', 'manage stock'],
+            'reorder_level'      => ['reorder level', 'reorder_level', 'low stock alert', 'alert level', 'min stock', 'alert qty', 'reorder qty'],
+            'base_unit'          => ['base unit', 'base_unit', 'purchase unit', 'purchase_unit'],
+            'conversion_factor'  => ['conversion factor', 'conversion_factor', 'unit conversion', 'multiplier', 'conversion'],
+            'batch_tracking'     => ['batch tracking', 'batch_tracking', 'track batch', 'batch', 'batch number', 'batch tracking?'],
+            'expiry_tracking'    => ['expiry tracking', 'expiry_tracking', 'track expiry', 'expiry', 'expiry date', 'expiry tracking?'],
+            'serial_tracking'    => ['serial tracking', 'serial_tracking', 'track serial', 'serial', 'imei', 'serial number', 'serial tracking?'],
+            'active'             => ['status', 'active', 'is_active', 'enabled', 'item status'],
+            'stock'              => ['stock', 'opening stock', 'qty', 'quantity'],
+            'shop_price'         => ['shop price', 'shop_price', 'location price', 'branch price'],
+            'shop_tax_rate'      => ['shop gst %', 'shop gst', 'shop tax rate %', 'shop tax rate', 'shop tax', 'location gst', 'location tax'],
         ];
 
         $colIndex = [];
@@ -177,6 +187,15 @@ class Product extends Task
         if (!isset($colIndex['name']))
             $this->fail('CSV must have a "Name" column.');
 
+        $parseBool = function($val, ?bool $default = null): ?bool {
+            if ($val === null) return $default;
+            $v = strtolower(trim((string)$val));
+            if ($v === '') return $default;
+            if (in_array($v, ['1', 'true', 'yes', 'y', 'active', 'on', 'checked'], true)) return true;
+            if (in_array($v, ['0', 'false', 'no', 'n', 'inactive', 'off', 'unchecked'], true)) return false;
+            return $default;
+        };
+
         // Load tax rates for matching
         $taxRates = DB::select(
             "SELECT id, rate FROM tax_rates WHERE business_id = ? AND active = 1",
@@ -184,7 +203,7 @@ class Product extends Task
         );
         $taxRateMap = [];
         foreach ($taxRates as $tr) {
-            $taxRateMap[(string)$tr->rate] = $tr->id;
+            $taxRateMap[(string)$tr->rate] = (int)$tr->id;
         }
 
         $created = 0;
@@ -204,35 +223,61 @@ class Product extends Task
                 continue;
             }
 
-            $type  = isset($colIndex['type']) ? strtolower(trim($cols[$colIndex['type']] ?? '')) : 'product';
-            if (!in_array($type, ['product', 'service'])) $type = 'product';
+            $type = isset($colIndex['type']) ? strtolower(trim($cols[$colIndex['type']] ?? '')) : 'product';
+            if (!in_array($type, ['product', 'service'], true)) $type = 'product';
+
+            $unit = isset($colIndex['unit']) ? (trim($cols[$colIndex['unit']] ?? '') ?: 'Nos') : 'Nos';
             $price = isset($colIndex['price']) ? (float)($cols[$colIndex['price']] ?? 0) : 0;
             $purchasePrice = isset($colIndex['purchase_price']) ? trim($cols[$colIndex['purchase_price']] ?? '') : '';
             $mrp = isset($colIndex['mrp']) ? trim($cols[$colIndex['mrp']] ?? '') : '';
+            $sku = isset($colIndex['sku']) ? trim($cols[$colIndex['sku']] ?? '') : '';
             $barcode = isset($colIndex['barcode']) ? trim($cols[$colIndex['barcode']] ?? '') : '';
+            $description = isset($colIndex['description']) ? trim($cols[$colIndex['description']] ?? '') : '';
+            $posCategory = isset($colIndex['pos_category']) ? trim($cols[$colIndex['pos_category']] ?? '') : '';
+            $hsnSac = isset($colIndex['hsn_sac']) ? trim($cols[$colIndex['hsn_sac']] ?? '') : '';
+
+            $priceIncludesTax = isset($colIndex['price_includes_tax']) ? $parseBool($cols[$colIndex['price_includes_tax']] ?? null) : null;
+
             $discountType = isset($colIndex['discount_type']) ? strtolower(trim($cols[$colIndex['discount_type']] ?? '')) : '';
-            if (!in_array($discountType, ['percent', 'amount', '%', '₹'])) $discountType = '';
+            if (!in_array($discountType, ['percent', 'amount', '%', '₹'], true)) $discountType = '';
             if ($discountType === '%') $discountType = 'percent';
             if ($discountType === '₹') $discountType = 'amount';
             $discountValue = isset($colIndex['discount_value']) ? (float)($cols[$colIndex['discount_value']] ?? 0) : 0;
-            // If no discount_type column but discount_value present, default to percent
             if ($discountValue > 0 && $discountType === '') $discountType = 'percent';
+
+            $trackStock = isset($colIndex['track_stock']) ? $parseBool($cols[$colIndex['track_stock']] ?? null) : null;
+            $reorderLevel = isset($colIndex['reorder_level']) ? trim($cols[$colIndex['reorder_level']] ?? '') : '';
+            $baseUnit = isset($colIndex['base_unit']) ? trim($cols[$colIndex['base_unit']] ?? '') : '';
+            $conversionFactor = isset($colIndex['conversion_factor']) ? trim($cols[$colIndex['conversion_factor']] ?? '') : '';
+
+            $batchTracking = isset($colIndex['batch_tracking']) ? $parseBool($cols[$colIndex['batch_tracking']] ?? null) : null;
+            $expiryTracking = isset($colIndex['expiry_tracking']) ? $parseBool($cols[$colIndex['expiry_tracking']] ?? null) : null;
+            $serialTracking = isset($colIndex['serial_tracking']) ? $parseBool($cols[$colIndex['serial_tracking']] ?? null) : null;
+            $isActive = isset($colIndex['active']) ? $parseBool($cols[$colIndex['active']] ?? null) : null;
+
             $stock = isset($colIndex['stock']) ? (float)($cols[$colIndex['stock']] ?? 0) : 0;
             $shopPrice = isset($colIndex['shop_price']) ? trim($cols[$colIndex['shop_price']] ?? '') : '';
+            $shopTaxRate = isset($colIndex['shop_tax_rate']) ? trim(str_replace('%', '', $cols[$colIndex['shop_tax_rate']] ?? '')) : '';
 
-            // Match tax rate
+            // Match product GST tax rate
             $taxRateId = null;
+            $hasTaxCol = false;
             if (isset($colIndex['tax_rate'])) {
-                $rate = trim(str_replace('%', '', $cols[$colIndex['tax_rate']] ?? ''));
-                if ($rate !== '' && isset($taxRateMap[$rate])) {
-                    $taxRateId = $taxRateMap[$rate];
+                $rateRaw = trim(str_replace('%', '', $cols[$colIndex['tax_rate']] ?? ''));
+                if ($rateRaw !== '') {
+                    $hasTaxCol = true;
+                    if (isset($taxRateMap[$rateRaw])) {
+                        $taxRateId = $taxRateMap[$rateRaw];
+                    } elseif (in_array(strtolower($rateRaw), ['0', 'exempt', 'nil', 'none'], true)) {
+                        $taxRateId = null;
+                    }
                 }
             }
 
             try {
-                // Upsert: find existing or create
+                // Upsert: find existing by name in active or inactive records
                 $existing = DB::selectOne(
-                    "SELECT id, track_stock FROM products WHERE business_id = ? AND LOWER(name) = LOWER(?) AND active = 1 LIMIT 1",
+                    "SELECT id, track_stock, active FROM products WHERE business_id = ? AND LOWER(name) = LOWER(?) LIMIT 1",
                     [$businessId, $name]
                 );
 
@@ -240,17 +285,38 @@ class Product extends Task
                     // Update existing product
                     $productId = (int)$existing->id;
                     $updateData = ['price' => $price];
-                    if (isset($colIndex['unit']))        $updateData['unit']        = trim($cols[$colIndex['unit']] ?? '') ?: 'Nos';
-                    if (isset($colIndex['hsn_sac']))     $updateData['hsn_sac']     = trim($cols[$colIndex['hsn_sac']] ?? '') ?: null;
-                    if (isset($colIndex['sku']))          $updateData['sku']         = trim($cols[$colIndex['sku']] ?? '') ?: null;
-                    if ($barcode !== '')                   $updateData['barcode']     = $barcode ?: null;
-                    if (isset($colIndex['description']))  $updateData['description'] = trim($cols[$colIndex['description']] ?? '') ?: null;
-                    if (isset($colIndex['pos_category'])) $updateData['pos_category'] = trim($cols[$colIndex['pos_category']] ?? '') ?: null;
-                    if ($purchasePrice !== '')             $updateData['purchase_price'] = (float)$purchasePrice;
-                    if ($mrp !== '')                       $updateData['mrp']         = (float)$mrp;
-                    if ($discountType !== '') {            $updateData['discount_type'] = $discountType; $updateData['discount_value'] = max(0, $discountValue); }
-                    if ($taxRateId !== null)               $updateData['tax_rate_id'] = $taxRateId;
-                    if ($stock > 0 && !$existing->track_stock) $updateData['track_stock'] = 1;
+
+                    if (isset($colIndex['type']))              $updateData['type']               = $type;
+                    if (isset($colIndex['unit']))              $updateData['unit']               = $unit;
+                    if (isset($colIndex['hsn_sac']))           $updateData['hsn_sac']           = $hsnSac !== '' ? $hsnSac : null;
+                    if (isset($colIndex['sku']))                $updateData['sku']               = $sku !== '' ? $sku : null;
+                    if ($barcode !== '')                         $updateData['barcode']           = $barcode;
+                    if (isset($colIndex['description']))        $updateData['description']       = $description !== '' ? $description : null;
+                    if (isset($colIndex['pos_category']))       $updateData['pos_category']      = $posCategory !== '' ? $posCategory : null;
+                    if ($purchasePrice !== '')                   $updateData['purchase_price']     = (float)$purchasePrice;
+                    if ($mrp !== '')                             $updateData['mrp']                = (float)$mrp;
+                    if ($discountType !== '') {
+                        $updateData['discount_type']  = $discountType;
+                        $updateData['discount_value'] = max(0, $discountValue);
+                    }
+                    if ($hasTaxCol)                              $updateData['tax_rate_id']       = $taxRateId;
+                    if ($priceIncludesTax !== null)              $updateData['price_includes_tax'] = $priceIncludesTax ? 1 : 0;
+                    if ($trackStock !== null) {
+                        $updateData['track_stock'] = $trackStock ? 1 : 0;
+                    } elseif ($stock > 0 && !$existing->track_stock) {
+                        $updateData['track_stock'] = 1;
+                    }
+                    if ($reorderLevel !== '')                    $updateData['reorder_level']      = max(0, (float)$reorderLevel);
+                    if ($baseUnit !== '')                        $updateData['base_unit']          = $baseUnit;
+                    if ($conversionFactor !== '')                $updateData['conversion_factor']  = max(0.0001, (float)$conversionFactor);
+                    if ($batchTracking !== null)                 $updateData['batch_tracking']     = $batchTracking ? 1 : 0;
+                    if ($expiryTracking !== null)                $updateData['expiry_tracking']    = $expiryTracking ? 1 : 0;
+                    if ($serialTracking !== null)                $updateData['serial_tracking']    = $serialTracking ? 1 : 0;
+                    if ($isActive !== null) {
+                        $updateData['active'] = $isActive ? 1 : 0;
+                    } elseif ((int)$existing->active === 0) {
+                        $updateData['active'] = 1;
+                    }
 
                     $sets = []; $vals = [];
                     foreach ($updateData as $col => $val) { $sets[] = "$col = ?"; $vals[] = $val; }
@@ -259,38 +325,65 @@ class Product extends Task
                     $updated++;
                 } else {
                     // Create new product
-                    $trackStock = ($type === 'product' && $stock > 0) ? 1 : 0;
+                    $isTracking = ($trackStock !== null)
+                        ? ($trackStock ? 1 : 0)
+                        : (($type === 'product' && $stock > 0) ? 1 : 0);
+
                     $product = ProductTable::create([
-                        'business_id'    => $businessId,
-                        'type'           => $type,
-                        'track_stock'    => $trackStock,
-                        'name'           => $name,
-                        'description'    => isset($colIndex['description']) ? trim($cols[$colIndex['description']] ?? '') ?: null : null,
-                        'pos_category'   => isset($colIndex['pos_category']) ? trim($cols[$colIndex['pos_category']] ?? '') ?: null : null,
-                        'hsn_sac'        => isset($colIndex['hsn_sac']) ? trim($cols[$colIndex['hsn_sac']] ?? '') ?: null : null,
-                        'unit'           => isset($colIndex['unit']) ? trim($cols[$colIndex['unit']] ?? '') ?: 'Nos' : 'Nos',
-                        'price'          => $price,
-                        'purchase_price' => $purchasePrice !== '' ? (float)$purchasePrice : 0,
-                        'mrp'            => $mrp !== '' ? (float)$mrp : null,
-                        'discount_type'  => $discountType ?: 'percent',
-                        'discount_value' => max(0, $discountValue),
-                        'tax_rate_id'    => $taxRateId,
-                        'sku'            => isset($colIndex['sku']) ? trim($cols[$colIndex['sku']] ?? '') ?: null : null,
-                        'barcode'        => $barcode ?: null,
-                        'active'         => 1,
+                        'business_id'        => $businessId,
+                        'type'               => $type,
+                        'track_stock'        => $isTracking,
+                        'name'               => $name,
+                        'description'        => $description !== '' ? $description : null,
+                        'pos_category'       => $posCategory !== '' ? $posCategory : null,
+                        'hsn_sac'            => $hsnSac !== '' ? $hsnSac : null,
+                        'unit'               => $unit,
+                        'price'              => $price,
+                        'price_includes_tax' => $priceIncludesTax !== null ? ($priceIncludesTax ? 1 : 0) : 0,
+                        'discount_type'      => $discountType ?: 'percent',
+                        'discount_value'     => max(0, $discountValue),
+                        'purchase_price'     => $purchasePrice !== '' ? (float)$purchasePrice : 0,
+                        'mrp'                => $mrp !== '' ? (float)$mrp : null,
+                        'reorder_level'      => $reorderLevel !== '' ? max(0, (float)$reorderLevel) : 0,
+                        'tax_rate_id'        => $taxRateId,
+                        'sku'                => $sku !== '' ? $sku : null,
+                        'barcode'            => $barcode !== '' ? $barcode : null,
+                        'base_unit'          => $baseUnit !== '' ? $baseUnit : $unit,
+                        'conversion_factor'  => $conversionFactor !== '' ? max(0.0001, (float)$conversionFactor) : 1,
+                        'batch_tracking'     => $batchTracking !== null ? ($batchTracking ? 1 : 0) : 0,
+                        'expiry_tracking'    => $expiryTracking !== null ? ($expiryTracking ? 1 : 0) : 0,
+                        'serial_tracking'    => $serialTracking !== null ? ($serialTracking ? 1 : 0) : 0,
+                        'active'             => $isActive !== null ? ($isActive ? 1 : 0) : 1,
                     ]);
                     $productId = (int)$product->id;
                     $created++;
                 }
 
-                // Assign to shop + set shop price
+                // Assign to shop + set shop price & shop GST override
                 if ($locationId) {
                     $shopPriceVal = ($shopPrice !== '') ? (float)$shopPrice : null;
-                    DB::statement(
-                        'INSERT INTO product_locations (product_id, location_id, price) VALUES (?, ?, ?)
-                         ON DUPLICATE KEY UPDATE price = VALUES(price)',
-                        [$productId, $locationId, $shopPriceVal]
-                    );
+                    $shopTaxRateId = null;
+                    if (isset($colIndex['shop_tax_rate']) && $shopTaxRate !== '') {
+                        if (isset($taxRateMap[$shopTaxRate])) {
+                            $shopTaxRateId = (int)$taxRateMap[$shopTaxRate];
+                        } elseif (in_array(strtolower($shopTaxRate), ['0', 'exempt', 'nil', 'none'], true)) {
+                            $shopTaxRateId = 0; // 0 denotes tax exempt override in product_locations
+                        }
+                    }
+
+                    if (isset($colIndex['shop_tax_rate'])) {
+                        DB::statement(
+                            'INSERT INTO product_locations (product_id, location_id, price, tax_rate_id) VALUES (?, ?, ?, ?)
+                             ON DUPLICATE KEY UPDATE price = VALUES(price), tax_rate_id = VALUES(tax_rate_id)',
+                            [$productId, $locationId, $shopPriceVal, $shopTaxRateId]
+                        );
+                    } else {
+                        DB::statement(
+                            'INSERT INTO product_locations (product_id, location_id, price) VALUES (?, ?, ?)
+                             ON DUPLICATE KEY UPDATE price = VALUES(price)',
+                            [$productId, $locationId, $shopPriceVal]
+                        );
+                    }
 
                     // Opening stock
                     if ($stock > 0) {
