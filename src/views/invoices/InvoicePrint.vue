@@ -288,7 +288,6 @@ onMounted(async () => {
             <th v-if="!isDC" class="px-2 py-2 text-right text-xs font-semibold">Rate</th>
             <th v-if="hasItemDiscount && !isDC" class="px-2 py-2 text-right text-xs font-semibold">Disc%</th>
             <th v-if="!isDC" class="px-2 py-2 text-right text-xs font-semibold">Taxable</th>
-            <th v-if="isGst" class="px-2 py-2 text-right text-xs font-semibold">Tax</th>
             <th v-if="!isDC" class="px-2 py-2 text-right text-xs font-semibold">Amount</th>
           </tr>
         </thead>
@@ -302,11 +301,6 @@ onMounted(async () => {
             <td v-if="!isDC" class="px-2 py-2 text-right text-gray-700">{{ inr(it.unit_price) }}</td>
             <td v-if="hasItemDiscount && !isDC" class="px-2 py-2 text-right text-green-700 text-xs">{{ parseFloat(it.discount_pct || 0) > 0 ? it.discount_pct + '%' : '—' }}</td>
             <td v-if="!isDC" class="px-2 py-2 text-right text-gray-700">{{ inr(itemTaxable(it)) }}</td>
-            <td v-if="isGst" class="px-2 py-2 text-right text-xs">
-              <div v-if="it.cgst_amt > 0"><span class="text-gray-600">CGST {{ it.gst_rate/2 }}%: {{ inr(it.cgst_amt) }}</span><br/><span class="text-gray-600">SGST {{ it.gst_rate/2 }}%: {{ inr(it.sgst_amt) }}</span></div>
-              <div v-else-if="it.igst_amt > 0" class="text-gray-600">IGST {{ it.gst_rate }}%: {{ inr(it.igst_amt) }}</div>
-              <div v-else class="text-gray-400">Nil</div>
-            </td>
             <td v-if="!isDC" class="px-2 py-2 text-right font-semibold text-gray-900">{{ inr(itemAmount(it)) }}</td>
           </tr>
         </tbody>
@@ -436,7 +430,6 @@ onMounted(async () => {
             <th style="padding: 10px 8px; text-align: center; font-size: 11px; font-weight: 600;">Unit</th>
             <th v-if="!isDC" style="padding: 10px 8px; text-align: right; font-size: 11px; font-weight: 600;">Rate</th>
             <th v-if="hasItemDiscount && !isDC" style="padding: 10px 8px; text-align: right; font-size: 11px; font-weight: 600;">Disc%</th>
-            <th v-if="isGst" style="padding: 10px 8px; text-align: right; font-size: 11px; font-weight: 600;">Tax</th>
             <th v-if="!isDC" style="padding: 10px 8px; text-align: right; font-size: 11px; font-weight: 600; border-radius: 0 6px 0 0;">Amount</th>
           </tr>
         </thead>
@@ -449,11 +442,6 @@ onMounted(async () => {
             <td style="padding: 8px; text-align: center; font-size: 11px; color: #374151;">{{ it.unit || 'Nos' }}</td>
             <td v-if="!isDC" style="padding: 8px; text-align: right; color: #374151;">{{ inr(it.unit_price) }}</td>
             <td v-if="hasItemDiscount && !isDC" style="padding: 8px; text-align: right; font-size: 11px; color: #15803d;">{{ parseFloat(it.discount_pct || 0) > 0 ? it.discount_pct + '%' : '—' }}</td>
-            <td v-if="isGst" style="padding: 8px; text-align: right; font-size: 10px; color: #6b7280;">
-              <span v-if="it.cgst_amt > 0">{{ it.gst_rate }}%</span>
-              <span v-else-if="it.igst_amt > 0">{{ it.gst_rate }}%</span>
-              <span v-else>—</span>
-            </td>
             <td v-if="!isDC" style="padding: 8px; text-align: right; font-weight: 700; color: #111827;">{{ inr(itemAmount(it)) }}</td>
           </tr>
         </tbody>
@@ -572,7 +560,6 @@ onMounted(async () => {
             <th style="padding: 8px 0; text-align: right; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">Qty</th>
             <th v-if="!isDC" style="padding: 8px 0; text-align: right; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">Rate</th>
             <th v-if="hasItemDiscount && !isDC" style="padding: 8px 0; text-align: right; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">Disc%</th>
-            <th v-if="isGst" style="padding: 8px 0; text-align: right; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">Tax</th>
             <th v-if="!isDC" style="padding: 8px 0; text-align: right; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">Amount</th>
           </tr>
         </thead>
@@ -586,7 +573,6 @@ onMounted(async () => {
             <td style="padding: 10px 0; text-align: right; font-size: 13px; color: #374151;">{{ it.quantity }}</td>
             <td v-if="!isDC" style="padding: 10px 0; text-align: right; font-size: 13px; color: #374151;">{{ inr(it.unit_price) }}</td>
             <td v-if="hasItemDiscount && !isDC" style="padding: 10px 0; text-align: right; font-size: 11px; color: #15803d;">{{ parseFloat(it.discount_pct || 0) > 0 ? it.discount_pct + '%' : '—' }}</td>
-            <td v-if="isGst" style="padding: 10px 0; text-align: right; font-size: 11px; color: #9ca3af;">{{ it.gst_rate }}%</td>
             <td v-if="!isDC" style="padding: 10px 0; text-align: right; font-size: 13px; font-weight: 600; color: #111827;">{{ inr(itemAmount(it)) }}</td>
           </tr>
         </tbody>
