@@ -1,6 +1,7 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
+const APP_VERSION = '1.4.0'
 const offlineInstallerUrl = import.meta.env.VITE_OFFLINE_INSTALLER_URL
   || '/downloads/AI-Billing-Offline-Setup.exe'
 
@@ -351,7 +352,7 @@ onBeforeUnmount(() => { cleanUp(); pauseFeatures() })
           </div>
         </div>
         <div class="download-action reveal reveal-scale">
-          <a class="button download-button" :href="offlineInstallerUrl">Download Offline Installer <span>↓</span></a>
+          <a class="button download-button" :href="offlineInstallerUrl">Download Offline Installer v{{ APP_VERSION }} <span>↓</span></a>
           <p>After installing, create the shop account and send the activation request. Once approved, everyday billing works offline.</p>
           <a href="#trial" class="setup-link">Need printer setup and training? Ask for the Counter Kit.</a>
         </div>

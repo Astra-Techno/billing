@@ -16,6 +16,7 @@ const HelpPopup = defineAsyncComponent(() => import('../HelpPopup.vue'))
 const bizStore = useBusinessStore()
 const route = useRoute()
 const desktopMode = !!window.__BILLING_DESKTOP__
+if (desktopMode) document.title = 'AI Billing v1.4.0 | GST Billing Software for Indian Shops'
 const backupWarning = ref('')
 let backupTimer
 async function checkBackup() {
