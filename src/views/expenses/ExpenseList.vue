@@ -26,6 +26,13 @@ const catFilter    = ref('')
 const showFilters = ref(false)
 const filter = ref({ preset: '', from_date: '', to_date: '' })
 
+// Persistent left panel collapse
+const panelCollapsed = ref(localStorage.getItem('expense_panel_collapsed') === '1')
+function togglePanel() {
+  panelCollapsed.value = !panelCollapsed.value
+  localStorage.setItem('expense_panel_collapsed', panelCollapsed.value ? '1' : '0')
+}
+
 const { items: expenses, loading, loadingMore, total, hasMore, search: searchQ, onSearch, loadMore, reload } =
   usePagedList('Expense', {
     limit: 50,
@@ -114,7 +121,11 @@ const methodLabel = m => ({ cash: 'Cash', upi: 'UPI', neft: 'NEFT', cheque: 'Che
   <div class="flex flex-col lg:flex-row h-full min-h-0 w-full overflow-hidden">
     
     <!-- Left Pane: List -->
-    <div id="c3-left-panel" :class="{ 'hidden lg:flex': $route.name !== 'Expenses', 'split-pane-left transition-all duration-300 relative z-30 h-full': true }">
+    <div id="c3-left-panel" :class="[
+      'split-pane-left transition-all duration-300 relative z-30 h-full',
+      $route.name !== 'Expenses' ? 'hidden lg:flex' : '',
+      panelCollapsed && $route.name !== 'Expenses' ? 'lg:!w-0 lg:!min-w-0 lg:overflow-hidden lg:!p-0 lg:!border-0' : ''
+    ]">
       
       <!-- Top Sticky Header Area -->
       <div class="px-5 py-4 border-b border-gray-200/60 bg-white/60 backdrop-blur-md sticky top-0 z-10">
@@ -237,6 +248,13 @@ const methodLabel = m => ({ cash: 'Cash', upi: 'UPI', neft: 'NEFT', cheque: 'Che
 
     <!-- Right Pane: Detail/Form wrapper -->
     <div id="c3-right-view" class="split-pane-right relative z-20 hidden lg:flex" :class="$route.name !== 'Expenses' ? '!flex' : ''">
+      <!-- Panel toggle button -->
+      <button v-if="$route.name !== 'Expenses'" @click="togglePanel" title="Toggle list"
+        class="hidden lg:flex absolute top-3 left-3 z-30 w-7 h-7 items-center justify-center rounded-lg bg-white border border-gray-200 shadow-sm hover:bg-gray-50 text-gray-500 hover:text-gray-700 transition-all">
+        <svg class="w-4 h-4 transition-transform" :class="panelCollapsed ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+        </svg>
+      </button>
       <router-view v-slot="{ Component }">
         <component v-if="Component" :is="Component" :key="$route.fullPath" @refresh="reload" />
         <ExpenseForm v-else :key="'default-new'" @refresh="reload" />
