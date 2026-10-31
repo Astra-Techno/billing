@@ -17,7 +17,7 @@ class EwayBill extends Sql
                 e.distance, e.vehicle_no, e.vehicle_type, e.transporter,
                 e.valid_from, e.valid_until, e.created_at,
                 e.invoice_id,
-                i.number AS invoice_number, i.invoice_date,
+                i.number AS invoice_number, i.issue_date AS invoice_date,
                 i.total AS invoice_total
             ')
             ->select('total', 'COUNT(*) AS total')
@@ -35,7 +35,7 @@ class EwayBill extends Sql
             ->left('clients c ON c.id = i.client_id')
             ->select('entity', '
                 e.*,
-                i.number AS invoice_number, i.invoice_date,
+                i.number AS invoice_number, i.issue_date AS invoice_date,
                 i.total AS invoice_total,
                 c.name AS client_name, c.company AS client_company,
                 c.gstin AS client_gstin
