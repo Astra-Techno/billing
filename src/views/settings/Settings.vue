@@ -329,6 +329,22 @@ async function genUpiQr() {
 const invoiceForm = ref({
   invoice_prefix: 'INV', quote_prefix: 'QTE', draft_invoice_number_enabled: false, invoice_notes: '', invoice_terms: '',
 })
+// Print column visibility — all ON by default
+const printColumns = ref({
+  serial: true, hsn: true, qty: true, unit: true, rate: true, discount: true, taxable: true, amount: true,
+})
+const printColumnLabels = {
+  serial: '#', hsn: 'HSN / SAC', qty: 'Quantity', unit: 'Unit', rate: 'Rate', discount: 'Discount %', taxable: 'Taxable', amount: 'Amount',
+}
+const printColSaving = ref(false)
+async function savePrintColumns() {
+  printColSaving.value = true
+  try {
+    await task('Settings', 'save', { settings: { print_columns: printColumns.value } })
+    flash('Print column settings saved.')
+  } catch (e) { error.value = e.response?.data?.message || 'Could not save print settings.' }
+  printColSaving.value = false
+}
 const sequences = ref({
   invoice:     { prefix: 'INV', next_number: '', padding: 4 },
   quote:       { prefix: 'QTE', next_number: '', padding: 4 },
@@ -499,6 +515,15 @@ onMounted(async () => {
     bizStore.setLogo(biz.logo || '')  // sync TopBar avatar
     await bizStore.loadFeatures()
     await loadStockSettings()
+    // Load print column settings
+    try {
+      const setRes = await task('Settings', 'get', {})
+      const s = setRes.data?.data || {}
+      if (s.print_columns) {
+        const pc = typeof s.print_columns === 'string' ? JSON.parse(s.print_columns) : s.print_columns
+        Object.assign(printColumns.value, pc)
+      }
+    } catch {}
     // Load current sequences
     try {
       const seqRes = await task('Sequence', 'list', {})
@@ -1268,6 +1293,21 @@ async function saveSequences() {
         <div class="pt-2">
           <button @click="saveInvoice" :disabled="saving" class="btn-primary w-full sm:w-auto">
             {{ saving ? 'Saving…' : 'Save Bill Settings' }}
+          </button>
+        </div>
+        <div class="pt-4 border-t border-gray-100">
+          <h2 class="section-title mb-0">Invoice Print Columns</h2>
+          <p class="text-xs text-gray-400 mt-0.5">Choose which columns appear on your printed invoices and PDFs</p>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <label v-for="(label, key) in printColumnLabels" :key="key" class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+            <input v-model="printColumns[key]" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+            {{ label }}
+          </label>
+        </div>
+        <div class="pt-2">
+          <button @click="savePrintColumns" :disabled="printColSaving" class="btn-primary w-full sm:w-auto">
+            {{ printColSaving ? 'Saving…' : 'Save Print Settings' }}
           </button>
         </div>
       </div>
