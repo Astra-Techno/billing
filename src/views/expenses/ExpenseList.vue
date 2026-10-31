@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { task, all } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
@@ -32,6 +32,8 @@ function togglePanel() {
   panelCollapsed.value = !panelCollapsed.value
   localStorage.setItem('expense_panel_collapsed', panelCollapsed.value ? '1' : '0')
 }
+window.addEventListener('billing:toggle-panel', togglePanel)
+onBeforeUnmount(() => window.removeEventListener('billing:toggle-panel', togglePanel))
 
 const { items: expenses, loading, loadingMore, total, hasMore, search: searchQ, onSearch, loadMore, reload } =
   usePagedList('Expense', {

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import HelpIcon from '../../components/HelpIcon.vue'
 import ClientForm from './ClientForm.vue'
@@ -23,6 +23,8 @@ function togglePanel() {
   panelCollapsed.value = !panelCollapsed.value
   localStorage.setItem('client_panel_collapsed', panelCollapsed.value ? '1' : '0')
 }
+window.addEventListener('billing:toggle-panel', togglePanel)
+onBeforeUnmount(() => window.removeEventListener('billing:toggle-panel', togglePanel))
 
 const { items: clients, loading, loadingMore, total, hasMore, search, onSearch, loadMore, reload } =
   usePagedList('Client', {

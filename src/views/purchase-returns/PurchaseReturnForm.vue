@@ -124,7 +124,7 @@ async function submit() {
   <div class="inv-shell">
     <div class="inv-toolbar">
       <div class="flex items-center gap-3 min-w-0">
-        <button type="button" @click="router.push('/purchase-returns')" class="inv-back-btn">
+        <button type="button" @click="window.innerWidth >= 1024 ? window.dispatchEvent(new Event('billing:toggle-panel')) : router.push('/purchase-returns')" class="inv-back-btn">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </button>
         <h1 class="inv-page-title">Return Items to Supplier</h1>

@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { task } from '../../api'
 import HelpIcon from '../../components/HelpIcon.vue'
@@ -19,6 +19,8 @@ function togglePanel() {
   panelCollapsed.value = !panelCollapsed.value
   localStorage.setItem('cn_panel_collapsed', panelCollapsed.value ? '1' : '0')
 }
+window.addEventListener('billing:toggle-panel', togglePanel)
+onBeforeUnmount(() => window.removeEventListener('billing:toggle-panel', togglePanel))
 
 const acting       = ref(null)
 const actError     = ref('')

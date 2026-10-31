@@ -790,7 +790,7 @@ async function submit() {
     <!-- Toolbar -->
     <div class="inv-toolbar max-lg:bg-[#1a56db] max-lg:text-white max-lg:border-none">
       <div class="flex items-center gap-3 min-w-0">
-        <button type="button" @click="router.back()" class="inv-back-btn max-lg:bg-white/10 max-lg:text-white max-lg:hover:bg-white/20">
+        <button type="button" @click="window.innerWidth >= 1024 ? window.dispatchEvent(new Event('billing:toggle-panel')) : router.back()" class="inv-back-btn max-lg:bg-white/10 max-lg:text-white max-lg:hover:bg-white/20">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </button>
         <h1 class="inv-page-title max-lg:text-white max-lg:text-lg max-lg:font-semibold">

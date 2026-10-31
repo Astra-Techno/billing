@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { task } from '../../api'
 import { inr } from '../../utils/currency'
@@ -15,6 +15,8 @@ function togglePanel() {
   panelCollapsed.value = !panelCollapsed.value
   localStorage.setItem('staff_panel_collapsed', panelCollapsed.value ? '1' : '0')
 }
+window.addEventListener('billing:toggle-panel', togglePanel)
+onBeforeUnmount(() => window.removeEventListener('billing:toggle-panel', togglePanel))
 
 const search  = ref('')
 const deleting = ref(null)

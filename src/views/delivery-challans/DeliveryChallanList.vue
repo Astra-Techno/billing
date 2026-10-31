@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { inr } from '../../utils/currency'
 import { fmtDateShort } from '../../utils/date'
@@ -20,6 +20,8 @@ function togglePanel() {
   panelCollapsed.value = !panelCollapsed.value
   localStorage.setItem('dc_panel_collapsed', panelCollapsed.value ? '1' : '0')
 }
+window.addEventListener('billing:toggle-panel', togglePanel)
+onBeforeUnmount(() => window.removeEventListener('billing:toggle-panel', togglePanel))
 
 const tabs = [
   { label: 'All',       value: '' },
