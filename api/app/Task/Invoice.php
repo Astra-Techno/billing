@@ -171,8 +171,10 @@ class Invoice extends Task
         $this->requirePermission('invoices', 'edit');
         $invoice    = $this->findInvoice((int)$input['id'], $businessId);
 
-        if ($invoice->status !== 'draft')
-            $this->fail('Only draft invoices can be edited. Cancel and duplicate if needed.');
+        if (in_array($invoice->status, ['cancelled'], true))
+            $this->fail('Cancelled invoices cannot be edited.');
+
+        $wasSent = $invoice->status !== 'draft';
 
         $this->validateItems($input['items'] ?? []);
         $clientId   = !empty($input['client_id']) ? (int)$input['client_id'] : null;
@@ -189,6 +191,16 @@ class Invoice extends Task
         if ($locationId) {
             $loc = DB::selectOne("SELECT gstin, state_id FROM inventory_locations WHERE id = ? AND business_id = ? LIMIT 1", [$locationId, $businessId]);
             if ($loc) { $locGstin = $loc->gstin ?: null; $locStateId = $loc->state_id ?: null; }
+        }
+
+        // For sent/partial/overdue invoices: recalculate amount_due based on existing payments
+        $amountPaid = (float)($invoice->amount_paid ?? 0);
+        $newAmountDue = round($totals['total'] - $amountPaid, 2);
+        if ($newAmountDue < 0) $newAmountDue = 0;
+        $newStatus = $invoice->status;
+        if ($wasSent) {
+            if ($newAmountDue <= 0) $newStatus = 'paid';
+            elseif ($amountPaid > 0) $newStatus = 'partial';
         }
 
         $invoice->fill([
@@ -213,15 +225,26 @@ class Invoice extends Task
             'discount'       => $totals['discount'],
             'round_off'      => $totals['round_off'],
             'total'          => $totals['total'],
-            'amount_due'     => $totals['total'],
+            'amount_due'     => $newAmountDue,
+            'status'         => $newStatus,
             'notes'          => $input['notes']           ?? $invoice->notes,
             'terms'          => $input['terms']           ?? $invoice->terms,
         ]);
         $invoice->save();
 
+        // Reverse stock movements for sent invoices before replacing items
+        if ($wasSent) {
+            InventoryStock::reverseDocument($businessId, 'invoice', (int)$invoice->id, $this->userId());
+        }
+
         // Replace items
         DB::statement("DELETE FROM invoice_items WHERE invoice_id = ?", [$invoice->id]);
         $this->saveItems((int)$invoice->id, $input['items'], $supplyType, $totals['subtotal']);
+
+        // Re-post stock movements for sent invoices
+        if ($wasSent) {
+            InventoryStock::postDocument($businessId, (int)($locationId ?: InventoryStock::defaultLocation($businessId)), 'invoice', (int)$invoice->id, 'invoice_items', 'invoice_id', 'sale', -1, $this->userId());
+        }
 
         return $this->success(['invoice_id' => $invoice->id], 'Invoice updated.');
     }
@@ -451,6 +474,14 @@ class Invoice extends Task
 
         if (!$invoice->delete())
             $this->fail('Could not delete invoice.');
+
+        // Free up the invoice number so it can be reused
+        if ($invoice->number) {
+            DB::statement(
+                "UPDATE invoices SET number = CONCAT(number, '_DEL_', id) WHERE id = ? AND deleted_at IS NOT NULL",
+                [$invoice->id]
+            );
+        }
 
         DB::statement(
             "INSERT INTO audit_log (business_id, user_id, action, entity_type, entity_id, snapshot, note)
