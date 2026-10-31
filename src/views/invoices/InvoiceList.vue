@@ -431,11 +431,11 @@ const activeDateLabel = () => {
 
     <!-- Right Pane: Detail/Form wrapper -->
     <div id="c3-right-view" class="split-pane-right relative z-20 hidden lg:flex" :class="$route.name !== 'Invoices' ? '!flex' : ''">
-      <!-- Panel toggle button -->
-      <button v-if="$route.name !== 'Invoices'" @click="togglePanel" title="Toggle invoice list"
-        class="hidden lg:flex absolute top-3 left-3 z-30 w-7 h-7 items-center justify-center rounded-lg bg-white border border-gray-200 shadow-sm hover:bg-gray-50 text-gray-500 hover:text-gray-700 transition-all">
-        <svg class="w-4 h-4 transition-transform" :class="panelCollapsed ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+      <!-- Panel toggle handle — sits on the left edge, vertically centered -->
+      <button v-if="$route.name !== 'Invoices'" @click.stop="togglePanel" title="Toggle invoice list"
+        class="hidden lg:flex absolute top-1/2 -translate-y-1/2 -left-3 z-40 w-3 h-10 items-center justify-center rounded-r-md bg-gray-200 hover:bg-primary-100 text-gray-500 hover:text-primary-600 transition-all shadow-sm border border-l-0 border-gray-300">
+        <svg class="w-3 h-3 transition-transform" :class="panelCollapsed ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
         </svg>
       </button>
       <router-view v-slot="{ Component }">
