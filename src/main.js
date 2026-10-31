@@ -21,6 +21,7 @@ if (window.location.hash.startsWith('#device=')) {
 }
 
 const app = createApp(App)
+app.config.globalProperties.window = window
 app.use(createPinia())
 app.use(router)
 app.mount('#app')
