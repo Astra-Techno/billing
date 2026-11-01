@@ -328,31 +328,31 @@ onMounted(async () => {
       </div>
 
       <!-- Items -->
-      <table class="w-full text-sm mb-4">
+      <table class="w-full text-xs mb-4">
         <thead>
           <tr :style="{ background: pc, color: '#fff' }">
-            <th v-if="pcol.serial" class="px-2 py-2 text-left text-xs font-semibold w-7">#</th>
-            <th class="px-2 py-2 text-left text-xs font-semibold">Description</th>
-            <th v-if="pcol.hsn" class="px-2 py-2 text-center text-xs font-semibold">HSN/SAC</th>
-            <th v-if="pcol.qty" class="px-2 py-2 text-right text-xs font-semibold">Qty</th>
-            <th v-if="pcol.unit" class="px-2 py-2 text-center text-xs font-semibold">Unit</th>
-            <th v-if="pcol.rate && !isDC" class="px-2 py-2 text-right text-xs font-semibold">Rate</th>
-            <th v-if="pcol.discount && hasItemDiscount && !isDC" class="px-2 py-2 text-right text-xs font-semibold">Disc%</th>
-            <th v-if="pcol.taxable && !isDC" class="px-2 py-2 text-right text-xs font-semibold">Taxable</th>
-            <th v-if="pcol.amount && !isDC" class="px-2 py-2 text-right text-xs font-semibold">Amount</th>
+            <th v-if="pcol.serial" class="px-1.5 py-1 text-left font-semibold w-6">#</th>
+            <th class="px-1.5 py-1 text-left font-semibold">Description</th>
+            <th v-if="pcol.hsn" class="px-1.5 py-1 text-center font-semibold">HSN/SAC</th>
+            <th v-if="pcol.qty" class="px-1.5 py-1 text-right font-semibold">Qty</th>
+            <th v-if="pcol.unit" class="px-1.5 py-1 text-center font-semibold">Unit</th>
+            <th v-if="pcol.rate && !isDC" class="px-1.5 py-1 text-right font-semibold">Rate</th>
+            <th v-if="pcol.discount && hasItemDiscount && !isDC" class="px-1.5 py-1 text-right font-semibold">Disc%</th>
+            <th v-if="pcol.taxable && !isDC" class="px-1.5 py-1 text-right font-semibold">Taxable</th>
+            <th v-if="pcol.amount && !isDC" class="px-1.5 py-1 text-right font-semibold">Amount</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(it, idx) in items" :key="it.id" class="border-b border-gray-100">
-            <td v-if="pcol.serial" class="px-2 py-2 text-gray-400 text-xs">{{ idx + 1 }}</td>
-            <td class="px-2 py-2 font-medium text-gray-800">{{ it.description }}</td>
-            <td v-if="pcol.hsn" class="px-2 py-2 text-center font-mono text-xs text-gray-500">{{ it.hsn_sac || '—' }}</td>
-            <td v-if="pcol.qty" class="px-2 py-2 text-right text-gray-700">{{ it.quantity }}</td>
-            <td v-if="pcol.unit" class="px-2 py-2 text-center text-gray-700 text-xs">{{ it.unit || 'Nos' }}</td>
-            <td v-if="pcol.rate && !isDC" class="px-2 py-2 text-right text-gray-700">{{ inr(it.unit_price) }}</td>
-            <td v-if="pcol.discount && hasItemDiscount && !isDC" class="px-2 py-2 text-right text-green-700 text-xs">{{ parseFloat(it.discount_pct || 0) > 0 ? it.discount_pct + '%' : '—' }}</td>
-            <td v-if="pcol.taxable && !isDC" class="px-2 py-2 text-right text-gray-700">{{ inr(itemTaxable(it)) }}</td>
-            <td v-if="pcol.amount && !isDC" class="px-2 py-2 text-right font-semibold text-gray-900">{{ inr(itemAmount(it)) }}</td>
+            <td v-if="pcol.serial" class="px-1.5 py-1 text-gray-400">{{ idx + 1 }}</td>
+            <td class="px-1.5 py-1 font-medium text-gray-800">{{ it.description }}</td>
+            <td v-if="pcol.hsn" class="px-1.5 py-1 text-center font-mono text-gray-500">{{ it.hsn_sac || '—' }}</td>
+            <td v-if="pcol.qty" class="px-1.5 py-1 text-right text-gray-700">{{ it.quantity }}</td>
+            <td v-if="pcol.unit" class="px-1.5 py-1 text-center text-gray-700">{{ it.unit || 'Nos' }}</td>
+            <td v-if="pcol.rate && !isDC" class="px-1.5 py-1 text-right text-gray-700">{{ inr(it.unit_price) }}</td>
+            <td v-if="pcol.discount && hasItemDiscount && !isDC" class="px-1.5 py-1 text-right text-green-700">{{ parseFloat(it.discount_pct || 0) > 0 ? it.discount_pct + '%' : '—' }}</td>
+            <td v-if="pcol.taxable && !isDC" class="px-1.5 py-1 text-right text-gray-700">{{ inr(itemTaxable(it)) }}</td>
+            <td v-if="pcol.amount && !isDC" class="px-1.5 py-1 text-right font-semibold text-gray-900">{{ inr(itemAmount(it)) }}</td>
           </tr>
         </tbody>
       </table>
@@ -472,29 +472,29 @@ onMounted(async () => {
       </div>
 
       <!-- Items -->
-      <table class="w-full text-sm mb-4">
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 11px;">
         <thead>
           <tr :style="{ background: `linear-gradient(135deg, ${pc}, ${pcGrad})`, color: 'white' }">
-            <th v-if="pcol.serial" style="padding: 10px 8px; text-align: left; font-size: 11px; font-weight: 600; border-radius: 6px 0 0 0;">#</th>
-            <th style="padding: 10px 8px; text-align: left; font-size: 11px; font-weight: 600;">Description</th>
-            <th v-if="pcol.hsn" style="padding: 10px 8px; text-align: center; font-size: 11px; font-weight: 600;">HSN</th>
-            <th v-if="pcol.qty" style="padding: 10px 8px; text-align: right; font-size: 11px; font-weight: 600;">Qty</th>
-            <th v-if="pcol.unit" style="padding: 10px 8px; text-align: center; font-size: 11px; font-weight: 600;">Unit</th>
-            <th v-if="pcol.rate && !isDC" style="padding: 10px 8px; text-align: right; font-size: 11px; font-weight: 600;">Rate</th>
-            <th v-if="pcol.discount && hasItemDiscount && !isDC" style="padding: 10px 8px; text-align: right; font-size: 11px; font-weight: 600;">Disc%</th>
-            <th v-if="pcol.amount && !isDC" style="padding: 10px 8px; text-align: right; font-size: 11px; font-weight: 600; border-radius: 0 6px 0 0;">Amount</th>
+            <th v-if="pcol.serial" style="padding: 6px 6px; text-align: left; font-weight: 600; border-radius: 6px 0 0 0;">#</th>
+            <th style="padding: 6px 6px; text-align: left; font-weight: 600;">Description</th>
+            <th v-if="pcol.hsn" style="padding: 6px 6px; text-align: center; font-weight: 600;">HSN</th>
+            <th v-if="pcol.qty" style="padding: 6px 6px; text-align: right; font-weight: 600;">Qty</th>
+            <th v-if="pcol.unit" style="padding: 6px 6px; text-align: center; font-weight: 600;">Unit</th>
+            <th v-if="pcol.rate && !isDC" style="padding: 6px 6px; text-align: right; font-weight: 600;">Rate</th>
+            <th v-if="pcol.discount && hasItemDiscount && !isDC" style="padding: 6px 6px; text-align: right; font-weight: 600;">Disc%</th>
+            <th v-if="pcol.amount && !isDC" style="padding: 6px 6px; text-align: right; font-weight: 600; border-radius: 0 6px 0 0;">Amount</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(it, idx) in items" :key="it.id" :style="{ background: idx % 2 === 0 ? pcLighter : 'white' }">
-            <td v-if="pcol.serial" style="padding: 8px; font-size: 11px; color: #9ca3af;">{{ idx + 1 }}</td>
-            <td style="padding: 8px; font-weight: 600; color: #1f2937;">{{ it.description }}</td>
-            <td v-if="pcol.hsn" style="padding: 8px; text-align: center; font-family: monospace; font-size: 11px; color: #6b7280;">{{ it.hsn_sac || '—' }}</td>
-            <td v-if="pcol.qty" style="padding: 8px; text-align: right; color: #374151;">{{ it.quantity }}</td>
-            <td v-if="pcol.unit" style="padding: 8px; text-align: center; font-size: 11px; color: #374151;">{{ it.unit || 'Nos' }}</td>
-            <td v-if="pcol.rate && !isDC" style="padding: 8px; text-align: right; color: #374151;">{{ inr(it.unit_price) }}</td>
-            <td v-if="pcol.discount && hasItemDiscount && !isDC" style="padding: 8px; text-align: right; font-size: 11px; color: #15803d;">{{ parseFloat(it.discount_pct || 0) > 0 ? it.discount_pct + '%' : '—' }}</td>
-            <td v-if="pcol.amount && !isDC" style="padding: 8px; text-align: right; font-weight: 700; color: #111827;">{{ inr(itemAmount(it)) }}</td>
+            <td v-if="pcol.serial" style="padding: 4px 6px; color: #9ca3af;">{{ idx + 1 }}</td>
+            <td style="padding: 4px 6px; font-weight: 600; color: #1f2937;">{{ it.description }}</td>
+            <td v-if="pcol.hsn" style="padding: 4px 6px; text-align: center; font-family: monospace; color: #6b7280;">{{ it.hsn_sac || '—' }}</td>
+            <td v-if="pcol.qty" style="padding: 4px 6px; text-align: right; color: #374151;">{{ it.quantity }}</td>
+            <td v-if="pcol.unit" style="padding: 4px 6px; text-align: center; color: #374151;">{{ it.unit || 'Nos' }}</td>
+            <td v-if="pcol.rate && !isDC" style="padding: 4px 6px; text-align: right; color: #374151;">{{ inr(it.unit_price) }}</td>
+            <td v-if="pcol.discount && hasItemDiscount && !isDC" style="padding: 4px 6px; text-align: right; color: #15803d;">{{ parseFloat(it.discount_pct || 0) > 0 ? it.discount_pct + '%' : '—' }}</td>
+            <td v-if="pcol.amount && !isDC" style="padding: 4px 6px; text-align: right; font-weight: 700; color: #111827;">{{ inr(itemAmount(it)) }}</td>
           </tr>
         </tbody>
       </table>
@@ -605,28 +605,28 @@ onMounted(async () => {
       </div>
 
       <!-- Items — clean table -->
-      <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-family: -apple-system, sans-serif;">
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px; font-family: -apple-system, sans-serif; font-size: 11px;">
         <thead>
           <tr :style="{ borderBottom: `2px solid ${pc}` }">
-            <th style="padding: 8px 0; text-align: left; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">Description</th>
-            <th v-if="pcol.hsn" style="padding: 8px 0; text-align: center; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">HSN</th>
-            <th v-if="pcol.qty" style="padding: 8px 0; text-align: right; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">Qty</th>
-            <th v-if="pcol.rate && !isDC" style="padding: 8px 0; text-align: right; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">Rate</th>
-            <th v-if="pcol.discount && hasItemDiscount && !isDC" style="padding: 8px 0; text-align: right; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">Disc%</th>
-            <th v-if="pcol.amount && !isDC" style="padding: 8px 0; text-align: right; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">Amount</th>
+            <th style="padding: 5px 0; text-align: left; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">Description</th>
+            <th v-if="pcol.hsn" style="padding: 5px 0; text-align: center; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">HSN</th>
+            <th v-if="pcol.qty" style="padding: 5px 0; text-align: right; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">Qty</th>
+            <th v-if="pcol.rate && !isDC" style="padding: 5px 0; text-align: right; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">Rate</th>
+            <th v-if="pcol.discount && hasItemDiscount && !isDC" style="padding: 5px 0; text-align: right; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">Disc%</th>
+            <th v-if="pcol.amount && !isDC" style="padding: 5px 0; text-align: right; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">Amount</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(it, idx) in items" :key="it.id" style="border-bottom: 1px solid #f3f4f6;">
-            <td style="padding: 10px 0;">
-              <span style="font-size: 13px; font-weight: 500; color: #111827;">{{ it.description }}</span>
+            <td style="padding: 5px 0;">
+              <span style="font-weight: 500; color: #111827;">{{ it.description }}</span>
               <span v-if="pcol.unit && it.unit && it.unit !== 'Nos'" style="font-size: 10px; color: #9ca3af; margin-left: 6px;">{{ it.unit }}</span>
             </td>
-            <td v-if="pcol.hsn" style="padding: 10px 0; text-align: center; font-family: monospace; font-size: 11px; color: #9ca3af;">{{ it.hsn_sac || '—' }}</td>
-            <td v-if="pcol.qty" style="padding: 10px 0; text-align: right; font-size: 13px; color: #374151;">{{ it.quantity }}</td>
-            <td v-if="pcol.rate && !isDC" style="padding: 10px 0; text-align: right; font-size: 13px; color: #374151;">{{ inr(it.unit_price) }}</td>
-            <td v-if="pcol.discount && hasItemDiscount && !isDC" style="padding: 10px 0; text-align: right; font-size: 11px; color: #15803d;">{{ parseFloat(it.discount_pct || 0) > 0 ? it.discount_pct + '%' : '—' }}</td>
-            <td v-if="pcol.amount && !isDC" style="padding: 10px 0; text-align: right; font-size: 13px; font-weight: 600; color: #111827;">{{ inr(itemAmount(it)) }}</td>
+            <td v-if="pcol.hsn" style="padding: 5px 0; text-align: center; font-family: monospace; color: #9ca3af;">{{ it.hsn_sac || '—' }}</td>
+            <td v-if="pcol.qty" style="padding: 5px 0; text-align: right; color: #374151;">{{ it.quantity }}</td>
+            <td v-if="pcol.rate && !isDC" style="padding: 5px 0; text-align: right; color: #374151;">{{ inr(it.unit_price) }}</td>
+            <td v-if="pcol.discount && hasItemDiscount && !isDC" style="padding: 5px 0; text-align: right; color: #15803d;">{{ parseFloat(it.discount_pct || 0) > 0 ? it.discount_pct + '%' : '—' }}</td>
+            <td v-if="pcol.amount && !isDC" style="padding: 5px 0; text-align: right; font-weight: 600; color: #111827;">{{ inr(itemAmount(it)) }}</td>
           </tr>
         </tbody>
       </table>
@@ -905,9 +905,9 @@ body.paper-thermal58 .print-page { width: 58mm; padding: 2mm 3mm; }
 .trad { border: 2px solid #000; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #000; }
 .trad-full { width: 100%; border-collapse: collapse; }
 .trad-full td, .trad-full th { border: none; }
-.trad-items th { padding: 8px 6px; font-size: 12px; font-weight: 700; border-bottom: 2px solid #000; border-right: 1px solid #ccc; text-align: center; background: #f9f9f9; }
+.trad-items th { padding: 5px 4px; font-size: 11px; font-weight: 700; border-bottom: 2px solid #000; border-right: 1px solid #ccc; text-align: center; background: #f9f9f9; }
 .trad-items th:last-child { border-right: none; }
-.trad-items td { padding: 6px; font-size: 12px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; }
+.trad-items td { padding: 4px; font-size: 11px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; }
 .trad-items td:last-child { border-right: none; }
 .trad-items tbody tr:last-child td { border-bottom: none; }
 /* Mobile action bar */
@@ -929,6 +929,10 @@ body.paper-thermal58 .print-page { width: 58mm; padding: 2mm 3mm; }
   .invoice-doc tfoot { display: table-footer-group; }
   .invoice-doc .grid { break-inside: avoid; }
   .invoice-doc .border-b { break-inside: avoid; }
+  /* Compact print rows */
+  .invoice-doc table td, .invoice-doc table th { line-height: 1.2; }
+  .trad-items td { padding: 3px 4px !important; }
+  .trad-items th { padding: 4px 4px !important; }
 }
 .flex { display: flex; }
 .grid { display: grid; }
