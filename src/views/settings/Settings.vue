@@ -370,6 +370,33 @@ const SECTION_TOGGLES = [
   { key: 'show_qr', label: 'UPI QR Code' },
 ]
 const COLOR_PRESETS = ['#1a5fd4','#1e3a5f','#111827','#0d9488','#7c3aed','#dc2626','#ea580c','#059669','#4f46e5','#be185d','#000000']
+
+// Customizable text labels — empty means use default
+const LABEL_FIELDS = [
+  { key: 'label_bill_to', label: 'Bill To heading', placeholder: 'Bill To' },
+  { key: 'label_invoice_details', label: 'Invoice Details heading', placeholder: 'Invoice Details' },
+  { key: 'label_description', label: 'Column: Description', placeholder: 'Description' },
+  { key: 'label_hsn', label: 'Column: HSN/SAC', placeholder: 'HSN/SAC' },
+  { key: 'label_qty', label: 'Column: Qty', placeholder: 'Qty' },
+  { key: 'label_unit', label: 'Column: Unit', placeholder: 'Unit' },
+  { key: 'label_rate', label: 'Column: Rate', placeholder: 'Rate' },
+  { key: 'label_discount', label: 'Column: Disc%', placeholder: 'Disc%' },
+  { key: 'label_taxable', label: 'Column: Taxable', placeholder: 'Taxable' },
+  { key: 'label_amount', label: 'Column: Amount', placeholder: 'Amount' },
+  { key: 'label_subtotal', label: 'Subtotal', placeholder: 'Subtotal' },
+  { key: 'label_net_amount', label: 'NET Amount', placeholder: 'NET Amount' },
+  { key: 'label_balance_due', label: 'Balance Due', placeholder: 'Balance Due' },
+  { key: 'label_amount_words', label: 'Amount in Words heading', placeholder: 'Amount in Words' },
+  { key: 'label_payment_details', label: 'Payment Details heading', placeholder: 'Payment Details' },
+  { key: 'label_notes', label: 'Notes heading', placeholder: 'Notes' },
+  { key: 'label_terms', label: 'Terms heading', placeholder: 'Terms' },
+  { key: 'label_customer_sig', label: 'Customer Signature', placeholder: 'Customer Signature' },
+  { key: 'label_auth_sig', label: 'Authorised Signatory', placeholder: 'Authorised Signatory' },
+]
+const TEXT_FIELDS = [
+  { key: 'custom_header', label: 'Custom Header Text', placeholder: 'e.g. "Your trusted partner since 2010"', multiline: false },
+  { key: 'custom_footer', label: 'Custom Footer Text', placeholder: 'e.g. "Thank you for your business!"', multiline: false },
+]
 function openTplEditor(tplId) {
   tplEditTarget.value = tplId
   if (!tplStyle.value[tplId]) tplStyle.value[tplId] = { ...tplStyleDefaults[tplId] }
@@ -378,7 +405,14 @@ function closeTplEditor() { tplEditTarget.value = null }
 async function saveTplStyle() {
   tplStyleSaving.value = true
   try {
-    await task('Settings', 'save', { settings: { template_style: tplStyle.value } })
+    // Strip internal UI flags (like _showLabels) before saving
+    const toSave = {}
+    for (const [tid, style] of Object.entries(tplStyle.value)) {
+      const clean = { ...style }
+      delete clean._showLabels
+      toSave[tid] = clean
+    }
+    await task('Settings', 'save', { settings: { template_style: toSave, print_columns: printColumns.value } })
     flash('Template style saved.')
     closeTplEditor()
   } catch (e) { error.value = e.response?.data?.message || 'Could not save template style.' }
@@ -386,7 +420,7 @@ async function saveTplStyle() {
 }
 function resetTplStyle() {
   if (tplEditTarget.value) {
-    tplStyle.value[tplEditTarget.value] = { ...tplStyleDefaults[tplEditTarget.value] }
+    tplStyle.value[tplEditTarget.value] = { ...tplStyleDefaults[tplEditTarget.value], _showLabels: false }
   }
 }
 const sequences = ref({
@@ -1084,6 +1118,45 @@ async function saveSequences() {
                     <input v-model="tplStyle[tplEditTarget][s.key]" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
                     {{ s.label }}
                   </label>
+                </div>
+              </div>
+
+              <!-- Column Visibility -->
+              <div>
+                <label class="text-sm font-semibold text-gray-700 dark:text-slate-300 block mb-2">Columns</label>
+                <div class="grid grid-cols-2 gap-2">
+                  <label v-for="(lbl, col) in printColumnLabels" :key="col" class="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300 cursor-pointer rounded-lg border border-gray-100 dark:border-slate-600 px-3 py-2 transition hover:bg-gray-50">
+                    <input v-model="printColumns[col]" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                    {{ lbl }}
+                  </label>
+                </div>
+              </div>
+
+              <!-- Custom Labels -->
+              <div>
+                <button @click="tplStyle[tplEditTarget]._showLabels = !tplStyle[tplEditTarget]._showLabels" class="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-slate-300 w-full">
+                  <svg class="w-4 h-4 transition-transform" :class="tplStyle[tplEditTarget]._showLabels ? 'rotate-90' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                  Rename Labels
+                  <span class="text-xs font-normal text-gray-400 ml-1">(change text on invoice)</span>
+                </button>
+                <div v-if="tplStyle[tplEditTarget]._showLabels" class="mt-3 space-y-2">
+                  <div v-for="f in LABEL_FIELDS" :key="f.key" class="flex items-center gap-2">
+                    <label class="text-xs text-gray-500 w-36 shrink-0 truncate" :title="f.label">{{ f.label }}</label>
+                    <input v-model="tplStyle[tplEditTarget][f.key]" type="text" :placeholder="f.placeholder"
+                      class="flex-1 text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-2.5 py-1.5 bg-white dark:bg-slate-700 text-gray-800 dark:text-white focus:ring-1 focus:ring-primary-500 focus:border-primary-500" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Custom Header / Footer Text -->
+              <div>
+                <label class="text-sm font-semibold text-gray-700 dark:text-slate-300 block mb-2">Custom Text</label>
+                <div class="space-y-2">
+                  <div v-for="f in TEXT_FIELDS" :key="f.key">
+                    <label class="text-xs text-gray-500 block mb-0.5">{{ f.label }}</label>
+                    <input v-model="tplStyle[tplEditTarget][f.key]" type="text" :placeholder="f.placeholder"
+                      class="w-full text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-2.5 py-1.5 bg-white dark:bg-slate-700 text-gray-800 dark:text-white focus:ring-1 focus:ring-primary-500 focus:border-primary-500" />
+                  </div>
                 </div>
               </div>
             </div>

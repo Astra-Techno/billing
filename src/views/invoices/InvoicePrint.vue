@@ -126,6 +126,9 @@ const fontFamily = computed(() => {
 })
 const logoSz = computed(() => (ts.value.logo_size || 56) + 'px')
 
+// Custom label helper — returns user-set label or the default
+function lbl(key, fallback) { return ts.value[key] || fallback }
+
 // Collect distinct GST rates for display in totals (e.g. "CGST @9%")
 const gstRates = computed(() => {
   const rates = [...new Set(items.value.map(it => parseFloat(it.gst_rate || 0)).filter(r => r > 0))]
@@ -306,10 +309,15 @@ onMounted(async () => {
         </div>
       </div>
 
+      <!-- Custom Header Text -->
+      <div v-if="ts.custom_header" class="mb-3 text-center">
+        <p class="text-xs text-gray-500 italic">{{ ts.custom_header }}</p>
+      </div>
+
       <!-- Bill To + Invoice Details -->
       <div class="grid grid-cols-2 gap-4 mb-4 pb-3 border-b border-gray-200">
         <div>
-          <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Bill To</p>
+          <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{{ lbl('label_bill_to', 'Bill To') }}</p>
           <p class="font-bold text-gray-900 text-sm">{{ invoice.client_name || 'Walk-in Customer' }}</p>
           <p v-if="invoice.client_company" class="text-xs text-gray-600">{{ invoice.client_company }}</p>
           <p v-if="invoice.client_gstin" class="text-xs text-gray-500 font-mono">GSTIN: {{ invoice.client_gstin }}</p>
@@ -317,7 +325,7 @@ onMounted(async () => {
           <p v-if="invoice.client_mobile" class="text-xs text-gray-500">Mob: {{ invoice.client_mobile }}</p>
         </div>
         <div>
-          <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{{ isDC ? 'Challan Details' : 'Invoice Details' }}</p>
+          <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{{ isDC ? 'Challan Details' : lbl('label_invoice_details', 'Invoice Details') }}</p>
           <table class="text-xs w-full">
             <tr><td class="text-gray-400 pb-1 pr-3">{{ isDC ? 'Ref Invoice' : 'Invoice No' }}</td><td class="font-semibold text-gray-800">{{ invoice.number || 'DRAFT' }}</td></tr>
             <tr><td class="text-gray-400 pb-1 pr-3">{{ isDC ? 'Challan Date' : 'Invoice Date' }}</td><td class="font-medium text-gray-700">{{ fmtDateShort(invoice.issue_date) }}</td></tr>
@@ -332,14 +340,14 @@ onMounted(async () => {
         <thead>
           <tr :style="{ background: pc, color: '#fff' }">
             <th v-if="pcol.serial" class="px-1.5 py-1 text-left font-semibold w-6">#</th>
-            <th class="px-1.5 py-1 text-left font-semibold">Description</th>
-            <th v-if="pcol.hsn" class="px-1.5 py-1 text-center font-semibold">HSN/SAC</th>
-            <th v-if="pcol.qty" class="px-1.5 py-1 text-right font-semibold">Qty</th>
-            <th v-if="pcol.unit" class="px-1.5 py-1 text-center font-semibold">Unit</th>
-            <th v-if="pcol.rate && !isDC" class="px-1.5 py-1 text-right font-semibold">Rate</th>
-            <th v-if="pcol.discount && hasItemDiscount && !isDC" class="px-1.5 py-1 text-right font-semibold">Disc%</th>
-            <th v-if="pcol.taxable && !isDC" class="px-1.5 py-1 text-right font-semibold">Taxable</th>
-            <th v-if="pcol.amount && !isDC" class="px-1.5 py-1 text-right font-semibold">Amount</th>
+            <th class="px-1.5 py-1 text-left font-semibold">{{ lbl('label_description', 'Description') }}</th>
+            <th v-if="pcol.hsn" class="px-1.5 py-1 text-center font-semibold">{{ lbl('label_hsn', 'HSN/SAC') }}</th>
+            <th v-if="pcol.qty" class="px-1.5 py-1 text-right font-semibold">{{ lbl('label_qty', 'Qty') }}</th>
+            <th v-if="pcol.unit" class="px-1.5 py-1 text-center font-semibold">{{ lbl('label_unit', 'Unit') }}</th>
+            <th v-if="pcol.rate && !isDC" class="px-1.5 py-1 text-right font-semibold">{{ lbl('label_rate', 'Rate') }}</th>
+            <th v-if="pcol.discount && hasItemDiscount && !isDC" class="px-1.5 py-1 text-right font-semibold">{{ lbl('label_discount', 'Disc%') }}</th>
+            <th v-if="pcol.taxable && !isDC" class="px-1.5 py-1 text-right font-semibold">{{ lbl('label_taxable', 'Taxable') }}</th>
+            <th v-if="pcol.amount && !isDC" class="px-1.5 py-1 text-right font-semibold">{{ lbl('label_amount', 'Amount') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -369,26 +377,31 @@ onMounted(async () => {
       <!-- Totals -->
       <div v-if="!isDC" class="flex gap-6 mb-4 pb-4 border-b border-gray-200">
         <div v-if="ts.show_words" class="flex-1">
-          <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Amount in Words</p>
+          <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{{ lbl('label_amount_words', 'Amount in Words') }}</p>
           <p class="text-sm font-medium text-gray-700 italic">{{ amountInWords(invoice.total) }}</p>
         </div>
         <div v-else class="flex-1"></div>
         <div class="w-52 space-y-1 text-xs">
-          <div class="flex justify-between text-gray-600"><span>Subtotal</span><span>{{ inr(afterItemDiscount) }}</span></div>
+          <div class="flex justify-between text-gray-600"><span>{{ lbl('label_subtotal', 'Subtotal') }}</span><span>{{ inr(afterItemDiscount) }}</span></div>
           <div v-if="invoiceDiscountOnly > 0" class="flex justify-between text-green-700"><span>Discount</span><span>-{{ inr(invoiceDiscountOnly) }}</span></div>
           <div v-if="invoice.cgst_total > 0" class="flex justify-between text-gray-600"><span>{{ cgstLabel() }}</span><span>{{ inr(invoice.cgst_total) }}</span></div>
           <div v-if="invoice.sgst_total > 0" class="flex justify-between text-gray-600"><span>{{ sgstLabel() }}</span><span>{{ inr(invoice.sgst_total) }}</span></div>
           <div v-if="invoice.igst_total > 0" class="flex justify-between text-gray-600"><span>{{ igstLabel() }}</span><span>{{ inr(invoice.igst_total) }}</span></div>
-          <div class="flex justify-between font-bold text-sm text-gray-900 border-t border-gray-300 pt-1"><span>NET Amount</span><span>{{ inr(invoice.total) }}</span></div>
+          <div class="flex justify-between font-bold text-sm text-gray-900 border-t border-gray-300 pt-1"><span>{{ lbl('label_net_amount', 'NET Amount') }}</span><span>{{ inr(invoice.total) }}</span></div>
           <div v-if="invoice.amount_paid > 0" class="flex justify-between text-green-700"><span>Paid</span><span>{{ inr(invoice.amount_paid) }}</span></div>
-          <div v-if="invoice.amount_due > 0" class="flex justify-between font-bold text-red-600 border-t border-gray-300 pt-1"><span>Balance Due</span><span>{{ inr(invoice.amount_due) }}</span></div>
+          <div v-if="invoice.amount_due > 0" class="flex justify-between font-bold text-red-600 border-t border-gray-300 pt-1"><span>{{ lbl('label_balance_due', 'Balance Due') }}</span><span>{{ inr(invoice.amount_due) }}</span></div>
         </div>
+      </div>
+
+      <!-- Custom Footer -->
+      <div v-if="ts.custom_footer" class="mb-4 text-center">
+        <p class="text-xs text-gray-500 italic">{{ ts.custom_footer }}</p>
       </div>
 
       <!-- Bank + Notes -->
       <div class="grid grid-cols-2 gap-6 mb-6">
         <div v-if="ts.show_bank && !isDC && (business?.bank_name || business?.upi_id)">
-          <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Payment Details</p>
+          <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{{ lbl('label_payment_details', 'Payment Details') }}</p>
           <div class="flex gap-4 items-start">
             <div class="space-y-0.5 text-xs flex-1">
               <div v-if="business.bank_name" class="flex gap-2"><span class="text-gray-400 w-16 shrink-0">Bank</span><span>{{ business.bank_name }}</span></div>
@@ -404,11 +417,11 @@ onMounted(async () => {
         </div>
         <div>
           <div v-if="ts.show_notes && (invoice.notes || business?.invoice_notes)" class="mb-2">
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Notes</p>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{{ lbl('label_notes', 'Notes') }}</p>
             <p class="text-xs text-gray-600">{{ invoice.notes || business?.invoice_notes }}</p>
           </div>
           <div v-if="ts.show_terms && (invoice.terms || business?.invoice_terms)">
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Terms</p>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{{ lbl('label_terms', 'Terms') }}</p>
             <p class="text-xs text-gray-600">{{ invoice.terms || business?.invoice_terms }}</p>
           </div>
         </div>
@@ -416,8 +429,8 @@ onMounted(async () => {
 
       <!-- Signature -->
       <div v-if="ts.show_signature" class="grid grid-cols-2 gap-8 mt-8">
-        <div class="text-center"><div class="border-t border-gray-400 pt-2 mt-12"><p class="text-xs font-semibold text-gray-500">Customer Signature</p></div></div>
-        <div class="text-center"><div class="border-t border-gray-400 pt-2 mt-12"><p class="text-xs font-semibold text-gray-500">Authorised Signatory</p></div></div>
+        <div class="text-center"><div class="border-t border-gray-400 pt-2 mt-12"><p class="text-xs font-semibold text-gray-500">{{ lbl('label_customer_sig', 'Customer Signature') }}</p></div></div>
+        <div class="text-center"><div class="border-t border-gray-400 pt-2 mt-12"><p class="text-xs font-semibold text-gray-500">{{ lbl('label_auth_sig', 'Authorised Signatory') }}</p></div></div>
       </div>
     </div>
 
@@ -436,6 +449,11 @@ onMounted(async () => {
         </div>
       </div>
 
+      <!-- Custom Header Text -->
+      <div v-if="ts.custom_header" style="text-align: center; padding: 6px 0; margin-top: 12px;">
+        <p :style="{ fontSize: '11px', color: pc, fontStyle: 'italic' }">{{ ts.custom_header }}</p>
+      </div>
+
       <!-- Business + Client row -->
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 20px 0; padding-bottom: 16px; border-bottom: 2px solid #eef2f7;">
         <div>
@@ -446,7 +464,7 @@ onMounted(async () => {
           <p v-if="sellerGstin" style="font-size: 11px; color: #6b7280; font-family: monospace;">GSTIN: {{ sellerGstin }}</p>
         </div>
         <div :style="{ background: pcLighter, borderRadius: '10px', padding: '12px 16px' }">
-          <p :style="{ fontSize: '10px', fontWeight: 700, color: pc, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }">Bill To</p>
+          <p :style="{ fontSize: '10px', fontWeight: 700, color: pc, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }">{{ lbl('label_bill_to', 'Bill To') }}</p>
           <p style="font-size: 14px; font-weight: 700; color: #111827;">{{ invoice.client_name || 'Walk-in Customer' }}</p>
           <p v-if="invoice.client_company" style="font-size: 11px; color: #6b7280;">{{ invoice.client_company }}</p>
           <p v-if="invoice.client_gstin" style="font-size: 11px; color: #6b7280; font-family: monospace;">GSTIN: {{ invoice.client_gstin }}</p>
@@ -476,13 +494,13 @@ onMounted(async () => {
         <thead>
           <tr :style="{ background: `linear-gradient(135deg, ${pc}, ${pcGrad})`, color: 'white' }">
             <th v-if="pcol.serial" style="padding: 6px 6px; text-align: left; font-weight: 600; border-radius: 6px 0 0 0;">#</th>
-            <th style="padding: 6px 6px; text-align: left; font-weight: 600;">Description</th>
-            <th v-if="pcol.hsn" style="padding: 6px 6px; text-align: center; font-weight: 600;">HSN</th>
-            <th v-if="pcol.qty" style="padding: 6px 6px; text-align: right; font-weight: 600;">Qty</th>
-            <th v-if="pcol.unit" style="padding: 6px 6px; text-align: center; font-weight: 600;">Unit</th>
-            <th v-if="pcol.rate && !isDC" style="padding: 6px 6px; text-align: right; font-weight: 600;">Rate</th>
-            <th v-if="pcol.discount && hasItemDiscount && !isDC" style="padding: 6px 6px; text-align: right; font-weight: 600;">Disc%</th>
-            <th v-if="pcol.amount && !isDC" style="padding: 6px 6px; text-align: right; font-weight: 600; border-radius: 0 6px 0 0;">Amount</th>
+            <th style="padding: 6px 6px; text-align: left; font-weight: 600;">{{ lbl('label_description', 'Description') }}</th>
+            <th v-if="pcol.hsn" style="padding: 6px 6px; text-align: center; font-weight: 600;">{{ lbl('label_hsn', 'HSN') }}</th>
+            <th v-if="pcol.qty" style="padding: 6px 6px; text-align: right; font-weight: 600;">{{ lbl('label_qty', 'Qty') }}</th>
+            <th v-if="pcol.unit" style="padding: 6px 6px; text-align: center; font-weight: 600;">{{ lbl('label_unit', 'Unit') }}</th>
+            <th v-if="pcol.rate && !isDC" style="padding: 6px 6px; text-align: right; font-weight: 600;">{{ lbl('label_rate', 'Rate') }}</th>
+            <th v-if="pcol.discount && hasItemDiscount && !isDC" style="padding: 6px 6px; text-align: right; font-weight: 600;">{{ lbl('label_discount', 'Disc%') }}</th>
+            <th v-if="pcol.amount && !isDC" style="padding: 6px 6px; text-align: right; font-weight: 600; border-radius: 0 6px 0 0;">{{ lbl('label_amount', 'Amount') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -511,26 +529,31 @@ onMounted(async () => {
       <!-- Totals -->
       <div v-if="!isDC" style="display: flex; gap: 24px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 2px solid #eef2f7;">
         <div v-if="ts.show_words" style="flex: 1;">
-          <p :style="{ fontSize: '9px', fontWeight: 700, color: pc, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }">Amount in Words</p>
+          <p :style="{ fontSize: '9px', fontWeight: 700, color: pc, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }">{{ lbl('label_amount_words', 'Amount in Words') }}</p>
           <p style="font-size: 12px; font-weight: 500; color: #374151; font-style: italic;">{{ amountInWords(invoice.total) }}</p>
         </div>
         <div v-else style="flex: 1;"></div>
         <div style="width: 220px;">
-          <div style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563;"><span>Subtotal</span><span>{{ inr(afterItemDiscount) }}</span></div>
+          <div style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563;"><span>{{ lbl('label_subtotal', 'Subtotal') }}</span><span>{{ inr(afterItemDiscount) }}</span></div>
           <div v-if="invoiceDiscountOnly > 0" style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #15803d;"><span>Discount</span><span>-{{ inr(invoiceDiscountOnly) }}</span></div>
           <div v-if="invoice.cgst_total > 0" style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563;"><span>{{ cgstLabel() }}</span><span>{{ inr(invoice.cgst_total) }}</span></div>
           <div v-if="invoice.sgst_total > 0" style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563;"><span>{{ sgstLabel() }}</span><span>{{ inr(invoice.sgst_total) }}</span></div>
           <div v-if="invoice.igst_total > 0" style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563;"><span>{{ igstLabel() }}</span><span>{{ inr(invoice.igst_total) }}</span></div>
-          <div :style="{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', marginTop: '4px', fontSize: '14px', fontWeight: 700, color: 'white', background: `linear-gradient(135deg, ${pc}, ${pcGrad})`, borderRadius: '6px' }"><span>NET Amount</span><span>{{ inr(invoice.total) }}</span></div>
+          <div :style="{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', marginTop: '4px', fontSize: '14px', fontWeight: 700, color: 'white', background: `linear-gradient(135deg, ${pc}, ${pcGrad})`, borderRadius: '6px' }"><span>{{ lbl('label_net_amount', 'NET Amount') }}</span><span>{{ inr(invoice.total) }}</span></div>
           <div v-if="invoice.amount_paid > 0" style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #15803d; margin-top: 4px;"><span>Paid</span><span>{{ inr(invoice.amount_paid) }}</span></div>
-          <div v-if="invoice.amount_due > 0" style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; font-weight: 700; color: #dc2626; border-top: 1px solid #e5e7eb; margin-top: 4px;"><span>Balance Due</span><span>{{ inr(invoice.amount_due) }}</span></div>
+          <div v-if="invoice.amount_due > 0" style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; font-weight: 700; color: #dc2626; border-top: 1px solid #e5e7eb; margin-top: 4px;"><span>{{ lbl('label_balance_due', 'Balance Due') }}</span><span>{{ inr(invoice.amount_due) }}</span></div>
         </div>
+      </div>
+
+      <!-- Custom Footer -->
+      <div v-if="ts.custom_footer" style="text-align: center; margin-bottom: 12px;">
+        <p style="font-size: 11px; color: #6b7280; font-style: italic;">{{ ts.custom_footer }}</p>
       </div>
 
       <!-- Bank + Notes -->
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
         <div v-if="ts.show_bank && !isDC && (business?.bank_name || business?.upi_id)">
-          <p :style="{ fontSize: '9px', fontWeight: 700, color: pc, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }">Payment Details</p>
+          <p :style="{ fontSize: '9px', fontWeight: 700, color: pc, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }">{{ lbl('label_payment_details', 'Payment Details') }}</p>
           <div style="display: flex; gap: 16px; align-items: flex-start;">
             <div style="flex: 1;">
               <div v-if="business.bank_name" style="font-size: 11px; color: #4b5563; padding: 2px 0;"><span style="color: #9ca3af; display: inline-block; width: 48px;">Bank</span> {{ business.bank_name }}</div>
@@ -546,11 +569,11 @@ onMounted(async () => {
         </div>
         <div>
           <div v-if="ts.show_notes && (invoice.notes || business?.invoice_notes)" style="margin-bottom: 8px;">
-            <p :style="{ fontSize: '9px', fontWeight: 700, color: pc, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '2px' }">Notes</p>
+            <p :style="{ fontSize: '9px', fontWeight: 700, color: pc, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '2px' }">{{ lbl('label_notes', 'Notes') }}</p>
             <p style="font-size: 11px; color: #4b5563;">{{ invoice.notes || business?.invoice_notes }}</p>
           </div>
           <div v-if="ts.show_terms && (invoice.terms || business?.invoice_terms)">
-            <p :style="{ fontSize: '9px', fontWeight: 700, color: pc, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '2px' }">Terms</p>
+            <p :style="{ fontSize: '9px', fontWeight: 700, color: pc, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '2px' }">{{ lbl('label_terms', 'Terms') }}</p>
             <p style="font-size: 11px; color: #4b5563;">{{ invoice.terms || business?.invoice_terms }}</p>
           </div>
         </div>
@@ -558,8 +581,8 @@ onMounted(async () => {
 
       <!-- Signature -->
       <div v-if="ts.show_signature" style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 32px;">
-        <div style="text-align: center;"><div style="border-top: 1px solid #9ca3af; padding-top: 8px; margin-top: 48px;"><p style="font-size: 11px; font-weight: 600; color: #6b7280;">Customer Signature</p></div></div>
-        <div style="text-align: center;"><div style="border-top: 1px solid #9ca3af; padding-top: 8px; margin-top: 48px;"><p style="font-size: 11px; font-weight: 600; color: #6b7280;">Authorised Signatory</p></div></div>
+        <div style="text-align: center;"><div style="border-top: 1px solid #9ca3af; padding-top: 8px; margin-top: 48px;"><p style="font-size: 11px; font-weight: 600; color: #6b7280;">{{ lbl('label_customer_sig', 'Customer Signature') }}</p></div></div>
+        <div style="text-align: center;"><div style="border-top: 1px solid #9ca3af; padding-top: 8px; margin-top: 48px;"><p style="font-size: 11px; font-weight: 600; color: #6b7280;">{{ lbl('label_auth_sig', 'Authorised Signatory') }}</p></div></div>
       </div>
     </div>
 
@@ -584,13 +607,18 @@ onMounted(async () => {
         </div>
       </div>
 
+      <!-- Custom Header Text -->
+      <div v-if="ts.custom_header" style="text-align: center; margin-bottom: 8px;">
+        <p style="font-size: 11px; color: #9ca3af; font-style: italic;">{{ ts.custom_header }}</p>
+      </div>
+
       <!-- Thin line -->
       <div style="height: 1px; background: #e5e7eb; margin-bottom: 24px;"></div>
 
       <!-- Client + Details -->
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 24px;">
         <div>
-          <p style="font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 8px;">Billed To</p>
+          <p style="font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 8px;">{{ lbl('label_bill_to', 'Billed To') }}</p>
           <p style="font-size: 15px; font-weight: 600; color: #111827;">{{ invoice.client_name || 'Walk-in Customer' }}</p>
           <p v-if="invoice.client_company" style="font-size: 12px; color: #6b7280; margin-top: 2px;">{{ invoice.client_company }}</p>
           <p v-if="invoice.client_gstin" style="font-size: 11px; color: #9ca3af; font-family: monospace; margin-top: 4px;">GSTIN: {{ invoice.client_gstin }}</p>
@@ -608,12 +636,12 @@ onMounted(async () => {
       <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px; font-family: -apple-system, sans-serif; font-size: 11px;">
         <thead>
           <tr :style="{ borderBottom: `2px solid ${pc}` }">
-            <th style="padding: 5px 0; text-align: left; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">Description</th>
-            <th v-if="pcol.hsn" style="padding: 5px 0; text-align: center; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">HSN</th>
-            <th v-if="pcol.qty" style="padding: 5px 0; text-align: right; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">Qty</th>
-            <th v-if="pcol.rate && !isDC" style="padding: 5px 0; text-align: right; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">Rate</th>
-            <th v-if="pcol.discount && hasItemDiscount && !isDC" style="padding: 5px 0; text-align: right; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">Disc%</th>
-            <th v-if="pcol.amount && !isDC" style="padding: 5px 0; text-align: right; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">Amount</th>
+            <th style="padding: 5px 0; text-align: left; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">{{ lbl('label_description', 'Description') }}</th>
+            <th v-if="pcol.hsn" style="padding: 5px 0; text-align: center; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">{{ lbl('label_hsn', 'HSN') }}</th>
+            <th v-if="pcol.qty" style="padding: 5px 0; text-align: right; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">{{ lbl('label_qty', 'Qty') }}</th>
+            <th v-if="pcol.rate && !isDC" style="padding: 5px 0; text-align: right; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">{{ lbl('label_rate', 'Rate') }}</th>
+            <th v-if="pcol.discount && hasItemDiscount && !isDC" style="padding: 5px 0; text-align: right; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">{{ lbl('label_discount', 'Disc%') }}</th>
+            <th v-if="pcol.amount && !isDC" style="padding: 5px 0; text-align: right; font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">{{ lbl('label_amount', 'Amount') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -642,26 +670,31 @@ onMounted(async () => {
       <!-- Totals — right aligned, minimal -->
       <div v-if="!isDC" style="display: flex; gap: 24px; margin-bottom: 24px;">
         <div v-if="ts.show_words" style="flex: 1;">
-          <p style="font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 4px;">Amount in Words</p>
+          <p style="font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 4px;">{{ lbl('label_amount_words', 'Amount in Words') }}</p>
           <p style="font-size: 12px; color: #6b7280; font-style: italic;">{{ amountInWords(invoice.total) }}</p>
         </div>
         <div v-else style="flex: 1;"></div>
         <div :style="{ width: '200px', borderTop: `2px solid ${pc}`, paddingTop: '8px' }">
-          <div style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280;"><span>Subtotal</span><span>{{ inr(afterItemDiscount) }}</span></div>
+          <div style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280;"><span>{{ lbl('label_subtotal', 'Subtotal') }}</span><span>{{ inr(afterItemDiscount) }}</span></div>
           <div v-if="invoiceDiscountOnly > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #15803d;"><span>Discount</span><span>-{{ inr(invoiceDiscountOnly) }}</span></div>
           <div v-if="invoice.cgst_total > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280;"><span>{{ cgstLabel() }}</span><span>{{ inr(invoice.cgst_total) }}</span></div>
           <div v-if="invoice.sgst_total > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280;"><span>{{ sgstLabel() }}</span><span>{{ inr(invoice.sgst_total) }}</span></div>
           <div v-if="invoice.igst_total > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280;"><span>{{ igstLabel() }}</span><span>{{ inr(invoice.igst_total) }}</span></div>
-          <div :style="{ display: 'flex', justifyContent: 'space-between', padding: '8px 0 4px', fontSize: '18px', fontWeight: 700, color: pc, borderTop: `2px solid ${pc}`, marginTop: '4px' }"><span>NET Amount</span><span>{{ inr(invoice.total) }}</span></div>
+          <div :style="{ display: 'flex', justifyContent: 'space-between', padding: '8px 0 4px', fontSize: '18px', fontWeight: 700, color: pc, borderTop: `2px solid ${pc}`, marginTop: '4px' }"><span>{{ lbl('label_net_amount', 'NET Amount') }}</span><span>{{ inr(invoice.total) }}</span></div>
           <div v-if="invoice.amount_paid > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #15803d;"><span>Paid</span><span>{{ inr(invoice.amount_paid) }}</span></div>
-          <div v-if="invoice.amount_due > 0" style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 14px; font-weight: 700; color: #dc2626;"><span>Balance Due</span><span>{{ inr(invoice.amount_due) }}</span></div>
+          <div v-if="invoice.amount_due > 0" style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 14px; font-weight: 700; color: #dc2626;"><span>{{ lbl('label_balance_due', 'Balance Due') }}</span><span>{{ inr(invoice.amount_due) }}</span></div>
         </div>
+      </div>
+
+      <!-- Custom Footer -->
+      <div v-if="ts.custom_footer" style="text-align: center; margin-bottom: 16px;">
+        <p style="font-size: 11px; color: #9ca3af; font-style: italic;">{{ ts.custom_footer }}</p>
       </div>
 
       <!-- Bank + Notes -->
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 32px;">
         <div v-if="ts.show_bank && !isDC && (business?.bank_name || business?.upi_id)">
-          <p style="font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 6px;">Payment Details</p>
+          <p style="font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 6px;">{{ lbl('label_payment_details', 'Payment Details') }}</p>
           <div style="display: flex; gap: 16px; align-items: flex-start;">
             <div style="flex: 1; font-size: 11px; color: #6b7280; line-height: 1.8;">
               <div v-if="business.bank_name">{{ business.bank_name }}</div>
@@ -677,11 +710,11 @@ onMounted(async () => {
         </div>
         <div>
           <div v-if="ts.show_notes && (invoice.notes || business?.invoice_notes)" style="margin-bottom: 8px;">
-            <p style="font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 2px;">Notes</p>
+            <p style="font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 2px;">{{ lbl('label_notes', 'Notes') }}</p>
             <p style="font-size: 11px; color: #6b7280;">{{ invoice.notes || business?.invoice_notes }}</p>
           </div>
           <div v-if="ts.show_terms && (invoice.terms || business?.invoice_terms)">
-            <p style="font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 2px;">Terms</p>
+            <p style="font-size: 9px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 2px;">{{ lbl('label_terms', 'Terms') }}</p>
             <p style="font-size: 11px; color: #6b7280;">{{ invoice.terms || business?.invoice_terms }}</p>
           </div>
         </div>
@@ -689,8 +722,8 @@ onMounted(async () => {
 
       <!-- Signature — minimal -->
       <div v-if="ts.show_signature" style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px;">
-        <div style="text-align: center;"><div style="border-top: 1px solid #d1d5db; padding-top: 8px; margin-top: 48px;"><p style="font-size: 10px; color: #9ca3af;">Customer Signature</p></div></div>
-        <div style="text-align: center;"><div style="border-top: 1px solid #d1d5db; padding-top: 8px; margin-top: 48px;"><p style="font-size: 10px; color: #9ca3af;">Authorised Signatory</p></div></div>
+        <div style="text-align: center;"><div style="border-top: 1px solid #d1d5db; padding-top: 8px; margin-top: 48px;"><p style="font-size: 10px; color: #9ca3af;">{{ lbl('label_customer_sig', 'Customer Signature') }}</p></div></div>
+        <div style="text-align: center;"><div style="border-top: 1px solid #d1d5db; padding-top: 8px; margin-top: 48px;"><p style="font-size: 10px; color: #9ca3af;">{{ lbl('label_auth_sig', 'Authorised Signatory') }}</p></div></div>
       </div>
     </div>
 
@@ -720,6 +753,11 @@ onMounted(async () => {
         </tr>
       </table>
 
+      <!-- Custom Header Text -->
+      <div v-if="ts.custom_header" style="text-align: center; padding: 4px 0;">
+        <p style="font-size: 11px; color: #555; font-style: italic;">{{ ts.custom_header }}</p>
+      </div>
+
       <!-- Invoice Title -->
       <div :style="{ textAlign: 'center', padding: '8px 0', borderBottom: `1px solid ${pc}` }">
         <p :style="{ fontSize: '18px', fontWeight: 800, letterSpacing: '0.1em', color: pc }">{{ invoiceTitle.toUpperCase() }}</p>
@@ -729,7 +767,7 @@ onMounted(async () => {
       <table class="trad-full">
         <tr>
           <td style="padding: 10px 12px; vertical-align: top; width: 55%; border-right: 1px solid #000; border-bottom: 1px solid #000;">
-            <p style="font-size: 12px; font-weight: 700;">To</p>
+            <p style="font-size: 12px; font-weight: 700;">{{ lbl('label_bill_to', 'To') }}</p>
             <p style="font-size: 14px; font-weight: 700; margin-top: 4px;">{{ invoice.client_name || 'Walk-in Customer' }}</p>
             <p v-if="invoice.client_company" style="font-size: 12px;">{{ invoice.client_company }}</p>
             <p v-if="invoice.client_gstin" style="font-size: 11px; margin-top: 2px;">GSTIN: {{ invoice.client_gstin }}</p>
@@ -752,13 +790,13 @@ onMounted(async () => {
         <thead>
           <tr>
             <th v-if="pcol.serial" style="width: 40px;">S.No</th>
-            <th style="text-align: left;">Product Name</th>
-            <th v-if="pcol.hsn">HSN Code</th>
-            <th v-if="pcol.unit">Per UOM</th>
-            <th v-if="pcol.rate && !isDC" style="text-align: right;">Rate</th>
-            <th v-if="pcol.discount && hasItemDiscount && !isDC" style="text-align: right;">Disc%</th>
-            <th v-if="pcol.qty" style="text-align: right;">Qty</th>
-            <th v-if="pcol.amount && !isDC" style="text-align: right;">Amount</th>
+            <th style="text-align: left;">{{ lbl('label_description', 'Product Name') }}</th>
+            <th v-if="pcol.hsn">{{ lbl('label_hsn', 'HSN Code') }}</th>
+            <th v-if="pcol.unit">{{ lbl('label_unit', 'Per UOM') }}</th>
+            <th v-if="pcol.rate && !isDC" style="text-align: right;">{{ lbl('label_rate', 'Rate') }}</th>
+            <th v-if="pcol.discount && hasItemDiscount && !isDC" style="text-align: right;">{{ lbl('label_discount', 'Disc%') }}</th>
+            <th v-if="pcol.qty" style="text-align: right;">{{ lbl('label_qty', 'Qty') }}</th>
+            <th v-if="pcol.amount && !isDC" style="text-align: right;">{{ lbl('label_amount', 'Amount') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -810,10 +848,10 @@ onMounted(async () => {
             <span style="font-weight: 700;">RS.</span> {{ amountInWords(invoice.total) }}
           </td>
           <td style="padding: 8px 12px; text-align: right;">
-            <span :style="{ fontSize: '11px', fontWeight: 700, background: pc, color: '#fff', padding: '3px 10px' }">NET-AMOUNT</span>
+            <span :style="{ fontSize: '11px', fontWeight: 700, background: pc, color: '#fff', padding: '3px 10px' }">{{ lbl('label_net_amount', 'NET-AMOUNT') }}</span>
             <p style="font-size: 18px; font-weight: 900; margin-top: 4px;">{{ inr(Math.round(parseFloat(invoice.total||0))) }}</p>
             <div v-if="invoice.amount_paid > 0" style="font-size: 12px; color: #15803d; margin-top: 2px;">Paid: {{ inr(invoice.amount_paid) }}</div>
-            <div v-if="invoice.amount_due > 0" style="font-size: 14px; font-weight: 800; color: #dc2626; margin-top: 2px;">Balance Due: {{ inr(invoice.amount_due) }}</div>
+            <div v-if="invoice.amount_due > 0" style="font-size: 14px; font-weight: 800; color: #dc2626; margin-top: 2px;">{{ lbl('label_balance_due', 'Balance Due') }}: {{ inr(invoice.amount_due) }}</div>
           </td>
         </tr>
       </table>
@@ -849,7 +887,7 @@ onMounted(async () => {
           <td style="width: 33%; padding: 12px; vertical-align: top; text-align: right;">
             <p style="font-size: 12px; font-weight: 700; font-style: italic;">For {{ business?.name || invoice.business_name }}</p>
             <div style="height: 50px;"></div>
-            <p style="font-size: 11px; font-weight: 600; text-align: right;">Authorised Signatory</p>
+            <p style="font-size: 11px; font-weight: 600; text-align: right;">{{ lbl('label_auth_sig', 'Authorised Signatory') }}</p>
           </td>
         </tr>
       </table>
@@ -862,7 +900,7 @@ onMounted(async () => {
 
       <!-- Footer -->
       <div style="border-top: 1px solid #000; padding: 6px; text-align: center;">
-        <p style="font-size: 10px; font-style: italic; color: #666;">This is a Computer Generated Invoice</p>
+        <p style="font-size: 10px; font-style: italic; color: #666;">{{ ts.custom_footer || 'This is a Computer Generated Invoice' }}</p>
       </div>
     </div>
 
