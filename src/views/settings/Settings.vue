@@ -345,6 +345,50 @@ async function savePrintColumns() {
   } catch (e) { error.value = e.response?.data?.message || 'Could not save print settings.' }
   printColSaving.value = false
 }
+
+// Template style customization
+const tplStyleDefaults = {
+  classic:     { primary_color: '#1e3a5f', font: 'sans', logo_size: 56, show_signature: true, show_bank: true, show_notes: true, show_terms: true, show_words: true, show_qr: true },
+  modern:      { primary_color: '#1a5fd4', font: 'sans', logo_size: 48, show_signature: true, show_bank: true, show_notes: true, show_terms: true, show_words: true, show_qr: true },
+  minimal:     { primary_color: '#111827', font: 'serif', logo_size: 40, show_signature: true, show_bank: true, show_notes: true, show_terms: true, show_words: true, show_qr: true },
+  traditional: { primary_color: '#000000', font: 'sans', logo_size: 64, show_signature: true, show_bank: true, show_notes: true, show_terms: true, show_words: true, show_qr: true },
+}
+const tplStyle = ref({})
+const tplEditTarget = ref(null) // which template is being edited
+const tplStyleSaving = ref(false)
+const FONT_OPTIONS = [
+  { id: 'sans', label: 'Sans-serif (Default)' },
+  { id: 'serif', label: 'Serif (Elegant)' },
+  { id: 'mono', label: 'Monospace (Technical)' },
+]
+const SECTION_TOGGLES = [
+  { key: 'show_signature', label: 'Signature Block' },
+  { key: 'show_bank', label: 'Bank / Payment Details' },
+  { key: 'show_notes', label: 'Notes' },
+  { key: 'show_terms', label: 'Terms & Conditions' },
+  { key: 'show_words', label: 'Amount in Words' },
+  { key: 'show_qr', label: 'UPI QR Code' },
+]
+const COLOR_PRESETS = ['#1a5fd4','#1e3a5f','#111827','#0d9488','#7c3aed','#dc2626','#ea580c','#059669','#4f46e5','#be185d','#000000']
+function openTplEditor(tplId) {
+  tplEditTarget.value = tplId
+  if (!tplStyle.value[tplId]) tplStyle.value[tplId] = { ...tplStyleDefaults[tplId] }
+}
+function closeTplEditor() { tplEditTarget.value = null }
+async function saveTplStyle() {
+  tplStyleSaving.value = true
+  try {
+    await task('Settings', 'save', { settings: { template_style: tplStyle.value } })
+    flash('Template style saved.')
+    closeTplEditor()
+  } catch (e) { error.value = e.response?.data?.message || 'Could not save template style.' }
+  tplStyleSaving.value = false
+}
+function resetTplStyle() {
+  if (tplEditTarget.value) {
+    tplStyle.value[tplEditTarget.value] = { ...tplStyleDefaults[tplEditTarget.value] }
+  }
+}
 const sequences = ref({
   invoice:     { prefix: 'INV', next_number: '', padding: 4 },
   quote:       { prefix: 'QTE', next_number: '', padding: 4 },
@@ -522,6 +566,17 @@ onMounted(async () => {
       if (s.print_columns) {
         const pc = typeof s.print_columns === 'string' ? JSON.parse(s.print_columns) : s.print_columns
         Object.assign(printColumns.value, pc)
+      }
+      if (s.template_style) {
+        const ts = typeof s.template_style === 'string' ? JSON.parse(s.template_style) : s.template_style
+        // Merge saved styles with defaults for each template
+        for (const tid of Object.keys(tplStyleDefaults)) {
+          tplStyle.value[tid] = { ...tplStyleDefaults[tid], ...(ts[tid] || {}) }
+        }
+      } else {
+        for (const tid of Object.keys(tplStyleDefaults)) {
+          tplStyle.value[tid] = { ...tplStyleDefaults[tid] }
+        }
       }
     } catch {}
     // Load current sequences
@@ -880,83 +935,166 @@ async function saveSequences() {
       <div class="card card-body !p-5 space-y-4 mb-4">
         <div>
           <h3 class="text-sm font-bold text-ink dark:text-white">Invoice Template</h3>
-          <p class="text-xs text-google-muted mt-0.5">Choose how your printed invoices look</p>
+          <p class="text-xs text-google-muted mt-0.5">Choose how your printed invoices look — click Edit to customise</p>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <button v-for="t in [
-            { id: 'classic', name: 'Classic', desc: 'Traditional business style', color: '#1f2937' },
-            { id: 'modern', name: 'Modern', desc: 'Clean with accent colors', color: '#1a5fd4' },
-            { id: 'minimal', name: 'Minimal', desc: 'Simple & elegant', color: '#111827' },
-            { id: 'traditional', name: 'Traditional', desc: 'Bordered table format', color: '#000000' },
+          <div v-for="t in [
+            { id: 'classic', name: 'Classic', desc: 'Traditional business style' },
+            { id: 'modern', name: 'Modern', desc: 'Clean with accent colors' },
+            { id: 'minimal', name: 'Minimal', desc: 'Simple & elegant' },
+            { id: 'traditional', name: 'Traditional', desc: 'Bordered table format' },
           ]" :key="t.id"
-            @click="bizStore.setInvoiceTemplate(t.id)"
-            class="relative p-3 rounded-xl border-2 transition-all text-left"
+            class="relative rounded-xl border-2 transition-all text-left"
             :class="bizStore.invoiceTemplate === t.id
               ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 ring-2 ring-primary-200'
               : 'border-gray-200 dark:border-slate-600 hover:border-gray-300'"
           >
-            <!-- Mini preview -->
-            <div class="w-full aspect-[3/4] rounded-lg mb-2 overflow-hidden border border-gray-100 dark:border-slate-600 bg-white">
-              <!-- Classic preview -->
-              <div v-if="t.id === 'classic'" class="p-2 h-full flex flex-col">
-                <div class="h-1 w-12 rounded bg-blue-800 mb-1"></div>
-                <div class="h-0.5 w-full bg-gray-800 mb-1.5"></div>
-                <div class="flex gap-1 mb-1.5"><div class="h-1 w-6 bg-gray-200 rounded"></div><div class="h-1 w-6 bg-gray-200 rounded"></div></div>
-                <div class="flex-1 space-y-0.5">
-                  <div class="h-2 w-full bg-gray-800 rounded-sm"></div>
-                  <div class="h-1.5 w-full bg-gray-100 rounded-sm"></div>
-                  <div class="h-1.5 w-full bg-gray-100 rounded-sm"></div>
-                  <div class="h-1.5 w-3/4 bg-gray-100 rounded-sm"></div>
-                </div>
-                <div class="h-1 w-8 bg-gray-800 rounded ml-auto mt-1"></div>
-              </div>
-              <!-- Modern preview -->
-              <div v-if="t.id === 'modern'" class="h-full flex flex-col">
-                <div class="h-3 bg-blue-600"></div>
-                <div class="p-2 flex-1 flex flex-col">
-                  <div class="flex gap-1 mb-1.5"><div class="h-1 w-6 bg-blue-100 rounded"></div><div class="h-1 w-6 bg-gray-100 rounded"></div></div>
+            <button @click="bizStore.setInvoiceTemplate(t.id)" class="w-full p-3 pb-0 text-left">
+              <!-- Mini preview with dynamic color -->
+              <div class="w-full aspect-[3/4] rounded-lg mb-2 overflow-hidden border border-gray-100 dark:border-slate-600 bg-white">
+                <!-- Classic preview -->
+                <div v-if="t.id === 'classic'" class="p-2 h-full flex flex-col">
+                  <div class="h-1 w-12 rounded mb-1" :style="{ background: tplStyle.classic?.primary_color || '#1e3a5f' }"></div>
+                  <div class="h-0.5 w-full mb-1.5" :style="{ background: tplStyle.classic?.primary_color || '#1e3a5f' }"></div>
+                  <div class="flex gap-1 mb-1.5"><div class="h-1 w-6 bg-gray-200 rounded"></div><div class="h-1 w-6 bg-gray-200 rounded"></div></div>
                   <div class="flex-1 space-y-0.5">
-                    <div class="h-2 w-full bg-blue-600 rounded-sm"></div>
-                    <div class="h-1.5 w-full bg-blue-50 rounded-sm"></div>
+                    <div class="h-2 w-full rounded-sm" :style="{ background: tplStyle.classic?.primary_color || '#1e3a5f' }"></div>
+                    <div class="h-1.5 w-full bg-gray-100 rounded-sm"></div>
+                    <div class="h-1.5 w-full bg-gray-100 rounded-sm"></div>
+                    <div class="h-1.5 w-3/4 bg-gray-100 rounded-sm"></div>
+                  </div>
+                  <div class="h-1 w-8 rounded ml-auto mt-1" :style="{ background: tplStyle.classic?.primary_color || '#1e3a5f' }"></div>
+                </div>
+                <!-- Modern preview -->
+                <div v-if="t.id === 'modern'" class="h-full flex flex-col">
+                  <div class="h-3" :style="{ background: tplStyle.modern?.primary_color || '#1a5fd4' }"></div>
+                  <div class="p-2 flex-1 flex flex-col">
+                    <div class="flex gap-1 mb-1.5"><div class="h-1 w-6 rounded" :style="{ background: (tplStyle.modern?.primary_color || '#1a5fd4') + '30' }"></div><div class="h-1 w-6 bg-gray-100 rounded"></div></div>
+                    <div class="flex-1 space-y-0.5">
+                      <div class="h-2 w-full rounded-sm" :style="{ background: tplStyle.modern?.primary_color || '#1a5fd4' }"></div>
+                      <div class="h-1.5 w-full rounded-sm" :style="{ background: (tplStyle.modern?.primary_color || '#1a5fd4') + '15' }"></div>
+                      <div class="h-1.5 w-full bg-gray-50 rounded-sm"></div>
+                      <div class="h-1.5 w-3/4 rounded-sm" :style="{ background: (tplStyle.modern?.primary_color || '#1a5fd4') + '15' }"></div>
+                    </div>
+                    <div class="h-1 w-8 rounded ml-auto mt-1" :style="{ background: tplStyle.modern?.primary_color || '#1a5fd4' }"></div>
+                  </div>
+                </div>
+                <!-- Minimal preview -->
+                <div v-if="t.id === 'minimal'" class="p-2 h-full flex flex-col">
+                  <div class="h-1 w-10 mb-1.5" :style="{ background: tplStyle.minimal?.primary_color || '#111827' }"></div>
+                  <div class="flex gap-1 mb-1.5"><div class="h-0.5 w-6 bg-gray-200 rounded"></div><div class="h-0.5 w-6 bg-gray-200 rounded"></div></div>
+                  <div class="border-t border-gray-200 pt-1 flex-1 space-y-0.5">
+                    <div class="h-1.5 w-full bg-gray-100 rounded-sm"></div>
                     <div class="h-1.5 w-full bg-gray-50 rounded-sm"></div>
-                    <div class="h-1.5 w-3/4 bg-blue-50 rounded-sm"></div>
+                    <div class="h-1.5 w-3/4 bg-gray-100 rounded-sm"></div>
                   </div>
-                  <div class="h-1 w-8 bg-blue-600 rounded ml-auto mt-1"></div>
+                  <div class="border-t border-gray-200 pt-1 mt-1"><div class="h-1 w-8 rounded ml-auto" :style="{ background: tplStyle.minimal?.primary_color || '#111827' }"></div></div>
                 </div>
-              </div>
-              <!-- Minimal preview -->
-              <div v-if="t.id === 'minimal'" class="p-2 h-full flex flex-col">
-                <div class="h-1 w-10 bg-gray-900 mb-1.5"></div>
-                <div class="flex gap-1 mb-1.5"><div class="h-0.5 w-6 bg-gray-200 rounded"></div><div class="h-0.5 w-6 bg-gray-200 rounded"></div></div>
-                <div class="border-t border-gray-200 pt-1 flex-1 space-y-0.5">
-                  <div class="h-1.5 w-full bg-gray-100 rounded-sm"></div>
-                  <div class="h-1.5 w-full bg-gray-50 rounded-sm"></div>
-                  <div class="h-1.5 w-3/4 bg-gray-100 rounded-sm"></div>
-                </div>
-                <div class="border-t border-gray-200 pt-1 mt-1"><div class="h-1 w-8 bg-gray-900 rounded ml-auto"></div></div>
-              </div>
-              <!-- Traditional preview -->
-              <div v-if="t.id === 'traditional'" class="p-1.5 h-full flex flex-col border border-gray-900 bg-white">
-                <div class="text-center mb-1"><div class="h-1 w-10 bg-gray-900 rounded mx-auto"></div><div class="h-0.5 w-6 bg-gray-300 rounded mx-auto mt-0.5"></div></div>
-                <div class="h-0.5 bg-gray-900 mb-1"></div>
-                <div class="flex-1 border border-gray-400">
-                  <div class="h-2 w-full bg-gray-100 border-b border-gray-400"></div>
-                  <div class="space-y-px p-0.5">
-                    <div class="h-1.5 w-full border-b border-gray-200"></div>
-                    <div class="h-1.5 w-full border-b border-gray-200"></div>
-                    <div class="h-1.5 w-3/4 border-b border-gray-200"></div>
+                <!-- Traditional preview -->
+                <div v-if="t.id === 'traditional'" class="p-1.5 h-full flex flex-col border bg-white" :style="{ borderColor: tplStyle.traditional?.primary_color || '#000' }">
+                  <div class="text-center mb-1"><div class="h-1 w-10 rounded mx-auto" :style="{ background: tplStyle.traditional?.primary_color || '#000' }"></div><div class="h-0.5 w-6 bg-gray-300 rounded mx-auto mt-0.5"></div></div>
+                  <div class="h-0.5 mb-1" :style="{ background: tplStyle.traditional?.primary_color || '#000' }"></div>
+                  <div class="flex-1 border border-gray-400">
+                    <div class="h-2 w-full bg-gray-100 border-b border-gray-400"></div>
+                    <div class="space-y-px p-0.5">
+                      <div class="h-1.5 w-full border-b border-gray-200"></div>
+                      <div class="h-1.5 w-full border-b border-gray-200"></div>
+                      <div class="h-1.5 w-3/4 border-b border-gray-200"></div>
+                    </div>
                   </div>
+                  <div class="h-0.5 mt-1" :style="{ background: tplStyle.traditional?.primary_color || '#000' }"></div>
+                  <div class="flex justify-between mt-0.5"><div class="h-1 w-5 bg-gray-300 rounded"></div><div class="h-1 w-8 rounded" :style="{ background: tplStyle.traditional?.primary_color || '#000' }"></div></div>
                 </div>
-                <div class="h-0.5 bg-gray-900 mt-1"></div>
-                <div class="flex justify-between mt-0.5"><div class="h-1 w-5 bg-gray-300 rounded"></div><div class="h-1 w-8 bg-gray-900 rounded"></div></div>
               </div>
+            </button>
+            <div class="px-3 pb-3">
+              <p class="text-xs font-bold text-ink dark:text-white">{{ t.name }}</p>
+              <p class="text-[10px] text-google-muted leading-tight">{{ t.desc }}</p>
+              <button @click.stop="openTplEditor(t.id)" class="mt-1.5 text-[10px] font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-1">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                Edit Style
+              </button>
             </div>
-            <p class="text-xs font-bold text-ink dark:text-white">{{ t.name }}</p>
-            <p class="text-[10px] text-google-muted leading-tight">{{ t.desc }}</p>
             <div v-if="bizStore.invoiceTemplate === t.id" class="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary-500 flex items-center justify-center">
               <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
             </div>
-          </button>
+          </div>
+        </div>
+
+        <!-- Template Style Editor Modal -->
+        <div v-if="tplEditTarget" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" @click.self="closeTplEditor">
+          <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
+            <div class="px-5 py-4 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between sticky top-0 bg-white dark:bg-slate-800 z-10 rounded-t-2xl">
+              <h3 class="font-bold text-gray-800 dark:text-white">Edit {{ { classic:'Classic', modern:'Modern', minimal:'Minimal', traditional:'Traditional' }[tplEditTarget] }} Template</h3>
+              <button @click="closeTplEditor" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
+            </div>
+            <div class="p-5 space-y-6">
+              <!-- Primary Color -->
+              <div>
+                <label class="text-sm font-semibold text-gray-700 dark:text-slate-300 block mb-2">Primary Color</label>
+                <div class="flex items-center gap-3 flex-wrap">
+                  <div v-for="c in COLOR_PRESETS" :key="c"
+                    @click="tplStyle[tplEditTarget].primary_color = c"
+                    class="w-7 h-7 rounded-full cursor-pointer border-2 transition-all hover:scale-110"
+                    :class="tplStyle[tplEditTarget].primary_color === c ? 'border-gray-900 dark:border-white ring-2 ring-offset-1 ring-gray-400' : 'border-gray-200'"
+                    :style="{ background: c }"></div>
+                  <label class="relative w-7 h-7 rounded-full cursor-pointer border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden hover:border-gray-400" title="Custom color">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                    <input type="color" :value="tplStyle[tplEditTarget].primary_color" @input="tplStyle[tplEditTarget].primary_color = $event.target.value" class="absolute inset-0 opacity-0 cursor-pointer" />
+                  </label>
+                </div>
+                <div class="flex items-center gap-2 mt-2">
+                  <div class="w-5 h-5 rounded border" :style="{ background: tplStyle[tplEditTarget].primary_color }"></div>
+                  <span class="text-xs font-mono text-gray-500">{{ tplStyle[tplEditTarget].primary_color }}</span>
+                </div>
+              </div>
+
+              <!-- Font Family -->
+              <div>
+                <label class="text-sm font-semibold text-gray-700 dark:text-slate-300 block mb-2">Font Style</label>
+                <div class="grid grid-cols-3 gap-2">
+                  <button v-for="f in FONT_OPTIONS" :key="f.id" @click="tplStyle[tplEditTarget].font = f.id"
+                    class="px-3 py-2 rounded-lg border-2 text-xs font-medium transition-all"
+                    :class="tplStyle[tplEditTarget].font === f.id ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'"
+                    :style="{ fontFamily: f.id === 'serif' ? 'Georgia, serif' : f.id === 'mono' ? 'monospace' : 'inherit' }">
+                    {{ f.label }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Logo Size -->
+              <div>
+                <label class="text-sm font-semibold text-gray-700 dark:text-slate-300 block mb-2">Logo Size</label>
+                <div class="flex items-center gap-3">
+                  <input type="range" v-model.number="tplStyle[tplEditTarget].logo_size" min="24" max="96" step="4" class="flex-1 accent-primary-500" />
+                  <span class="text-xs text-gray-500 w-10 text-right">{{ tplStyle[tplEditTarget].logo_size }}px</span>
+                </div>
+                <div class="flex gap-2 mt-1">
+                  <button v-for="s in [{v:32,l:'S'},{v:48,l:'M'},{v:64,l:'L'},{v:80,l:'XL'}]" :key="s.v" @click="tplStyle[tplEditTarget].logo_size = s.v"
+                    class="px-2 py-0.5 rounded text-[10px] font-bold border transition"
+                    :class="tplStyle[tplEditTarget].logo_size === s.v ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-200 text-gray-500'">{{ s.l }}</button>
+                </div>
+              </div>
+
+              <!-- Section Visibility -->
+              <div>
+                <label class="text-sm font-semibold text-gray-700 dark:text-slate-300 block mb-2">Show / Hide Sections</label>
+                <div class="grid grid-cols-2 gap-2">
+                  <label v-for="s in SECTION_TOGGLES" :key="s.key" class="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300 cursor-pointer rounded-lg border border-gray-100 dark:border-slate-600 px-3 py-2 transition hover:bg-gray-50">
+                    <input v-model="tplStyle[tplEditTarget][s.key]" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                    {{ s.label }}
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="px-5 py-4 border-t border-gray-100 dark:border-slate-700 flex items-center justify-between sticky bottom-0 bg-white dark:bg-slate-800 rounded-b-2xl">
+              <button @click="resetTplStyle" class="text-xs text-gray-500 hover:text-gray-700">Reset to default</button>
+              <div class="flex gap-2">
+                <button @click="closeTplEditor" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">Cancel</button>
+                <button @click="saveTplStyle" :disabled="tplStyleSaving" class="btn-primary btn-sm">{{ tplStyleSaving ? 'Saving…' : 'Save Style' }}</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
