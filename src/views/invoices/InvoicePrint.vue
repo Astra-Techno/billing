@@ -382,7 +382,7 @@ onMounted(async () => {
         </div>
         <div v-else class="flex-1"></div>
         <div class="w-52 space-y-1 text-xs">
-          <div class="flex justify-between text-gray-600"><span>{{ lbl('label_subtotal', 'Subtotal') }}</span><span>{{ inr(afterItemDiscount) }}</span></div>
+          <div class="flex justify-between text-gray-600 font-semibold"><span>{{ lbl('label_subtotal', 'Subtotal') }}</span><span>{{ inr(afterItemDiscount) }}</span></div>
           <div v-if="invoiceDiscountOnly > 0" class="flex justify-between text-green-700"><span>Discount</span><span>-{{ inr(invoiceDiscountOnly) }}</span></div>
           <div v-if="invoice.cgst_total > 0" class="flex justify-between text-gray-600"><span>{{ cgstLabel() }}</span><span>{{ inr(invoice.cgst_total) }}</span></div>
           <div v-if="invoice.sgst_total > 0" class="flex justify-between text-gray-600"><span>{{ sgstLabel() }}</span><span>{{ inr(invoice.sgst_total) }}</span></div>
@@ -534,7 +534,7 @@ onMounted(async () => {
         </div>
         <div v-else style="flex: 1;"></div>
         <div style="width: 220px;">
-          <div style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563;"><span>{{ lbl('label_subtotal', 'Subtotal') }}</span><span>{{ inr(afterItemDiscount) }}</span></div>
+          <div style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563; font-weight: 600;"><span>{{ lbl('label_subtotal', 'Subtotal') }}</span><span>{{ inr(afterItemDiscount) }}</span></div>
           <div v-if="invoiceDiscountOnly > 0" style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #15803d;"><span>Discount</span><span>-{{ inr(invoiceDiscountOnly) }}</span></div>
           <div v-if="invoice.cgst_total > 0" style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563;"><span>{{ cgstLabel() }}</span><span>{{ inr(invoice.cgst_total) }}</span></div>
           <div v-if="invoice.sgst_total > 0" style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; color: #4b5563;"><span>{{ sgstLabel() }}</span><span>{{ inr(invoice.sgst_total) }}</span></div>
@@ -675,7 +675,7 @@ onMounted(async () => {
         </div>
         <div v-else style="flex: 1;"></div>
         <div :style="{ width: '200px', borderTop: `2px solid ${pc}`, paddingTop: '8px' }">
-          <div style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280;"><span>{{ lbl('label_subtotal', 'Subtotal') }}</span><span>{{ inr(afterItemDiscount) }}</span></div>
+          <div style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280; font-weight: 600;"><span>{{ lbl('label_subtotal', 'Subtotal') }}</span><span>{{ inr(afterItemDiscount) }}</span></div>
           <div v-if="invoiceDiscountOnly > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #15803d;"><span>Discount</span><span>-{{ inr(invoiceDiscountOnly) }}</span></div>
           <div v-if="invoice.cgst_total > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280;"><span>{{ cgstLabel() }}</span><span>{{ inr(invoice.cgst_total) }}</span></div>
           <div v-if="invoice.sgst_total > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280;"><span>{{ sgstLabel() }}</span><span>{{ inr(invoice.sgst_total) }}</span></div>
