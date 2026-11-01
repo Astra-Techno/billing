@@ -965,8 +965,129 @@ async function saveSequences() {
     <!-- Features -->
     <template v-if="!loading && activeTab === 'features'">
 
-      <!-- Invoice Template -->
-      <div class="card card-body !p-5 space-y-4 mb-4">
+      <!-- Template Style Editor (full page, replaces template list) -->
+      <div v-if="tplEditTarget" class="space-y-4">
+        <!-- Header with back button -->
+        <div class="card card-body !p-4">
+          <div class="flex items-center gap-3">
+            <button @click="closeTplEditor" class="w-8 h-8 rounded-lg border border-gray-200 dark:border-slate-600 flex items-center justify-center text-gray-500 hover:bg-gray-50 dark:hover:bg-slate-700 transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <div class="flex-1">
+              <h3 class="text-sm font-bold text-ink dark:text-white">Edit {{ { classic:'Classic', modern:'Modern', minimal:'Minimal', traditional:'Traditional' }[tplEditTarget] }} Template</h3>
+              <p class="text-xs text-google-muted">Customise colors, fonts, columns, labels and text</p>
+            </div>
+            <button @click="resetTplStyle" class="text-xs text-gray-500 hover:text-gray-700 dark:text-slate-400 mr-2">Reset</button>
+            <button @click="saveTplStyle" :disabled="tplStyleSaving" class="btn-primary btn-sm">{{ tplStyleSaving ? 'Saving…' : 'Save Style' }}</button>
+          </div>
+        </div>
+
+        <!-- Primary Color -->
+        <div class="card card-body !p-5">
+          <label class="text-sm font-semibold text-gray-700 dark:text-slate-300 block mb-3">Primary Color</label>
+          <div class="flex items-center gap-3 flex-wrap">
+            <div v-for="c in COLOR_PRESETS" :key="c"
+              @click="tplStyle[tplEditTarget].primary_color = c"
+              class="w-8 h-8 rounded-full cursor-pointer border-2 transition-all hover:scale-110"
+              :class="tplStyle[tplEditTarget].primary_color === c ? 'border-gray-900 dark:border-white ring-2 ring-offset-1 ring-gray-400' : 'border-gray-200'"
+              :style="{ background: c }"></div>
+            <label class="relative w-8 h-8 rounded-full cursor-pointer border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden hover:border-gray-400" title="Custom color">
+              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+              <input type="color" :value="tplStyle[tplEditTarget].primary_color" @input="tplStyle[tplEditTarget].primary_color = $event.target.value" class="absolute inset-0 opacity-0 cursor-pointer" />
+            </label>
+          </div>
+          <div class="flex items-center gap-2 mt-3">
+            <div class="w-6 h-6 rounded border" :style="{ background: tplStyle[tplEditTarget].primary_color }"></div>
+            <span class="text-xs font-mono text-gray-500">{{ tplStyle[tplEditTarget].primary_color }}</span>
+          </div>
+        </div>
+
+        <!-- Font & Logo -->
+        <div class="card card-body !p-5 space-y-5">
+          <div>
+            <label class="text-sm font-semibold text-gray-700 dark:text-slate-300 block mb-2">Font Style</label>
+            <div class="grid grid-cols-3 gap-2">
+              <button v-for="f in FONT_OPTIONS" :key="f.id" @click="tplStyle[tplEditTarget].font = f.id"
+                class="px-3 py-2.5 rounded-lg border-2 text-xs font-medium transition-all"
+                :class="tplStyle[tplEditTarget].font === f.id ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'"
+                :style="{ fontFamily: f.id === 'serif' ? 'Georgia, serif' : f.id === 'mono' ? 'monospace' : 'inherit' }">
+                {{ f.label }}
+              </button>
+            </div>
+          </div>
+          <div>
+            <label class="text-sm font-semibold text-gray-700 dark:text-slate-300 block mb-2">Logo Size</label>
+            <div class="flex items-center gap-3">
+              <input type="range" v-model.number="tplStyle[tplEditTarget].logo_size" min="24" max="96" step="4" class="flex-1 accent-primary-500" />
+              <span class="text-xs text-gray-500 w-10 text-right">{{ tplStyle[tplEditTarget].logo_size }}px</span>
+            </div>
+            <div class="flex gap-2 mt-1">
+              <button v-for="s in [{v:32,l:'S'},{v:48,l:'M'},{v:64,l:'L'},{v:80,l:'XL'}]" :key="s.v" @click="tplStyle[tplEditTarget].logo_size = s.v"
+                class="px-2.5 py-1 rounded text-[10px] font-bold border transition"
+                :class="tplStyle[tplEditTarget].logo_size === s.v ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-200 text-gray-500'">{{ s.l }}</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sections & Columns -->
+        <div class="card card-body !p-5 space-y-5">
+          <div>
+            <label class="text-sm font-semibold text-gray-700 dark:text-slate-300 block mb-2">Show / Hide Sections</label>
+            <div class="grid grid-cols-2 gap-2">
+              <label v-for="s in SECTION_TOGGLES" :key="s.key" class="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300 cursor-pointer rounded-lg border border-gray-100 dark:border-slate-600 px-3 py-2.5 transition hover:bg-gray-50">
+                <input v-model="tplStyle[tplEditTarget][s.key]" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                {{ s.label }}
+              </label>
+            </div>
+          </div>
+          <div>
+            <label class="text-sm font-semibold text-gray-700 dark:text-slate-300 block mb-2">Columns</label>
+            <div class="grid grid-cols-2 gap-2">
+              <label v-for="(lbl, col) in printColumnLabels" :key="col" class="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300 cursor-pointer rounded-lg border border-gray-100 dark:border-slate-600 px-3 py-2.5 transition hover:bg-gray-50">
+                <input v-model="printColumns[col]" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                {{ lbl }}
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rename Labels -->
+        <div class="card card-body !p-5">
+          <label class="text-sm font-semibold text-gray-700 dark:text-slate-300 block mb-3">Rename Labels</label>
+          <p class="text-xs text-google-muted mb-3">Change the text that appears on printed invoices. Leave empty to use the default.</p>
+          <div class="space-y-2">
+            <div v-for="f in LABEL_FIELDS" :key="f.key" class="flex items-center gap-3">
+              <label class="text-xs text-gray-500 w-40 shrink-0 truncate" :title="f.label">{{ f.label }}</label>
+              <input v-model="tplStyle[tplEditTarget][f.key]" type="text" :placeholder="f.placeholder"
+                class="flex-1 text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-gray-800 dark:text-white focus:ring-1 focus:ring-primary-500 focus:border-primary-500" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom Text -->
+        <div class="card card-body !p-5">
+          <label class="text-sm font-semibold text-gray-700 dark:text-slate-300 block mb-3">Custom Text</label>
+          <div class="space-y-3">
+            <div v-for="f in TEXT_FIELDS" :key="f.key">
+              <label class="text-xs text-gray-500 block mb-1">{{ f.label }}</label>
+              <input v-model="tplStyle[tplEditTarget][f.key]" type="text" :placeholder="f.placeholder"
+                class="w-full text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-gray-800 dark:text-white focus:ring-1 focus:ring-primary-500 focus:border-primary-500" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom save bar -->
+        <div class="card card-body !p-4 flex items-center justify-between">
+          <button @click="closeTplEditor" class="text-sm text-gray-600 hover:text-gray-800 dark:text-slate-400 flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            Back to Templates
+          </button>
+          <button @click="saveTplStyle" :disabled="tplStyleSaving" class="btn-primary btn-sm">{{ tplStyleSaving ? 'Saving…' : 'Save Style' }}</button>
+        </div>
+      </div>
+
+      <!-- Invoice Template List (shown when not editing) -->
+      <div v-if="!tplEditTarget" class="card card-body !p-5 space-y-4 mb-4">
         <div>
           <h3 class="text-sm font-bold text-ink dark:text-white">Invoice Template</h3>
           <p class="text-xs text-google-muted mt-0.5">Choose how your printed invoices look — click Edit to customise</p>
@@ -984,9 +1105,7 @@ async function saveSequences() {
               : 'border-gray-200 dark:border-slate-600 hover:border-gray-300'"
           >
             <button @click="bizStore.setInvoiceTemplate(t.id)" class="w-full p-3 pb-0 text-left">
-              <!-- Mini preview with dynamic color -->
               <div class="w-full aspect-[3/4] rounded-lg mb-2 overflow-hidden border border-gray-100 dark:border-slate-600 bg-white">
-                <!-- Classic preview -->
                 <div v-if="t.id === 'classic'" class="p-2 h-full flex flex-col">
                   <div class="h-1 w-12 rounded mb-1" :style="{ background: tplStyle.classic?.primary_color || '#1e3a5f' }"></div>
                   <div class="h-0.5 w-full mb-1.5" :style="{ background: tplStyle.classic?.primary_color || '#1e3a5f' }"></div>
@@ -999,7 +1118,6 @@ async function saveSequences() {
                   </div>
                   <div class="h-1 w-8 rounded ml-auto mt-1" :style="{ background: tplStyle.classic?.primary_color || '#1e3a5f' }"></div>
                 </div>
-                <!-- Modern preview -->
                 <div v-if="t.id === 'modern'" class="h-full flex flex-col">
                   <div class="h-3" :style="{ background: tplStyle.modern?.primary_color || '#1a5fd4' }"></div>
                   <div class="p-2 flex-1 flex flex-col">
@@ -1013,7 +1131,6 @@ async function saveSequences() {
                     <div class="h-1 w-8 rounded ml-auto mt-1" :style="{ background: tplStyle.modern?.primary_color || '#1a5fd4' }"></div>
                   </div>
                 </div>
-                <!-- Minimal preview -->
                 <div v-if="t.id === 'minimal'" class="p-2 h-full flex flex-col">
                   <div class="h-1 w-10 mb-1.5" :style="{ background: tplStyle.minimal?.primary_color || '#111827' }"></div>
                   <div class="flex gap-1 mb-1.5"><div class="h-0.5 w-6 bg-gray-200 rounded"></div><div class="h-0.5 w-6 bg-gray-200 rounded"></div></div>
@@ -1024,7 +1141,6 @@ async function saveSequences() {
                   </div>
                   <div class="border-t border-gray-200 pt-1 mt-1"><div class="h-1 w-8 rounded ml-auto" :style="{ background: tplStyle.minimal?.primary_color || '#111827' }"></div></div>
                 </div>
-                <!-- Traditional preview -->
                 <div v-if="t.id === 'traditional'" class="p-1.5 h-full flex flex-col border bg-white" :style="{ borderColor: tplStyle.traditional?.primary_color || '#000' }">
                   <div class="text-center mb-1"><div class="h-1 w-10 rounded mx-auto" :style="{ background: tplStyle.traditional?.primary_color || '#000' }"></div><div class="h-0.5 w-6 bg-gray-300 rounded mx-auto mt-0.5"></div></div>
                   <div class="h-0.5 mb-1" :style="{ background: tplStyle.traditional?.primary_color || '#000' }"></div>
@@ -1054,124 +1170,9 @@ async function saveSequences() {
             </div>
           </div>
         </div>
-
-        <!-- Template Style Editor Modal -->
-        <div v-if="tplEditTarget" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" @click.self="closeTplEditor">
-          <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
-            <div class="px-5 py-4 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between sticky top-0 bg-white dark:bg-slate-800 z-10 rounded-t-2xl">
-              <h3 class="font-bold text-gray-800 dark:text-white">Edit {{ { classic:'Classic', modern:'Modern', minimal:'Minimal', traditional:'Traditional' }[tplEditTarget] }} Template</h3>
-              <button @click="closeTplEditor" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
-            </div>
-            <div class="p-5 space-y-6">
-              <!-- Primary Color -->
-              <div>
-                <label class="text-sm font-semibold text-gray-700 dark:text-slate-300 block mb-2">Primary Color</label>
-                <div class="flex items-center gap-3 flex-wrap">
-                  <div v-for="c in COLOR_PRESETS" :key="c"
-                    @click="tplStyle[tplEditTarget].primary_color = c"
-                    class="w-7 h-7 rounded-full cursor-pointer border-2 transition-all hover:scale-110"
-                    :class="tplStyle[tplEditTarget].primary_color === c ? 'border-gray-900 dark:border-white ring-2 ring-offset-1 ring-gray-400' : 'border-gray-200'"
-                    :style="{ background: c }"></div>
-                  <label class="relative w-7 h-7 rounded-full cursor-pointer border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden hover:border-gray-400" title="Custom color">
-                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                    <input type="color" :value="tplStyle[tplEditTarget].primary_color" @input="tplStyle[tplEditTarget].primary_color = $event.target.value" class="absolute inset-0 opacity-0 cursor-pointer" />
-                  </label>
-                </div>
-                <div class="flex items-center gap-2 mt-2">
-                  <div class="w-5 h-5 rounded border" :style="{ background: tplStyle[tplEditTarget].primary_color }"></div>
-                  <span class="text-xs font-mono text-gray-500">{{ tplStyle[tplEditTarget].primary_color }}</span>
-                </div>
-              </div>
-
-              <!-- Font Family -->
-              <div>
-                <label class="text-sm font-semibold text-gray-700 dark:text-slate-300 block mb-2">Font Style</label>
-                <div class="grid grid-cols-3 gap-2">
-                  <button v-for="f in FONT_OPTIONS" :key="f.id" @click="tplStyle[tplEditTarget].font = f.id"
-                    class="px-3 py-2 rounded-lg border-2 text-xs font-medium transition-all"
-                    :class="tplStyle[tplEditTarget].font === f.id ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'"
-                    :style="{ fontFamily: f.id === 'serif' ? 'Georgia, serif' : f.id === 'mono' ? 'monospace' : 'inherit' }">
-                    {{ f.label }}
-                  </button>
-                </div>
-              </div>
-
-              <!-- Logo Size -->
-              <div>
-                <label class="text-sm font-semibold text-gray-700 dark:text-slate-300 block mb-2">Logo Size</label>
-                <div class="flex items-center gap-3">
-                  <input type="range" v-model.number="tplStyle[tplEditTarget].logo_size" min="24" max="96" step="4" class="flex-1 accent-primary-500" />
-                  <span class="text-xs text-gray-500 w-10 text-right">{{ tplStyle[tplEditTarget].logo_size }}px</span>
-                </div>
-                <div class="flex gap-2 mt-1">
-                  <button v-for="s in [{v:32,l:'S'},{v:48,l:'M'},{v:64,l:'L'},{v:80,l:'XL'}]" :key="s.v" @click="tplStyle[tplEditTarget].logo_size = s.v"
-                    class="px-2 py-0.5 rounded text-[10px] font-bold border transition"
-                    :class="tplStyle[tplEditTarget].logo_size === s.v ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-200 text-gray-500'">{{ s.l }}</button>
-                </div>
-              </div>
-
-              <!-- Section Visibility -->
-              <div>
-                <label class="text-sm font-semibold text-gray-700 dark:text-slate-300 block mb-2">Show / Hide Sections</label>
-                <div class="grid grid-cols-2 gap-2">
-                  <label v-for="s in SECTION_TOGGLES" :key="s.key" class="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300 cursor-pointer rounded-lg border border-gray-100 dark:border-slate-600 px-3 py-2 transition hover:bg-gray-50">
-                    <input v-model="tplStyle[tplEditTarget][s.key]" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-                    {{ s.label }}
-                  </label>
-                </div>
-              </div>
-
-              <!-- Column Visibility -->
-              <div>
-                <label class="text-sm font-semibold text-gray-700 dark:text-slate-300 block mb-2">Columns</label>
-                <div class="grid grid-cols-2 gap-2">
-                  <label v-for="(lbl, col) in printColumnLabels" :key="col" class="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300 cursor-pointer rounded-lg border border-gray-100 dark:border-slate-600 px-3 py-2 transition hover:bg-gray-50">
-                    <input v-model="printColumns[col]" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-                    {{ lbl }}
-                  </label>
-                </div>
-              </div>
-
-              <!-- Custom Labels -->
-              <div>
-                <button @click="tplStyle[tplEditTarget]._showLabels = !tplStyle[tplEditTarget]._showLabels" class="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-slate-300 w-full">
-                  <svg class="w-4 h-4 transition-transform" :class="tplStyle[tplEditTarget]._showLabels ? 'rotate-90' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-                  Rename Labels
-                  <span class="text-xs font-normal text-gray-400 ml-1">(change text on invoice)</span>
-                </button>
-                <div v-if="tplStyle[tplEditTarget]._showLabels" class="mt-3 space-y-2">
-                  <div v-for="f in LABEL_FIELDS" :key="f.key" class="flex items-center gap-2">
-                    <label class="text-xs text-gray-500 w-36 shrink-0 truncate" :title="f.label">{{ f.label }}</label>
-                    <input v-model="tplStyle[tplEditTarget][f.key]" type="text" :placeholder="f.placeholder"
-                      class="flex-1 text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-2.5 py-1.5 bg-white dark:bg-slate-700 text-gray-800 dark:text-white focus:ring-1 focus:ring-primary-500 focus:border-primary-500" />
-                  </div>
-                </div>
-              </div>
-
-              <!-- Custom Header / Footer Text -->
-              <div>
-                <label class="text-sm font-semibold text-gray-700 dark:text-slate-300 block mb-2">Custom Text</label>
-                <div class="space-y-2">
-                  <div v-for="f in TEXT_FIELDS" :key="f.key">
-                    <label class="text-xs text-gray-500 block mb-0.5">{{ f.label }}</label>
-                    <input v-model="tplStyle[tplEditTarget][f.key]" type="text" :placeholder="f.placeholder"
-                      class="w-full text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-2.5 py-1.5 bg-white dark:bg-slate-700 text-gray-800 dark:text-white focus:ring-1 focus:ring-primary-500 focus:border-primary-500" />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="px-5 py-4 border-t border-gray-100 dark:border-slate-700 flex items-center justify-between sticky bottom-0 bg-white dark:bg-slate-800 rounded-b-2xl">
-              <button @click="resetTplStyle" class="text-xs text-gray-500 hover:text-gray-700">Reset to default</button>
-              <div class="flex gap-2">
-                <button @click="closeTplEditor" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">Cancel</button>
-                <button @click="saveTplStyle" :disabled="tplStyleSaving" class="btn-primary btn-sm">{{ tplStyleSaving ? 'Saving…' : 'Save Style' }}</button>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
-      <div class="card card-body !p-5 space-y-4 mb-4">
+      <div v-if="!tplEditTarget" class="card card-body !p-5 space-y-4 mb-4">
         <div>
           <h3 class="text-sm font-bold text-ink dark:text-white">Printer & Paper</h3>
           <p class="text-xs text-google-muted mt-0.5">Set the layout used by the Print button</p>
@@ -1198,7 +1199,7 @@ async function saveSequences() {
       </div>
 
       <!-- Dark Mode Toggle -->
-      <div class="card card-body mb-4">
+      <div v-if="!tplEditTarget" class="card card-body mb-4">
         <div class="flex items-center justify-between">
           <div class="flex-1 min-w-0 pr-4">
             <div class="font-semibold text-sm text-gray-800 dark:text-slate-200">Dark Mode</div>
@@ -1211,7 +1212,7 @@ async function saveSequences() {
         </div>
       </div>
 
-      <div class="card card-body space-y-1" data-tour="settings-features">
+      <div v-if="!tplEditTarget" class="card card-body space-y-1" data-tour="settings-features">
         <h2 class="text-lg font-bold text-gray-800 mb-1">Enable Features</h2>
         <p class="text-sm text-gray-500 mb-4">Turn on only what you need. You can always enable more later.</p>
 
@@ -1235,7 +1236,7 @@ async function saveSequences() {
       </div>
 
       <!-- Stock Settings -->
-      <div class="card card-body !p-5 space-y-4 mt-4">
+      <div v-if="!tplEditTarget" class="card card-body !p-5 space-y-4 mt-4">
         <div>
           <h3 class="text-sm font-bold text-ink dark:text-white">Stock Management</h3>
           <p class="text-xs text-google-muted mt-0.5">Choose how stock works for this business</p>
