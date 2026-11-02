@@ -193,7 +193,18 @@ class Sequence extends Task
         if (!empty($invoice->number)) return $invoice->number;
 
         $fy = self::financialYearForDate((string)$invoice->issue_date);
-        $number = self::generate($businessId, 'invoice', $fy);
+
+        // Retry up to 10 times in case the generated number already exists
+        // (e.g. from deleted invoices, manual edits, or sequence drift)
+        for ($attempt = 0; $attempt < 10; $attempt++) {
+            $number = self::generate($businessId, 'invoice', $fy);
+            $exists = DB::selectOne(
+                "SELECT id FROM invoices WHERE business_id = ? AND number = ? AND id != ? LIMIT 1",
+                [$businessId, $number, $invoiceId]
+            );
+            if (!$exists) break;
+        }
+
         DB::statement(
             "UPDATE invoices SET number = ?, financial_year = ? WHERE id = ? AND business_id = ? AND number IS NULL",
             [$number, $fy, $invoiceId, $businessId]
