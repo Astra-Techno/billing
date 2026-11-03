@@ -13,12 +13,13 @@ class Invoice extends Sql
             ->from('invoices i')
             ->left('clients c ON c.id = i.client_id')
             ->left('indian_states s ON s.id = i.place_of_supply')
+            ->left('inventory_locations il ON il.id = i.location_id')
             ->select('list', '
                 i.id, i.number, i.invoice_type, i.status,
                 i.issue_date, i.due_date, i.financial_year,
                 i.total, i.amount_paid, i.amount_due,
                 i.supply_type, i.is_recurring, i.sent_at, i.paid_at, i.created_at,
-                i.location_id, i.location_gstin,
+                i.location_id, i.location_gstin, il.name AS location_name,
                 i.client_id, COALESCE(c.name, "Walk-in Customer") AS client_name, c.company AS client_company,
                 c.mobile AS client_mobile, c.gstin AS client_gstin,
                 s.name AS place_of_supply_name
@@ -33,6 +34,7 @@ class Invoice extends Sql
             ->filterOptional('i.issue_date >= {filter.from_date}')
             ->filterOptional('i.issue_date <= {filter.to_date}')
             ->filterOptional('i.location_id IN ({user_location_ids})')
+            ->filterOptional('i.location_id = {filter.location_id}')
             ->filterOptional('i.location_gstin = {filter.location_gstin}')
             ->filterOptional('(i.number LIKE {filter.search} OR c.name LIKE {filter.search} OR c.company LIKE {filter.search} OR c.mobile LIKE {filter.search} OR c.gstin LIKE {filter.search} OR CAST(i.total AS CHAR) LIKE {filter.search})')
             ->order('{sort_by}', '{sort_order}');

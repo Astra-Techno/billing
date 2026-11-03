@@ -131,7 +131,8 @@ function exportCsv() {
 }
 
 // ── Date presets ───────────────────────────────────────────────────────────────
-const filter       = ref({ status: '', search: '', from_date: '', to_date: '', preset: '', client_id: '', client_name: '' })
+const locations = ref([])
+const filter       = ref({ status: '', search: '', from_date: '', to_date: '', preset: '', client_id: '', client_name: '', location_id: '' })
 
 const presets = [
   { label: 'Today',        value: 'today' },
@@ -204,6 +205,7 @@ const {
     if (filter.value.from_date) p['filter.from_date'] = filter.value.from_date
     if (filter.value.to_date)   p['filter.to_date']   = filter.value.to_date
     if (filter.value.client_id) p['filter.client_id'] = filter.value.client_id
+    if (filter.value.location_id) p['filter.location_id'] = filter.value.location_id
     return p
   },
 })
@@ -216,8 +218,9 @@ function onRowClick(inv) {
   router.push(`/invoices/${inv.id}`)
 }
 
-// Tour trigger after first load
-onMounted(() => {
+// Load locations for shop filter & tour trigger
+onMounted(async () => {
+  try { const r = await task('Inventory', 'overview'); locations.value = r.data?.data?.locations || [] } catch {}
   setTimeout(() => { if (!isTourSeen()) startTour() }, 800)
 })
 
@@ -293,6 +296,11 @@ const activeDateLabel = () => {
               <span class="text-gray-400 text-[10px] font-bold uppercase">to</span>
               <input v-model="filter.to_date" type="date" class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-[11px] font-semibold rounded-lg px-2 py-1.5 focus:border-primary-500 transition-all" @change="reload()" />
             </div>
+            <select v-if="locations.length > 1" v-model="filter.location_id" @change="reload()"
+              class="w-full bg-white border border-gray-200 shadow-sm text-gray-900 text-[11px] font-semibold rounded-lg px-2 py-1.5 focus:border-primary-500 transition-all">
+              <option value="">All Shops</option>
+              <option v-for="l in locations" :key="l.id" :value="l.id">{{ l.name }}</option>
+            </select>
         </div>
 
         <!-- Active client filter chip -->
@@ -384,7 +392,7 @@ const activeDateLabel = () => {
                         </span>
                     </div>
                     <div class="flex justify-between items-center mt-1.5">
-                        <span class="text-[12px] font-semibold text-gray-400">{{ inv.number || 'Number pending' }} • {{ fmtDateShort(inv.issue_date) }}</span>
+                        <span class="text-[12px] font-semibold text-gray-400">{{ inv.number || 'Number pending' }} • {{ fmtDateShort(inv.issue_date) }}<template v-if="inv.location_name && locations.length > 1"> • {{ inv.location_name }}</template></span>
                         
                         <span class="text-[10px] font-bold px-2 py-0.5 rounded-[5px] tracking-wider flex items-center border"
                               :class="{

@@ -51,6 +51,8 @@ const supplyType=computed(()=>{
   return Number(loc.state_id)===Number(selectedClient.value.state_id)?'intra':'inter'
 })
 const totals=computed(()=>calcInvoice(invoiceItems.value,supplyType.value,discountType.value,discountValue.value))
+const SHOP_COLORS=['#4f46e5','#0d9488','#dc2626','#ea580c','#7c3aed','#0284c7','#be185d','#65a30d']
+const shopColor=computed(()=>{if(locations.value.length<=1)return null;const idx=locations.value.findIndex(l=>Number(l.id)===Number(locationId.value));return SHOP_COLORS[idx%SHOP_COLORS.length]||SHOP_COLORS[0]})
 
 function lineFor(product){return cart.value.find(l=>l.product.id===product.id)}
 function stockAt(product){return stockRows.value.find(s=>Number(s.product_id)===Number(product.id)&&Number(s.location_id)===Number(locationId.value))}
@@ -61,6 +63,7 @@ function cannotAdd(product){return inventoryMode.value==='strict'&&+product.trac
 function add(product){error.value='';if(cannotAdd(product)){error.value=`Only ${available(product)} ${product.unit||'Nos'} available for ${product.name}.`;return}const line=lineFor(product);if(line)line.quantity++;else{const dv=parseFloat(product.discount_value||0);const ep=price(product);const dp=(dv>0&&product.discount_type==='amount')?((ep>0)?Math.round(dv/ep*100*100)/100:0):dv;cart.value.push({product,quantity:1,discount:dp})};if(inventoryMode.value==='warn'&&+product.track_stock&&Number(lineFor(product)?.quantity||0)>available(product))error.value=`Stock warning: only ${available(product)} ${product.unit||'Nos'} available for ${product.name}. Sale is still allowed.`}
 function addExactSearch(){const q=search.value.trim().toLowerCase();if(!q)return;const product=products.value.find(p=>[p.barcode,p.sku].some(v=>String(v||'').toLowerCase()===q))||visibleProducts.value[0];if(product){add(product);search.value=''}}
 function change(line,amount){if(amount>0&&cannotAdd(line.product)){error.value=`Only ${available(line.product)} ${line.product.unit||'Nos'} available.`;return}line.quantity+=amount;if(line.quantity<=0)cart.value=cart.value.filter(x=>x!==line)}
+function setQty(line,val){const n=parseFloat(val);if(!n||n<=0){cart.value=cart.value.filter(x=>x!==line);return}if(inventoryMode.value==='strict'&&+line.product.track_stock&&n>available(line.product)){error.value=`Only ${available(line.product)} ${line.product.unit||'Nos'} available.`;return}line.quantity=n}
 function chooseClient(client){selectedClient.value=client;clientSearch.value=client.name;customerName.value=client.name;customerPhone.value=client.mobile||''}
 function onLocationChange(){if(cart.value.length){const invalid=cart.value.filter(l=>!locationProducts.value.some(p=>p.id===l.product.id));if(invalid.length){cart.value=cart.value.filter(l=>locationProducts.value.some(p=>p.id===l.product.id));error.value=`${invalid.length} item(s) removed — not available at this shop.`}}category.value='All'}
 function clearCart(){if(cart.value.length&&!confirm('Clear all items from the current sale?'))return;cart.value=[];error.value='';success.value='';nextTick(()=>searchInput.value?.focus())}
@@ -223,7 +226,7 @@ onUnmounted(()=>{stopConnectionMonitor();if(html5QrCode){try{html5QrCode.stop()}
     <section class="pos-catalog">
       <div class="pos-search"><span>⌕</span><input ref="searchInput" v-model="search" placeholder="Search product, SKU or scan barcode" title="Type a product name, SKU or barcode. Press Enter to add the first match." @keydown.enter.prevent="addExactSearch" /><button class="scan-btn" title="Scan barcode with camera" @click="openScanner"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M5 21H3a2 2 0 01-2-2v-2m5-4h8m-4-4v8"/></svg></button><button class="scan-btn" title="Recent sales" @click="openRecent"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></button></div>
       <div v-if="shiftRequired&&currentShift" class="shift-bar"><span>● {{currentShift.counter_name}} · {{currentShift.cashier_name}}</span><button title="Count cash and close this shift" @click="showCloseShift">Close shift</button></div>
-      <div class="pos-categories"><button v-for="c in categories" :key="c" :class="{active:category===c}" @click="category=c">{{c==='All'?'All items':c}}</button></div>
+      <div class="pos-categories"><button v-for="c in categories" :key="c" :class="{active:category===c}" :style="category===c&&shopColor?{background:shopColor,borderColor:shopColor}:{}" @click="category=c">{{c==='All'?'All items':c}}</button></div>
       <div v-if="loading" class="pos-empty">Loading products…</div>
       <div v-else class="pos-products">
         <button v-for="p in visibleProducts" :key="p.id" class="pos-product" :class="{selected:lineFor(p),disabled:cannotAdd(p)}" :title="cannotAdd(p)?'No more stock available':'Add this product to the current sale'" @click="add(p)"><span>{{p.name.charAt(0).toUpperCase()}}</span><strong>{{p.name}}</strong><small>{{p.pos_category||'Others'}} · {{p.unit||'Nos'}}<template v-if="+p.track_stock"> · Stock {{available(p)}}</template></small><b>{{inr(price(p))}}</b><em v-if="lineFor(p)">{{lineFor(p).quantity}}</em></button>
@@ -231,9 +234,9 @@ onUnmounted(()=>{stopConnectionMonitor();if(html5QrCode){try{html5QrCode.stop()}
       </div>
     </section>
     <aside class="pos-cart" :class="{'cart-collapsed':!cartExpanded && cart.length}">
-      <div v-if="locations.length>1" class="pos-shop-bar"><select v-model="locationId" @change="onLocationChange"><option v-for="l in locations" :key="l.id" :value="l.id">{{l.name}}</option></select></div>
+      <div v-if="locations.length>1" class="pos-shop-bar" :style="shopColor?{background:shopColor+'18',borderColor:shopColor+'30'}:{}"><span class="shop-dot" :style="shopColor?{background:shopColor}:{}"></span><select v-model="locationId" @change="onLocationChange" :style="shopColor?{color:shopColor,borderColor:shopColor+'40'}:{}"><option v-for="l in locations" :key="l.id" :value="l.id">{{l.name}}</option></select></div>
       <div class="pos-cart-head" @click="cartExpanded=!cartExpanded"><div><p>CURRENT SALE</p><h2>{{itemCount}} {{itemCount===1?'item':'items'}}<span class="cart-toggle lg:hidden">{{cartExpanded?'▾':'▴'}}</span></h2></div><button v-if="cart.length" @click.stop="clearCart">Clear Cart</button></div>
-      <div class="pos-lines"><div v-if="!cart.length" class="pos-empty"><strong>Cart is empty</strong><small>Tap products from the left.</small></div><article v-for="line in cart" :key="line.product.id"><div><strong>{{line.product.name}}</strong><small>{{inr(price(line.product))}} × {{line.quantity}}<template v-if="Number(line.discount)"> · -{{line.discount}}%</template></small></div><div class="pos-step"><button title="Reduce quantity" @click="change(line,-1)">−</button><b>{{line.quantity}}</b><button title="Increase quantity" @click="change(line,1)">+</button></div><div class="pos-line-right"><strong>{{inr(price(line.product)*line.quantity*(1-Number(line.discount||0)/100))}}</strong><input v-model.number="line.discount" type="number" min="0" max="100" step="1" class="pos-disc-input" placeholder="0" title="Discount %" /></div></article></div>
+      <div class="pos-lines"><div v-if="!cart.length" class="pos-empty"><strong>Cart is empty</strong><small>Tap products from the left.</small></div><article v-for="line in cart" :key="line.product.id"><div><strong>{{line.product.name}}</strong><small>{{inr(price(line.product))}} × {{line.quantity}}<template v-if="Number(line.discount)"> · -{{line.discount}}%</template></small></div><div class="pos-step"><button title="Reduce quantity" @click="change(line,-1)">−</button><input type="number" :value="line.quantity" min="0.001" step="1" class="pos-qty-input" @change="setQty(line,$event.target.value)" /><button title="Increase quantity" @click="change(line,1)">+</button></div><div class="pos-line-right"><strong>{{inr(price(line.product)*line.quantity*(1-Number(line.discount||0)/100))}}</strong><input v-model.number="line.discount" type="number" min="0" max="100" step="1" class="pos-disc-input" placeholder="0" title="Discount %" /></div></article></div>
       <div class="pos-bottom">
         <div class="pos-details-row"><input v-model="customerName" placeholder="Customer name" /><input v-model="customerPhone" inputmode="tel" placeholder="Mobile" /><input v-model="note" placeholder="Note" /></div>
         <div class="pos-pay-row">
@@ -255,7 +258,7 @@ onUnmounted(()=>{stopConnectionMonitor();if(html5QrCode){try{html5QrCode.stop()}
           <div v-if="totals.igst"><span>IGST</span><span>{{inr(totals.igst)}}</span></div>
           <div v-if="totals.roundOff" class="round-off"><span>Round off</span><span>{{totals.roundOff>0?'+':''}}{{inr(totals.roundOff)}}</span></div>
         </div>
-        <footer class="pos-footer"><div><strong>{{inr(totals.total)}}</strong><small v-if="totals.tax">Tax ₹{{totals.tax}}</small><small v-else>No tax</small></div><div class="pos-footer-actions"><button class="draft-btn" :disabled="drafting||paying||!cart.length||!serverConnected" @click="draftSale">{{drafting?'Saving…':'Draft'}}</button><button :disabled="paying||drafting||!cart.length||!serverConnected" @click="checkout">{{paying?'Processing…':`Pay ${inr(totals.total)}`}} →</button></div></footer>
+        <footer class="pos-footer" :style="shopColor?{background:shopColor}:{}"><div><strong>{{inr(totals.total)}}</strong><small v-if="totals.tax">Tax ₹{{totals.tax}}</small><small v-else>No tax</small></div><div class="pos-footer-actions"><button class="draft-btn" :disabled="drafting||paying||!cart.length||!serverConnected" @click="draftSale">{{drafting?'Saving…':'Draft'}}</button><button :disabled="paying||drafting||!cart.length||!serverConnected" @click="checkout">{{paying?'Processing…':`Pay ${inr(totals.total)}`}} →</button></div></footer>
       </div>
     </aside>
   </div>
@@ -338,8 +341,9 @@ onUnmounted(()=>{stopConnectionMonitor();if(html5QrCode){try{html5QrCode.stop()}
 .pos-product b{color:#4f46e5;font-size:13px}
 .pos-product em{position:absolute;right:8px;top:8px;background:#4f46e5;color:white;border-radius:999px;min-width:22px;height:22px;text-align:center;line-height:22px;font-style:normal;font-size:10px;font-weight:800}
 .pos-cart{display:flex;flex-direction:column;min-height:0;overflow:hidden}
-.pos-shop-bar{padding:8px 12px;background:#f0f0ff;border-bottom:1px solid #e0e0f0;flex-shrink:0}
-.pos-shop-bar select{width:100%;border:1px solid #c7d2fe;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;color:#4338ca;background:#fff;cursor:pointer}
+.pos-shop-bar{padding:8px 12px;background:#f0f0ff;border-bottom:1px solid #e0e0f0;flex-shrink:0;display:flex;align-items:center;gap:8px}
+.shop-dot{width:10px;height:10px;border-radius:50%;background:#4f46e5;flex-shrink:0}
+.pos-shop-bar select{flex:1;border:1px solid #c7d2fe;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;color:#4338ca;background:#fff;cursor:pointer}
 .pos-cart-head{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #eee;flex-shrink:0}
 .pos-cart-head p{margin-bottom:-2px}
 .pos-cart-head h2{font-size:16px;font-weight:800}
@@ -350,7 +354,9 @@ onUnmounted(()=>{stopConnectionMonitor();if(html5QrCode){try{html5QrCode.stop()}
 .pos-lines article small{display:block;font-size:10px;color:#94a3b8}
 .pos-step{display:flex;align-items:center;gap:7px}
 .pos-step button{width:24px;height:24px;border-radius:7px;background:#eef2ff;color:#4f46e5;font-weight:800;font-size:13px}
-.pos-step b{font-size:13px}
+.pos-qty-input{width:40px;border:1px solid #e2e8f0;border-radius:6px;padding:2px 2px;font-size:13px;font-weight:800;text-align:center;color:#111827;background:#f8fafc;-moz-appearance:textfield}
+.pos-qty-input::-webkit-inner-spin-button,.pos-qty-input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.pos-qty-input:focus{border-color:#818cf8;outline:none;background:#fff}
 .pos-line-right{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
 .pos-disc-input{width:42px;border:1px solid #e2e8f0;border-radius:5px;padding:2px 4px;font-size:10px;text-align:center;color:#4f46e5;background:#f8fafc}
 .pos-disc-input:focus{border-color:#818cf8;outline:none}
