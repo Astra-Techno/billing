@@ -44,7 +44,13 @@ const visibleProducts=computed(()=>{const q=search.value.trim().toLowerCase();re
 const customerMatches=computed(()=>{const q=clientSearch.value.trim().toLowerCase();if(!q)return [];return clients.value.filter(c=>[c.name,c.mobile,c.company].some(v=>String(v||'').toLowerCase().includes(q))).slice(0,6)})
 const itemCount=computed(()=>cart.value.reduce((s,l)=>s+Number(l.quantity),0))
 const invoiceItems=computed(()=>cart.value.map(l=>({product_id:l.product.id,description:l.product.name,unit:l.product.unit||'Nos',quantity:l.quantity,unit_price:price(l.product),gst_rate:gstRate(l.product),discount_pct:Number(l.discount||0)})))
-const totals=computed(()=>calcInvoice(invoiceItems.value,'intra',discountType.value,discountValue.value))
+const supplyType=computed(()=>{
+  if(!selectedClient.value?.state_id)return 'intra'
+  const loc=locations.value.find(l=>Number(l.id)===Number(locationId.value))
+  if(!loc?.state_id)return 'intra'
+  return Number(loc.state_id)===Number(selectedClient.value.state_id)?'intra':'inter'
+})
+const totals=computed(()=>calcInvoice(invoiceItems.value,supplyType.value,discountType.value,discountValue.value))
 
 function lineFor(product){return cart.value.find(l=>l.product.id===product.id)}
 function stockAt(product){return stockRows.value.find(s=>Number(s.product_id)===Number(product.id)&&Number(s.location_id)===Number(locationId.value))}
@@ -242,7 +248,14 @@ onUnmounted(()=>{stopConnectionMonitor();if(html5QrCode){try{html5QrCode.stop()}
           </div>
         </div>
         <div v-if="cart.length" class="pos-discount-row"><label>Discount</label><select v-model="discountType" class="pos-disc-type"><option value="percent">%</option><option value="amount">₹</option></select><input v-model.number="discountValue" type="number" min="0" step="0.01" class="pos-disc-val" placeholder="0" /><small v-if="totals.invoiceDiscount">−{{inr(totals.invoiceDiscount)}}</small></div>
-        <footer class="pos-footer"><div><strong>{{inr(totals.total)}}</strong><small>GST incl.</small></div><div class="pos-footer-actions"><button class="draft-btn" :disabled="drafting||paying||!cart.length||!serverConnected" @click="draftSale">{{drafting?'Saving…':'Draft'}}</button><button :disabled="paying||drafting||!cart.length||!serverConnected" @click="checkout">{{paying?'Processing…':`Pay ${inr(totals.total)}`}} →</button></div></footer>
+        <div v-if="cart.length && totals.tax" class="pos-tax-summary">
+          <div><span>Subtotal</span><span>{{inr(totals.subtotal)}}</span></div>
+          <div v-if="totals.cgst"><span>CGST</span><span>{{inr(totals.cgst)}}</span></div>
+          <div v-if="totals.sgst"><span>SGST</span><span>{{inr(totals.sgst)}}</span></div>
+          <div v-if="totals.igst"><span>IGST</span><span>{{inr(totals.igst)}}</span></div>
+          <div v-if="totals.roundOff" class="round-off"><span>Round off</span><span>{{totals.roundOff>0?'+':''}}{{inr(totals.roundOff)}}</span></div>
+        </div>
+        <footer class="pos-footer"><div><strong>{{inr(totals.total)}}</strong><small v-if="totals.tax">Tax ₹{{totals.tax}}</small><small v-else>No tax</small></div><div class="pos-footer-actions"><button class="draft-btn" :disabled="drafting||paying||!cart.length||!serverConnected" @click="draftSale">{{drafting?'Saving…':'Draft'}}</button><button :disabled="paying||drafting||!cart.length||!serverConnected" @click="checkout">{{paying?'Processing…':`Pay ${inr(totals.total)}`}} →</button></div></footer>
       </div>
     </aside>
   </div>
@@ -347,6 +360,10 @@ onUnmounted(()=>{stopConnectionMonitor();if(html5QrCode){try{html5QrCode.stop()}
 .pos-disc-val{width:64px;border:1px solid #e2e8f0;border-radius:6px;padding:4px 8px;font-size:12px;text-align:right;color:#4338ca;font-weight:700}
 .pos-disc-val:focus{border-color:#818cf8;outline:none}
 .pos-discount-row small{color:#059669;font-size:11px;font-weight:600;margin-left:auto}
+.pos-tax-summary{padding:6px 12px;border-top:1px solid #f1f5f9;font-size:11px;color:#64748b}
+.pos-tax-summary>div{display:flex;justify-content:space-between;padding:2px 0}
+.pos-tax-summary>div span:last-child{font-weight:600;color:#334155}
+.pos-tax-summary .round-off span:last-child{color:#94a3b8;font-weight:500}
 .pos-bottom{flex-shrink:0;border-top:1px solid #e5e7eb}
 .pos-details-row{display:flex;gap:6px;padding:8px 12px}
 .pos-details-row input{flex:1;min-width:0;border:1px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:12px}
