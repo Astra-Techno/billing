@@ -416,6 +416,53 @@ onMounted(async () => {
         </div>
       </div>
 
+      <!-- HSN-wise Tax Summary (Classic) -->
+      <div v-if="!isDC && hsnSummary.length > 0 && (invoice.cgst_total > 0 || invoice.sgst_total > 0 || invoice.igst_total > 0)" class="mb-4 pb-4 border-b border-gray-200">
+        <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+          <thead>
+            <tr :style="{ background: pcLight }">
+              <th rowspan="2" style="padding: 4px 8px; border: 1px solid #d1d5db; font-weight: 600;">HSN/SAC</th>
+              <th rowspan="2" style="padding: 4px 8px; border: 1px solid #d1d5db; text-align: right; font-weight: 600;">Taxable Value</th>
+              <th v-if="invoice.supply_type !== 'inter'" colspan="2" style="padding: 4px 8px; border: 1px solid #d1d5db; text-align: center; font-weight: 600;">Central Tax</th>
+              <th v-if="invoice.supply_type !== 'inter'" colspan="2" style="padding: 4px 8px; border: 1px solid #d1d5db; text-align: center; font-weight: 600;">State Tax</th>
+              <th v-if="invoice.supply_type === 'inter'" colspan="2" style="padding: 4px 8px; border: 1px solid #d1d5db; text-align: center; font-weight: 600;">Integrated Tax</th>
+              <th rowspan="2" style="padding: 4px 8px; border: 1px solid #d1d5db; text-align: right; font-weight: 600;">Total Tax</th>
+            </tr>
+            <tr :style="{ background: pcLighter }">
+              <th style="padding: 3px 8px; border: 1px solid #d1d5db; text-align: center; font-size: 10px;">Rate</th>
+              <th style="padding: 3px 8px; border: 1px solid #d1d5db; text-align: right; font-size: 10px;">Amount</th>
+              <template v-if="invoice.supply_type !== 'inter'">
+                <th style="padding: 3px 8px; border: 1px solid #d1d5db; text-align: center; font-size: 10px;">Rate</th>
+                <th style="padding: 3px 8px; border: 1px solid #d1d5db; text-align: right; font-size: 10px;">Amount</th>
+              </template>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in hsnSummary" :key="row.hsn + '_' + row.rate">
+              <td style="padding: 3px 8px; border: 1px solid #e5e7eb; font-family: monospace;">{{ row.hsn }}</td>
+              <td style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: right;">{{ inr(row.taxable) }}</td>
+              <td v-if="invoice.supply_type !== 'inter'" style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: center; font-size: 10px;">{{ row.rate / 2 }}%</td>
+              <td v-if="invoice.supply_type !== 'inter'" style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: right;">{{ inr(row.cgst) }}</td>
+              <td v-if="invoice.supply_type !== 'inter'" style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: center; font-size: 10px;">{{ row.rate / 2 }}%</td>
+              <td v-if="invoice.supply_type !== 'inter'" style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: right;">{{ inr(row.sgst) }}</td>
+              <td v-if="invoice.supply_type === 'inter'" style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: center; font-size: 10px;">{{ row.rate }}%</td>
+              <td v-if="invoice.supply_type === 'inter'" style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: right;">{{ inr(row.igst) }}</td>
+              <td style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: right; font-weight: 600;">{{ inr(row.cgst + row.sgst + row.igst) }}</td>
+            </tr>
+            <tr style="font-weight: 700;">
+              <td style="padding: 4px 8px; border: 1px solid #d1d5db; text-align: right;" colspan="2">Total</td>
+              <td v-if="invoice.supply_type !== 'inter'" style="padding: 4px 8px; border: 1px solid #d1d5db;"></td>
+              <td v-if="invoice.supply_type !== 'inter'" style="padding: 4px 8px; border: 1px solid #d1d5db; text-align: right;">{{ inr(hsnSummary.reduce((s,r) => s + r.cgst, 0)) }}</td>
+              <td v-if="invoice.supply_type !== 'inter'" style="padding: 4px 8px; border: 1px solid #d1d5db;"></td>
+              <td v-if="invoice.supply_type !== 'inter'" style="padding: 4px 8px; border: 1px solid #d1d5db; text-align: right;">{{ inr(hsnSummary.reduce((s,r) => s + r.sgst, 0)) }}</td>
+              <td v-if="invoice.supply_type === 'inter'" style="padding: 4px 8px; border: 1px solid #d1d5db;"></td>
+              <td v-if="invoice.supply_type === 'inter'" style="padding: 4px 8px; border: 1px solid #d1d5db; text-align: right;">{{ inr(hsnSummary.reduce((s,r) => s + r.igst, 0)) }}</td>
+              <td style="padding: 4px 8px; border: 1px solid #d1d5db; text-align: right;">{{ inr(hsnTaxTotal) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
       <!-- Custom Footer -->
       <div v-if="ts.custom_footer" class="mb-4 text-center">
         <p class="text-xs text-gray-500 italic">{{ ts.custom_footer }}</p>
@@ -568,6 +615,53 @@ onMounted(async () => {
         </div>
       </div>
 
+      <!-- HSN-wise Tax Summary (Modern) -->
+      <div v-if="!isDC && hsnSummary.length > 0 && (invoice.cgst_total > 0 || invoice.sgst_total > 0 || invoice.igst_total > 0)" style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 2px solid #eef2f7;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+          <thead>
+            <tr :style="{ background: pcLight }">
+              <th rowspan="2" style="padding: 4px 8px; border: 1px solid #d1d5db; font-weight: 600;">HSN/SAC</th>
+              <th rowspan="2" style="padding: 4px 8px; border: 1px solid #d1d5db; text-align: right; font-weight: 600;">Taxable Value</th>
+              <th v-if="invoice.supply_type !== 'inter'" colspan="2" style="padding: 4px 8px; border: 1px solid #d1d5db; text-align: center; font-weight: 600;">Central Tax</th>
+              <th v-if="invoice.supply_type !== 'inter'" colspan="2" style="padding: 4px 8px; border: 1px solid #d1d5db; text-align: center; font-weight: 600;">State Tax</th>
+              <th v-if="invoice.supply_type === 'inter'" colspan="2" style="padding: 4px 8px; border: 1px solid #d1d5db; text-align: center; font-weight: 600;">Integrated Tax</th>
+              <th rowspan="2" style="padding: 4px 8px; border: 1px solid #d1d5db; text-align: right; font-weight: 600;">Total Tax</th>
+            </tr>
+            <tr :style="{ background: pcLighter }">
+              <th style="padding: 3px 8px; border: 1px solid #d1d5db; text-align: center; font-size: 10px;">Rate</th>
+              <th style="padding: 3px 8px; border: 1px solid #d1d5db; text-align: right; font-size: 10px;">Amount</th>
+              <template v-if="invoice.supply_type !== 'inter'">
+                <th style="padding: 3px 8px; border: 1px solid #d1d5db; text-align: center; font-size: 10px;">Rate</th>
+                <th style="padding: 3px 8px; border: 1px solid #d1d5db; text-align: right; font-size: 10px;">Amount</th>
+              </template>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in hsnSummary" :key="row.hsn + '_' + row.rate">
+              <td style="padding: 3px 8px; border: 1px solid #e5e7eb; font-family: monospace;">{{ row.hsn }}</td>
+              <td style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: right;">{{ inr(row.taxable) }}</td>
+              <td v-if="invoice.supply_type !== 'inter'" style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: center; font-size: 10px;">{{ row.rate / 2 }}%</td>
+              <td v-if="invoice.supply_type !== 'inter'" style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: right;">{{ inr(row.cgst) }}</td>
+              <td v-if="invoice.supply_type !== 'inter'" style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: center; font-size: 10px;">{{ row.rate / 2 }}%</td>
+              <td v-if="invoice.supply_type !== 'inter'" style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: right;">{{ inr(row.sgst) }}</td>
+              <td v-if="invoice.supply_type === 'inter'" style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: center; font-size: 10px;">{{ row.rate }}%</td>
+              <td v-if="invoice.supply_type === 'inter'" style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: right;">{{ inr(row.igst) }}</td>
+              <td style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: right; font-weight: 600;">{{ inr(row.cgst + row.sgst + row.igst) }}</td>
+            </tr>
+            <tr style="font-weight: 700;">
+              <td style="padding: 4px 8px; border: 1px solid #d1d5db; text-align: right;" colspan="2">Total</td>
+              <td v-if="invoice.supply_type !== 'inter'" style="padding: 4px 8px; border: 1px solid #d1d5db;"></td>
+              <td v-if="invoice.supply_type !== 'inter'" style="padding: 4px 8px; border: 1px solid #d1d5db; text-align: right;">{{ inr(hsnSummary.reduce((s,r) => s + r.cgst, 0)) }}</td>
+              <td v-if="invoice.supply_type !== 'inter'" style="padding: 4px 8px; border: 1px solid #d1d5db;"></td>
+              <td v-if="invoice.supply_type !== 'inter'" style="padding: 4px 8px; border: 1px solid #d1d5db; text-align: right;">{{ inr(hsnSummary.reduce((s,r) => s + r.sgst, 0)) }}</td>
+              <td v-if="invoice.supply_type === 'inter'" style="padding: 4px 8px; border: 1px solid #d1d5db;"></td>
+              <td v-if="invoice.supply_type === 'inter'" style="padding: 4px 8px; border: 1px solid #d1d5db; text-align: right;">{{ inr(hsnSummary.reduce((s,r) => s + r.igst, 0)) }}</td>
+              <td style="padding: 4px 8px; border: 1px solid #d1d5db; text-align: right;">{{ inr(hsnTaxTotal) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
       <!-- Custom Footer -->
       <div v-if="ts.custom_footer" style="text-align: center; margin-bottom: 12px;">
         <p style="font-size: 11px; color: #6b7280; font-style: italic;">{{ ts.custom_footer }}</p>
@@ -707,6 +801,53 @@ onMounted(async () => {
           <div v-if="invoice.amount_paid > 0" style="display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #15803d;"><span>Paid</span><span>{{ inr(invoice.amount_paid) }}</span></div>
           <div v-if="invoice.amount_due > 0" style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 14px; font-weight: 700; color: #dc2626;"><span>{{ lbl('label_balance_due', 'Balance Due') }}</span><span>{{ inr(invoice.amount_due) }}</span></div>
         </div>
+      </div>
+
+      <!-- HSN-wise Tax Summary (Minimal) -->
+      <div v-if="!isDC && hsnSummary.length > 0 && (invoice.cgst_total > 0 || invoice.sgst_total > 0 || invoice.igst_total > 0)" style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #e5e7eb;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+          <thead>
+            <tr style="background: #f9fafb;">
+              <th rowspan="2" style="padding: 4px 8px; border: 1px solid #e5e7eb; font-weight: 600;">HSN/SAC</th>
+              <th rowspan="2" style="padding: 4px 8px; border: 1px solid #e5e7eb; text-align: right; font-weight: 600;">Taxable Value</th>
+              <th v-if="invoice.supply_type !== 'inter'" colspan="2" style="padding: 4px 8px; border: 1px solid #e5e7eb; text-align: center; font-weight: 600;">Central Tax</th>
+              <th v-if="invoice.supply_type !== 'inter'" colspan="2" style="padding: 4px 8px; border: 1px solid #e5e7eb; text-align: center; font-weight: 600;">State Tax</th>
+              <th v-if="invoice.supply_type === 'inter'" colspan="2" style="padding: 4px 8px; border: 1px solid #e5e7eb; text-align: center; font-weight: 600;">Integrated Tax</th>
+              <th rowspan="2" style="padding: 4px 8px; border: 1px solid #e5e7eb; text-align: right; font-weight: 600;">Total Tax</th>
+            </tr>
+            <tr style="background: #f9fafb;">
+              <th style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: center; font-size: 10px;">Rate</th>
+              <th style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: right; font-size: 10px;">Amount</th>
+              <template v-if="invoice.supply_type !== 'inter'">
+                <th style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: center; font-size: 10px;">Rate</th>
+                <th style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: right; font-size: 10px;">Amount</th>
+              </template>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in hsnSummary" :key="row.hsn + '_' + row.rate">
+              <td style="padding: 3px 8px; border: 1px solid #e5e7eb; font-family: monospace;">{{ row.hsn }}</td>
+              <td style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: right;">{{ inr(row.taxable) }}</td>
+              <td v-if="invoice.supply_type !== 'inter'" style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: center; font-size: 10px;">{{ row.rate / 2 }}%</td>
+              <td v-if="invoice.supply_type !== 'inter'" style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: right;">{{ inr(row.cgst) }}</td>
+              <td v-if="invoice.supply_type !== 'inter'" style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: center; font-size: 10px;">{{ row.rate / 2 }}%</td>
+              <td v-if="invoice.supply_type !== 'inter'" style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: right;">{{ inr(row.sgst) }}</td>
+              <td v-if="invoice.supply_type === 'inter'" style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: center; font-size: 10px;">{{ row.rate }}%</td>
+              <td v-if="invoice.supply_type === 'inter'" style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: right;">{{ inr(row.igst) }}</td>
+              <td style="padding: 3px 8px; border: 1px solid #e5e7eb; text-align: right; font-weight: 600;">{{ inr(row.cgst + row.sgst + row.igst) }}</td>
+            </tr>
+            <tr style="font-weight: 700;">
+              <td style="padding: 4px 8px; border: 1px solid #e5e7eb; text-align: right;" colspan="2">Total</td>
+              <td v-if="invoice.supply_type !== 'inter'" style="padding: 4px 8px; border: 1px solid #e5e7eb;"></td>
+              <td v-if="invoice.supply_type !== 'inter'" style="padding: 4px 8px; border: 1px solid #e5e7eb; text-align: right;">{{ inr(hsnSummary.reduce((s,r) => s + r.cgst, 0)) }}</td>
+              <td v-if="invoice.supply_type !== 'inter'" style="padding: 4px 8px; border: 1px solid #e5e7eb;"></td>
+              <td v-if="invoice.supply_type !== 'inter'" style="padding: 4px 8px; border: 1px solid #e5e7eb; text-align: right;">{{ inr(hsnSummary.reduce((s,r) => s + r.sgst, 0)) }}</td>
+              <td v-if="invoice.supply_type === 'inter'" style="padding: 4px 8px; border: 1px solid #e5e7eb;"></td>
+              <td v-if="invoice.supply_type === 'inter'" style="padding: 4px 8px; border: 1px solid #e5e7eb; text-align: right;">{{ inr(hsnSummary.reduce((s,r) => s + r.igst, 0)) }}</td>
+              <td style="padding: 4px 8px; border: 1px solid #e5e7eb; text-align: right;">{{ inr(hsnTaxTotal) }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <!-- Custom Footer -->
