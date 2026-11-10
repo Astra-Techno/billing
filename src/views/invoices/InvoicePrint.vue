@@ -898,11 +898,11 @@ onMounted(async () => {
       <!-- Company Header -->
       <table class="trad-full" :style="{ borderBottom: `2px solid ${pc}` }">
         <tr>
-          <td style="padding: 12px 16px;">
-            <div style="display: flex; align-items: center; gap: 16px;">
+          <td style="padding: 8px 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
               <img v-if="business?.logo" :src="business.logo" :style="{ width: logoSz, height: logoSz, objectFit: 'contain', flexShrink: 0 }" alt="logo" />
               <div style="flex: 1; text-align: center;">
-                <p style="font-size: 24px; font-weight: 900; font-style: italic; color: #000; letter-spacing: 0.02em;">{{ business?.name || invoice.business_name }}</p>
+                <p style="font-size: 20px; font-weight: 900; font-style: italic; color: #000; letter-spacing: 0.02em;">{{ business?.name || invoice.business_name }}</p>
                 <p v-if="business?.address_line1" style="font-size: 11px; color: #333;">{{ business.address_line1 }}<span v-if="business.address_line2">, {{ business.address_line2 }}</span></p>
                 <p v-if="business?.city" style="font-size: 11px; color: #333;">{{ [business?.city, business?.state_name, business?.pincode].filter(Boolean).join(' - ') }}<span v-if="business?.state_name"> {{ business.state_name }} Dt.</span></p>
                 <p v-if="sellerGstin" style="font-size: 12px; font-weight: 700; color: #000;">GST IN : {{ sellerGstin }}</p>
@@ -923,7 +923,7 @@ onMounted(async () => {
       </div>
 
       <!-- Invoice Title -->
-      <div :style="{ textAlign: 'center', padding: '8px 0', borderBottom: `1px solid ${pc}` }">
+      <div :style="{ textAlign: 'center', padding: '4px 0', borderBottom: `1px solid ${pc}` }">
         <p :style="{ fontSize: '18px', fontWeight: 800, letterSpacing: '0.1em', color: pc }">{{ invoiceTitle.toUpperCase() }}</p>
       </div>
 
@@ -975,7 +975,7 @@ onMounted(async () => {
             <td v-if="pcol.amount && !isDC" style="text-align: right; font-weight: 600;">{{ inr(itemTaxable(it)) }}</td>
           </tr>
           <!-- Empty rows to fill minimum height -->
-          <tr v-for="n in Math.max(0, 8 - items.length)" :key="'empty-'+n" class="trad-empty-row">
+          <tr v-for="n in Math.max(0, 3 - items.length)" :key="'empty-'+n" class="trad-empty-row">
             <td v-if="pcol.serial">&nbsp;</td><td></td><td v-if="pcol.hsn"></td><td v-if="pcol.unit"></td>
             <td v-if="pcol.discount && hasItemDiscount && !isDC"></td>
             <td v-if="pcol.rate && !isDC"></td><td v-if="pcol.qty"></td><td v-if="pcol.amount && !isDC"></td>
@@ -986,20 +986,20 @@ onMounted(async () => {
       <!-- Transport + Totals row -->
       <table v-if="!isDC" class="trad-full" :style="{ borderTop: `2px solid ${pc}` }">
         <tr>
-          <td style="width: 55%; padding: 8px 12px; vertical-align: top; border-right: 1px solid #000; font-size: 12px;">
-            <div style="display: flex; gap: 8px;"><span style="font-weight: 600; min-width: 80px;">No.of.Bdl</span><span>:</span></div>
-            <div style="display: flex; gap: 8px;"><span style="font-weight: 600; min-width: 80px;">Transport</span><span>:</span></div>
-            <div style="display: flex; gap: 8px;"><span style="font-weight: 600; min-width: 80px;">Vehicle No</span><span>:</span></div>
-            <div style="display: flex; gap: 8px;"><span style="font-weight: 600; min-width: 80px;">L.R. No</span><span>:</span></div>
+          <td style="width: 55%; padding: 4px 10px; vertical-align: top; border-right: 1px solid #000; font-size: 11px;">
+            <div style="display: flex; gap: 6px;"><span style="font-weight: 600; min-width: 70px;">No.of.Bdl</span><span>:</span></div>
+            <div style="display: flex; gap: 6px;"><span style="font-weight: 600; min-width: 70px;">Transport</span><span>:</span></div>
+            <div style="display: flex; gap: 6px;"><span style="font-weight: 600; min-width: 70px;">Vehicle No</span><span>:</span></div>
+            <div style="display: flex; gap: 6px;"><span style="font-weight: 600; min-width: 70px;">L.R. No</span><span>:</span></div>
           </td>
           <td style="padding: 0; vertical-align: top;">
-            <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
-              <tr style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">Total</td><td style="padding: 4px 12px; text-align: right; font-weight: 600;">{{ inr(afterItemDiscount) }}</td></tr>
-              <tr v-if="invoiceDiscountOnly > 0" style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">Discount</td><td style="padding: 4px 12px; text-align: right;">-{{ inr(invoiceDiscountOnly) }}</td></tr>
-              <tr v-if="invoice.sgst_total > 0" style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">{{ sgstLabel() }}</td><td style="padding: 4px 12px; text-align: right;">{{ inr(invoice.sgst_total) }}</td></tr>
-              <tr v-if="invoice.cgst_total > 0" style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">{{ cgstLabel() }}</td><td style="padding: 4px 12px; text-align: right;">{{ inr(invoice.cgst_total) }}</td></tr>
-              <tr v-if="invoice.igst_total > 0" style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">{{ igstLabel() }}</td><td style="padding: 4px 12px; text-align: right;">{{ inr(invoice.igst_total) }}</td></tr>
-              <tr style="border-bottom: 1px solid #ddd;"><td style="padding: 4px 12px;">Round-off</td><td style="padding: 4px 12px; text-align: right;">{{ inr(Math.round(parseFloat(invoice.total||0)) - parseFloat(invoice.total||0)) }}</td></tr>
+            <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
+              <tr style="border-bottom: 1px solid #ddd;"><td style="padding: 2px 8px;">Total</td><td style="padding: 2px 8px; text-align: right; font-weight: 600;">{{ inr(afterItemDiscount) }}</td></tr>
+              <tr v-if="invoiceDiscountOnly > 0" style="border-bottom: 1px solid #ddd;"><td style="padding: 2px 8px;">Discount</td><td style="padding: 2px 8px; text-align: right;">-{{ inr(invoiceDiscountOnly) }}</td></tr>
+              <tr v-if="invoice.sgst_total > 0" style="border-bottom: 1px solid #ddd;"><td style="padding: 2px 8px;">{{ sgstLabel() }}</td><td style="padding: 2px 8px; text-align: right;">{{ inr(invoice.sgst_total) }}</td></tr>
+              <tr v-if="invoice.cgst_total > 0" style="border-bottom: 1px solid #ddd;"><td style="padding: 2px 8px;">{{ cgstLabel() }}</td><td style="padding: 2px 8px; text-align: right;">{{ inr(invoice.cgst_total) }}</td></tr>
+              <tr v-if="invoice.igst_total > 0" style="border-bottom: 1px solid #ddd;"><td style="padding: 2px 8px;">{{ igstLabel() }}</td><td style="padding: 2px 8px; text-align: right;">{{ inr(invoice.igst_total) }}</td></tr>
+              <tr style="border-bottom: 1px solid #ddd;"><td style="padding: 2px 8px;">Round-off</td><td style="padding: 2px 8px; text-align: right;">{{ inr(Math.round(parseFloat(invoice.total||0)) - parseFloat(invoice.total||0)) }}</td></tr>
             </table>
           </td>
         </tr>
@@ -1008,14 +1008,14 @@ onMounted(async () => {
       <!-- Amount in words + NET AMOUNT -->
       <table v-if="!isDC && ts.show_words" class="trad-full" :style="{ borderTop: `2px solid ${pc}` }">
         <tr>
-          <td style="width: 55%; padding: 8px 12px; font-size: 12px; border-right: 1px solid #000;">
+          <td style="width: 55%; padding: 4px 10px; font-size: 11px; border-right: 1px solid #000;">
             <span style="font-weight: 700;">RS.</span> {{ amountInWords(invoice.total) }}
           </td>
-          <td style="padding: 8px 12px; text-align: right;">
-            <span :style="{ fontSize: '11px', fontWeight: 700, background: pc, color: '#fff', padding: '3px 10px' }">{{ lbl('label_net_amount', 'NET-AMOUNT') }}</span>
-            <p style="font-size: 18px; font-weight: 900; margin-top: 4px;">{{ inr(Math.round(parseFloat(invoice.total||0))) }}</p>
-            <div v-if="invoice.amount_paid > 0" style="font-size: 12px; color: #15803d; margin-top: 2px;">Paid: {{ inr(invoice.amount_paid) }}</div>
-            <div v-if="invoice.amount_due > 0" style="font-size: 14px; font-weight: 800; color: #dc2626; margin-top: 2px;">{{ lbl('label_balance_due', 'Balance Due') }}: {{ inr(invoice.amount_due) }}</div>
+          <td style="padding: 4px 10px; text-align: right;">
+            <span :style="{ fontSize: '10px', fontWeight: 700, background: pc, color: '#fff', padding: '2px 8px' }">{{ lbl('label_net_amount', 'NET-AMOUNT') }}</span>
+            <p style="font-size: 16px; font-weight: 900; margin-top: 2px;">{{ inr(Math.round(parseFloat(invoice.total||0))) }}</p>
+            <div v-if="invoice.amount_paid > 0" style="font-size: 11px; color: #15803d; margin-top: 1px;">Paid: {{ inr(invoice.amount_paid) }}</div>
+            <div v-if="invoice.amount_due > 0" style="font-size: 12px; font-weight: 800; color: #dc2626; margin-top: 1px;">{{ lbl('label_balance_due', 'Balance Due') }}: {{ inr(invoice.amount_due) }}</div>
           </td>
         </tr>
       </table>
@@ -1070,9 +1070,9 @@ onMounted(async () => {
       </div>
 
       <!-- Bank Details -->
-      <div v-if="ts.show_bank && !isDC && (business?.bank_name || business?.upi_id)" :style="{ borderTop: `1px solid ${pc}`, padding: '10px 12px', textAlign: 'center' }">
-        <p style="font-size: 13px; font-weight: 800; margin-bottom: 6px;">Company's Bank Details</p>
-        <div style="display: flex; justify-content: center; gap: 32px; font-size: 12px;">
+      <div v-if="ts.show_bank && !isDC && (business?.bank_name || business?.upi_id)" :style="{ borderTop: `1px solid ${pc}`, padding: '4px 10px', textAlign: 'center' }">
+        <p style="font-size: 12px; font-weight: 800; margin-bottom: 3px;">Company's Bank Details</p>
+        <div style="display: flex; justify-content: center; gap: 24px; font-size: 11px;">
           <div style="text-align: left;">
             <div v-if="business?.bank_account_holder || business?.name"><span style="font-weight: 600;">A/C Holder's Name</span> : {{ business?.bank_account_holder || business?.name }}</div>
             <div v-if="business?.bank_account_no"><span style="font-weight: 600;">A/C No</span> : {{ business.bank_account_no }}</div>
@@ -1091,24 +1091,24 @@ onMounted(async () => {
       <!-- Signatures -->
       <table v-if="ts.show_signature" class="trad-full" :style="{ borderTop: `2px solid ${pc}` }">
         <tr>
-          <td :style="{ width: '33%', padding: '12px', verticalAlign: 'bottom', height: '80px', borderRight: `1px solid ${pc}` }">
-            <div :style="{ borderTop: `1px solid ${pc}`, paddingTop: '4px', textAlign: 'center', fontSize: '11px', fontWeight: 600 }">Receiver's Signature</div>
+          <td :style="{ width: '33%', padding: '6px 10px', verticalAlign: 'bottom', height: '50px', borderRight: `1px solid ${pc}` }">
+            <div :style="{ borderTop: `1px solid ${pc}`, paddingTop: '2px', textAlign: 'center', fontSize: '10px', fontWeight: 600 }">Receiver's Signature</div>
           </td>
-          <td :style="{ width: '34%', padding: '12px', verticalAlign: 'bottom', borderRight: `1px solid ${pc}` }">
-            <div :style="{ borderTop: `1px solid ${pc}`, paddingTop: '4px', textAlign: 'center', fontSize: '11px', fontWeight: 600 }">Checked by</div>
+          <td :style="{ width: '34%', padding: '6px 10px', verticalAlign: 'bottom', borderRight: `1px solid ${pc}` }">
+            <div :style="{ borderTop: `1px solid ${pc}`, paddingTop: '2px', textAlign: 'center', fontSize: '10px', fontWeight: 600 }">Checked by</div>
           </td>
-          <td style="width: 33%; padding: 12px; vertical-align: top; text-align: right;">
+          <td style="width: 33%; padding: 6px 10px; vertical-align: top; text-align: right;">
             <p style="font-size: 12px; font-weight: 700; font-style: italic;">For {{ business?.name || invoice.business_name }}</p>
-            <div style="height: 50px;"></div>
+            <div style="height: 30px;"></div>
             <p style="font-size: 11px; font-weight: 600; text-align: right;">{{ lbl('label_auth_sig', 'Authorised Signatory') }}</p>
           </td>
         </tr>
       </table>
 
       <!-- Terms -->
-      <div v-if="ts.show_terms" :style="{ borderTop: `1px solid ${pc}`, padding: '8px 12px' }">
-        <p style="font-size: 11px; font-weight: 700;">Terms & Conditions</p>
-        <p v-if="invoice.terms || business?.invoice_terms" style="font-size: 10px; color: #333; margin-top: 2px;">{{ invoice.terms || business?.invoice_terms }}</p>
+      <div v-if="ts.show_terms" :style="{ borderTop: `1px solid ${pc}`, padding: '3px 10px' }">
+        <p style="font-size: 10px; font-weight: 700;">Terms & Conditions</p>
+        <p v-if="invoice.terms || business?.invoice_terms" style="font-size: 9px; color: #333; margin-top: 1px;">{{ invoice.terms || business?.invoice_terms }}</p>
       </div>
 
       <!-- Footer -->
@@ -1161,9 +1161,7 @@ body.paper-thermal58 .print-page { width: 58mm; padding: 2mm 3mm; }
 .trad-items td { padding: 4px; font-size: 11px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; }
 .trad-items td:last-child { border-right: none; }
 .trad-items tbody tr:last-child td { border-bottom: none; }
-.trad-items { height: 280px; }
-.trad-empty-row td { padding: 0; height: 1px; }
-.trad-empty-row:last-child td { height: 100%; }
+.trad-empty-row td { padding: 0; height: 18px; }
 /* Mobile action bar */
 .print-actions { position: fixed; bottom: 0; left: 0; right: 0; display: flex; gap: 8px; padding: 12px 16px; background: #1f2937; z-index: 100; }
 .print-action-btn { flex: 1; padding: 10px 0; border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; background: rgba(255,255,255,0.1); color: white; font-size: 14px; font-weight: 600; cursor: pointer; }
