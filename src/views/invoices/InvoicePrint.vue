@@ -383,7 +383,7 @@ onMounted(async () => {
             <td v-if="pcol.rate && !isDC" class="px-1.5 py-1 text-right text-gray-700">{{ inr(it.unit_price) }}</td>
             <td v-if="pcol.discount && hasItemDiscount && !isDC" class="px-1.5 py-1 text-right text-green-700">{{ parseFloat(it.discount_pct || 0) > 0 ? it.discount_pct + '%' : '—' }}</td>
             <td v-if="pcol.taxable && !isDC" class="px-1.5 py-1 text-right text-gray-700">{{ inr(itemTaxable(it)) }}</td>
-            <td v-if="pcol.amount && !isDC" class="px-1.5 py-1 text-right font-semibold text-gray-900">{{ inr(itemAmount(it)) }}</td>
+            <td v-if="pcol.amount && !isDC" class="px-1.5 py-1 text-right font-semibold text-gray-900">{{ inr(itemTaxable(it)) }}</td>
           </tr>
         </tbody>
       </table>
@@ -535,7 +535,7 @@ onMounted(async () => {
             <td v-if="pcol.unit" style="padding: 4px 6px; text-align: center; color: #374151;">{{ it.unit || 'Nos' }}</td>
             <td v-if="pcol.rate && !isDC" style="padding: 4px 6px; text-align: right; color: #374151;">{{ inr(it.unit_price) }}</td>
             <td v-if="pcol.discount && hasItemDiscount && !isDC" style="padding: 4px 6px; text-align: right; color: #15803d;">{{ parseFloat(it.discount_pct || 0) > 0 ? it.discount_pct + '%' : '—' }}</td>
-            <td v-if="pcol.amount && !isDC" style="padding: 4px 6px; text-align: right; font-weight: 700; color: #111827;">{{ inr(itemAmount(it)) }}</td>
+            <td v-if="pcol.amount && !isDC" style="padding: 4px 6px; text-align: right; font-weight: 700; color: #111827;">{{ inr(itemTaxable(it)) }}</td>
           </tr>
         </tbody>
       </table>
@@ -677,7 +677,7 @@ onMounted(async () => {
             <td v-if="pcol.qty" style="padding: 5px 0; text-align: right; color: #374151;">{{ fmtQty(it.quantity) }}</td>
             <td v-if="pcol.rate && !isDC" style="padding: 5px 0; text-align: right; color: #374151;">{{ inr(it.unit_price) }}</td>
             <td v-if="pcol.discount && hasItemDiscount && !isDC" style="padding: 5px 0; text-align: right; color: #15803d;">{{ parseFloat(it.discount_pct || 0) > 0 ? it.discount_pct + '%' : '—' }}</td>
-            <td v-if="pcol.amount && !isDC" style="padding: 5px 0; text-align: right; font-weight: 600; color: #111827;">{{ inr(itemAmount(it)) }}</td>
+            <td v-if="pcol.amount && !isDC" style="padding: 5px 0; text-align: right; font-weight: 600; color: #111827;">{{ inr(itemTaxable(it)) }}</td>
           </tr>
         </tbody>
       </table>
