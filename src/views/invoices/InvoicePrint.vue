@@ -152,6 +152,28 @@ const itemDiscountTotal = computed(() => items.value.reduce((s, it) => {
 }, 0))
 const invoiceDiscountOnly = computed(() => parseFloat(invoice.value?.discount || 0) - itemDiscountTotal.value)
 
+// HSN-wise tax summary table
+const hsnSummary = computed(() => {
+  const map = {}
+  const st = invoice.value?.supply_type || 'intra'
+  for (const it of items.value) {
+    const hsn = it.hsn_sac || '—'
+    const rate = parseFloat(it.gst_rate || 0)
+    const key = `${hsn}_${rate}`
+    if (!map[key]) map[key] = { hsn, rate, taxable: 0, cgst: 0, sgst: 0, igst: 0 }
+    const taxable = itemTaxable(it)
+    map[key].taxable += taxable
+    if (st === 'inter') {
+      map[key].igst += taxable * rate / 100
+    } else {
+      map[key].cgst += taxable * rate / 200
+      map[key].sgst += taxable * rate / 200
+    }
+  }
+  return Object.values(map)
+})
+const hsnTaxTotal = computed(() => hsnSummary.value.reduce((s, r) => s + r.cgst + r.sgst + r.igst, 0))
+
 const ones = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine',
   'Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen']
 const tens = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety']
@@ -808,10 +830,10 @@ onMounted(async () => {
             <td v-if="pcol.rate && !isDC" style="text-align: right;">{{ inr(it.unit_price) }}</td>
             <td v-if="pcol.discount && hasItemDiscount && !isDC" style="text-align: right; color: #15803d;">{{ parseFloat(it.discount_pct || 0) > 0 ? it.discount_pct + '%' : '—' }}</td>
             <td v-if="pcol.qty" style="text-align: right;">{{ it.quantity }}</td>
-            <td v-if="pcol.amount && !isDC" style="text-align: right; font-weight: 600;">{{ inr(itemAmount(it)) }}</td>
+            <td v-if="pcol.amount && !isDC" style="text-align: right; font-weight: 600;">{{ inr(itemTaxable(it)) }}</td>
           </tr>
-          <!-- Empty rows to fill space -->
-          <tr v-for="n in Math.max(0, 8 - items.length)" :key="'empty-'+n">
+          <!-- Empty rows to fill minimum height -->
+          <tr v-for="n in Math.max(0, 8 - items.length)" :key="'empty-'+n" class="trad-empty-row">
             <td v-if="pcol.serial">&nbsp;</td><td></td><td v-if="pcol.hsn"></td><td v-if="pcol.unit"></td>
             <td v-if="pcol.discount && hasItemDiscount && !isDC"></td>
             <td v-if="pcol.rate && !isDC"></td><td v-if="pcol.qty"></td><td v-if="pcol.amount && !isDC"></td>
@@ -855,6 +877,55 @@ onMounted(async () => {
           </td>
         </tr>
       </table>
+
+      <!-- HSN-wise Tax Summary -->
+      <table v-if="!isDC && hsnSummary.length > 0 && (invoice.cgst_total > 0 || invoice.sgst_total > 0 || invoice.igst_total > 0)" class="trad-full" :style="{ borderTop: `2px solid ${pc}` }">
+        <thead>
+          <tr style="background: #f3f4f6;">
+            <th rowspan="2" style="padding: 4px 8px; font-size: 11px; border-right: 1px solid #000; border-bottom: 1px solid #000;">HSN/SAC</th>
+            <th rowspan="2" style="padding: 4px 8px; font-size: 11px; text-align: right; border-right: 1px solid #000; border-bottom: 1px solid #000;">Taxable Value</th>
+            <th v-if="invoice.supply_type !== 'inter'" colspan="2" style="padding: 4px 8px; font-size: 11px; text-align: center; border-right: 1px solid #000; border-bottom: 1px solid #000;">Central Tax</th>
+            <th v-if="invoice.supply_type !== 'inter'" colspan="2" style="padding: 4px 8px; font-size: 11px; text-align: center; border-right: 1px solid #000; border-bottom: 1px solid #000;">State Tax</th>
+            <th v-if="invoice.supply_type === 'inter'" colspan="2" style="padding: 4px 8px; font-size: 11px; text-align: center; border-right: 1px solid #000; border-bottom: 1px solid #000;">Integrated Tax</th>
+            <th rowspan="2" style="padding: 4px 8px; font-size: 11px; text-align: right; border-bottom: 1px solid #000;">Total Tax</th>
+          </tr>
+          <tr style="background: #f3f4f6;">
+            <th style="padding: 3px 8px; font-size: 10px; text-align: center; border-right: 1px solid #ddd; border-bottom: 1px solid #000;">Rate</th>
+            <th style="padding: 3px 8px; font-size: 10px; text-align: right; border-right: 1px solid #000; border-bottom: 1px solid #000;">Amount</th>
+            <template v-if="invoice.supply_type !== 'inter'">
+              <th style="padding: 3px 8px; font-size: 10px; text-align: center; border-right: 1px solid #ddd; border-bottom: 1px solid #000;">Rate</th>
+              <th style="padding: 3px 8px; font-size: 10px; text-align: right; border-right: 1px solid #000; border-bottom: 1px solid #000;">Amount</th>
+            </template>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="row in hsnSummary" :key="row.hsn + '_' + row.rate" style="border-bottom: 1px solid #ddd;">
+            <td style="padding: 3px 8px; font-size: 11px; font-family: monospace; border-right: 1px solid #000;">{{ row.hsn }}</td>
+            <td style="padding: 3px 8px; font-size: 11px; text-align: right; border-right: 1px solid #000;">{{ inr(row.taxable) }}</td>
+            <td v-if="invoice.supply_type !== 'inter'" style="padding: 3px 8px; font-size: 10px; text-align: center; border-right: 1px solid #ddd;">{{ row.rate / 2 }}%</td>
+            <td v-if="invoice.supply_type !== 'inter'" style="padding: 3px 8px; font-size: 11px; text-align: right; border-right: 1px solid #000;">{{ inr(row.cgst) }}</td>
+            <td v-if="invoice.supply_type !== 'inter'" style="padding: 3px 8px; font-size: 10px; text-align: center; border-right: 1px solid #ddd;">{{ row.rate / 2 }}%</td>
+            <td v-if="invoice.supply_type !== 'inter'" style="padding: 3px 8px; font-size: 11px; text-align: right; border-right: 1px solid #000;">{{ inr(row.sgst) }}</td>
+            <td v-if="invoice.supply_type === 'inter'" style="padding: 3px 8px; font-size: 10px; text-align: center; border-right: 1px solid #ddd;">{{ row.rate }}%</td>
+            <td v-if="invoice.supply_type === 'inter'" style="padding: 3px 8px; font-size: 11px; text-align: right; border-right: 1px solid #000;">{{ inr(row.igst) }}</td>
+            <td style="padding: 3px 8px; font-size: 11px; text-align: right; font-weight: 600;">{{ inr(row.cgst + row.sgst + row.igst) }}</td>
+          </tr>
+          <tr style="background: #f9fafb; font-weight: 700;">
+            <td style="padding: 4px 8px; font-size: 11px; border-right: 1px solid #000; border-top: 1px solid #000;">Total</td>
+            <td style="padding: 4px 8px; font-size: 11px; text-align: right; border-right: 1px solid #000; border-top: 1px solid #000;">{{ inr(afterItemDiscount) }}</td>
+            <td v-if="invoice.supply_type !== 'inter'" style="padding: 4px 8px; border-right: 1px solid #ddd; border-top: 1px solid #000;"></td>
+            <td v-if="invoice.supply_type !== 'inter'" style="padding: 4px 8px; font-size: 11px; text-align: right; border-right: 1px solid #000; border-top: 1px solid #000;">{{ inr(invoice.cgst_total) }}</td>
+            <td v-if="invoice.supply_type !== 'inter'" style="padding: 4px 8px; border-right: 1px solid #ddd; border-top: 1px solid #000;"></td>
+            <td v-if="invoice.supply_type !== 'inter'" style="padding: 4px 8px; font-size: 11px; text-align: right; border-right: 1px solid #000; border-top: 1px solid #000;">{{ inr(invoice.sgst_total) }}</td>
+            <td v-if="invoice.supply_type === 'inter'" style="padding: 4px 8px; border-right: 1px solid #ddd; border-top: 1px solid #000;"></td>
+            <td v-if="invoice.supply_type === 'inter'" style="padding: 4px 8px; font-size: 11px; text-align: right; border-right: 1px solid #000; border-top: 1px solid #000;">{{ inr(invoice.igst_total) }}</td>
+            <td style="padding: 4px 8px; font-size: 11px; text-align: right; border-top: 1px solid #000;">{{ inr(hsnTaxTotal) }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div v-if="!isDC && hsnTaxTotal > 0" style="padding: 3px 12px; font-size: 11px; border-top: 1px solid #ddd;">
+        <span style="font-weight: 600;">Tax Amount (in words) :</span> INR {{ amountInWords(hsnTaxTotal) }} Only
+      </div>
 
       <!-- Bank Details -->
       <div v-if="ts.show_bank && !isDC && (business?.bank_name || business?.upi_id)" :style="{ borderTop: `1px solid ${pc}`, padding: '10px 12px', textAlign: 'center' }">
@@ -948,6 +1019,8 @@ body.paper-thermal58 .print-page { width: 58mm; padding: 2mm 3mm; }
 .trad-items td { padding: 4px; font-size: 11px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; }
 .trad-items td:last-child { border-right: none; }
 .trad-items tbody tr:last-child td { border-bottom: none; }
+.trad-items { min-height: 280px; }
+.trad-empty-row td { height: 22px; }
 /* Mobile action bar */
 .print-actions { position: fixed; bottom: 0; left: 0; right: 0; display: flex; gap: 8px; padding: 12px 16px; background: #1f2937; z-index: 100; }
 .print-action-btn { flex: 1; padding: 10px 0; border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; background: rgba(255,255,255,0.1); color: white; font-size: 14px; font-weight: 600; cursor: pointer; }
