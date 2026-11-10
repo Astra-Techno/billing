@@ -139,6 +139,7 @@ function cgstLabel() { return gstRates.value.single ? `CGST @${gstRates.value.ha
 function sgstLabel() { return gstRates.value.single ? `SGST @${gstRates.value.half}%` : 'SGST' }
 function igstLabel() { return gstRates.value.single ? `IGST @${gstRates.value.rate}%` : 'IGST' }
 
+function fmtQty(v) { const n = parseFloat(v || 0); return n % 1 === 0 ? n.toLocaleString('en-IN') : parseFloat(n.toFixed(3)).toLocaleString('en-IN') }
 function itemTaxable(it) {
   return parseFloat(it.quantity || 0) * parseFloat(it.unit_price || 0) * (1 - parseFloat(it.discount_pct || 0) / 100)
 }
@@ -290,7 +291,7 @@ onMounted(async () => {
       <div v-for="(it, idx) in items" :key="it.id || idx" class="receipt-item">
         <strong>{{ idx + 1 }}. {{ it.description }}</strong>
         <p v-if="it.hsn_sac || (isGst && Number(it.gst_rate))"><span v-if="it.hsn_sac">HSN/SAC: {{ it.hsn_sac }}</span><span v-if="it.hsn_sac && isGst && Number(it.gst_rate)"> · </span><span v-if="isGst && Number(it.gst_rate)">GST {{ it.gst_rate }}%</span></p>
-        <div class="receipt-pair"><span>{{ it.quantity }} {{ it.unit || 'Nos' }}<template v-if="!isDC"> × {{ inr(it.unit_price) }}</template></span><strong v-if="!isDC">{{ inr(it.total) }}</strong></div>
+        <div class="receipt-pair"><span>{{ fmtQty(it.quantity) }} {{ it.unit || 'Nos' }}<template v-if="!isDC"> × {{ inr(it.unit_price) }}</template></span><strong v-if="!isDC">{{ inr(it.total) }}</strong></div>
       </div>
       <div class="receipt-rule"></div>
       <template v-if="isDC"><div class="receipt-pair"><strong>Total Qty</strong><strong>{{ items.reduce((sum, it) => sum + Number(it.quantity || 0), 0) }}</strong></div></template>
@@ -377,7 +378,7 @@ onMounted(async () => {
             <td v-if="pcol.serial" class="px-1.5 py-1 text-gray-400">{{ idx + 1 }}</td>
             <td class="px-1.5 py-1 font-medium text-gray-800">{{ it.description }}</td>
             <td v-if="pcol.hsn" class="px-1.5 py-1 text-center font-mono text-gray-500">{{ it.hsn_sac || '—' }}</td>
-            <td v-if="pcol.qty" class="px-1.5 py-1 text-right text-gray-700">{{ it.quantity }}</td>
+            <td v-if="pcol.qty" class="px-1.5 py-1 text-right text-gray-700">{{ fmtQty(it.quantity) }}</td>
             <td v-if="pcol.unit" class="px-1.5 py-1 text-center text-gray-700">{{ it.unit || 'Nos' }}</td>
             <td v-if="pcol.rate && !isDC" class="px-1.5 py-1 text-right text-gray-700">{{ inr(it.unit_price) }}</td>
             <td v-if="pcol.discount && hasItemDiscount && !isDC" class="px-1.5 py-1 text-right text-green-700">{{ parseFloat(it.discount_pct || 0) > 0 ? it.discount_pct + '%' : '—' }}</td>
@@ -393,7 +394,7 @@ onMounted(async () => {
       </div>
       <div v-if="isDC" class="mb-4 pb-4 border-b border-gray-200 text-right">
         <p class="text-sm text-gray-600">Total Items: <span class="font-bold text-gray-900">{{ items.length }}</span></p>
-        <p class="text-sm text-gray-600">Total Quantity: <span class="font-bold text-gray-900">{{ items.reduce((s, it) => s + parseFloat(it.quantity || 0), 0) }}</span></p>
+        <p class="text-sm text-gray-600">Total Quantity: <span class="font-bold text-gray-900">{{ fmtQty(items.reduce((s, it) => s + parseFloat(it.quantity || 0), 0)) }}</span></p>
       </div>
 
       <!-- Totals -->
@@ -530,7 +531,7 @@ onMounted(async () => {
             <td v-if="pcol.serial" style="padding: 4px 6px; color: #9ca3af;">{{ idx + 1 }}</td>
             <td style="padding: 4px 6px; font-weight: 600; color: #1f2937;">{{ it.description }}</td>
             <td v-if="pcol.hsn" style="padding: 4px 6px; text-align: center; font-family: monospace; color: #6b7280;">{{ it.hsn_sac || '—' }}</td>
-            <td v-if="pcol.qty" style="padding: 4px 6px; text-align: right; color: #374151;">{{ it.quantity }}</td>
+            <td v-if="pcol.qty" style="padding: 4px 6px; text-align: right; color: #374151;">{{ fmtQty(it.quantity) }}</td>
             <td v-if="pcol.unit" style="padding: 4px 6px; text-align: center; color: #374151;">{{ it.unit || 'Nos' }}</td>
             <td v-if="pcol.rate && !isDC" style="padding: 4px 6px; text-align: right; color: #374151;">{{ inr(it.unit_price) }}</td>
             <td v-if="pcol.discount && hasItemDiscount && !isDC" style="padding: 4px 6px; text-align: right; color: #15803d;">{{ parseFloat(it.discount_pct || 0) > 0 ? it.discount_pct + '%' : '—' }}</td>
@@ -545,7 +546,7 @@ onMounted(async () => {
       </div>
       <div v-if="isDC" style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #e5e7eb; text-align: right;">
         <p style="font-size: 13px; color: #4b5563;">Total Items: <span style="font-weight: 700; color: #111827;">{{ items.length }}</span></p>
-        <p style="font-size: 13px; color: #4b5563;">Total Qty: <span style="font-weight: 700; color: #111827;">{{ items.reduce((s, it) => s + parseFloat(it.quantity || 0), 0) }}</span></p>
+        <p style="font-size: 13px; color: #4b5563;">Total Qty: <span style="font-weight: 700; color: #111827;">{{ fmtQty(items.reduce((s, it) => s + parseFloat(it.quantity || 0), 0)) }}</span></p>
       </div>
 
       <!-- Totals -->
@@ -673,7 +674,7 @@ onMounted(async () => {
               <span v-if="pcol.unit && it.unit && it.unit !== 'Nos'" style="font-size: 10px; color: #9ca3af; margin-left: 6px;">{{ it.unit }}</span>
             </td>
             <td v-if="pcol.hsn" style="padding: 5px 0; text-align: center; font-family: monospace; color: #9ca3af;">{{ it.hsn_sac || '—' }}</td>
-            <td v-if="pcol.qty" style="padding: 5px 0; text-align: right; color: #374151;">{{ it.quantity }}</td>
+            <td v-if="pcol.qty" style="padding: 5px 0; text-align: right; color: #374151;">{{ fmtQty(it.quantity) }}</td>
             <td v-if="pcol.rate && !isDC" style="padding: 5px 0; text-align: right; color: #374151;">{{ inr(it.unit_price) }}</td>
             <td v-if="pcol.discount && hasItemDiscount && !isDC" style="padding: 5px 0; text-align: right; color: #15803d;">{{ parseFloat(it.discount_pct || 0) > 0 ? it.discount_pct + '%' : '—' }}</td>
             <td v-if="pcol.amount && !isDC" style="padding: 5px 0; text-align: right; font-weight: 600; color: #111827;">{{ inr(itemAmount(it)) }}</td>
@@ -686,7 +687,7 @@ onMounted(async () => {
         <p style="font-size: 11px; font-weight: 600; color: #b45309; text-transform: uppercase; letter-spacing: 0.1em;">This is not a tax invoice — for reference only</p>
       </div>
       <div v-if="isDC" style="margin-bottom: 20px; text-align: right;">
-        <p style="font-size: 12px; color: #6b7280;">Total Items: <strong>{{ items.length }}</strong> · Total Qty: <strong>{{ items.reduce((s, it) => s + parseFloat(it.quantity || 0), 0) }}</strong></p>
+        <p style="font-size: 12px; color: #6b7280;">Total Items: <strong>{{ items.length }}</strong> · Total Qty: <strong>{{ fmtQty(items.reduce((s, it) => s + parseFloat(it.quantity || 0), 0)) }}</strong></p>
       </div>
 
       <!-- Totals — right aligned, minimal -->
@@ -829,7 +830,7 @@ onMounted(async () => {
             <td v-if="pcol.unit" style="text-align: center;">{{ it.unit || 'Nos' }}</td>
             <td v-if="pcol.rate && !isDC" style="text-align: right;">{{ inr(it.unit_price) }}</td>
             <td v-if="pcol.discount && hasItemDiscount && !isDC" style="text-align: right; color: #15803d;">{{ parseFloat(it.discount_pct || 0) > 0 ? it.discount_pct + '%' : '—' }}</td>
-            <td v-if="pcol.qty" style="text-align: right;">{{ it.quantity }}</td>
+            <td v-if="pcol.qty" style="text-align: right;">{{ fmtQty(it.quantity) }}</td>
             <td v-if="pcol.amount && !isDC" style="text-align: right; font-weight: 600;">{{ inr(itemTaxable(it)) }}</td>
           </tr>
           <!-- Empty rows to fill minimum height -->
@@ -1019,8 +1020,9 @@ body.paper-thermal58 .print-page { width: 58mm; padding: 2mm 3mm; }
 .trad-items td { padding: 4px; font-size: 11px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; }
 .trad-items td:last-child { border-right: none; }
 .trad-items tbody tr:last-child td { border-bottom: none; }
-.trad-items { min-height: 280px; }
-.trad-empty-row td { height: 22px; }
+.trad-items { height: 280px; }
+.trad-empty-row td { padding: 0; height: 1px; }
+.trad-empty-row:last-child td { height: 100%; }
 /* Mobile action bar */
 .print-actions { position: fixed; bottom: 0; left: 0; right: 0; display: flex; gap: 8px; padding: 12px 16px; background: #1f2937; z-index: 100; }
 .print-action-btn { flex: 1; padding: 10px 0; border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; background: rgba(255,255,255,0.1); color: white; font-size: 14px; font-weight: 600; cursor: pointer; }
