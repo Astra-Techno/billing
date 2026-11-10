@@ -69,6 +69,7 @@ const routes = [
         ]
       },
       { path: 'inventory', name: 'Inventory', component: () => import('../views/inventory/Inventory.vue'), meta: { permission: 'inventory' } },
+      { path: 'locations', name: 'Locations', component: () => import('../views/inventory/Locations.vue'), meta: { permission: 'inventory' } },
       {
         path: 'credit-notes',     name: 'CreditNotes',  component: () => import('../views/credit-notes/CreditNoteList.vue'), meta: { permission: 'credit_notes', feature: 'credit_notes' },
         children: [

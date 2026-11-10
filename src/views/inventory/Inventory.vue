@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { all, task } from '../../api'
+import { task } from '../../api'
 import { inr } from '../../utils/currency'
 import InfoTip from '../../components/InfoTip.vue'
 import HelpIcon from '../../components/HelpIcon.vue'
@@ -15,8 +15,6 @@ const tab = ref('stock')
 const locationFilter = ref('')
 const settings = ref({ mode: 'none', advanced: false })
 const adjust = ref({ product_id: '', location_id: '', kind: 'purchase', quantity: '', unit_cost: '', batch_no: '', expiry_date: '', serial_numbers: '', note: '' })
-const place = ref({ name: '', type: 'shop', address: '', gstin: '', state_id: '', city: '', pincode: '', is_default: false, active: true })
-const states = ref([])
 const transfer = ref({ from_location_id: '', to_location_id: '', transfer_date: new Date().toISOString().slice(0, 10), notes: '', items: [{ product_id: '', quantity: '' }] })
 const search = ref('')
 const stockFilter = ref('all')
@@ -27,7 +25,6 @@ const tabs = [
   { key: 'stock', label: 'Current Stock' },
   { key: 'in', label: 'Stock In / Correction' },
   { key: 'transfer', label: 'Move Stock' },
-  { key: 'places', label: 'Shops / Godowns' },
   { key: 'history', label: 'Stock History' },
 ]
 
@@ -73,25 +70,6 @@ async function run(method, payload, ok) {
   busy.value = false
 }
 
-const blankPlace = () => ({ name: '', type: 'shop', address: '', gstin: '', state_id: '', city: '', pincode: '', is_default: false, active: true })
-
-async function saveLocation() {
-  await run('saveLocation', place.value, 'Shop / Godown saved.')
-  if (!error.value) place.value = blankPlace()
-}
-
-function editLocation(l) {
-  place.value = { id: l.id, name: l.name, type: l.type, address: l.address || '', gstin: l.gstin || '', state_id: l.state_id || '', city: l.city || '', pincode: l.pincode || '', is_default: !!+l.is_default, active: !!+l.active }
-}
-
-function cancelEdit() {
-  place.value = blankPlace()
-}
-
-async function deleteLocation(l) {
-  if (!confirm(`Delete "${l.name}"? This cannot be undone.`)) return
-  await run('deleteLocation', { id: l.id }, 'Location deleted.')
-}
 
 function saveAdjustment() {
   const payload = { ...adjust.value, serial_numbers: adjust.value.serial_numbers.split(/[,\n]/).map(x => x.trim()).filter(Boolean) }
@@ -106,7 +84,6 @@ const receive = id => run('receiveTransfer', { id }, 'Stock received at destinat
 
 onMounted(async () => {
   load()
-  try { const r = await all('IndianState'); states.value = r.data?.data || [] } catch {}
 })
 </script>
 
@@ -324,91 +301,6 @@ onMounted(async () => {
               class="btn-sm btn-outline text-green-600 border-green-300 hover:bg-green-50">
               Confirm Received
             </button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ━━ Shops / Godowns ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-    <section v-if="tab === 'places'" class="grid gap-5 lg:grid-cols-2">
-
-      <!-- Add / Edit location form -->
-      <div class="card card-body space-y-4">
-        <div class="flex items-center gap-2">
-          <h2 class="text-base font-bold text-gray-900">{{ place.id ? 'Edit' : 'Add' }} Shop / Godown</h2>
-          <InfoTip text="Single-shop users need only Main Shop. Add a godown or branch only when stock is physically stored there." />
-        </div>
-        <input v-model="place.name" class="form-input" placeholder="Example: Main Shop, Central Godown" />
-        <select v-model="place.type" class="form-input">
-          <option value="shop">Shop / Branch</option>
-          <option value="godown">Godown</option>
-          <option value="damaged">Damaged / Returns Store</option>
-        </select>
-        <textarea v-model="place.address" class="form-input" placeholder="Address (optional)"></textarea>
-
-        <!-- GST Identity (optional — overrides business-level GST for this shop) -->
-        <details class="border border-gray-200 rounded-lg">
-          <summary class="px-3 py-2 text-xs font-bold text-gray-500 cursor-pointer select-none hover:bg-gray-50">GST Settings (optional — for multi-state shops)</summary>
-          <div class="px-3 pb-3 pt-1 space-y-3">
-            <div>
-              <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">GSTIN</label>
-              <input v-model="place.gstin" class="form-input" placeholder="e.g. 27AABCU9603R1ZM" maxlength="15" />
-            </div>
-            <div>
-              <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">State</label>
-              <select v-model="place.state_id" class="form-input">
-                <option value="">— Use business state —</option>
-                <option v-for="s in states" :key="s.id" :value="s.id">{{ s.name }}</option>
-              </select>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">City</label>
-                <input v-model="place.city" class="form-input" placeholder="City" />
-              </div>
-              <div>
-                <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Pincode</label>
-                <input v-model="place.pincode" class="form-input" placeholder="Pincode" maxlength="10" />
-              </div>
-            </div>
-            <p class="text-[10px] text-gray-400">Leave blank to use the business-level GST identity on invoices from this shop.</p>
-          </div>
-        </details>
-
-        <label v-if="!place.id" class="flex items-center gap-2 text-sm text-gray-700">
-          <input v-model="place.is_default" type="checkbox" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-          Use as default billing location
-        </label>
-        <label v-if="place.id" class="flex items-center gap-2 text-sm text-gray-700">
-          <input v-model="place.active" type="checkbox" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-          Active
-        </label>
-        <div class="flex gap-2">
-          <button @click="saveLocation" class="btn-primary">{{ place.id ? 'Update' : 'Save' }} Location</button>
-          <button v-if="place.id" @click="cancelEdit" class="btn-secondary">Cancel</button>
-        </div>
-      </div>
-
-      <!-- Location list -->
-      <div class="card overflow-hidden">
-        <div v-if="!data.locations.length" class="p-8 text-center text-sm text-gray-400">No locations yet</div>
-        <div v-for="l in data.locations" :key="l.id"
-          class="flex items-center justify-between border-b border-google-divider/50 last:border-0 px-4 py-3.5">
-          <div>
-            <p class="text-[14px] font-bold text-gray-900">{{ l.name }}</p>
-            <p class="text-[11px] text-gray-500 capitalize mt-0.5">
-              {{ l.type }}
-              <span v-if="+l.is_default"> · Default</span>
-              <span v-if="l.gstin"> · {{ l.gstin }}</span>
-              <span v-if="l.state_name"> · {{ l.state_name }}</span>
-            </p>
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="badge" :class="+l.active ? 'badge-green' : 'badge-gray'">
-              {{ +l.active ? 'Active' : 'Inactive' }}
-            </span>
-            <button @click="editLocation(l)" class="text-primary-600 hover:text-primary-800 text-xs font-medium">Edit</button>
-            <button v-if="!+l.is_default" @click="deleteLocation(l)" class="text-red-500 hover:text-red-700 text-xs font-medium">Delete</button>
           </div>
         </div>
       </div>

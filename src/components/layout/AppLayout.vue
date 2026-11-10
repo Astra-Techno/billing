@@ -65,7 +65,7 @@ watch(() => route.fullPath, () => {
 }, { immediate: true })
 
 const showNavbar = computed(() => {
-  const regular = ['Dashboard', 'POS', 'Invoices', 'Quotes', 'Expenses', 'Products', 'Inventory', 'CreditNotes', 'PurchaseOrders', 'DeliveryChallans', 'Timesheets', 'GstReturns', 'Reports', 'Settings', 'BillingCounters', 'Help', 'More', 'Clients', 'Payroll', 'StaffNew', 'StaffEdit', 'PayrollRun'].includes(route.name)
+  const regular = ['Dashboard', 'POS', 'Invoices', 'Quotes', 'Expenses', 'Products', 'Inventory', 'Locations', 'CreditNotes', 'PurchaseOrders', 'DeliveryChallans', 'Timesheets', 'GstReturns', 'Reports', 'Settings', 'BillingCounters', 'Help', 'More', 'Clients', 'Payroll', 'StaffNew', 'StaffEdit', 'PayrollRun'].includes(route.name)
   const admin = route.meta.superAdmin && ['AdminDashboard', 'AdminBusinesses', 'AdminUsers'].includes(route.name)
   return regular || admin
 })
