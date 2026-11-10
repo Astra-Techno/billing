@@ -894,7 +894,7 @@ onMounted(async () => {
     <!-- ════════════════════════════════════════════════════════════════ -->
     <!-- TEMPLATE: TRADITIONAL (bordered table format)                   -->
     <!-- ════════════════════════════════════════════════════════════════ -->
-    <div v-else-if="invoice && effectiveTpl === 'traditional'" class="invoice-doc trad" :style="{ fontFamily: fontFamily }">
+    <div v-else-if="invoice && effectiveTpl === 'traditional'" class="invoice-doc trad trad-page" :style="{ fontFamily: fontFamily }">
       <!-- Company Header -->
       <table class="trad-full" :style="{ borderBottom: `2px solid ${pc}` }">
         <tr>
@@ -949,7 +949,8 @@ onMounted(async () => {
         </tr>
       </table>
 
-      <!-- Items Table -->
+      <!-- Items Table (flex-grow to push footer down) -->
+      <div class="trad-items-wrap">
       <table class="trad-full trad-items">
         <thead>
           <tr>
@@ -974,14 +975,11 @@ onMounted(async () => {
             <td v-if="pcol.qty" style="text-align: right;">{{ fmtQty(it.quantity) }}</td>
             <td v-if="pcol.amount && !isDC" style="text-align: right; font-weight: 600;">{{ inr(itemTaxable(it)) }}</td>
           </tr>
-          <!-- Empty rows to fill minimum height -->
-          <tr v-for="n in Math.max(0, 3 - items.length)" :key="'empty-'+n" class="trad-empty-row">
-            <td v-if="pcol.serial">&nbsp;</td><td></td><td v-if="pcol.hsn"></td><td v-if="pcol.unit"></td>
-            <td v-if="pcol.discount && hasItemDiscount && !isDC"></td>
-            <td v-if="pcol.rate && !isDC"></td><td v-if="pcol.qty"></td><td v-if="pcol.amount && !isDC"></td>
-          </tr>
+          <!-- Spacer row fills remaining height -->
+          <tr class="trad-spacer-row"><td :colspan="[pcol.serial,true,pcol.hsn,pcol.unit,pcol.rate&&!isDC,pcol.discount&&hasItemDiscount&&!isDC,pcol.qty,pcol.amount&&!isDC].filter(Boolean).length">&nbsp;</td></tr>
         </tbody>
       </table>
+      </div>
 
       <!-- Transport + Totals row -->
       <table v-if="!isDC" class="trad-full" :style="{ borderTop: `2px solid ${pc}` }">
@@ -1153,6 +1151,10 @@ body.paper-thermal58 .print-page { width: 58mm; padding: 2mm 3mm; }
 .receipt-qr { display: block; width: 22mm; height: 22mm; margin: 2mm auto; image-rendering: pixelated; }
 .receipt-thanks { font-weight: 700; margin: 3mm 0 5mm !important; }
 /* Traditional template */
+.trad-page { display: flex; flex-direction: column; min-height: calc(100vh - 40px); }
+.trad-items-wrap { flex: 1; display: flex; flex-direction: column; }
+.trad-items-wrap .trad-items { flex: 1; }
+@media print { .trad-page { min-height: 100%; } }
 .trad { border: 2px solid #000; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #000; }
 .trad-full { width: 100%; border-collapse: collapse; }
 .trad-full td, .trad-full th { border: none; }
@@ -1161,7 +1163,7 @@ body.paper-thermal58 .print-page { width: 58mm; padding: 2mm 3mm; }
 .trad-items td { padding: 4px; font-size: 11px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; }
 .trad-items td:last-child { border-right: none; }
 .trad-items tbody tr:last-child td { border-bottom: none; }
-.trad-empty-row td { padding: 0; height: 18px; }
+.trad-spacer-row td { padding: 0; height: 100%; }
 /* Mobile action bar */
 .print-actions { position: fixed; bottom: 0; left: 0; right: 0; display: flex; gap: 8px; padding: 12px 16px; background: #1f2937; z-index: 100; }
 .print-action-btn { flex: 1; padding: 10px 0; border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; background: rgba(255,255,255,0.1); color: white; font-size: 14px; font-weight: 600; cursor: pointer; }
