@@ -208,8 +208,8 @@ if (!is_dir($srcFrontend)) {
     log_step('⚠', 'public_html/ not found in repo — skipping frontend. Build and commit first: npm run build', 'warn');
 } else {
     log_step('🧹', 'Cleaning old frontend files…');
-    // Delete everything in root EXCEPT deploy.php and api/ folder
-    $deletedFe = clean_dir(BASE_DIR, ['deploy.php', 'api']);
+    // Delete everything in root EXCEPT deploy.php, api/ and downloads/
+    $deletedFe = clean_dir(BASE_DIR, ['deploy.php', 'api', 'downloads']);
     log_step('🗑', "Deleted {$deletedFe} old file(s) from frontend", 'muted');
 
     log_step('🔄', 'Copying fresh frontend files…');
