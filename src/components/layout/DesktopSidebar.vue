@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useBusinessStore } from '../../stores/business'
@@ -12,6 +12,12 @@ const router = useRouter()
 const auth   = useAuthStore()
 const biz    = useBusinessStore()
 const { can } = useRole()
+
+const collapsed = ref(localStorage.getItem('sidebar_collapsed') === '1')
+function toggleCollapse() {
+  collapsed.value = !collapsed.value
+  localStorage.setItem('sidebar_collapsed', collapsed.value ? '1' : '0')
+}
 
 const isActive = (to) => to === '/' ? route.path === '/' : route.path.startsWith(to)
 
@@ -82,12 +88,12 @@ const businessName = computed(() =>
 </script>
 
 <template>
-  <aside class="hidden lg:flex flex-col shrink-0 z-40 relative overflow-y-auto no-scrollbar sidebar-root">
+  <aside class="hidden lg:flex flex-col shrink-0 z-40 relative overflow-y-auto no-scrollbar sidebar-root" :class="{ 'sidebar-collapsed': collapsed }">
 
     <!-- Brand -->
     <div class="sidebar-brand">
-      <div class="sidebar-logo">{{ businessInitial }}</div>
-      <span class="sidebar-biz-name">{{ businessName }}</span>
+      <div class="sidebar-logo" @click="toggleCollapse" title="Toggle sidebar" style="cursor: pointer;">{{ businessInitial }}</div>
+      <span v-if="!collapsed" class="sidebar-biz-name">{{ businessName }}</span>
     </div>
 
     <!-- Navigation -->
@@ -133,16 +139,18 @@ const businessName = computed(() =>
       <!-- Regular navigation -->
       <template v-else>
         <template v-for="group in groups" :key="group.group">
-          <p class="sidebar-group-label">{{ group.group }}</p>
+          <p v-if="!collapsed" class="sidebar-group-label">{{ group.group }}</p>
+          <div v-else class="sidebar-collapsed-divider"></div>
           <RouterLink v-for="item in group.items" :key="item.path"
             :to="item.path"
             class="nav-item"
-            :class="isActive(item.path) ? 'nav-active' : 'nav-default'">
+            :class="isActive(item.path) ? 'nav-active' : 'nav-default'"
+            :title="collapsed ? item.label : ''">
             <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path v-for="(d, i) in item.icon.split(' M').map((p, idx) => idx === 0 ? p : 'M' + p)"
                 :key="i" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" :d="d" />
             </svg>
-            <span>{{ item.label }}</span>
+            <span v-if="!collapsed">{{ item.label }}</span>
           </RouterLink>
         </template>
 
@@ -172,14 +180,14 @@ const businessName = computed(() =>
             d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
         </svg>
-        <span>Settings</span>
+        <span v-if="!collapsed">Settings</span>
       </RouterLink>
-      <button @click="logout" class="nav-item nav-logout w-full text-left">
+      <button @click="logout" class="nav-item nav-logout w-full text-left" :title="collapsed ? 'Sign Out' : ''">
         <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
             d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
         </svg>
-        <span>Sign Out</span>
+        <span v-if="!collapsed">Sign Out</span>
       </button>
     </div>
   </aside>
@@ -189,10 +197,19 @@ const businessName = computed(() =>
 .sidebar-root {
   width: 224px;
   background: #111827;
+  transition: width 0.2s ease;
 }
 @media (min-width: 1280px) {
   .sidebar-root { width: 240px; }
 }
+.sidebar-collapsed {
+  width: 60px !important;
+}
+.sidebar-collapsed .sidebar-brand { justify-content: center; padding: 0; }
+.sidebar-collapsed .nav-item { justify-content: center; padding: 7px 0; }
+.sidebar-collapsed .nav-icon { width: 20px; height: 20px; }
+.sidebar-collapsed .sidebar-footer { padding: 12px 6px 16px; }
+.sidebar-collapsed-divider { border-top: 1px solid #1f2937; margin: 6px 8px; }
 
 .sidebar-brand {
   height: 60px;
